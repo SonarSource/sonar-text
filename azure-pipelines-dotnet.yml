@@ -1,0 +1,63 @@
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+trigger:
+- branch-dotnet
+
+pr:
+- branch-dotnet
+- rg/*
+- dp/*
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  - group: sonarsource-build-variables
+  - name: buildConfiguration
+    value: 'Release'
+  - name: slnPath
+    value: 'sonar-secrets-dotnet/SonarLint.Secrets.DotNet.sln'
+  - name: additionalMSBuildProperties
+    value: ''
+
+steps:
+
+- task: DownloadSecureFile@1
+  displayName: 'Download snk file'
+  name: snk
+  inputs:
+    secureFile: SonarSourceSecret.snk
+
+
+- task: NuGetCommand@2
+  displayName: 'Restore NuGet packages'
+  inputs:
+    command: 'restore'
+    projects: $(slnPath)
+    restoreArguments: '--locked-mode'
+    feedsToUse: 'select'
+    vstsFeed: '399fb241-ecc7-4802-8697-dcdd01fbb832/423b576f-2263-43a1-93bd-69f4def19102'
+    includeNuGetOrg: false
+
+  
+- task: VSBuild@1
+  displayName: 'Build solution'
+  inputs:
+    solution: $(slnPath)
+    platform: 'Any CPU'
+    configuration: '$(buildConfiguration)'
+    msbuildArgs: '-p:SignAssembly=true -p:AssemblyOriginatorKeyFile="$(snk.secureFilePath)" $(additionalMSBuildProperties) '
+
+
+- task: VSTest@2
+  displayName: 'Run .NET unit tests'
+  inputs:
+     testAssemblyVer2: |
+        **\$(BuildConfiguration)\**\*.UnitTests.dll
+        !**\obj\**
+     runInParallel: true
+     runTestsInIsolation: true
+     codeCoverageEnabled: true
+     platform: '$(buildPlatform)'
+     configuration: '$(buildConfiguration)'
+     rerunFailedTests: false
