@@ -1,0 +1,10 @@
+<Project>
+
+  <PropertyGroup Label="Package locking">
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+
+    <!-- Set the compilation constant if strong-naming -->
+    <DefineConstants Condition=" '$(SignAssembly)' == true ">$(DefineConstants);SignAssembly</DefineConstants>
+  </PropertyGroup>
+
+</Project>
