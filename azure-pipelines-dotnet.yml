@@ -19,7 +19,8 @@ variables:
     value: 'sonar-secrets-dotnet/SonarLint.Secrets.DotNet.sln'
   - name: additionalMSBuildProperties
     value: ''
-
+  - name: nugetFeed
+    value: '399fb241-ecc7-4802-8697-dcdd01fbb832/423b576f-2263-43a1-93bd-69f4def19102'
 steps:
 
 - task: DownloadSecureFile@1
@@ -36,7 +37,7 @@ steps:
     projects: $(slnPath)
     restoreArguments: '--locked-mode'
     feedsToUse: 'select'
-    vstsFeed: '399fb241-ecc7-4802-8697-dcdd01fbb832/423b576f-2263-43a1-93bd-69f4def19102'
+    vstsFeed: $(nugetFeed)
     includeNuGetOrg: false
 
   
@@ -61,3 +62,22 @@ steps:
      platform: '$(buildPlatform)'
      configuration: '$(buildConfiguration)'
      rerunFailedTests: false
+
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet pack'
+  inputs:
+    command: 'pack'
+    packagesToPack: 'sonar-secrets-dotnet/src/SonarLint.Secrets.DotNet/SonarLint.Secrets.DotNet.csproj'
+    nobuild: true
+    packDestination: '$(Build.ArtifactStagingDirectory)'
+
+    
+- #task: NuGetAuthenticate@0
+  #displayName: 'NuGet authenticate'
+
+- #task: NuGetCommand@2
+  #displayName: 'Nuget push'
+  #inputs:
+   # command: 'push'
+    #publishVstsFeed: $(nugetFeed)
+    #allowPackageConflicts: true
