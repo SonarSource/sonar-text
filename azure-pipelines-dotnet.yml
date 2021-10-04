@@ -72,12 +72,12 @@ steps:
     packDestination: '$(Build.ArtifactStagingDirectory)'
 
     
-- #task: NuGetAuthenticate@0
-  #displayName: 'NuGet authenticate'
+#- task: NuGetAuthenticate@0
+#  displayName: 'NuGet authenticate'
 
-- #task: NuGetCommand@2
-  #displayName: 'Nuget push'
-  #inputs:
-   # command: 'push'
-    #publishVstsFeed: $(nugetFeed)
-    #allowPackageConflicts: true
+#- task: NuGetCommand@2
+#  displayName: 'Nuget push'
+#  inputs:
+#    command: 'push'
+#    publishVstsFeed: $(nugetFeed)
+#    allowPackageConflicts: true
