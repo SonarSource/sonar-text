@@ -4,18 +4,16 @@
  * mailto:info AT sonarsource DOT com
  */
 
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Linq;
 
 namespace SonarLint.Secrets.DotNet
 {
-    public interface ISecretDetector
-    {
-
-    }
-
     [Export(typeof(ISecretDetector))]
     [PartCreationPolicy(CreationPolicy.Shared)]
     public class DummySecretDetector : ISecretDetector
     {
+        public IEnumerable<ISecret> Find(string input) => Enumerable.Empty<ISecret>();
     }
 }
