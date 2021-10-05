@@ -35,11 +35,9 @@ namespace SonarLint.Secrets.DotNet.UnitTests
 
             actual.Count().Should().Be(2);
 
-            actual.First().RuleKey.Should().Be("secrets:DUMMY");
             actual.First().StartIndex.Should().Be(9);
             actual.First().EndIndex.Should().Be(11);
 
-            actual.Last().RuleKey.Should().Be("secrets:DUMMY");
             actual.Last().StartIndex.Should().Be(52);
             actual.Last().EndIndex.Should().Be(57);
         }
