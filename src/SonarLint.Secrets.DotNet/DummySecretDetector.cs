@@ -20,6 +20,10 @@ namespace SonarLint.Secrets.DotNet
 
         private const string RuleKey = "secrets:DUMMY";
 
+        string ISecretDetector.RuleKey => RuleKey;
+
+        public string Message => "Don't hard-code passwords";
+
         public IEnumerable<ISecret> Find(string input)
         {
             if (string.IsNullOrEmpty(input))
@@ -33,7 +37,7 @@ namespace SonarLint.Secrets.DotNet
             {
                 var pwdGrp = match.Groups["pwd"];
 
-                var newRange = new Secret(RuleKey, pwdGrp.Index, pwdGrp.Index + pwdGrp.Value.Length - 1);
+                var newRange = new Secret(pwdGrp.Index, pwdGrp.Index + pwdGrp.Value.Length - 1);
                 results.Add(newRange);
             }
 
