@@ -47,7 +47,7 @@ steps:
     solution: $(slnPath)
     platform: 'Any CPU'
     configuration: '$(buildConfiguration)'
-    msbuildArgs: '-p:SignAssembly=true -p:AssemblyOriginatorKeyFile="$(snk.secureFilePath)" $(additionalMSBuildProperties) '
+    msbuildArgs: '-p:SignAssembly=true -p:AssemblyOriginatorKeyFile="$(snk.secureFilePath)" /p:CommitId=$(Build.SourceVersion) /p:BranchName=$(Build.SourceBranchName) /p:BuildNumber=$(Build.BuildId) $(additionalMSBuildProperties) '
 
 
 - task: VSTest@2
@@ -71,6 +71,11 @@ steps:
     nobuild: true
     packDestination: '$(Build.ArtifactStagingDirectory)'
 
+#- task: PublishPipelineArtifact@1
+#  displayName: 'Publish the NuGet package as a pipeline artifact'
+#  inputs:
+#    path: '$(Build.ArtifactStagingDirectory)'
+#    artifact: DotNetNuGet
     
 #- task: NuGetAuthenticate@0
 #  displayName: 'NuGet authenticate'
