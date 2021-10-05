@@ -10,8 +10,6 @@ namespace SonarLint.Secrets.DotNet
 {
     public interface ISecret
     {
-        string RuleKey { get; }
-
         /// <summary>
         /// 0-based start position for the detected secret
         /// </summary>
@@ -25,10 +23,8 @@ namespace SonarLint.Secrets.DotNet
 
     internal class Secret : ISecret
     {
-        public Secret(string ruleKey, int startIndex, int endIndex)
+        public Secret(int startIndex, int endIndex)
         {
-            RuleKey = ruleKey ?? throw new ArgumentNullException(nameof(ruleKey));
-
             if (startIndex < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(startIndex));
@@ -43,7 +39,6 @@ namespace SonarLint.Secrets.DotNet
             EndIndex = endIndex;
         }
 
-        public string RuleKey { get; }
         public int StartIndex { get; }
         public int EndIndex { get; }
     }
