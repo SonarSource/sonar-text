@@ -7,6 +7,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace SonarLint.Secrets.DotNet
 {
@@ -14,6 +15,29 @@ namespace SonarLint.Secrets.DotNet
     [PartCreationPolicy(CreationPolicy.Shared)]
     public class DummySecretDetector : ISecretDetector
     {
-        public IEnumerable<ISecret> Find(string input) => Enumerable.Empty<ISecret>();
+        private const string PasswordPattern = "password=((?<pwd>\\w+)\\s)";
+        private static readonly Regex StackRegExp = new Regex(PasswordPattern);
+
+        private const string RuleKey = "secrets:DUMMY";
+
+        public IEnumerable<ISecret> Find(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return Enumerable.Empty<Secret>();
+            }
+
+            var results = new List<Secret>();
+
+            foreach (Match match in StackRegExp.Matches(input))
+            {
+                var pwdGrp = match.Groups["pwd"];
+
+                var newRange = new Secret(RuleKey, pwdGrp.Index, pwdGrp.Index + pwdGrp.Value.Length - 1);
+                results.Add(newRange);
+            }
+
+            return results;
+        }
     }
 }
