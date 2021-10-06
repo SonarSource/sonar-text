@@ -1,12 +1,19 @@
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+# Only run this pipeline for changes in the dotnet code
 
 trigger:
-- branch-dotnet
+  branches:
+    include:
+    - master
+    - branch-*
 
+  paths:
+    include:
+    - sonar-secrets-dotnet
+  
 pr:
-- branch-dotnet
-- rg/*
-- dp/*
+  paths:
+    include:
+    - sonar-secrets-dotnet
 
 pool:
   vmImage: 'windows-latest'
