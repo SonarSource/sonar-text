@@ -16,30 +16,30 @@ namespace SonarLint.Secrets.DotNet
         int StartIndex { get; }
 
         /// <summary>
-        /// 0-based end position for the detected secret
+        /// Number of characters in the secret
         /// </summary>
-        int EndIndex { get; }
+        int Length { get; }
     }
 
     internal class Secret : ISecret
     {
-        public Secret(int startIndex, int endIndex)
+        public Secret(int startIndex, int length)
         {
             if (startIndex < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(startIndex));
             }
 
-            if (endIndex < 0)
+            if (length < 1)
             {
-                throw new ArgumentOutOfRangeException(nameof(endIndex));
+                throw new ArgumentOutOfRangeException(nameof(length));
             }
 
             StartIndex = startIndex;
-            EndIndex = endIndex;
+            Length = length;
         }
 
         public int StartIndex { get; }
-        public int EndIndex { get; }
+        public int Length { get; }
     }
 }
