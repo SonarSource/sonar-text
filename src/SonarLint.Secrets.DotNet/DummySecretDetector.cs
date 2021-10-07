@@ -37,7 +37,7 @@ namespace SonarLint.Secrets.DotNet
             {
                 var pwdGrp = match.Groups["pwd"];
 
-                var newRange = new Secret(pwdGrp.Index, pwdGrp.Index + pwdGrp.Value.Length - 1);
+                var newRange = new Secret(pwdGrp.Index, pwdGrp.Value.Length);
                 results.Add(newRange);
             }
 
