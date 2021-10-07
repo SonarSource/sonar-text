@@ -16,26 +16,26 @@ namespace SonarLint.Secrets.DotNet.UnitTests
         [TestMethod]
         public void Ctor_InvalidStartIndex()
         {
-            Action act = () => new Secret(-1, 0);
+            Action act = () => new Secret(-1, 1);
             act.Should().ThrowExactly<ArgumentOutOfRangeException>().And.ParamName.Should().Be("startIndex");
         }
 
         [TestMethod]
-        public void Ctor_InvalidEndIndex()
+        public void Ctor_InvalidLength()
         {
-            Action act = () => new Secret(0, -1);
-            act.Should().ThrowExactly<ArgumentOutOfRangeException>().And.ParamName.Should().Be("endIndex");
+            Action act = () => new Secret(1, 0);
+            act.Should().ThrowExactly<ArgumentOutOfRangeException>().And.ParamName.Should().Be("length");
         }
 
         [TestMethod]
         [DataRow(0, 1)]
-        [DataRow(1, 0)]
-        public void Ctor_ValidValues_PropertiesSet(int startIndex, int endIndex)
+        [DataRow(1, 99)]
+        public void Ctor_ValidValues_PropertiesSet(int startIndex, int length)
         {
-            var testSubject = new Secret(startIndex, endIndex);
+            var testSubject = new Secret(startIndex, length);
 
             testSubject.StartIndex.Should().Be(startIndex);
-            testSubject.EndIndex.Should().Be(endIndex);
+            testSubject.Length.Should().Be(length);
         }
     }
 }
