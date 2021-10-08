@@ -6,11 +6,14 @@
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
+using System.Text;
 
 namespace SonarLint.Secrets.DotNet.UnitTests
 {
-    internal static class JavaTestFileLocator
+    internal static class JavaTestFileUtils
     {
+        public static readonly Encoding UTF_8 = Encoding.UTF8;
+
         public static string LocateJavaTestFile(string relativeJavaTestFilePath)
         {
             // We want to use the same test case files as for the Java tests.
@@ -19,8 +22,14 @@ namespace SonarLint.Secrets.DotNet.UnitTests
             // to absolute paths.
 
             var fullPath = Path.Combine(LocateRepoRootDirectory(), "sonar-secrets-plugin", relativeJavaTestFilePath);
-            Assert.IsTrue(File.Exists(fullPath), @"Test setup error: could not find test file: {fullPath}");
+            Assert.IsTrue(File.Exists(fullPath), $"Test setup error: could not find test file: {fullPath}");
             return fullPath;
+        }
+        public static string readFileAndNormalize(string relativeJavaTestFilePath, Encoding charset)
+        {
+            var fullPath = LocateJavaTestFile(relativeJavaTestFilePath);
+
+            return File.ReadAllText(fullPath, charset);
         }
 
         private static string LocateRepoRootDirectory()
@@ -39,5 +48,6 @@ namespace SonarLint.Secrets.DotNet.UnitTests
             Assert.Fail("Test setup error: cannot locate repo root directory");
             return null;
         }
+
     }
 }
