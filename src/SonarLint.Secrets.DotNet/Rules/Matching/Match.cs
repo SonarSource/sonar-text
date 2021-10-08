@@ -19,5 +19,21 @@ namespace SonarLint.Secrets.DotNet.Rules.Matching
         public string Text { get; }
         public int StartIndex{ get; }
         public int Length { get; }
+
+        public bool Overlaps(Match other)
+        {
+            int thisEndIndex = StartIndex + Length - 1;
+            int otherEndIndex = other.StartIndex + other.Length - 1;
+
+            return
+                // 1. Our start index is inside the other Match
+                (StartIndex >= other.StartIndex && StartIndex <= otherEndIndex) ||
+
+                // 2. Our end index is inside the other Match
+                (thisEndIndex >= other.StartIndex && thisEndIndex <= otherEndIndex) ||
+
+                // 3. We completely contain the other match
+                (this.StartIndex < other.StartIndex && thisEndIndex > otherEndIndex);
+        }
     }
 }
