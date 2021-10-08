@@ -10,7 +10,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.IO;
 using static SonarLint.Secrets.DotNet.UnitTests.JavaAssertions;
-using static SonarLint.Secrets.DotNet.UnitTests.JavaTestFileLocator;
+using static SonarLint.Secrets.DotNet.UnitTests.JavaTestFileUtils;
 
 namespace SonarLint.Secrets.DotNet.UnitTests
 {
