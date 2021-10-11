@@ -38,9 +38,9 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         {
             var testSubject = new AwsAccessKeyIdRule();
 
-            var input = ("public class Foo {\n"
+            var input = "public class Foo {\n"
               + "  public static final String KEY = \"AKIAIGKECZXA7AEIJLMQ\"\n"
-              + "}");
+              + "}";
 
             var secrets = testSubject.Find(input);
 
