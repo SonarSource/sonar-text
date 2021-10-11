@@ -30,7 +30,6 @@ namespace SonarLint.Secrets.DotNet.UnitTests.DotNetOnly
             secretsMatcher.Invocations.Count.Should().Be(0);
         }
 
-        [TestMethod]
         public void Find_PredicateIsTrue_MatcherIsCalled()
         {
             var expectedMatches = new List<Match> { new Match("any", 1, 2) };
