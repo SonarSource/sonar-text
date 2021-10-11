@@ -12,6 +12,8 @@ using SonarLint.Secrets.DotNet.Rules;
 using SonarLint.VisualStudio.Integration.UnitTests;
 using System.Linq;
 
+using static SonarLint.Secrets.DotNet.UnitTests.TestUtils;
+
 namespace SonarLint.Secrets.DotNet.UnitTests.Rules
 {
     [TestClass]
@@ -38,12 +40,13 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         {
             var testSubject = new IbmApiKeyRule();
 
-            var secrets = testSubject.Find("\"apikey\": \"iT5wxMGq2-ZJlMAHYoODl5EuTeCPvNRkSp1h3m99HWrc\"");
+            var input = "\"apikey\": \"iT5wxMGq2-ZJlMAHYoODl5EuTeCPvNRkSp1h3m99HWrc\"";
+
+            var secrets = testSubject.Find(input);
 
             secrets.Count().Should().Be(1);
-            // The Java test checks for the tuple(1, 11, 1, 55) (start.line, start.lineOffset, end.line, end.lineOffset) 
-            secrets.First().StartIndex.Should().Be(11);
-            secrets.First().Length.Should().Be(44);
+            CheckExpectedSecretFound(input, "iT5wxMGq2-ZJlMAHYoODl5EuTeCPvNRkSp1h3m99HWrc", secrets.First());
+            CrossCheckWithJavaResult(input, new(1, 11, 1, 55), secrets.First());
         }
 
         [TestMethod]

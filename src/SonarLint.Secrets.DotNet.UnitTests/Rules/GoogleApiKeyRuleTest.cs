@@ -12,6 +12,7 @@ using SonarLint.Secrets.DotNet.Rules;
 using SonarLint.VisualStudio.Integration.UnitTests;
 using System.Collections.Generic;
 using System.Linq;
+using static SonarLint.Secrets.DotNet.UnitTests.TestUtils;
 
 namespace SonarLint.Secrets.DotNet.UnitTests.Rules
 {
@@ -39,13 +40,13 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         {
             var testSubject = new GoogleApiKeyRule();
 
+            var input = "android:value=\"AIzaSyCis4NzxMw1aJyvUIrjGILjPkSdxrRfof4\"";
+
             var secrets = testSubject.Find("android:value=\"AIzaSyCis4NzxMw1aJyvUIrjGILjPkSdxrRfof4\"");
 
             secrets.Count().Should().Be(1);
-
-            // The Java test checks for the tuple(1, 15, 1, 54) (start.line, start.lineOffset, end.line, end.lineOffset) 
-            secrets.First().StartIndex.Should().Be(15);
-            secrets.First().Length.Should().Be(39);
+            CheckExpectedSecretFound(input, "AIzaSyCis4NzxMw1aJyvUIrjGILjPkSdxrRfof4", secrets.First());
+            CrossCheckWithJavaResult(input, new(1, 15, 1, 54), secrets.First());
         }
 
         [TestMethod]
