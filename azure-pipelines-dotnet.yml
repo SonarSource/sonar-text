@@ -106,11 +106,11 @@ steps:
     nobuild: true
     packDestination: '$(Build.ArtifactStagingDirectory)'
 
-- task: PublishPipelineArtifact@1
-  displayName: 'Publish the NuGet package as a pipeline artifact'
-  inputs:
-    path: '$(Build.ArtifactStagingDirectory)'
-    artifact: DotNetNuGet
+#- task: PublishPipelineArtifact@1
+#  displayName: 'Publish the NuGet package as a pipeline artifact'
+#  inputs:
+#    path: '$(Build.ArtifactStagingDirectory)'
+#    artifact: DotNetNuGet
     
 #- task: NuGetAuthenticate@0
 #  displayName: 'NuGet authenticate'
