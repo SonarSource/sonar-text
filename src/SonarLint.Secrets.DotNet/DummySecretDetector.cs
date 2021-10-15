@@ -15,14 +15,14 @@ namespace SonarLint.Secrets.DotNet
     [PartCreationPolicy(CreationPolicy.Shared)]
     public class DummySecretDetector : ISecretDetector
     {
-        private const string PasswordPattern = "password=((?<pwd>\\w+)\\s)";
+        private const string PasswordPattern = "sonarlint\\.internal\\.dummy\\.password\\=(?<pwd>[\\w-]+)\\s";
         private static readonly Regex StackRegExp = new Regex(PasswordPattern);
 
-        private const string RuleKey = "secrets:DUMMY";
+        private const string RuleKey = "secrets:sonarlint.internal.dummy.pwd";
 
         string ISecretDetector.RuleKey => RuleKey;
 
-        public string Message => "Don't hard-code passwords";
+        public string Message => "Don't hard-code credentials";
 
         public IEnumerable<ISecret> Find(string input)
         {
