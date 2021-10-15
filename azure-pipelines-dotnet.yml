@@ -41,6 +41,18 @@ steps:
     secureFile: SonarSourceSecret.snk
 
 - powershell: |
+    # Calculate the file path
+    $versionFilePath = "$env:BUILD_SOURCESDIRECTORY\sonar-secrets-dotnet\src\SonarLint.Secrets.DotNet\SonarLint.Secrets.DotNet.csproj"
+    Write-Host "Reading the Sonar project version from '${versionFilePath}' ..."
+    # Read the version from the file
+    [xml]$versionProps = Get-Content "$versionFilePath"
+    $sonarProjectVersion = $versionProps.Project.PropertyGroup.Version
+    Write-Host "Sonar project version is '${sonarProjectVersion}'"
+    # Set the variable to it can be used by other tasks
+    Write-Host "##vso[task.setvariable variable=SONAR_PROJECT_VERSION]$sonarProjectVersion"
+  displayName: 'Calculate Sonar project version'
+
+- powershell: |
     $searchRoot = ${env:ProgramFiles(x86)} + '\Windows Kits\10\bin\10*'
     $exeName = 'signtool.exe'
     $signtool = Get-ChildItem -Path $searchRoot -Filter $exeName -Recurse -ErrorAction SilentlyContinue -Force | Select -Last 1
@@ -70,6 +82,12 @@ steps:
     vstsFeed: $(nugetFeed)
     includeNuGetOrg: false
 
+- task: SonarQubePrepare@4
+  inputs:
+    SonarQube: 'Next'
+    scannerMode: 'MSBuild'
+    projectKey: 'sonar-secrets-dotnet'
+    projectVersion: $(SONAR_PROJECT_VERSION)
   
 - task: VSBuild@1
   displayName: 'Build solution'
@@ -97,6 +115,8 @@ steps:
      platform: '$(buildPlatform)'
      configuration: '$(buildConfiguration)'
      rerunFailedTests: false
+
+- task: SonarQubeAnalyze@4
 
 - task: DotNetCoreCLI@2
   displayName: 'dotnet pack'
