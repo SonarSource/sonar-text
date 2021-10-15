@@ -25,21 +25,22 @@ namespace SonarLint.Secrets.DotNet.UnitTests
         {
             var testSubject = new DummySecretDetector();
 
-            const string input = @"password=123
+            const string input = @"sonarlint.internal.dummy.password=9E7E72A5-10B6-4B72-8C04-349C045599C4  // should match
   woijwoj w woijw e
   ffef  password=abcdef
 
+  sonarlint.internal.dummy.password=F12504D1-AE23-4008-A599-8DEDB2A0EEEB    // should match
 ";
 
             var actual = testSubject.Find(input);
 
             actual.Count().Should().Be(2);
 
-            actual.First().StartIndex.Should().Be(9);
-            actual.First().Length.Should().Be(3);
+            actual.First().StartIndex.Should().Be(34);
+            actual.First().Length.Should().Be(36);
 
-            actual.Last().StartIndex.Should().Be(52);
-            actual.Last().Length.Should().Be(6);
+            actual.Last().StartIndex.Should().Be(173);
+            actual.Last().Length.Should().Be(36);
         }
     }
 }
