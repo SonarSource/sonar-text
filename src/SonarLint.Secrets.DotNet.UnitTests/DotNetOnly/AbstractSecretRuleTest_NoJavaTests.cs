@@ -88,17 +88,17 @@ namespace SonarLint.Secrets.DotNet.UnitTests.DotNetOnly
             actual[1].Length.Should().Be(1);
         }
 
-        private static SecretsMatcher CreateMatcher(params Match[] matchesToReturn)
+        private static ISecretsMatcher CreateMatcher(params Match[] matchesToReturn)
         {
-            var matcher = new Moq.Mock<SecretsMatcher>();
-            matcher.Setup(x => x.findIn(Moq.It.IsAny<string>())).Returns(matchesToReturn.ToList());
+            var matcher = new Moq.Mock<ISecretsMatcher>();
+            matcher.Setup(x => x.FindIn(Moq.It.IsAny<string>())).Returns(matchesToReturn.ToList());
             return matcher.Object;
         }
 
         // Concrete sub-class: doesn't change any of the base class functionality
         private class ConcreteSecretRule : AbstractSecretRule
         {
-            public ConcreteSecretRule(string ruleKey, string name, string message, params SecretsMatcher[] matchers)
+            public ConcreteSecretRule(string ruleKey, string name, string message, params ISecretsMatcher[] matchers)
                 : base(ruleKey, name, message, matchers)
             { }
         }
@@ -109,13 +109,13 @@ namespace SonarLint.Secrets.DotNet.UnitTests.DotNetOnly
             private readonly string[] falsePositives;
 
             public ConfigurableFalsePositivesTestRule(string[] falsePositiveText,
-                params SecretsMatcher[] matchers)
+                params ISecretsMatcher[] matchers)
                 : base("any", "any", "any", matchers)
             {
                 falsePositives = falsePositiveText;
             }
 
-            protected override bool isProbablyFalsePositive(string matchedText) =>
+            protected override bool IsProbablyFalsePositive(string matchedText) =>
                 falsePositives.Contains(matchedText);
         }
     }
