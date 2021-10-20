@@ -25,7 +25,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         }
 
         [TestMethod]
-        public void testRuleProperties()
+        public void TestRuleProperties()
         {
             var testSubject = new AwsAccessKeyIdRule();
 
@@ -34,7 +34,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         }
 
         [TestMethod]
-        public void testRuleRegexPositive()
+        public void TestRuleRegexPositive()
         {
             var testSubject = new AwsAccessKeyIdRule();
 
@@ -50,7 +50,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         }
 
         [TestMethod]
-        public void testRuleRegexNegative()
+        public void TestRuleRegexNegative()
         {
             var testSubject = new AwsAccessKeyIdRule();
 
@@ -62,7 +62,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         }
 
         [TestMethod]
-        public void testRuleRegexExamplePositive()
+        public void RestRuleRegexExamplePositive()
         {
             var testSubject = new AwsAccessKeyIdRule();
 
@@ -78,7 +78,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         }
 
         [TestMethod]
-        public void testRuleRegexExampleNegative()
+        public void TestRuleRegexExampleNegative()
         {
             var testSubject = new AwsAccessKeyIdRule();
 

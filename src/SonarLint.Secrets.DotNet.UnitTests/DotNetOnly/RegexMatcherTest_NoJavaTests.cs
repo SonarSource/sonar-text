@@ -27,7 +27,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.DotNetOnly
 
 ";
 
-            var actual = testSubject.findIn(input);
+            var actual = testSubject.FindIn(input);
 
             actual.Count().Should().Be(2);
 
