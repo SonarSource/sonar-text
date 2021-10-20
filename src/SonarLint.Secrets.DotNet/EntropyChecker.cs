@@ -11,15 +11,15 @@ using System.Collections.Generic;
 
 namespace SonarLint.Secrets.DotNet
 {
-    internal class EntropyChecker {
-
+    internal static class EntropyChecker
+    {
         internal const double ENTROPY_THRESHOLD = 4.2;
 
-        public bool hasLowEntropy(String str) {
-            return calculateShannonEntropy(str) < ENTROPY_THRESHOLD;
+        public static bool HasLowEntropy(string str) {
+            return CalculateShannonEntropy(str) < ENTROPY_THRESHOLD;
         }
 
-        public double calculateShannonEntropy(String str) {
+        public static double CalculateShannonEntropy(string str) {
             if (string.IsNullOrEmpty(str)) {
                 return 0.0;
             }
