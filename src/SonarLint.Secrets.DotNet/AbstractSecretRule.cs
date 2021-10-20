@@ -12,11 +12,11 @@ using System.Linq;
 
 namespace SonarLint.Secrets.DotNet.Rules
 {
-    internal abstract class AbstractSecretRule : ISecretDetector
+    internal class AbstractSecretRule : ISecretDetector
     {
-        private readonly List<SecretsMatcher> matchers;
+        private readonly List<ISecretsMatcher> matchers;
 
-        protected AbstractSecretRule(string ruleKey, string name, string message, params SecretsMatcher[] matchers)
+        protected AbstractSecretRule(string ruleKey, string name, string message, params ISecretsMatcher[] matchers)
         {
             RuleKey = ruleKey;
             Name = name;
@@ -30,15 +30,15 @@ namespace SonarLint.Secrets.DotNet.Rules
 
         public string Message { get; }
 
-        protected virtual bool isProbablyFalsePositive(string matchedText) { return false; }
+        protected virtual bool IsProbablyFalsePositive(string matchedText) { return false; }
 
-        public IEnumerable<ISecret> Find(string content)
+        public IEnumerable<ISecret> Find(string input)
         {
             var nonOverlappingTruePositives = new List<Match>();
 
             var allTruePositiveMatches = matchers
-                .SelectMany(matcher => matcher.findIn(content))
-                .Where(match => !isProbablyFalsePositive(match.Text));
+                .SelectMany(matcher => matcher.FindIn(input))
+                .Where(match => !IsProbablyFalsePositive(match.Text));
 
             // Discard any overlapping matches
             foreach (var match in allTruePositiveMatches)

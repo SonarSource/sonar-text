@@ -11,22 +11,22 @@ using System.Collections.Generic;
 
 namespace SonarLint.Secrets.DotNet.Rules.Matching
 {
-    internal class ConditionalMatcher : SecretsMatcher
+    internal class ConditionalMatcher : ISecretsMatcher
     {
         private static readonly List<Match> EmptyList = new List<Match>();
 
         private readonly Predicate<string> predicate;
-        private readonly SecretsMatcher ifTrue;
+        private readonly ISecretsMatcher ifTrue;
 
-        public ConditionalMatcher(Predicate<string> predicate, SecretsMatcher ifTrue)
+        public ConditionalMatcher(Predicate<string> predicate, ISecretsMatcher ifTrue)
         {
             this.predicate = predicate;
             this.ifTrue = ifTrue;
         }
 
-        public List<Match> findIn(string content)
+        public List<Match> FindIn(string input)
         {
-            return predicate(content) ? ifTrue.findIn(content) : EmptyList;
+            return predicate(input) ? ifTrue.FindIn(input) : EmptyList;
         }
     }
 }

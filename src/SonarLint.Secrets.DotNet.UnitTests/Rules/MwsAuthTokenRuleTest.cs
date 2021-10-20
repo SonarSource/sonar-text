@@ -25,7 +25,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         }
 
         [TestMethod]
-        public void testRuleProperties()
+        public void TestRuleProperties()
         {
             var testSubject = new MwsAuthTokenRule();
 
@@ -34,7 +34,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         }
 
         [TestMethod]
-        public void testRuleRegexPositive()
+        public void TestRuleRegexPositive()
         {
             var testSubject = new MwsAuthTokenRule();
 
@@ -48,7 +48,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         }
 
         [TestMethod]
-        public void testRuleRegexNegative()
+        public void TestRuleRegexNegative()
         {
             var testSubject = new MwsAuthTokenRule();
 

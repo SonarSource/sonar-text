@@ -20,10 +20,10 @@ namespace SonarLint.Secrets.DotNet.UnitTests.DotNetOnly
         {
             var predicate = new Moq.Mock<Predicate<string>>();
             predicate.Setup(x => x.Invoke("expected content")).Returns(false);
-            var secretsMatcher = new Moq.Mock<SecretsMatcher>();
+            var secretsMatcher = new Moq.Mock<ISecretsMatcher>();
             var testSubject = new ConditionalMatcher(predicate.Object, secretsMatcher.Object);
 
-            var actual = testSubject.findIn("expected content");
+            var actual = testSubject.FindIn("expected content");
 
             actual.Should().BeEmpty();
             predicate.VerifyAll();
@@ -37,12 +37,12 @@ namespace SonarLint.Secrets.DotNet.UnitTests.DotNetOnly
             var predicate = new Moq.Mock<Predicate<string>>();
             predicate.Setup(x => x.Invoke("expected content")).Returns(true);
 
-            var secretsMatcher = new Moq.Mock<SecretsMatcher>();
-            secretsMatcher.Setup(x => x.findIn("expected content")).Returns(expectedMatches);
+            var secretsMatcher = new Moq.Mock<ISecretsMatcher>();
+            secretsMatcher.Setup(x => x.FindIn("expected content")).Returns(expectedMatches);
 
             var testSubject = new ConditionalMatcher(predicate.Object, secretsMatcher.Object);
 
-            var actual = testSubject.findIn("expected content");
+            var actual = testSubject.FindIn("expected content");
 
             actual.Count.Should().Be(1);
             actual.Should().BeSameAs(expectedMatches);

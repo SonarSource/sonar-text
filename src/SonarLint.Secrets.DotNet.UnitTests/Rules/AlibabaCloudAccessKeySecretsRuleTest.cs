@@ -26,7 +26,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         }
 
         [TestMethod]
-        public void testRuleProperties()
+        public void TestRuleProperties()
         {
             var testSubject = new AlibabaCloudAccessKeySecretsRule();
 
@@ -64,7 +64,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         }
 
         [TestMethod]
-        public void testRuleRegexNegative()
+        public void TestRuleRegexNegative()
         {
             var testSubject = new AlibabaCloudAccessKeySecretsRule();
 

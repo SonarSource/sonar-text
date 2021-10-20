@@ -7,7 +7,6 @@
 // Ported from ...\sonar-secrets-plugin\src\test\java\com\sonarsource\secrets\EntropyCheckerTest.java
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using System.IO;
 using static SonarLint.Secrets.DotNet.UnitTests.JavaAssertions;
 using static SonarLint.Secrets.DotNet.UnitTests.JavaTestFileUtils;
@@ -17,27 +16,25 @@ namespace SonarLint.Secrets.DotNet.UnitTests
     [TestClass]
     public class EntropyCheckerTest
     {
-        EntropyChecker underTest = new EntropyChecker();
-
         [TestMethod]
         public void computeSampleValue(){
-            assertThat(underTest.calculateShannonEntropy("0040878d3579659158d09ad09b6a9849d18e0e22")).isEqualTo(3.587326145256008);
+            assertThat(EntropyChecker.CalculateShannonEntropy("0040878d3579659158d09ad09b6a9849d18e0e22")).isEqualTo(3.587326145256008);
         }
 
         [TestMethod]
         public void entropyCheckPositive() {
-            assertThat(underTest.hasLowEntropy("06c6d5715a1ede6c51fc39ff67fd647f740b656d")).isTrue();
+            assertThat(EntropyChecker.HasLowEntropy("06c6d5715a1ede6c51fc39ff67fd647f740b656d")).isTrue();
         }
 
         [TestMethod]
         public void entropyCheckNegative() {
-            assertThat(underTest.hasLowEntropy("qAhEMdXy/MPwEuDlhh7O0AFBuzGvNy7AxpL3sX3q")).isFalse();
+            assertThat(EntropyChecker.HasLowEntropy("qAhEMdXy/MPwEuDlhh7O0AFBuzGvNy7AxpL3sX3q")).isFalse();
         }
 
         [TestMethod]
         public void thresholdSplitsFalsePositiveGoodEnough() {
-            double falsePositivesAboveThreshold = processFile("src/test/files/false-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
-            double truePositivesAboveThreshold = processFile("src/test/files/true-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
+            double falsePositivesAboveThreshold = ProcessFile("src/test/files/false-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
+            double truePositivesAboveThreshold = ProcessFile("src/test/files/true-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
 
             // this assertions can be changed if we will get more data that, for example, will show more false positives
             // the goal of the test to fail if threshold value will be changed, since current value is the sweet spot on data we have so far
@@ -45,7 +42,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests
             assertThat(truePositivesAboveThreshold).isEqualTo(100.0);
         }
 
-        private double processFile(String fileName, double threshold) {
+        private double ProcessFile(string fileName, double threshold) {
             var javaTestFileName = LocateJavaTestFile(fileName);
 
             var lines = File.ReadAllLines(javaTestFileName);
@@ -54,7 +51,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests
             foreach (var line in lines)
             {
                 total++;
-                double entropy = underTest.calculateShannonEntropy(line);
+                double entropy = EntropyChecker.CalculateShannonEntropy(line);
                 if (entropy > threshold)
                 {
                     aboveThreshold++;
