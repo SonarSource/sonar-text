@@ -10,7 +10,8 @@ namespace SonarLint.Secrets.DotNet.Rules.Matching
 {
     internal class Match
     {
-        public Match(string text, int startIndex, int length) {
+        public Match(string text, int startIndex, int length)
+        {
             Text = text;
             StartIndex = startIndex;
             Length = length;

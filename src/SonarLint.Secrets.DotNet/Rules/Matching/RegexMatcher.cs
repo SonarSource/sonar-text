@@ -4,14 +4,13 @@
  * mailto:info AT sonarsource DOT com
  */
 
-using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using MatchResult = System.Text.RegularExpressions.Match;
 
 namespace SonarLint.Secrets.DotNet.Rules.Matching
 {
-    internal class RegexMatcher : SecretsMatcher
+    internal class RegexMatcher : ISecretsMatcher
     {
         private readonly Regex pattern;
 
@@ -20,11 +19,11 @@ namespace SonarLint.Secrets.DotNet.Rules.Matching
             this.pattern = new Regex(stringPattern, RegexOptions.Compiled);
         }
 
-        public List<Match> findIn(String content)
+        public List<Match> FindIn(string input)
         {
             List<Match> matches = new List<Match>();
 
-            foreach (MatchResult matchResult in pattern.Matches(content))
+            foreach (MatchResult matchResult in pattern.Matches(input))
             {
                 // Note: hard-coded assumption that the text to highlight is in the second group (index = 1)
                 var group = matchResult.Groups[1];

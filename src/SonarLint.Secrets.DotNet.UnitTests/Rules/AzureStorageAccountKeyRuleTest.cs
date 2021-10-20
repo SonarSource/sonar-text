@@ -17,7 +17,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         }
 
         [TestMethod]
-        public void testRuleProperties()
+        public void TestRuleProperties()
         {
             var testSubject = new AzureStorageAccountKeyRule();
 
@@ -27,7 +27,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         }
 
         [TestMethod]
-        public void testRuleFirstRegexPositive()
+        public void TestRuleFirstRegexPositive()
         {
             var testSubject = new AzureStorageAccountKeyRule();
 
@@ -49,7 +49,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         }
 
         [TestMethod]
-        public void testRuleSecondRegexPositive()
+        public void TestRuleSecondRegexPositive()
         {
             var testSubject = new AzureStorageAccountKeyRule();
 
@@ -63,7 +63,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         }
 
         [TestMethod]
-        public void testRuleSecondRegexPositiveEvenWhenCoreWindowsNetStringPresent()
+        public void TestRuleSecondRegexPositiveEvenWhenCoreWindowsNetStringPresent()
         {
             var testSubject = new AzureStorageAccountKeyRule();
 
@@ -77,7 +77,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         }
 
         [TestMethod]
-        public void testRuleRegexNegative()
+        public void TestRuleRegexNegative()
         {
             var testSubject = new AzureStorageAccountKeyRule();
 

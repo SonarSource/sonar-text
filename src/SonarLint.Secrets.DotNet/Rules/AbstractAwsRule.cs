@@ -7,7 +7,6 @@
 // Ported from ...\sonar-secrets-plugin\src\main\java\com\sonarsource\secrets\rules\AbstractAwsRule.java
 
 using SonarLint.Secrets.DotNet.Rules.Matching;
-using System;
 
 namespace SonarLint.Secrets.DotNet.Rules
 {
@@ -15,7 +14,7 @@ namespace SonarLint.Secrets.DotNet.Rules
     {
         private const string RULE_KEY = "S6290";
 
-        protected AbstractAwsRule(String message, params SecretsMatcher[] matchers)
+        protected AbstractAwsRule(string message, params ISecretsMatcher[] matchers)
           : base(RULE_KEY, "Amazon Web Services credentials should not be disclosed", message, matchers)
         {
         }

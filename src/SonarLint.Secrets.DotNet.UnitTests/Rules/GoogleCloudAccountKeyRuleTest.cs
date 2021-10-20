@@ -61,5 +61,4 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
             secrets.Should().BeEmpty();
         }
     }
-
 }

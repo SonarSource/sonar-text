@@ -10,9 +10,9 @@ using SonarLint.Secrets.DotNet.Rules.Matching;
 
 namespace SonarLint.Secrets.DotNet.Rules
 {
-    internal abstract class AbstractAlibabaCloudAccessKeyRule : AbstractSecretRule
+    internal class AbstractAlibabaCloudAccessKeyRule : AbstractSecretRule
     {
-        protected AbstractAlibabaCloudAccessKeyRule(string message, params SecretsMatcher[] matchers)
+        protected AbstractAlibabaCloudAccessKeyRule(string message, params ISecretsMatcher[] matchers)
 
               : base("S6336", "Alibaba Cloud AccessKeys should not be disclosed", message, matchers)
         { }

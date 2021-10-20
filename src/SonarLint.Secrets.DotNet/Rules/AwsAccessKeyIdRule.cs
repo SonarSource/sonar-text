@@ -20,10 +20,8 @@ namespace SonarLint.Secrets.DotNet.Rules
               : base("Make sure this AWS Access Key ID is not disclosed.", new RegexMatcher("((?:AKIA|ASIA)[A-Z0-9]{16})\\b"))
         { }
 
-        protected override bool isProbablyFalsePositive(string matchedText)
-        {
-            return matchedText.EndsWith(NO_MATCH_SUFFIX);
-        }
+        protected override bool IsProbablyFalsePositive(string matchedText) =>
+            matchedText.EndsWith(NO_MATCH_SUFFIX);
     }
 
 }
