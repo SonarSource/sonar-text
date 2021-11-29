@@ -1,0 +1,10 @@
+{
+  "rules-metadata-path": "./text-checks/src/main/resources/org/sonar/l10n/common/rules/common",
+  "languages": [
+    "COMMON"
+  ],
+  "options": {
+    "no-language-in-filenames": true,
+    "preserve-filenames": true
+  }
+}
