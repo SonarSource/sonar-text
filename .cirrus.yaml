@@ -83,23 +83,23 @@ ws_scan_task:
     ws_artifacts:
       path: "whitesource/**/*"
 
-qa_plugin_task:
-  <<: *QA_TASK_FILTER
-  <<: *LINUX_2_CPU_4G
-  env:
-    matrix:
-      - SQ_VERSION: LATEST_RELEASE[8.9]
-      - SQ_VERSION: DOGFOOD
-  maven_cache:
-    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
-  submodules_script:
-    - git submodule update --init
-  plugin_script:
-    - source cirrus-env QA
-    - source set_maven_build_version $BUILD_NUMBER
-    - cd its
-    - mvn verify -P its -Dsonar.runtimeVersion=${SQ_VERSION} -B -e -V
-  cleanup_before_cache_script: cleanup_maven_repository
+#qa_plugin_task:
+#  <<: *QA_TASK_FILTER
+#  <<: *LINUX_2_CPU_4G
+#  env:
+#    matrix:
+#      - SQ_VERSION: LATEST_RELEASE[8.9]
+#      - SQ_VERSION: DOGFOOD
+#  maven_cache:
+#    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
+#  submodules_script:
+#    - git submodule update --init
+#  plugin_script:
+#    - source cirrus-env QA
+#    - source set_maven_build_version $BUILD_NUMBER
+#    - cd its
+#    - mvn verify -P its -Dsonar.runtimeVersion=${SQ_VERSION} -B -e -V
+#  cleanup_before_cache_script: cleanup_maven_repository
 
 promote_task:
   depends_on:
