@@ -22,8 +22,11 @@ package org.sonar.plugins.text.core;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import javax.annotation.Nullable;
 import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.fs.TextPointer;
 import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.api.batch.sensor.error.NewAnalysisError;
 import org.sonar.api.batch.sensor.issue.NewIssue;
 import org.sonar.api.batch.sensor.issue.NewIssueLocation;
 import org.sonar.api.rule.RuleKey;
@@ -49,6 +52,15 @@ public class InputFileContext {
       issue.forRule(ruleKey).at(issueLocation);
       issue.save();
     }
+  }
+
+  public void reportAnalysisError(String message) {
+    NewAnalysisError error = sensorContext.newAnalysisError();
+    error
+      .message(message)
+      .onFile(inputFile);
+
+    error.save();
   }
 
   private static int issueHash(RuleKey ruleKey, int line) {
