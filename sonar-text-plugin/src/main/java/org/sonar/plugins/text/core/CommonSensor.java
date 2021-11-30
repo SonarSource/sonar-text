@@ -73,7 +73,7 @@ public class CommonSensor implements Sensor {
     }
   }
 
-  private FilePredicate filePredicate(FileSystem fileSystem) {
+  private static FilePredicate filePredicate(FileSystem fileSystem) {
     return fileSystem.predicates().all();
   }
 

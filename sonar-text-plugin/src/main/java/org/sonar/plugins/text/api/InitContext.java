@@ -21,7 +21,6 @@ package org.sonar.plugins.text.api;
 
 import java.util.function.BiConsumer;
 import org.sonar.api.batch.fs.InputFile;
-import org.sonar.plugins.text.api.CheckContext;
 
 public interface InitContext {
   void register(BiConsumer<CheckContext, InputFile> visitor);
