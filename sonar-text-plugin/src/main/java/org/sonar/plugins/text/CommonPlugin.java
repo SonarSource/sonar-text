@@ -20,6 +20,10 @@
 package org.sonar.plugins.text;
 
 import org.sonar.api.Plugin;
+import org.sonar.plugins.text.core.CommonLanguage;
+import org.sonar.plugins.text.core.CommonSensor;
+import org.sonar.plugins.text.rules.CommonBuiltInProfileDefinition;
+import org.sonar.plugins.text.rules.CommonRuleDefinition;
 
 public class CommonPlugin implements Plugin {
 

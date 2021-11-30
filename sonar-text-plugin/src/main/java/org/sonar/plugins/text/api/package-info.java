@@ -17,18 +17,5 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text;
-
-import org.junit.jupiter.api.Test;
-import org.sonar.plugins.text.core.CommonLanguage;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-class CommonLanguageTest {
-
-  @Test
-  void should_return_empty_string_array() {
-    CommonLanguage language = new CommonLanguage();
-    assertThat(language.getFileSuffixes()).isEmpty();
-  }
-}
+@javax.annotation.ParametersAreNonnullByDefault
+package org.sonar.plugins.text.api;

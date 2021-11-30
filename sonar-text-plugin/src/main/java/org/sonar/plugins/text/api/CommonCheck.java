@@ -17,19 +17,8 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text;
+package org.sonar.plugins.text.api;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-
-public class CommonBuiltInProfileDefinition implements BuiltInQualityProfilesDefinition {
-
-  public static final String PROFILE_NAME = "Sonar way";
-
-  @Override
-  public void define(Context context) {
-    NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(PROFILE_NAME, CommonLanguage.KEY);
-    profile.setDefault(true);
-    profile.done();
-  }
-
+public interface CommonCheck {
+  void initialize(InitContext init);
 }

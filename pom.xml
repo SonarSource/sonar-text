@@ -45,7 +45,6 @@
   <modules>
     <module>sonar-text-plugin</module>
     <module>its</module>
-    <module>text-checks</module>
   </modules>
 
   <scm>

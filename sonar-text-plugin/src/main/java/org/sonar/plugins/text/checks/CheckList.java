@@ -17,24 +17,18 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text;
+package org.sonar.plugins.text.checks;
 
-import java.util.ArrayList;
-import org.sonar.api.server.rule.RulesDefinition;
-import org.sonar.text.checks.CheckList;
-import org.sonarsource.analyzer.commons.RuleMetadataLoader;
+import java.util.Collections;
+import java.util.List;
 
-import static org.sonar.plugins.text.CommonPlugin.REPOSITORY_NAME;
+public class CheckList {
 
-public class CommonRuleDefinition implements RulesDefinition {
+  private CheckList() {
 
-  static final String RESOURCE_FOLDER = "org/sonar/l10n/common/rules/common";
+  }
 
-  @Override
-  public void define(Context context) {
-    NewRepository repository = context.createRepository(CommonPlugin.REPOSITORY_KEY, CommonLanguage.KEY).setName(REPOSITORY_NAME);
-    RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RESOURCE_FOLDER);
-    ruleMetadataLoader.addRulesByAnnotatedClass(repository, new ArrayList<>(CheckList.getAllChecks()));
-    repository.done();
+  public static List<Class<?>> checks() {
+    return Collections.emptyList();
   }
 }

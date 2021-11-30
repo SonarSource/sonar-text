@@ -17,18 +17,26 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text;
+package org.sonar.plugins.text.rules;
 
-import org.junit.jupiter.api.Test;
+import java.util.ArrayList;
+import org.sonar.api.server.rule.RulesDefinition;
+import org.sonar.plugins.text.CommonPlugin;
 import org.sonar.plugins.text.core.CommonLanguage;
+import org.sonar.plugins.text.checks.CheckList;
+import org.sonarsource.analyzer.commons.RuleMetadataLoader;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.sonar.plugins.text.CommonPlugin.REPOSITORY_NAME;
 
-class CommonLanguageTest {
+public class CommonRuleDefinition implements RulesDefinition {
 
-  @Test
-  void should_return_empty_string_array() {
-    CommonLanguage language = new CommonLanguage();
-    assertThat(language.getFileSuffixes()).isEmpty();
+  static final String RESOURCE_FOLDER = "org/sonar/l10n/common/rules/common";
+
+  @Override
+  public void define(Context context) {
+    NewRepository repository = context.createRepository(CommonPlugin.REPOSITORY_KEY, CommonLanguage.KEY).setName(REPOSITORY_NAME);
+    RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RESOURCE_FOLDER);
+    ruleMetadataLoader.addRulesByAnnotatedClass(repository, new ArrayList<>(CheckList.checks()));
+    repository.done();
   }
 }

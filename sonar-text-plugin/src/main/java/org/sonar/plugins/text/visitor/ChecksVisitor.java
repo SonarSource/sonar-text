@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.text.checks;
+package org.sonar.plugins.text.visitor;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,6 +27,10 @@ import java.util.function.BiConsumer;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.rule.RuleKey;
+import org.sonar.plugins.text.api.CheckContext;
+import org.sonar.plugins.text.api.CommonCheck;
+import org.sonar.plugins.text.api.InitContext;
+import org.sonar.plugins.text.core.InputFileContext;
 
 public class ChecksVisitor {
 

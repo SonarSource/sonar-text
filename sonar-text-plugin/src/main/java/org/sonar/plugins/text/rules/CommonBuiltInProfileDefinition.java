@@ -17,18 +17,20 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text;
+package org.sonar.plugins.text.rules;
 
-import org.junit.jupiter.api.Test;
+import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
 import org.sonar.plugins.text.core.CommonLanguage;
 
-import static org.assertj.core.api.Assertions.assertThat;
+public class CommonBuiltInProfileDefinition implements BuiltInQualityProfilesDefinition {
 
-class CommonLanguageTest {
+  public static final String PROFILE_NAME = "Sonar way";
 
-  @Test
-  void should_return_empty_string_array() {
-    CommonLanguage language = new CommonLanguage();
-    assertThat(language.getFileSuffixes()).isEmpty();
+  @Override
+  public void define(Context context) {
+    NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(PROFILE_NAME, CommonLanguage.KEY);
+    profile.setDefault(true);
+    profile.done();
   }
+
 }

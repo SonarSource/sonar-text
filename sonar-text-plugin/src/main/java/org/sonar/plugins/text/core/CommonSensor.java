@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text;
+package org.sonar.plugins.text.core;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -31,10 +31,10 @@ import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
-import org.sonar.text.checks.CheckList;
-import org.sonar.text.checks.ChecksVisitor;
-import org.sonar.text.checks.CommonCheck;
-import org.sonar.text.checks.InputFileContext;
+import org.sonar.plugins.text.CommonPlugin;
+import org.sonar.plugins.text.checks.CheckList;
+import org.sonar.plugins.text.visitor.ChecksVisitor;
+import org.sonar.plugins.text.api.CommonCheck;
 import org.sonarsource.analyzer.commons.ProgressReport;
 
 public class CommonSensor implements Sensor {
@@ -43,7 +43,7 @@ public class CommonSensor implements Sensor {
 
   public CommonSensor(CheckFactory checkFactory) {
     this.checks = checkFactory.create(CommonPlugin.REPOSITORY_KEY);
-    this.checks.addAnnotatedChecks((Iterable<?>) CheckList.getAllChecks());
+    this.checks.addAnnotatedChecks((Iterable<?>) CheckList.checks());
   }
 
   @Override

@@ -17,26 +17,12 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.text.checks;
+package org.sonar.plugins.text.api;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.function.BiConsumer;
+import org.sonar.api.batch.fs.InputFile;
+import org.sonar.plugins.text.api.CheckContext;
 
-/**
- * Abstract Check to commonly catch possible IOExceptions for InputFiles
- */
-public abstract class InputStreamCheck implements CommonCheck {
-
-  @Override
-  public void initialize(InitContext init) {
-    init.register((ctx, inputFile) -> {
-      try {
-        analyzeStream(ctx, inputFile.inputStream());
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    });
-  }
-
-  abstract void analyzeStream(CheckContext ctx, InputStream stream);
+public interface InitContext {
+  void register(BiConsumer<CheckContext, InputFile> visitor);
 }

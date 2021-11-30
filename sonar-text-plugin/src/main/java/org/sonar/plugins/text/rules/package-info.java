@@ -17,21 +17,5 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text;
-
-import org.sonar.api.resources.AbstractLanguage;
-
-public class CommonLanguage extends AbstractLanguage {
-
-  public static final String KEY = "common";
-  public static final String NAME = "COMMON";
-
-  public CommonLanguage() {
-    super(KEY, NAME);
-  }
-
-  @Override
-  public String[] getFileSuffixes() {
-    return new String[0];
-  }
-}
+@javax.annotation.ParametersAreNonnullByDefault
+package org.sonar.plugins.text.rules;

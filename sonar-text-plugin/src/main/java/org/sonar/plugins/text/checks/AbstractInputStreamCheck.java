@@ -17,18 +17,29 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text;
+package org.sonar.plugins.text.checks;
 
-import org.junit.jupiter.api.Test;
-import org.sonar.plugins.text.core.CommonLanguage;
+import java.io.IOException;
+import java.io.InputStream;
+import org.sonar.plugins.text.api.CheckContext;
+import org.sonar.plugins.text.api.CommonCheck;
+import org.sonar.plugins.text.api.InitContext;
 
-import static org.assertj.core.api.Assertions.assertThat;
+/**
+ * Abstract Check to commonly catch possible IOExceptions for InputFiles
+ */
+public abstract class AbstractInputStreamCheck implements CommonCheck {
 
-class CommonLanguageTest {
-
-  @Test
-  void should_return_empty_string_array() {
-    CommonLanguage language = new CommonLanguage();
-    assertThat(language.getFileSuffixes()).isEmpty();
+  @Override
+  public void initialize(InitContext init) {
+    init.register((ctx, inputFile) -> {
+      try {
+        analyzeStream(ctx, inputFile.inputStream());
+      } catch (IOException e) {
+        // do nothing for now
+      }
+    });
   }
+
+  abstract void analyzeStream(CheckContext ctx, InputStream stream);
 }
