@@ -19,6 +19,11 @@
  */
 package org.sonar.plugins.text.api;
 
+import org.sonar.api.batch.fs.InputFile;
+
 public interface CommonCheck {
-  void initialize(InitContext init);
+
+  void initialize(CheckContext ctx);
+
+  void analyze(InputFile inputFile);
 }

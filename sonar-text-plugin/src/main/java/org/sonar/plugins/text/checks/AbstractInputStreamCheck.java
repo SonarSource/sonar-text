@@ -22,25 +22,20 @@ package org.sonar.plugins.text.checks;
 import java.io.IOException;
 import java.io.InputStream;
 import org.sonar.api.batch.fs.InputFile;
-import org.sonar.plugins.text.api.CheckContext;
-import org.sonar.plugins.text.api.CommonCheck;
-import org.sonar.plugins.text.api.InitContext;
 
 /**
  * Abstract Check to commonly catch possible IOExceptions for InputFiles
  */
-public abstract class AbstractInputStreamCheck implements CommonCheck {
+public abstract class AbstractInputStreamCheck extends AbstractCheck {
 
   @Override
-  public void initialize(InitContext init) {
-    init.register((ctx, inputFile) -> {
-      try (InputStream inputStream = inputFile.inputStream()) {
-        analyzeStream(ctx, inputFile, inputStream);
-      } catch (IOException e) {
-        throw new IllegalStateException(e.getMessage(), e.getCause());
-      }
-    });
+  public void analyze(InputFile inputFile) {
+    try (InputStream inputStream = inputFile.inputStream()) {
+      analyzeStream(inputStream);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
-  abstract void analyzeStream(CheckContext ctx, InputFile inputFile, InputStream stream);
+  abstract void analyzeStream(InputStream stream);
 }

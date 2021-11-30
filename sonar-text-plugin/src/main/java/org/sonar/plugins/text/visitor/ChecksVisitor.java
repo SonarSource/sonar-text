@@ -19,43 +19,38 @@
  */
 package org.sonar.plugins.text.visitor;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Objects;
-import java.util.function.BiConsumer;
-import org.sonar.api.batch.fs.InputFile;
+import java.util.Set;
 import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.plugins.text.api.CheckContext;
 import org.sonar.plugins.text.api.CommonCheck;
-import org.sonar.plugins.text.api.InitContext;
 import org.sonar.plugins.text.core.InputFileContext;
 
 public class ChecksVisitor {
 
-  protected final List<BiConsumer<InputFileContext, InputFile>> consumers = new ArrayList<>();
+  private final Set<ContextAdapter> contextAdapters = new HashSet<>();
+  private final Collection<CommonCheck> activeChecks;
 
   public ChecksVisitor(Checks<CommonCheck> checks) {
-    Collection<CommonCheck> activeChecks = checks.all();
+    activeChecks = checks.all();
     for (CommonCheck check : activeChecks) {
       RuleKey ruleKey = checks.ruleKey(check);
       Objects.requireNonNull(ruleKey);
-      check.initialize(new ContextAdapter(ruleKey));
+      ContextAdapter contextAdapter = new ContextAdapter(ruleKey);
+      contextAdapters.add(contextAdapter);
+      check.initialize(contextAdapter);
     }
-  }
-
-  public void register(BiConsumer<InputFileContext, InputFile> visitor) {
-    consumers.add(visitor);
   }
 
   public void scan(InputFileContext inputFileContext) {
-    for(BiConsumer<InputFileContext, InputFile> consumer: consumers) {
-      consumer.accept(inputFileContext, inputFileContext.inputFile);
-    }
+    contextAdapters.forEach(ctx -> ctx.currentCtx = inputFileContext);
+    activeChecks.forEach(check -> check.analyze(inputFileContext.inputFile));
   }
 
-  public class ContextAdapter implements CheckContext, InitContext {
+  public static class ContextAdapter implements CheckContext {
 
     public final RuleKey ruleKey;
     private InputFileContext currentCtx;
@@ -69,12 +64,5 @@ public class ChecksVisitor {
       currentCtx.reportLineIssue(ruleKey, line, message);
     }
 
-    @Override
-    public void register(BiConsumer<CheckContext, InputFile> visitor) {
-      ChecksVisitor.this.register((ctx, inputFile) -> {
-        currentCtx = ctx;
-        visitor.accept(this, inputFile);
-      });
-    }
   }
 }
