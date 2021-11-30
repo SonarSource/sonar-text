@@ -56,7 +56,7 @@ public class BIDICharacterCheck extends AbstractInputStreamCheck {
     }
   }
 
-  private void checkLine(CheckContext ctx, String lineContent, int lineNumber) {
+  private static void checkLine(CheckContext ctx, String lineContent, int lineNumber) {
     for (Character bidiChar : BIDI_CHARS) {
       if (lineContent.indexOf(bidiChar) >= 0) {
         ctx.reportLineIssue(lineNumber, MESSAGE);
