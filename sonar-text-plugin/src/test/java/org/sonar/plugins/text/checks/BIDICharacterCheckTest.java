@@ -19,8 +19,15 @@
  */
 package org.sonar.plugins.text.checks;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+import org.sonar.plugins.text.CheckVerifier;
 
 class BIDICharacterCheckTest {
 
+  @Test
+  void test() {
+    CheckVerifier.verify(new BIDICharacterCheck(), "BIDICharacterCheck/test.php",
+      new CheckVerifier.LineIssue(3, "Make sure that using bidirectional characters is safe here."),
+      new CheckVerifier.LineIssue(4));
+  }
 }
