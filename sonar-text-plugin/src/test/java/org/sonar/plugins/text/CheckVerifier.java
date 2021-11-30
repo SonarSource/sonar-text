@@ -43,6 +43,11 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 public class CheckVerifier {
 
+  /**
+   * Verify that if <code>check</code> is run on the specified file, exactly the expected {@link LineIssue}s are found.
+   * {@link LineIssue#message} can be empty for expected issues. In that case the message is not considered in the comparison.
+   * <b>It is currently not possible to test multiple issues on the same line.</b>
+   */
   public static void verify(CommonCheck check, String testFileRelativePath, LineIssue... expected) {
     TestContext ctx = new TestContext();
     check.initialize(ctx);
@@ -51,24 +56,15 @@ public class CheckVerifier {
   }
 
   private static void verifyLineIssues(List<LineIssue> actual, List<LineIssue> expected) {
-    List<LineIssue> missing = expected.stream()
-      .filter(e -> actual.stream().noneMatch(a -> a.lineNumber == e.lineNumber))
-      .collect(Collectors.toList());
+    List<LineIssue> missing = missingBasedOnLine(actual, expected);
+    List<LineIssue> unexpected = missingBasedOnLine(expected, actual);
 
-    List<LineIssue> unexpected = actual.stream()
-      .filter(a -> expected.stream().noneMatch(e -> e.lineNumber == a.lineNumber))
-      .collect(Collectors.toList());
-
-    Map<LineIssue, LineIssue> differentMessage = new HashMap<>();
+    Map<LineIssue, LineIssue> sameLineButDifferentMessage = new HashMap<>();
     expected.stream()
-      .filter(e -> !(e.message == null))
-      .filter(e -> !(missing.contains(e)))
-      .filter(e -> !(actual.contains(e)))
-      .forEach(e -> differentMessage.put(e, actual.stream()
+      .filter(e -> !(e.message == null || missing.contains(e) || actual.contains(e)))
+      .forEach(e -> sameLineButDifferentMessage.put(e, actual.stream()
         .filter(a -> (e.lineNumber == a.lineNumber))
-        .findFirst()
-        .get())
-      );
+        .findFirst().orElseThrow(() -> new IllegalStateException("This should never happen. The issue would be in missing already."))));
 
     StringBuilder resultSb = new StringBuilder();
     if (!missing.isEmpty()) {
@@ -79,15 +75,24 @@ public class CheckVerifier {
       resultSb.append("Unexpected Issues:\n");
       unexpected.forEach(u -> resultSb.append(u).append("\n"));
     }
-    if (!differentMessage.isEmpty()) {
+    if (!sameLineButDifferentMessage.isEmpty()) {
       resultSb.append("Unexpected Messages:\n");
-      differentMessage.forEach((a, b) -> resultSb.append(a).append(" -> ").append(b).append("\n"));
+      sameLineButDifferentMessage.forEach((a, b) -> resultSb.append(a).append(" -> ").append(b).append("\n"));
     }
 
-    String result = resultSb.toString();
-    if (!result.isEmpty()) {
-      fail(result);
+    if (resultSb.length() > 0) {
+      fail(resultSb.toString());
     }
+  }
+
+  /**
+   * Returns issues that are in <code>comparedTo</code> but not in <code>from</code> solely based on the line numbers
+   */
+  private static List<LineIssue> missingBasedOnLine(List<LineIssue> from, List<LineIssue> comparedTo) {
+    List<Integer> fromLines = from.stream().map(f -> f.lineNumber).collect(Collectors.toList());
+    return comparedTo.stream()
+      .filter(e -> !(fromLines.contains(e.lineNumber)))
+      .collect(Collectors.toList());
   }
 
   static class TestContext implements InitContext, CheckContext {
@@ -148,7 +153,7 @@ public class CheckVerifier {
         .setContents(Files.readString(filePath))
         .build();
     } catch (IOException e) {
-      e.printStackTrace();
+      fail("Could not read the file: " + e.getMessage());
     }
     return result;
   }

@@ -1,4 +1,4 @@
 <?php
 
 echo "foo‮";
-// Check if admin⁩ ⁦
+// Check if admin⁩
