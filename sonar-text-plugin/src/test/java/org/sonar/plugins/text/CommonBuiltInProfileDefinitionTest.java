@@ -21,6 +21,7 @@ package org.sonar.plugins.text;
 
 import org.junit.jupiter.api.Test;
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
+import org.sonar.plugins.text.checks.CheckList;
 import org.sonar.plugins.text.rules.CommonBuiltInProfileDefinition;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,7 +36,7 @@ class CommonBuiltInProfileDefinitionTest {
     BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile("common", "Sonar way");
     assertThat(profile.language()).isEqualTo("common");
     assertThat(profile.name()).isEqualTo("Sonar way");
-    assertThat(profile.rules()).isEmpty();
+    assertThat(profile.rules().size()).isLessThanOrEqualTo(CheckList.checks().size());
   }
 
 }

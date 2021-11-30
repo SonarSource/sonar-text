@@ -20,18 +20,17 @@
 package org.sonar.plugins.text.checks;
 
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.check.Rule;
 import org.sonar.plugins.text.api.CheckContext;
 
-@Rule(key = "placeholder")
+@Rule(key = "bidi-rule-key-placeholder")
 public class BIDICharacterCheck extends AbstractInputStreamCheck {
 
   public static final String MESSAGE = "Make sure that using bidirectional characters is safe here.";
-  private static final List<Character> BIDI_CHARS = new ArrayList<>(List.of(
+  private static final List<Character> BIDI_CHARS = List.of(
     '\u061C',
     '\u200E',
     '\u200F',
@@ -44,7 +43,7 @@ public class BIDICharacterCheck extends AbstractInputStreamCheck {
     '\u2067',
     '\u2068',
     '\u2069'
-  ));
+  );
 
   @Override
   void analyzeStream(CheckContext ctx, InputFile inputFile, InputStream stream) {
@@ -56,10 +55,11 @@ public class BIDICharacterCheck extends AbstractInputStreamCheck {
     }
   }
 
-  private void checkLine(CheckContext ctx, String lineContent, int lineNumber) {
+  private static void checkLine(CheckContext ctx, String lineContent, int lineNumber) {
     for (Character bidiChar : BIDI_CHARS) {
       if (lineContent.indexOf(bidiChar) >= 0) {
         ctx.reportLineIssue(lineNumber, MESSAGE);
+        return;
       }
     }
   }

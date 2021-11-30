@@ -27,8 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CommonLanguageTest {
 
   @Test
-  void should_return_empty_string_array() {
+  void should_return_fake_suffix() {
     CommonLanguage language = new CommonLanguage();
-    assertThat(language.getFileSuffixes()).isEmpty();
+    assertThat(language.getFileSuffixes()).containsExactly("sonarShouldNotExistExtension");
   }
 }

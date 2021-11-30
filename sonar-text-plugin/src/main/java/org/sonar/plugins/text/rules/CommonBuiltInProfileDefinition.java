@@ -20,15 +20,19 @@
 package org.sonar.plugins.text.rules;
 
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
+import org.sonar.plugins.text.CommonPlugin;
 import org.sonar.plugins.text.core.CommonLanguage;
+import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
 
 public class CommonBuiltInProfileDefinition implements BuiltInQualityProfilesDefinition {
 
-  public static final String PROFILE_NAME = "Sonar way";
+  public static final String SONAR_WAY_PROFILE = "Sonar way";
+  public static final String SONAR_WAY_PATH = "org/sonar/l10n/common/rules/common/Sonar_way_profile.json";
 
   @Override
   public void define(Context context) {
-    NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(PROFILE_NAME, CommonLanguage.KEY);
+    NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(SONAR_WAY_PROFILE, CommonLanguage.KEY);
+    BuiltInQualityProfileJsonLoader.load(profile, CommonPlugin.REPOSITORY_KEY, SONAR_WAY_PATH);
     profile.setDefault(true);
     profile.done();
   }
