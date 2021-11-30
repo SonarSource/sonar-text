@@ -20,15 +20,25 @@
 package org.sonar.plugins.text;
 
 import org.junit.jupiter.api.Test;
-import org.sonar.plugins.text.core.CommonLanguage;
+import org.sonar.api.Plugin;
+import org.sonar.api.SonarEdition;
+import org.sonar.api.SonarQubeSide;
+import org.sonar.api.SonarRuntime;
+import org.sonar.api.internal.SonarRuntimeImpl;
+import org.sonar.api.utils.Version;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class CommonLanguageTest {
+class CommonPluginTest {
+
+  private static final Version VERSION_8_9 = Version.create(8, 9);
 
   @Test
-  void should_return_empty_string_array() {
-    CommonLanguage language = new CommonLanguage();
-    assertThat(language.getFileSuffixes()).isEmpty();
+  void sonarqube_extensions() {
+    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(VERSION_8_9, SonarQubeSide.SCANNER, SonarEdition.COMMUNITY);
+    Plugin.Context context = new Plugin.Context(runtime);
+    Plugin plugin = new CommonPlugin();
+    plugin.define(context);
+    assertThat(context.getExtensions()).hasSize(4);
   }
 }

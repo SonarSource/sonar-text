@@ -17,25 +17,25 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text;
+package org.sonar.plugins.text.rules;
 
 import org.junit.jupiter.api.Test;
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonar.plugins.text.rules.CommonBuiltInProfileDefinition;
+import org.sonar.api.server.rule.RulesDefinition;
+import org.sonar.plugins.text.checks.CheckList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class CommonBuiltInProfileDefinitionTest {
+class CommonRuleDefinitionTest {
 
   @Test
-  void should_create_sonar_way_profile() {
-    BuiltInQualityProfilesDefinition.Context context = new BuiltInQualityProfilesDefinition.Context();
-    CommonBuiltInProfileDefinition definition = new CommonBuiltInProfileDefinition();
-    definition.define(context);
-    BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile("common", "Sonar way");
-    assertThat(profile.language()).isEqualTo("common");
-    assertThat(profile.name()).isEqualTo("Sonar way");
-    assertThat(profile.rules()).isEmpty();
+  void test_rule_activation() {
+    CommonRuleDefinition rulesDefinition = new CommonRuleDefinition();
+    RulesDefinition.Context context = new RulesDefinition.Context();
+    rulesDefinition.define(context);
+    RulesDefinition.Repository repository = context.repository("common");
+    assertThat(repository).isNotNull();
+    assertThat(repository.name()).isEqualTo("SonarQube");
+    assertThat(repository.language()).isEqualTo("common");
+    assertThat(repository.rules()).hasSize(CheckList.checks().size());
   }
-
 }

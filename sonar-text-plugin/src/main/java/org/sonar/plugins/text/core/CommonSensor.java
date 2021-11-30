@@ -19,8 +19,11 @@
  */
 package org.sonar.plugins.text.core;
 
+import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.sonar.api.batch.fs.FileSystem;
@@ -30,6 +33,8 @@ import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 import org.sonar.plugins.text.CommonPlugin;
 import org.sonar.plugins.text.checks.CheckList;
 import org.sonar.plugins.text.visitor.ChecksVisitor;
@@ -37,6 +42,9 @@ import org.sonar.plugins.text.api.CommonCheck;
 import org.sonarsource.analyzer.commons.ProgressReport;
 
 public class CommonSensor implements Sensor {
+
+  private static final Logger LOG = Loggers.get(CommonSensor.class);
+  private static final Pattern EMPTY_FILE_CONTENT_PATTERN = Pattern.compile("\\s*+");
 
   private final Checks<CommonCheck> checks;
 
@@ -84,10 +92,37 @@ public class CommonSensor implements Sensor {
           return false;
         }
         InputFileContext inputFileContext = new InputFileContext(sensorContext, inputFile);
-        checksVisitor.scan(inputFileContext);
+        analyseFile(inputFileContext);
         progressReport.nextFile();
       }
       return true;
+    }
+
+    private void analyseFile(InputFileContext inputFileContext) {
+      InputFile inputFile = inputFileContext.inputFile;
+      String content;
+      try {
+        content = inputFile.contents();
+      } catch (IOException | RuntimeException e) {
+        logAnalysisError(inputFileContext, e, "read");
+        return;
+      }
+
+      if (EMPTY_FILE_CONTENT_PATTERN.matcher(content).matches()) {
+        return;
+      }
+
+      try {
+        checksVisitor.scan(inputFileContext);
+      } catch (RuntimeException e) {
+        logAnalysisError(inputFileContext, e, "analyse");
+      }
+    }
+
+    private static void logAnalysisError(InputFileContext inputFileContext, Exception e, String action) {
+      URI inputFileUri = inputFileContext.inputFile.uri();
+      inputFileContext.reportAnalysisError(String.format("Unable to %s file %s: %s", action, inputFileUri, e.getMessage()));
+      LOG.error(String.format("Unable to %s file %s", action, inputFileUri), e);
     }
   }
 }
