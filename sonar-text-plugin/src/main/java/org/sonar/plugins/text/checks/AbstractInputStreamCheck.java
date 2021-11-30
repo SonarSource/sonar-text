@@ -33,8 +33,8 @@ public abstract class AbstractInputStreamCheck implements CommonCheck {
   @Override
   public void initialize(InitContext init) {
     init.register((ctx, inputFile) -> {
-      try {
-        analyzeStream(ctx, inputFile.inputStream());
+      try (InputStream inputStream = inputFile.inputStream()) {
+        analyzeStream(ctx, inputStream);
       } catch (IOException e) {
         // do nothing for now
       }

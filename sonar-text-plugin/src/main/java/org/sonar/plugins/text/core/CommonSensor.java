@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
@@ -48,15 +47,13 @@ public class CommonSensor implements Sensor {
 
   @Override
   public void describe(SensorDescriptor sensorDescriptor) {
-    sensorDescriptor
-      .onlyOnLanguages(CommonLanguage.KEY)
-      .name("Common Sensor");
+    sensorDescriptor.name("Common Sensor");
   }
 
   @Override
   public void execute(SensorContext sensorContext) {
     FileSystem fileSystem = sensorContext.fileSystem();
-    Iterable<InputFile> inputFiles = fileSystem.inputFiles(filePredicate(fileSystem));
+    Iterable<InputFile> inputFiles = fileSystem.inputFiles(fileSystem.predicates().all());
     List<String> filenames = StreamSupport.stream(inputFiles.spliterator(), false).map(InputFile::toString).collect(Collectors.toList());
     ProgressReport progressReport = new ProgressReport("Progress of the common analysis", TimeUnit.SECONDS.toMillis(10));
     progressReport.start(filenames);
@@ -71,10 +68,6 @@ public class CommonSensor implements Sensor {
         progressReport.cancel();
       }
     }
-  }
-
-  private static FilePredicate filePredicate(FileSystem fileSystem) {
-    return fileSystem.predicates().all();
   }
 
   private static class Analyzer {
