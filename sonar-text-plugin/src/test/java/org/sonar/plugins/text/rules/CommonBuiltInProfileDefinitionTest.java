@@ -22,7 +22,6 @@ package org.sonar.plugins.text.rules;
 import org.junit.jupiter.api.Test;
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
 import org.sonar.plugins.text.checks.CheckList;
-import org.sonar.plugins.text.rules.CommonBuiltInProfileDefinition;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
