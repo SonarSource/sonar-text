@@ -31,9 +31,9 @@ import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.plugins.text.CommonPlugin;
+import org.sonar.plugins.text.api.CommonCheck;
 import org.sonar.plugins.text.checks.CheckList;
 import org.sonar.plugins.text.visitor.ChecksVisitor;
-import org.sonar.plugins.text.api.CommonCheck;
 import org.sonarsource.analyzer.commons.ProgressReport;
 
 public class CommonSensor implements Sensor {
@@ -53,7 +53,7 @@ public class CommonSensor implements Sensor {
   @Override
   public void execute(SensorContext sensorContext) {
     FileSystem fileSystem = sensorContext.fileSystem();
-    Iterable<InputFile> inputFiles = fileSystem.inputFiles(fileSystem.predicates().all());
+    Iterable<InputFile> inputFiles = fileSystem.inputFiles(inputFile -> inputFile.language() != null);
     List<String> filenames = StreamSupport.stream(inputFiles.spliterator(), false).map(InputFile::toString).collect(Collectors.toList());
     ProgressReport progressReport = new ProgressReport("Progress of the common analysis", TimeUnit.SECONDS.toMillis(10));
     progressReport.start(filenames);

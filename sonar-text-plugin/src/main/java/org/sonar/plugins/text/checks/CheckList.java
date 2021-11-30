@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.text.checks;
 
-import java.util.Collections;
 import java.util.List;
 
 public class CheckList {
@@ -29,6 +28,8 @@ public class CheckList {
   }
 
   public static List<Class<?>> checks() {
-    return Collections.emptyList();
+    return List.of(
+      BIDICharacterCheck.class
+    );
   }
 }

@@ -80,8 +80,13 @@
     <!-- Release: enable publication to Bintray -->
     <artifactsToPublish>${project.groupId}:sonar-text-plugin:jar</artifactsToPublish>
 
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
+    <!-- Advertise minimal required JRE version -->
+    <jre.min.version>11</jre.min.version>
+
+    <!-- JDK Build versions -->
+    <jdk.min.version>11</jdk.min.version>
+    <jdk.source.version>11</jdk.source.version>
+    <jdk.target.version>11</jdk.target.version>
   </properties>
 
   <dependencyManagement>
