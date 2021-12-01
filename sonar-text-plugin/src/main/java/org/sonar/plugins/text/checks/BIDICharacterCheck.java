@@ -19,7 +19,9 @@
  */
 package org.sonar.plugins.text.checks;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Scanner;
 import org.sonar.api.batch.fs.InputFile;
@@ -27,7 +29,7 @@ import org.sonar.check.Rule;
 import org.sonar.plugins.text.api.CheckContext;
 
 @Rule(key = "S6389")
-public class BIDICharacterCheck extends AbstractInputStreamCheck {
+public class BIDICharacterCheck extends AbstractCheck {
 
   public static final String MESSAGE = "Make sure that using bidirectional characters is safe here.";
   private static final List<Character> BIDI_CHARS = List.of(
@@ -46,8 +48,17 @@ public class BIDICharacterCheck extends AbstractInputStreamCheck {
   );
 
   @Override
-  void analyzeStream(CheckContext ctx, InputFile inputFile, InputStream stream) {
-    Scanner scanner = new Scanner(stream, inputFile.charset().name());
+  public void analyze(InputFile inputFile) {
+    try (InputStream stream = inputFile.inputStream()) {
+      analyzeStream(stream, inputFile.charset());
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+
+  private void analyzeStream(InputStream stream, Charset charset) {
+    Scanner scanner = new Scanner(stream, charset);
     int lineNumber = 0;
     while (scanner.hasNextLine()) {
       lineNumber++;
