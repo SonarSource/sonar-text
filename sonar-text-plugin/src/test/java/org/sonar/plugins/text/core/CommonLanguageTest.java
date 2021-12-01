@@ -20,7 +20,6 @@
 package org.sonar.plugins.text.core;
 
 import org.junit.jupiter.api.Test;
-import org.sonar.plugins.text.core.CommonLanguage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

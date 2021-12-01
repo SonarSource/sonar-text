@@ -20,7 +20,6 @@
 package org.sonar.plugins.text.core;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,7 +49,6 @@ import org.sonar.plugins.text.api.CommonCheck;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 class CommonSensorTest {
@@ -87,14 +85,6 @@ class CommonSensorTest {
   }
 
   @Test
-  void stop_on_cancellation() {
-    context.setCancelled(true);
-    analyse(sensor(), inputFile("file1.ts", "{}"));
-    Collection<Issue> issues = context.allIssues();
-    assertThat(issues).isEmpty();
-  }
-
-  @Test
   void valid_check_on_valid_file_should_raise_issue() {
     CommonCheck validCheck = init -> init.register((ctx, tree) -> ctx.reportLineIssue(1, "testIssue"));
     CheckFactory checkFactory = mockCheckFactory(validCheck, "valid");
@@ -110,6 +100,17 @@ class CommonSensorTest {
     assertThat(location.inputComponent()).isEqualTo(inputFile);
     assertThat(location.message()).isEqualTo("testIssue");
     assertTextRange(location.textRange(), 1, 0, 1, 3);
+  }
+
+  @Test
+  void stop_on_cancellation() {
+    CommonCheck validCheck = init -> init.register((ctx, tree) -> ctx.reportLineIssue(1, "testIssue"));
+    CheckFactory checkFactory = mockCheckFactory(validCheck, "valid");
+
+    context.setCancelled(true);
+    analyse(sensor(checkFactory), inputFile("file1.ts", "{}"));
+    Collection<Issue> issues = context.allIssues();
+    assertThat(issues).isEmpty();
   }
 
   @Test

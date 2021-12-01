@@ -22,8 +22,8 @@ package org.sonar.plugins.text.rules;
 import java.util.ArrayList;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.plugins.text.CommonPlugin;
-import org.sonar.plugins.text.core.CommonLanguage;
 import org.sonar.plugins.text.checks.CheckList;
+import org.sonar.plugins.text.core.CommonLanguage;
 import org.sonarsource.analyzer.commons.RuleMetadataLoader;
 
 import static org.sonar.plugins.text.CommonPlugin.REPOSITORY_NAME;
