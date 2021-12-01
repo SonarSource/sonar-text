@@ -17,18 +17,25 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text;
+package org.sonar.plugins.text.rules;
 
 import org.junit.jupiter.api.Test;
-import org.sonar.plugins.text.core.CommonLanguage;
+import org.sonar.api.server.rule.RulesDefinition;
+import org.sonar.plugins.text.checks.CheckList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class CommonLanguageTest {
+class CommonRuleDefinitionTest {
 
   @Test
-  void should_return_fake_suffix() {
-    CommonLanguage language = new CommonLanguage();
-    assertThat(language.getFileSuffixes()).containsExactly("sonarShouldNotExistExtension");
+  void test_rule_activation() {
+    CommonRuleDefinition rulesDefinition = new CommonRuleDefinition();
+    RulesDefinition.Context context = new RulesDefinition.Context();
+    rulesDefinition.define(context);
+    RulesDefinition.Repository repository = context.repository("common");
+    assertThat(repository).isNotNull();
+    assertThat(repository.name()).isEqualTo("SonarQube");
+    assertThat(repository.language()).isEqualTo("common");
+    assertThat(repository.rules()).hasSize(CheckList.checks().size());
   }
 }
