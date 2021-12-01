@@ -17,26 +17,17 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text;
+package org.sonar.plugins.text.checks;
 
 import org.junit.jupiter.api.Test;
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonar.plugins.text.checks.CheckList;
-import org.sonar.plugins.text.rules.CommonBuiltInProfileDefinition;
+import org.sonar.plugins.text.CheckVerifier;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-class CommonBuiltInProfileDefinitionTest {
+class BIDICharacterCheckTest {
 
   @Test
-  void should_create_sonar_way_profile() {
-    BuiltInQualityProfilesDefinition.Context context = new BuiltInQualityProfilesDefinition.Context();
-    CommonBuiltInProfileDefinition definition = new CommonBuiltInProfileDefinition();
-    definition.define(context);
-    BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile("common", "Sonar way");
-    assertThat(profile.language()).isEqualTo("common");
-    assertThat(profile.name()).isEqualTo("Sonar way");
-    assertThat(profile.rules().size()).isLessThanOrEqualTo(CheckList.checks().size());
+  void test() {
+    CheckVerifier.verify(new BIDICharacterCheck(), "BIDICharacterCheck/test.php",
+      new CheckVerifier.LineIssue(3, "Make sure that using bidirectional characters is safe here."),
+      new CheckVerifier.LineIssue(4));
   }
-
 }

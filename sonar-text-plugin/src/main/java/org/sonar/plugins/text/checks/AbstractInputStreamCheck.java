@@ -21,6 +21,7 @@ package org.sonar.plugins.text.checks;
 
 import java.io.IOException;
 import java.io.InputStream;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.text.api.CheckContext;
 import org.sonar.plugins.text.api.CommonCheck;
 import org.sonar.plugins.text.api.InitContext;
@@ -34,12 +35,12 @@ public abstract class AbstractInputStreamCheck implements CommonCheck {
   public void initialize(InitContext init) {
     init.register((ctx, inputFile) -> {
       try (InputStream inputStream = inputFile.inputStream()) {
-        analyzeStream(ctx, inputStream);
+        analyzeStream(ctx, inputFile, inputStream);
       } catch (IOException e) {
         // do nothing for now
       }
     });
   }
 
-  abstract void analyzeStream(CheckContext ctx, InputStream stream);
+  abstract void analyzeStream(CheckContext ctx, InputFile inputFile, InputStream stream);
 }

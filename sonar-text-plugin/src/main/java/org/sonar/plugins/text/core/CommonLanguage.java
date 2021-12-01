@@ -32,6 +32,8 @@ public class CommonLanguage extends AbstractLanguage {
 
   @Override
   public String[] getFileSuffixes() {
-    return new String[0];
+    // We do not want any files to be associated with this language. The sole purpose of registering the language is to have rules and
+    // quality profiles associated to it.
+    return new String[]{"sonarShouldNotExistExtension"};
   }
 }
