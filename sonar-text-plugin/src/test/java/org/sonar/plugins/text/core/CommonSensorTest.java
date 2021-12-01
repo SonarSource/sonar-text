@@ -129,23 +129,6 @@ class CommonSensorTest {
   }
 
   @Test
-  void analysis_error_should_be_raised_on_corrupted_file() throws IOException {
-    InputFile inputFile = inputFile("fakeFile.ts", "\n{}");
-    InputFile spyInputFile = spy(inputFile);
-    when(spyInputFile.contents()).thenThrow(IOException.class);
-    analyse(sensor(), spyInputFile);
-
-    Collection<AnalysisError> analysisErrors = context.allAnalysisErrors();
-    assertThat(analysisErrors).hasSize(1);
-    AnalysisError analysisError = analysisErrors.iterator().next();
-    assertThat(analysisError.inputFile()).isEqualTo(spyInputFile);
-    assertThat(analysisError.message()).startsWith("Unable to read");
-    assertThat(analysisError.location()).isNull();
-
-    assertThat(logTester.logs()).anyMatch(log -> log.startsWith("Unable to read"));
-  }
-
-  @Test
   void analysis_error_should_be_raised_on_failure_in_check() {
     CommonCheck failingCheck = init ->
       init.register((ctx, tree) -> {
@@ -160,8 +143,8 @@ class CommonSensorTest {
     assertThat(analysisErrors).hasSize(1);
     AnalysisError analysisError = analysisErrors.iterator().next();
     assertThat(analysisError.inputFile()).isEqualTo(inputFile);
-    assertThat(analysisError.message()).startsWith("Unable to analyse");
-    assertThat(logTester.logs()).anyMatch(log -> log.startsWith("Unable to analyse"));
+    assertThat(analysisError.message()).startsWith("Unable to analyze");
+    assertThat(logTester.logs()).anyMatch(log -> log.startsWith("Unable to analyze"));
   }
 
   private void assertTextRange(@Nullable TextRange actual, int startLine, int startLineOffset, int endLine, int endLineOffset) {

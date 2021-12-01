@@ -44,7 +44,6 @@ import org.sonarsource.analyzer.commons.ProgressReport;
 public class CommonSensor implements Sensor {
 
   private static final Logger LOG = Loggers.get(CommonSensor.class);
-  private static final Pattern EMPTY_FILE_CONTENT_PATTERN = Pattern.compile("\\s*+");
 
   private final Checks<CommonCheck> checks;
 
@@ -92,37 +91,21 @@ public class CommonSensor implements Sensor {
           return false;
         }
         InputFileContext inputFileContext = new InputFileContext(sensorContext, inputFile);
-        analyseFile(inputFileContext);
+        try {
+          checksVisitor.scan(inputFileContext);
+        } catch (RuntimeException e) {
+          logAnalysisError(inputFileContext, e);
+        }
         progressReport.nextFile();
       }
       return true;
     }
 
-    private void analyseFile(InputFileContext inputFileContext) {
-      InputFile inputFile = inputFileContext.inputFile;
-      String content;
-      try {
-        content = inputFile.contents();
-      } catch (IOException | RuntimeException e) {
-        logAnalysisError(inputFileContext, e, "read");
-        return;
-      }
-
-      if (EMPTY_FILE_CONTENT_PATTERN.matcher(content).matches()) {
-        return;
-      }
-
-      try {
-        checksVisitor.scan(inputFileContext);
-      } catch (RuntimeException e) {
-        logAnalysisError(inputFileContext, e, "analyse");
-      }
-    }
-
-    private static void logAnalysisError(InputFileContext inputFileContext, Exception e, String action) {
+    private static void logAnalysisError(InputFileContext inputFileContext, Exception e) {
       URI inputFileUri = inputFileContext.inputFile.uri();
-      inputFileContext.reportAnalysisError(String.format("Unable to %s file %s: %s", action, inputFileUri, e.getMessage()));
-      LOG.error(String.format("Unable to %s file %s", action, inputFileUri), e);
+      String message = String.format("Unable to analyze file %s: %s", inputFileUri, e.getMessage());
+      inputFileContext.reportAnalysisError(message);
+      LOG.error(message, e);
     }
   }
 }
