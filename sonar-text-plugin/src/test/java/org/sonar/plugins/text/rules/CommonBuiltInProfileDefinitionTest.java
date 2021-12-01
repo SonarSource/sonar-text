@@ -19,24 +19,23 @@
  */
 package org.sonar.plugins.text.rules;
 
-import java.util.ArrayList;
-import org.sonar.api.server.rule.RulesDefinition;
-import org.sonar.plugins.text.CommonPlugin;
+import org.junit.jupiter.api.Test;
+import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
 import org.sonar.plugins.text.checks.CheckList;
-import org.sonar.plugins.text.core.CommonLanguage;
-import org.sonarsource.analyzer.commons.RuleMetadataLoader;
 
-import static org.sonar.plugins.text.CommonPlugin.REPOSITORY_NAME;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class CommonRuleDefinition implements RulesDefinition {
+class CommonBuiltInProfileDefinitionTest {
 
-  static final String RESOURCE_FOLDER = "org/sonar/l10n/common/rules/common";
-
-  @Override
-  public void define(Context context) {
-    NewRepository repository = context.createRepository(CommonPlugin.REPOSITORY_KEY, CommonLanguage.KEY).setName(REPOSITORY_NAME);
-    RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RESOURCE_FOLDER);
-    ruleMetadataLoader.addRulesByAnnotatedClass(repository, new ArrayList<>(CheckList.checks()));
-    repository.done();
+  @Test
+  void should_create_sonar_way_profile() {
+    BuiltInQualityProfilesDefinition.Context context = new BuiltInQualityProfilesDefinition.Context();
+    CommonBuiltInProfileDefinition definition = new CommonBuiltInProfileDefinition();
+    definition.define(context);
+    BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile("common", "Sonar way");
+    assertThat(profile.language()).isEqualTo("common");
+    assertThat(profile.name()).isEqualTo("Sonar way");
+    assertThat(profile.rules().size()).isLessThanOrEqualTo(CheckList.checks().size());
   }
+
 }
