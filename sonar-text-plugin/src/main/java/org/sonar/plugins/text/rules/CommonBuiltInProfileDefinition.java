@@ -21,7 +21,6 @@ package org.sonar.plugins.text.rules;
 
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
 import org.sonar.plugins.text.CommonPlugin;
-import org.sonar.plugins.text.checks.CheckList;
 import org.sonar.plugins.text.core.CommonLanguage;
 import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
 
