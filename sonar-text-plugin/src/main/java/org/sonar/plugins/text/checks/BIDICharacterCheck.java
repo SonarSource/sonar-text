@@ -59,6 +59,7 @@ public class BIDICharacterCheck extends AbstractInputStreamCheck {
     for (Character bidiChar : BIDI_CHARS) {
       if (lineContent.indexOf(bidiChar) >= 0) {
         ctx.reportLineIssue(lineNumber, MESSAGE);
+        return;
       }
     }
   }
