@@ -37,7 +37,7 @@ public abstract class AbstractInputStreamCheck implements CommonCheck {
       try (InputStream inputStream = inputFile.inputStream()) {
         analyzeStream(ctx, inputFile, inputStream);
       } catch (IOException e) {
-        // do nothing for now
+        throw new IllegalStateException(e.getMessage(), e.getCause());
       }
     });
   }

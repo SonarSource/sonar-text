@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.text.core;
 
+import java.net.URI;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -30,6 +31,8 @@ import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 import org.sonar.plugins.text.CommonPlugin;
 import org.sonar.plugins.text.api.CommonCheck;
 import org.sonar.plugins.text.checks.CheckList;
@@ -37,6 +40,8 @@ import org.sonar.plugins.text.visitor.ChecksVisitor;
 import org.sonarsource.analyzer.commons.ProgressReport;
 
 public class CommonSensor implements Sensor {
+
+  private static final Logger LOG = Loggers.get(CommonSensor.class);
 
   private final Checks<CommonCheck> checks;
 
@@ -84,10 +89,21 @@ public class CommonSensor implements Sensor {
           return false;
         }
         InputFileContext inputFileContext = new InputFileContext(sensorContext, inputFile);
-        checksVisitor.scan(inputFileContext);
+        try {
+          checksVisitor.scan(inputFileContext);
+        } catch (RuntimeException e) {
+          logAnalysisError(inputFileContext, e);
+        }
         progressReport.nextFile();
       }
       return true;
+    }
+
+    private static void logAnalysisError(InputFileContext inputFileContext, Exception e) {
+      URI inputFileUri = inputFileContext.inputFile.uri();
+      String message = String.format("Unable to analyze file %s: %s", inputFileUri, e.getMessage());
+      inputFileContext.reportAnalysisError(message);
+      LOG.error(message, e);
     }
   }
 }
