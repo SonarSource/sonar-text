@@ -26,7 +26,7 @@ import org.sonar.api.batch.fs.InputFile;
 import org.sonar.check.Rule;
 import org.sonar.plugins.text.api.CheckContext;
 
-@Rule(key = "bidi-rule-key-placeholder")
+@Rule(key = "S6389")
 public class BIDICharacterCheck extends AbstractInputStreamCheck {
 
   public static final String MESSAGE = "Make sure that using bidirectional characters is safe here.";
