@@ -30,14 +30,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.plugins.text.api.CheckContext;
 import org.sonar.plugins.text.api.CommonCheck;
-import org.sonar.plugins.text.api.InitContext;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -51,7 +49,7 @@ public class CheckVerifier {
   public static void verify(CommonCheck check, String testFileRelativePath, LineIssue... expected) {
     TestContext ctx = new TestContext();
     check.initialize(ctx);
-    ctx.consumers.forEach(c -> c.accept(ctx, inputFile(testFileRelativePath)));
+    check.analyze(inputFile(testFileRelativePath));
     verifyLineIssues(ctx.raisedLineIssues, Arrays.asList(expected));
   }
 
@@ -95,19 +93,13 @@ public class CheckVerifier {
       .collect(Collectors.toList());
   }
 
-  static class TestContext implements InitContext, CheckContext {
+  static class TestContext implements CheckContext {
 
-    List<BiConsumer<CheckContext, InputFile>> consumers = new ArrayList<>();
     List<LineIssue> raisedLineIssues = new ArrayList<>();
 
     @Override
     public void reportLineIssue(int line, String message) {
       raisedLineIssues.add(new LineIssue(line, message));
-    }
-
-    @Override
-    public void register(BiConsumer<CheckContext, InputFile> visitor) {
-      consumers.add(visitor);
     }
   }
 
