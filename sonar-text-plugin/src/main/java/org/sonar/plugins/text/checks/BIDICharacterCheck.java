@@ -52,7 +52,7 @@ public class BIDICharacterCheck extends AbstractCheck {
     try (InputStream stream = inputFile.inputStream()) {
       analyzeStream(stream, inputFile.charset());
     } catch (IOException e) {
-      throw new RuntimeException("Fail to read file input stream");
+      throw new IllegalStateException("Fail to read file input stream");
     }
   }
 
