@@ -146,6 +146,23 @@ class CommonSensorTest {
   }
 
   @Test
+  void file_should_not_be_handled_when_not_assigned_to_any_language() {
+    CommonCheck validCheck = new AbstractCheck() {
+      @Override
+      public void analyze(InputFile inputFile) {
+        ctx.reportLineIssue(1, "testIssue");
+      }
+    };
+    CheckFactory checkFactory = mockCheckFactory(validCheck, "valid");
+
+    InputFile inputFile = inputFile("file1.ts", "foo", null);
+    analyse(sensor(checkFactory), inputFile);
+
+    Collection<Issue> issues = context.allIssues();
+    assertThat(issues).isEmpty();
+  }
+
+  @Test
   void analysis_error_should_be_raised_on_failure_in_check() {
     CommonCheck failingCheck = new AbstractCheck() {
       @Override
