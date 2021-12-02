@@ -1,6 +1,6 @@
 {
   "name": "Sonar way",
   "ruleKeys": [
-    "bidi-rule-key-placeholder"
+    "S6389"
   ]
 }

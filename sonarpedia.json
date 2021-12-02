@@ -1,5 +1,5 @@
 {
-  "rules-metadata-path": "./text-checks/src/main/resources/org/sonar/l10n/common/rules/common",
+  "rules-metadata-path": "./sonar-text-plugin/src/main/resources/org/sonar/l10n/common/rules/common",
   "languages": [
     "COMMON"
   ],
