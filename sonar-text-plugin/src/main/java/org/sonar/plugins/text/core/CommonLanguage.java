@@ -24,7 +24,7 @@ import org.sonar.api.resources.AbstractLanguage;
 public class CommonLanguage extends AbstractLanguage {
 
   public static final String KEY = "common";
-  public static final String NAME = "COMMON";
+  public static final String NAME = "Common";
 
   public CommonLanguage() {
     super(KEY, NAME);
