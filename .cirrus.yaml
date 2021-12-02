@@ -97,8 +97,8 @@ qa_plugin_task:
   plugin_script:
     - source cirrus-env QA
     - source set_maven_build_version $BUILD_NUMBER
-    - cd its
-    - mvn verify -P its -Dsonar.runtimeVersion=${SQ_VERSION} -B -e -V
+    - cd its/plugin
+    - mvn verify -Pit-plugin -Drevision=${PROJECT_VERSION} -Dsonar.runtimeVersion=${SQ_VERSION} -B -e -V
   cleanup_before_cache_script: cleanup_maven_repository
 
 promote_task:
