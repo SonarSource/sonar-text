@@ -47,7 +47,7 @@ public class CommonSensor implements Sensor {
 
   public CommonSensor(CheckFactory checkFactory) {
     this.checks = checkFactory.create(CommonPlugin.REPOSITORY_KEY);
-    this.checks.addAnnotatedChecks((Iterable<?>) CheckList.checks());
+    this.checks.addAnnotatedChecks(CheckList.checks());
   }
 
   @Override
