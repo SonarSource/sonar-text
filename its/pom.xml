@@ -10,7 +10,7 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>its</artifactId>
+  <artifactId>text-its</artifactId>
   <packaging>pom</packaging>
 
   <name>SonarSource Text Analyzer :: ITs</name>
@@ -19,6 +19,12 @@
     <module>ruling</module>
     <module>plugin</module>
   </modules>
+
+  <properties>
+    <skipTests>true</skipTests>
+    <maven.deploy.skip>true</maven.deploy.skip>
+    <surefire.argLine>-server</surefire.argLine>
+  </properties>
 
   <profiles>
     <profile>
@@ -34,7 +40,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>
-            <version>3.0.2</version>
+            <version>2.10</version>
             <executions>
               <execution>
                 <id>copy-plugin</id>
@@ -61,6 +67,14 @@
           </plugin>
         </plugins>
       </build>
+    </profile>
+
+    <profile>
+      <id>its</id>
+      <properties>
+        <maven.test.redirectTestOutputToFile>false</maven.test.redirectTestOutputToFile>
+        <skipTests>false</skipTests>
+      </properties>
     </profile>
   </profiles>
 
