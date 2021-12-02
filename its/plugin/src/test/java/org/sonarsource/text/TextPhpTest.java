@@ -27,7 +27,6 @@ public class TextPhpTest extends TestBase {
 
   private static final String BASE_DIRECTORY = "projects/text-php/";
   private static final String NO_SONAR_PROFILE_NAME = "nosonar-profile";
-  private static final String RULE_KEY = "bidi-rule-key-placeholder";
   private static final String PROJECT_KEY = "textPhp";
 
   @Test
@@ -35,6 +34,6 @@ public class TextPhpTest extends TestBase {
     ORCHESTRATOR.executeBuild(getSonarScanner(PROJECT_KEY, BASE_DIRECTORY, NO_SONAR_PROFILE_NAME));
 
     assertThat(getMeasureAsInt(PROJECT_KEY, "files")).isEqualTo(1);
-    assertThat(getIssuesForRule(PROJECT_KEY, "common" + ":" + RULE_KEY)).hasSize(2);
+    assertThat(getIssuesForRule(PROJECT_KEY, "common" + ":" + BIDI_RULE_ID)).hasSize(2);
   }
 }
