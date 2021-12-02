@@ -16,7 +16,6 @@
   <name>SonarSource Text Analyzer :: ITs</name>
 
   <modules>
-    <module>ruling</module>
     <module>plugin</module>
   </modules>
 
