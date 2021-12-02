@@ -89,11 +89,9 @@ qa_plugin_task:
   env:
     matrix:
       - SQ_VERSION: LATEST_RELEASE[9.2]
-      - SQ_VERSION: DOGFOOD
+      - SQ_VERSION: DEV
   maven_cache:
     folder: ${CIRRUS_WORKING_DIR}/.m2/repository
-  submodules_script:
-    - git submodule update --init
   plugin_script:
     - source cirrus-env QA
     - source set_maven_build_version $BUILD_NUMBER
@@ -106,8 +104,6 @@ qa_ruling_task:
   <<: *LINUX_2_CPU_4G
   maven_cache:
     folder: ${CIRRUS_WORKING_DIR}/.m2/repository
-  submodules_script:
-    - git submodule update --init
   ruling_script:
     - source cirrus-env QA
     - source set_maven_build_version $BUILD_NUMBER
