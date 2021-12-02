@@ -20,6 +20,7 @@
 package org.sonar.plugins.text.core;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
@@ -46,9 +47,12 @@ import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.log.LogTesterJUnit5;
 import org.sonar.plugins.text.CommonPlugin;
 import org.sonar.plugins.text.api.CommonCheck;
+import org.sonar.plugins.text.checks.AbstractCheck;
+import org.sonar.plugins.text.checks.BIDICharacterCheck;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 class CommonSensorTest {
@@ -86,7 +90,12 @@ class CommonSensorTest {
 
   @Test
   void valid_check_on_valid_file_should_raise_issue() {
-    CommonCheck validCheck = init -> init.register((ctx, tree) -> ctx.reportLineIssue(1, "testIssue"));
+    CommonCheck validCheck = new AbstractCheck() {
+      @Override
+      public void analyze(InputFile inputFile) {
+        ctx.reportLineIssue(1, "testIssue");
+      }
+    };
     CheckFactory checkFactory = mockCheckFactory(validCheck, "valid");
 
     InputFile inputFile = inputFile("file1.ts", "foo");
@@ -104,7 +113,12 @@ class CommonSensorTest {
 
   @Test
   void stop_on_cancellation() {
-    CommonCheck validCheck = init -> init.register((ctx, tree) -> ctx.reportLineIssue(1, "testIssue"));
+    CommonCheck validCheck = new AbstractCheck() {
+      @Override
+      public void analyze(InputFile inputFile) {
+        ctx.reportLineIssue(1, "testIssue");
+      }
+    };
     CheckFactory checkFactory = mockCheckFactory(validCheck, "valid");
 
     context.setCancelled(true);
@@ -115,11 +129,13 @@ class CommonSensorTest {
 
   @Test
   void issue_should_not_be_raised_twice_on_same_line() {
-    CommonCheck validCheck = init ->
-      init.register((ctx, tree) -> {
+    CommonCheck validCheck = new AbstractCheck() {
+      @Override
+      public void analyze(InputFile inputFile) {
         ctx.reportLineIssue(1, "testIssue");
         ctx.reportLineIssue(1, "testIssue");
-      });
+      }
+    };
     CheckFactory checkFactory = mockCheckFactory(validCheck, "valid");
 
     InputFile inputFile = inputFile("file1.ts", "foo");
@@ -131,13 +147,15 @@ class CommonSensorTest {
 
   @Test
   void analysis_error_should_be_raised_on_failure_in_check() {
-    CommonCheck failingCheck = init ->
-      init.register((ctx, tree) -> {
+    CommonCheck failingCheck = new AbstractCheck() {
+      @Override
+      public void analyze(InputFile inputFile) {
         throw new IllegalStateException("Crash");
-      });
+      }
+    };
     CheckFactory checkFactory = mockCheckFactory(failingCheck, "failing");
 
-    InputFile inputFile = inputFile("file1.iac", "foo");
+    InputFile inputFile = inputFile("file1.ts", "foo");
     analyse(sensor(checkFactory), inputFile);
 
     Collection<AnalysisError> analysisErrors = context.allAnalysisErrors();
@@ -145,6 +163,24 @@ class CommonSensorTest {
     AnalysisError analysisError = analysisErrors.iterator().next();
     assertThat(analysisError.inputFile()).isEqualTo(inputFile);
     assertThat(analysisError.message()).startsWith("Unable to analyze");
+    assertThat(logTester.logs()).anyMatch(log -> log.startsWith("Unable to analyze"));
+  }
+
+  @Test
+  void analysis_error_should_be_raised_on_corrupted_file() throws IOException {
+    CheckFactory checkFactory = mockCheckFactory(new BIDICharacterCheck(), "failing");
+    InputFile inputFile = inputFile("fakeFile.ts", "\n{}");
+    InputFile spyInputFile = spy(inputFile);
+    when(spyInputFile.inputStream()).thenThrow(IOException.class);
+    analyse(sensor(checkFactory), spyInputFile);
+
+    Collection<AnalysisError> analysisErrors = context.allAnalysisErrors();
+    assertThat(analysisErrors).hasSize(1);
+    AnalysisError analysisError = analysisErrors.iterator().next();
+    assertThat(analysisError.inputFile()).isEqualTo(spyInputFile);
+    assertThat(analysisError.message()).startsWith("Unable to analyze").endsWith("Fail to read file input stream");
+    assertThat(analysisError.location()).isNull();
+
     assertThat(logTester.logs()).anyMatch(log -> log.startsWith("Unable to analyze"));
   }
 
