@@ -68,7 +68,7 @@ ws_scan_task:
     - build
   <<: *LINUX_1_CPU_1G
   # run only on master and long-term branches
-  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && ($CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*")
+  <<: *QA_TASK_FILTER
   env:
     WS_APIKEY: ENCRYPTED[!3929c6148b9dfc751a2d17c590b15d755f82cd9c108f2de5f24a5b32f2a0c26144e921fab7e2c959fc2824d6d6d1550d!]
   maven_cache:
@@ -96,7 +96,7 @@ qa_plugin_task:
     - source cirrus-env QA
     - source set_maven_build_version $BUILD_NUMBER
     - cd its/plugin
-    - mvn verify -Pit-plugin -Drevision=${PROJECT_VERSION} -Dsonar.runtimeVersion=${SQ_VERSION} -B -e -V
+    - mvn verify -Drevision=${PROJECT_VERSION} -Dsonar.runtimeVersion=${SQ_VERSION} -B -e -V
   cleanup_before_cache_script: cleanup_maven_repository
 
 qa_ruling_task:
@@ -108,7 +108,7 @@ qa_ruling_task:
     - source cirrus-env QA
     - source set_maven_build_version $BUILD_NUMBER
     - cd its/ruling
-    - mvn verify -Pit-ruling -Dsonar.runtimeVersion=LATEST_RELEASE[9.2] -B -e -V
+    - mvn verify -Dsonar.runtimeVersion=LATEST_RELEASE[9.2] -B -e -V
   cleanup_before_cache_script: cleanup_maven_repository
 
 promote_task:
@@ -123,7 +123,7 @@ promote_task:
     GCF_ACCESS_TOKEN: ENCRYPTED[!1fb91961a5c01e06e38834e55755231d649dc62eca354593105af9f9d643d701ae4539ab6a8021278b8d9348ae2ce8be!]
     PROMOTE_URL: ENCRYPTED[!e22ed2e34a8f7a1aea5cff653585429bbd3d5151e7201022140218f9c5d620069ec2388f14f83971e3fd726215bc0f5e!]
     #artifacts that will have downloadable links in burgr
-    ARTIFACTS: org.sonarsource.config:sonar-config-plugin:jar
+    ARTIFACTS: org.sonarsource.text:sonar-text-plugin:jar
   maven_cache:
     folder: ${CIRRUS_WORKING_DIR}/.m2/repository
   script: cirrus_promote_maven
