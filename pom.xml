@@ -44,7 +44,6 @@
 
   <modules>
     <module>sonar-text-plugin</module>
-    <module>its</module>
   </modules>
 
   <scm>
@@ -176,5 +175,14 @@
       </plugins>
     </pluginManagement>
   </build>
+
+  <profiles>
+    <profile>
+      <id>include-its</id>
+      <modules>
+        <module>its</module>
+      </modules>
+    </profile>
+  </profiles>
 
 </project>
