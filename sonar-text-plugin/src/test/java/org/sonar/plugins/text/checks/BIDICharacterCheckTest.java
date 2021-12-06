@@ -27,7 +27,21 @@ class BIDICharacterCheckTest {
   @Test
   void test() {
     CheckVerifier.verify(new BIDICharacterCheck(), "BIDICharacterCheck/test.php",
-      new CheckVerifier.LineIssue(3, "Make sure that using bidirectional characters is safe here."),
-      new CheckVerifier.LineIssue(4));
+      new CheckVerifier.LineIssue(3, "" +
+        "This line contains a bidirectional character in column 12. Make sure that using bidirectional characters is safe here."),
+      new CheckVerifier.LineIssue(4),
+      new CheckVerifier.LineIssue(5),
+      new CheckVerifier.LineIssue(6),
+      new CheckVerifier.LineIssue(7),
+      new CheckVerifier.LineIssue(8),
+      new CheckVerifier.LineIssue(9),
+      new CheckVerifier.LineIssue(12),
+      new CheckVerifier.LineIssue(13),
+      new CheckVerifier.LineIssue(16,
+        "This line contains a bidirectional character in column 32. Make sure that using bidirectional characters is safe here."),
+      new CheckVerifier.LineIssue(17),
+      new CheckVerifier.LineIssue(20,
+        "This line contains a bidirectional character in column 12. Make sure that using bidirectional characters is safe here."),
+      new CheckVerifier.LineIssue(21));
   }
 }
