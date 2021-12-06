@@ -33,15 +33,15 @@ public class BIDICharacterCheck extends AbstractCheck {
 
   public static final String MESSAGE = "Make sure that using bidirectional characters is safe here.";
   private static final List<Character> BIDI_CHARS = List.of(
-    '\u202A',
-    '\u202B',
-    '\u202C',
-    '\u202D',
-    '\u202E',
-    '\u2066',
-    '\u2067',
-    '\u2068',
-    '\u2069'
+    '\u202A',	// Left-To-Right Embedding
+    '\u202B', // Right-To-Left Embedding
+    '\u202C', // Pop Directional Formatting
+    '\u202D', // Left-To-Right Override
+    '\u202E', // Right-To-Left Override
+    '\u2066', // Left-To-Right Isolate
+    '\u2067', // Right-To-Left Isolate
+    '\u2068', // First Strong Isolate
+    '\u2069'  // Pop Directional Isolate
   );
 
   @Override
