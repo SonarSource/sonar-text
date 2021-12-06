@@ -34,6 +34,6 @@ public class TextPhpTest extends TestBase {
     ORCHESTRATOR.executeBuild(getSonarScanner(PROJECT_KEY, BASE_DIRECTORY, NO_SONAR_PROFILE_NAME));
 
     assertThat(getMeasureAsInt(PROJECT_KEY, "files")).isEqualTo(1);
-    assertThat(getIssuesForRule(PROJECT_KEY, "common" + ":" + BIDI_RULE_ID)).hasSize(2);
+    assertThat(getHotspotsForProject(PROJECT_KEY)).hasSize(2);
   }
 }

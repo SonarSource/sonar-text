@@ -22,19 +22,18 @@ package org.sonarsource.text;
 import com.sonar.orchestrator.Orchestrator;
 import com.sonar.orchestrator.build.SonarScanner;
 import java.io.File;
-import java.util.Collections;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
 import org.junit.ClassRule;
-import org.sonarqube.ws.Issues;
+import org.sonarqube.ws.Hotspots;
 import org.sonarqube.ws.Measures;
+import org.sonarqube.ws.Measures.ComponentWsResponse;
 import org.sonarqube.ws.Measures.Measure;
 import org.sonarqube.ws.client.HttpConnector;
 import org.sonarqube.ws.client.WsClient;
 import org.sonarqube.ws.client.WsClientFactories;
-import org.sonarqube.ws.client.issues.SearchRequest;
+import org.sonarqube.ws.client.hotspots.SearchRequest;
 import org.sonarqube.ws.client.measures.ComponentRequest;
-import org.sonarqube.ws.Measures.ComponentWsResponse;
 
 import static java.util.Collections.singletonList;
 
@@ -77,10 +76,8 @@ public abstract class TestBase {
     return measures.size() == 1 ? measures.get(0) : null;
   }
 
-  protected List<Issues.Issue> getIssuesForRule(String componentKey, String rule) {
-    return newWsClient().issues().search(new SearchRequest()
-      .setRules(Collections.singletonList(rule))
-      .setComponentKeys(Collections.singletonList(componentKey))).getIssuesList();
+  protected List<Hotspots.SearchWsResponse.Hotspot> getHotspotsForProject(String projectkey) {
+    return newWsClient().hotspots().search(new SearchRequest().setProjectKey(projectkey)).getHotspotsList();
   }
 
   protected Integer getMeasureAsInt(String componentKey, String metricKey) {
