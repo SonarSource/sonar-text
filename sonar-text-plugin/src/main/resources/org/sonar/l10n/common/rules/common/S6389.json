@@ -1,15 +1,22 @@
 {
   "title": "Using bidirectional characters is security-sensitive",
-  "type": "CODE_SMELL",
+  "type": "SECURITY_HOTSPOT",
   "status": "ready",
   "remediation": {
     "func": "Constant\/Issue",
     "constantCost": "5min"
   },
-  "tags": [],
+  "tags": [
+    "cwe"
+  ],
   "defaultSeverity": "Major",
   "ruleSpecification": "RSPEC-6389",
   "sqKey": "S6389",
   "scope": "All",
-  "quickfix": "unknown"
+  "quickfix": "unknown",
+  "securityStandards": {
+    "CWE": [
+      94
+    ]
+  }
 }
