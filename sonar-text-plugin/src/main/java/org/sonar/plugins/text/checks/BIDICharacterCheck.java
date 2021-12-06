@@ -89,8 +89,8 @@ public class BIDICharacterCheck extends AbstractCheck {
    * - There has to be one closing PDI for every LRI, RLI, FSI
    */
   private static void checkLineBIDIChars(CheckContext ctx, String lineContent, int lineNumber) {
-    Deque<Integer> unclosedFormattingColumns = new ArrayDeque<Integer>();
-    Deque<Integer> unclosedIsolateColumns = new ArrayDeque<Integer>();
+    Deque<Integer> unclosedFormattingColumns = new ArrayDeque<>();
+    Deque<Integer> unclosedIsolateColumns = new ArrayDeque<>();
 
     for (int i = 0; i < lineContent.length(); i++) {
       char currentChar = lineContent.charAt(i);
