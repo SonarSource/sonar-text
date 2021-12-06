@@ -122,7 +122,7 @@ public class BIDICharacterCheck extends AbstractCheck {
     } else if (!unclosedFormattingColumns.isEmpty()) {
       columnToReport = unclosedFormattingColumns.getFirst();
     } else {
-      unclosedIsolateColumns.getFirst();
+      columnToReport = unclosedIsolateColumns.getFirst();
     }
 
     ctx.reportLineIssue(lineNumber, String.format(MESSAGE_FORMAT, columnToReport + 1));
