@@ -41,6 +41,7 @@ class BIDICharacterCheckTest {
         "This line contains a bidirectional character in column 32. Make sure that using bidirectional characters is safe here."),
       new CheckVerifier.LineIssue(17),
       new CheckVerifier.LineIssue(20,
-        "This line contains a bidirectional character in column 12. Make sure that using bidirectional characters is safe here."));
+        "This line contains a bidirectional character in column 12. Make sure that using bidirectional characters is safe here."),
+      new CheckVerifier.LineIssue(21));
   }
 }

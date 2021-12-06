@@ -18,6 +18,7 @@
 
 // Different unclosed. We do report on the first
 // comment ‪ comment ⁦ comment
+// comment ⁦ comment ‪ comment
 
 // === COMPLIANT ===
 
