@@ -1,4 +1,13 @@
 <?php
 
-echo "foo‮";
-// Check if admin⁩
+// comment ‪ comment
+// comment ‫ comment
+// comment ‬ comment
+// comment ‭ comment
+// comment ‮ comment
+// comment ⁦ comment
+// comment ⁧ comment
+// comment ⁨ comment
+// comment ⁩ comment
+
+// comment 😀 comment

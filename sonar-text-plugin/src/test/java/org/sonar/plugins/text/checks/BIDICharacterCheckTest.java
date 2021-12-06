@@ -28,6 +28,13 @@ class BIDICharacterCheckTest {
   void test() {
     CheckVerifier.verify(new BIDICharacterCheck(), "BIDICharacterCheck/test.php",
       new CheckVerifier.LineIssue(3, "Make sure that using bidirectional characters is safe here."),
-      new CheckVerifier.LineIssue(4));
+      new CheckVerifier.LineIssue(4),
+      new CheckVerifier.LineIssue(5),
+      new CheckVerifier.LineIssue(6),
+      new CheckVerifier.LineIssue(7),
+      new CheckVerifier.LineIssue(8),
+      new CheckVerifier.LineIssue(9),
+      new CheckVerifier.LineIssue(10),
+      new CheckVerifier.LineIssue(11));
   }
 }

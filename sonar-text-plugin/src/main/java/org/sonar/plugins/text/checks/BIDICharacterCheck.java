@@ -33,9 +33,6 @@ public class BIDICharacterCheck extends AbstractCheck {
 
   public static final String MESSAGE = "Make sure that using bidirectional characters is safe here.";
   private static final List<Character> BIDI_CHARS = List.of(
-    '\u061C',
-    '\u200E',
-    '\u200F',
     '\u202A',
     '\u202B',
     '\u202C',
