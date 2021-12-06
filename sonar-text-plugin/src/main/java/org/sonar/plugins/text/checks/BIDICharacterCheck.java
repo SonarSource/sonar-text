@@ -84,7 +84,7 @@ public class BIDICharacterCheck extends AbstractCheck {
   }
 
   /**
-   * Look for unclose BIDI characters. The rules are as follows:
+   * Look for unclosed BIDI characters. The rules are as follows:
    * - There has to be one closing PDF for every LRE, RLE, LRO, RLO
    * - There has to be one closing PDI for every LRI, RLI, FSI
    */
