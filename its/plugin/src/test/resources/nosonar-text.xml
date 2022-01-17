@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <profile>
   <name>nosonar-profile</name>
-  <language>common</language>
+  <language>text</language>
   <rules>
     <rule>
-      <repositoryKey>common</repositoryKey>
+      <repositoryKey>text</repositoryKey>
       <key>S6389</key>
       <priority>MINOR</priority>
     </rule>

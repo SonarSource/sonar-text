@@ -19,21 +19,15 @@
  */
 package org.sonar.plugins.text.core;
 
-import org.sonar.api.resources.AbstractLanguage;
+import org.junit.jupiter.api.Test;
 
-public class CommonLanguage extends AbstractLanguage {
+import static org.assertj.core.api.Assertions.assertThat;
 
-  public static final String KEY = "common";
-  public static final String NAME = "Common";
+class TextLanguageTest {
 
-  public CommonLanguage() {
-    super(KEY, NAME);
-  }
-
-  @Override
-  public String[] getFileSuffixes() {
-    // We do not want any files to be associated with this language. The sole purpose of registering the language is to have rules and
-    // quality profiles associated to it.
-    return new String[]{"sonarShouldNotExistExtension"};
+  @Test
+  void should_return_fake_suffix() {
+    TextLanguage language = new TextLanguage();
+    assertThat(language.getFileSuffixes()).containsExactly("sonarShouldNotExistExtension");
   }
 }

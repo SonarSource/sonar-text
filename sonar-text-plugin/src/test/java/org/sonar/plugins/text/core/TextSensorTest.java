@@ -45,8 +45,8 @@ import org.sonar.api.batch.sensor.issue.IssueLocation;
 import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.log.LogTesterJUnit5;
-import org.sonar.plugins.text.CommonPlugin;
-import org.sonar.plugins.text.api.CommonCheck;
+import org.sonar.plugins.text.TextPlugin;
+import org.sonar.plugins.text.api.TextCheck;
 import org.sonar.plugins.text.checks.AbstractCheck;
 import org.sonar.plugins.text.checks.BIDICharacterCheck;
 
@@ -55,12 +55,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-class CommonSensorTest {
+class TextSensorTest {
 
   @RegisterExtension
   public LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
-  private static final String REPOSITORY_KEY = CommonPlugin.REPOSITORY_KEY;
+  private static final String REPOSITORY_KEY = TextPlugin.REPOSITORY_KEY;
 
   @TempDir
   protected File baseDir;
@@ -77,7 +77,7 @@ class CommonSensorTest {
   void should_return_sensor_descriptor() {
     DefaultSensorDescriptor descriptor = new DefaultSensorDescriptor();
     sensor().describe(descriptor);
-    assertThat(descriptor.name()).isEqualTo("Common Sensor");
+    assertThat(descriptor.name()).isEqualTo("Text Sensor");
     assertThat(descriptor.languages()).isEmpty();
   }
 
@@ -90,7 +90,7 @@ class CommonSensorTest {
 
   @Test
   void valid_check_on_valid_file_should_raise_issue() {
-    CommonCheck validCheck = new AbstractCheck() {
+    TextCheck validCheck = new AbstractCheck() {
       @Override
       public void analyze(InputFile inputFile) {
         ctx.reportLineIssue(1, "testIssue");
@@ -113,7 +113,7 @@ class CommonSensorTest {
 
   @Test
   void stop_on_cancellation() {
-    CommonCheck validCheck = new AbstractCheck() {
+    TextCheck validCheck = new AbstractCheck() {
       @Override
       public void analyze(InputFile inputFile) {
         ctx.reportLineIssue(1, "testIssue");
@@ -129,7 +129,7 @@ class CommonSensorTest {
 
   @Test
   void issue_should_not_be_raised_twice_on_same_line() {
-    CommonCheck validCheck = new AbstractCheck() {
+    TextCheck validCheck = new AbstractCheck() {
       @Override
       public void analyze(InputFile inputFile) {
         ctx.reportLineIssue(1, "testIssue");
@@ -147,7 +147,7 @@ class CommonSensorTest {
 
   @Test
   void file_should_not_be_handled_when_not_assigned_to_any_language() {
-    CommonCheck validCheck = new AbstractCheck() {
+    TextCheck validCheck = new AbstractCheck() {
       @Override
       public void analyze(InputFile inputFile) {
         ctx.reportLineIssue(1, "testIssue");
@@ -164,7 +164,7 @@ class CommonSensorTest {
 
   @Test
   void analysis_error_should_be_raised_on_failure_in_check() {
-    CommonCheck failingCheck = new AbstractCheck() {
+    TextCheck failingCheck = new AbstractCheck() {
       @Override
       public void analyze(InputFile inputFile) {
         throw new IllegalStateException("Crash");
@@ -216,15 +216,15 @@ class CommonSensorTest {
     sensor.execute(context);
   }
 
-  private CommonSensor sensor(String... rules) {
+  private TextSensor sensor(String... rules) {
     return sensor(checkFactory(rules));
   }
 
-  private CommonSensor sensor(CheckFactory checkFactory) {
-    return new CommonSensor(checkFactory);
+  private TextSensor sensor(CheckFactory checkFactory) {
+    return new TextSensor(checkFactory);
   }
 
-  private CheckFactory mockCheckFactory(CommonCheck check, String ruleName) {
+  private CheckFactory mockCheckFactory(TextCheck check, String ruleName) {
     CheckFactory checkFactory = mock(CheckFactory.class);
     Checks checks = mock(Checks.class);
     when(checks.ruleKey(check)).thenReturn(RuleKey.of(REPOSITORY_KEY, ruleName));

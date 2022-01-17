@@ -26,17 +26,17 @@ import java.util.Set;
 import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.plugins.text.api.CheckContext;
-import org.sonar.plugins.text.api.CommonCheck;
+import org.sonar.plugins.text.api.TextCheck;
 import org.sonar.plugins.text.core.InputFileContext;
 
 public class ChecksVisitor {
 
   private final Set<ContextAdapter> contextAdapters = new HashSet<>();
-  private final Collection<CommonCheck> activeChecks;
+  private final Collection<TextCheck> activeChecks;
 
-  public ChecksVisitor(Checks<CommonCheck> checks) {
+  public ChecksVisitor(Checks<TextCheck> checks) {
     activeChecks = checks.all();
-    for (CommonCheck check : activeChecks) {
+    for (TextCheck check : activeChecks) {
       RuleKey ruleKey = checks.ruleKey(check);
       Objects.requireNonNull(ruleKey);
       ContextAdapter contextAdapter = new ContextAdapter(ruleKey);

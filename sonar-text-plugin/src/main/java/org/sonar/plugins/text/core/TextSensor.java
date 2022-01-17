@@ -33,26 +33,26 @@ import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
-import org.sonar.plugins.text.CommonPlugin;
-import org.sonar.plugins.text.api.CommonCheck;
+import org.sonar.plugins.text.TextPlugin;
+import org.sonar.plugins.text.api.TextCheck;
 import org.sonar.plugins.text.checks.CheckList;
 import org.sonar.plugins.text.visitor.ChecksVisitor;
 import org.sonarsource.analyzer.commons.ProgressReport;
 
-public class CommonSensor implements Sensor {
+public class TextSensor implements Sensor {
 
-  private static final Logger LOG = Loggers.get(CommonSensor.class);
+  private static final Logger LOG = Loggers.get(TextSensor.class);
 
-  private final Checks<CommonCheck> checks;
+  private final Checks<TextCheck> checks;
 
-  public CommonSensor(CheckFactory checkFactory) {
-    this.checks = checkFactory.create(CommonPlugin.REPOSITORY_KEY);
+  public TextSensor(CheckFactory checkFactory) {
+    this.checks = checkFactory.create(TextPlugin.REPOSITORY_KEY);
     this.checks.addAnnotatedChecks(CheckList.checks());
   }
 
   @Override
   public void describe(SensorDescriptor sensorDescriptor) {
-    sensorDescriptor.name("Common Sensor");
+    sensorDescriptor.name("Text Sensor");
   }
 
   @Override
@@ -60,7 +60,7 @@ public class CommonSensor implements Sensor {
     FileSystem fileSystem = sensorContext.fileSystem();
     Iterable<InputFile> inputFiles = fileSystem.inputFiles(inputFile -> inputFile.language() != null);
     List<String> filenames = StreamSupport.stream(inputFiles.spliterator(), false).map(InputFile::toString).collect(Collectors.toList());
-    ProgressReport progressReport = new ProgressReport("Progress of the common analysis", TimeUnit.SECONDS.toMillis(10));
+    ProgressReport progressReport = new ProgressReport("Progress of the text analysis", TimeUnit.SECONDS.toMillis(10));
     progressReport.start(filenames);
     boolean success = false;
     Analyzer analyzer = new Analyzer(new ChecksVisitor(checks));

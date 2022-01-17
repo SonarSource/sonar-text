@@ -25,17 +25,17 @@ import org.sonar.plugins.text.checks.CheckList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class CommonRuleDefinitionTest {
+class TextRuleDefinitionTest {
 
   @Test
   void test_rule_activation() {
-    CommonRuleDefinition rulesDefinition = new CommonRuleDefinition();
+    TextRuleDefinition rulesDefinition = new TextRuleDefinition();
     RulesDefinition.Context context = new RulesDefinition.Context();
     rulesDefinition.define(context);
-    RulesDefinition.Repository repository = context.repository("common");
+    RulesDefinition.Repository repository = context.repository("text");
     assertThat(repository).isNotNull();
     assertThat(repository.name()).isEqualTo("SonarQube");
-    assertThat(repository.language()).isEqualTo("common");
+    assertThat(repository.language()).isEqualTo("text");
     assertThat(repository.rules()).hasSize(CheckList.checks().size());
   }
 }
