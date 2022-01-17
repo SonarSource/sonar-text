@@ -17,28 +17,25 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text;
+package org.sonar.plugins.text.rules;
 
 import org.junit.jupiter.api.Test;
-import org.sonar.api.Plugin;
-import org.sonar.api.SonarEdition;
-import org.sonar.api.SonarQubeSide;
-import org.sonar.api.SonarRuntime;
-import org.sonar.api.internal.SonarRuntimeImpl;
-import org.sonar.api.utils.Version;
+import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
+import org.sonar.plugins.text.checks.CheckList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class CommonPluginTest {
-
-  private static final Version VERSION_8_9 = Version.create(8, 9);
+class TextBuiltInProfileDefinitionTest {
 
   @Test
-  void sonarqube_extensions() {
-    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(VERSION_8_9, SonarQubeSide.SCANNER, SonarEdition.COMMUNITY);
-    Plugin.Context context = new Plugin.Context(runtime);
-    Plugin plugin = new CommonPlugin();
-    plugin.define(context);
-    assertThat(context.getExtensions()).hasSize(4);
+  void should_create_sonar_way_profile() {
+    BuiltInQualityProfilesDefinition.Context context = new BuiltInQualityProfilesDefinition.Context();
+    TextBuiltInProfileDefinition definition = new TextBuiltInProfileDefinition();
+    definition.define(context);
+    BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile("text", "Sonar way");
+    assertThat(profile.language()).isEqualTo("text");
+    assertThat(profile.name()).isEqualTo("Sonar way");
+    assertThat(profile.rules().size()).isLessThanOrEqualTo(CheckList.checks().size());
   }
+
 }

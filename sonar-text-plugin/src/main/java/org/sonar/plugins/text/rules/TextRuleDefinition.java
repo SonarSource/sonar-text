@@ -19,22 +19,24 @@
  */
 package org.sonar.plugins.text.rules;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonar.plugins.text.CommonPlugin;
-import org.sonar.plugins.text.core.CommonLanguage;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
+import java.util.ArrayList;
+import org.sonar.api.server.rule.RulesDefinition;
+import org.sonar.plugins.text.TextPlugin;
+import org.sonar.plugins.text.checks.CheckList;
+import org.sonar.plugins.text.core.TextLanguage;
+import org.sonarsource.analyzer.commons.RuleMetadataLoader;
 
-public class CommonBuiltInProfileDefinition implements BuiltInQualityProfilesDefinition {
+import static org.sonar.plugins.text.TextPlugin.REPOSITORY_NAME;
 
-  public static final String SONAR_WAY_PROFILE = "Sonar way";
-  public static final String SONAR_WAY_PATH = "org/sonar/l10n/common/rules/common/Sonar_way_profile.json";
+public class TextRuleDefinition implements RulesDefinition {
+
+  static final String RESOURCE_FOLDER = "org/sonar/l10n/text/rules/text";
 
   @Override
   public void define(Context context) {
-    NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(SONAR_WAY_PROFILE, CommonLanguage.KEY);
-    BuiltInQualityProfileJsonLoader.load(profile, CommonPlugin.REPOSITORY_KEY, SONAR_WAY_PATH);
-    profile.setDefault(true);
-    profile.done();
+    NewRepository repository = context.createRepository(TextPlugin.REPOSITORY_KEY, TextLanguage.KEY).setName(REPOSITORY_NAME);
+    RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RESOURCE_FOLDER);
+    ruleMetadataLoader.addRulesByAnnotatedClass(repository, new ArrayList<>(CheckList.checks()));
+    repository.done();
   }
-
 }

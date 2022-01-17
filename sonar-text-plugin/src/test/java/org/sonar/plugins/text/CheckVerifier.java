@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.plugins.text.api.CheckContext;
-import org.sonar.plugins.text.api.CommonCheck;
+import org.sonar.plugins.text.api.TextCheck;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -46,7 +46,7 @@ public class CheckVerifier {
    * {@link LineIssue#message} can be empty for expected issues. In that case the message is not considered in the comparison.
    * <b>It is currently not possible to test multiple issues on the same line.</b>
    */
-  public static void verify(CommonCheck check, String testFileRelativePath, LineIssue... expected) {
+  public static void verify(TextCheck check, String testFileRelativePath, LineIssue... expected) {
     TestContext ctx = new TestContext();
     check.initialize(ctx);
     check.analyze(inputFile(testFileRelativePath));

@@ -17,17 +17,24 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text.core;
+package org.sonar.plugins.text;
 
-import org.junit.jupiter.api.Test;
+import org.sonar.api.Plugin;
+import org.sonar.plugins.text.core.TextLanguage;
+import org.sonar.plugins.text.core.TextSensor;
+import org.sonar.plugins.text.rules.TextBuiltInProfileDefinition;
+import org.sonar.plugins.text.rules.TextRuleDefinition;
 
-import static org.assertj.core.api.Assertions.assertThat;
+public class TextPlugin implements Plugin {
 
-class CommonLanguageTest {
+  public static final String REPOSITORY_KEY = "text";
+  public static final String REPOSITORY_NAME = "SonarQube";
 
-  @Test
-  void should_return_fake_suffix() {
-    CommonLanguage language = new CommonLanguage();
-    assertThat(language.getFileSuffixes()).containsExactly("sonarShouldNotExistExtension");
+  @Override
+  public void define(Context context) {
+    context.addExtension(TextLanguage.class);
+    context.addExtension(TextBuiltInProfileDefinition.class);
+    context.addExtension(TextRuleDefinition.class);
+    context.addExtension(TextSensor.class);
   }
 }

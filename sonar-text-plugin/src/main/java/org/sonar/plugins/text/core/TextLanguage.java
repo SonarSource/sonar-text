@@ -17,24 +17,23 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text;
+package org.sonar.plugins.text.core;
 
-import org.sonar.api.Plugin;
-import org.sonar.plugins.text.core.CommonLanguage;
-import org.sonar.plugins.text.core.CommonSensor;
-import org.sonar.plugins.text.rules.CommonBuiltInProfileDefinition;
-import org.sonar.plugins.text.rules.CommonRuleDefinition;
+import org.sonar.api.resources.AbstractLanguage;
 
-public class CommonPlugin implements Plugin {
+public class TextLanguage extends AbstractLanguage {
 
-  public static final String REPOSITORY_KEY = "common";
-  public static final String REPOSITORY_NAME = "SonarQube";
+  public static final String KEY = "text";
+  public static final String NAME = "Text";
+
+  public TextLanguage() {
+    super(KEY, NAME);
+  }
 
   @Override
-  public void define(Context context) {
-    context.addExtension(CommonLanguage.class);
-    context.addExtension(CommonBuiltInProfileDefinition.class);
-    context.addExtension(CommonRuleDefinition.class);
-    context.addExtension(CommonSensor.class);
+  public String[] getFileSuffixes() {
+    // We do not want any files to be associated with this language. The sole purpose of registering the language is to have rules and
+    // quality profiles associated to it.
+    return new String[]{"sonarShouldNotExistExtension"};
   }
 }

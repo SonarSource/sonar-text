@@ -17,17 +17,13 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text.checks;
+package org.sonar.plugins.text.api;
 
-import org.sonar.plugins.text.api.CheckContext;
-import org.sonar.plugins.text.api.TextCheck;
+import org.sonar.api.batch.fs.InputFile;
 
-public abstract class AbstractCheck implements TextCheck {
+public interface TextCheck {
 
-  protected CheckContext ctx;
+  void initialize(CheckContext ctx);
 
-  @Override
-  public void initialize(CheckContext ctx) {
-    this.ctx = ctx;
-  }
+  void analyze(InputFile inputFile);
 }
