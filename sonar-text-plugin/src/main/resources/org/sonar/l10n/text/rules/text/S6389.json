@@ -1,6 +1,6 @@
 {
   "title": "Using bidirectional characters is security-sensitive",
-  "type": "SECURITY_HOTSPOT",
+  "type": "CODE_SMELL",
   "status": "beta",
   "remediation": {
     "func": "Constant\/Issue",
