@@ -52,7 +52,9 @@ public class TextSensor implements Sensor {
 
   @Override
   public void describe(SensorDescriptor sensorDescriptor) {
-    sensorDescriptor.name("Text Sensor");
+    sensorDescriptor
+      .name("Text Sensor")
+      .processesFilesIndependently();
   }
 
   @Override
