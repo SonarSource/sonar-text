@@ -1,3 +1,7 @@
+# New variable(s):
+# * publishPipelineArtifact : boolean. True to publish to the pipeline (not to the NuGet feed). WARNING - setting this to true means the artefact will be publicly visible in the pipeline results.
+
+
 # Only run this pipeline for changes in the dotnet code
 
 trigger:
@@ -76,7 +80,7 @@ steps:
   displayName: 'Restore NuGet packages'
   inputs:
     command: 'restore'
-    projects: $(slnPath)
+    restoreSolution: '$(slnPath)'
     restoreArguments: '--locked-mode'
     feedsToUse: 'select'
     vstsFeed: $(nugetFeed)
@@ -91,11 +95,6 @@ steps:
   
 - task: VSBuild@1
   displayName: 'Build solution'
-  env:
-    SIGNTOOL_PATH: $(SIGNTOOL_PATH)
-    PFX_PASSWORD: $(pfxPassword2021-2023)
-    PFX_PATH: $(pfx.secureFilePath)
-    PFX_SHA1: $(pfxSha1-2021-2023)
   inputs:
     solution: $(slnPath)
     platform: 'Any CPU'
@@ -118,19 +117,58 @@ steps:
 
 - task: SonarQubeAnalyze@4
 
+
+### .NET Reactor installation start ###
+
+# NOTE: .NET Reactor only requires an installation step.
+# Licensing: the license is provided as secure file dropped in the same folder as the exe,
+#  with the environment variable DOTNETREACTORROOT set to point to the folder.
+# Execution: handled by the MSBuild targets.
+# Cleanup: none required
+
+# See the ReadMe in the \build folder for information on how we install and run the obfuscation tool,
+# and on how to update it to a newer version.
+
+- task: DownloadSecureFile@1
+  displayName: 'Download license'
+  name: obfuscLicense
+  inputs:
+    secureFile: 'license.v3lic'
+
+- task: UniversalPackages@0
+  displayName: 'Download .NET Reactor package'
+  inputs:
+    command: download
+    vstsFeed: 'DotNetTeam Project/slvs_obfusc_proto'
+    vstsFeedPackage: 'dotnetreactor'
+    vstsPackageVersion: '6.8.0'
+    downloadDirectory: '$(Agent.TempDirectory)'
+
+### .NET Reactor installation end ###
+
 - task: DotNetCoreCLI@2
-  displayName: 'dotnet pack'
+  displayName: 'Build NuGet package and publish to local test feed'
+  env:
+    DOTNETREACTORROOT: '$(Agent.TempDirectory)'
+    SIGNTOOL_PATH: $(SIGNTOOL_PATH)
+    PFX_PASSWORD: $(pfxPassword2021-2023)
+    PFX_PATH: $(pfx.secureFilePath)
+    PFX_SHA1: $(pfxSha1-2021-2023)
+
   inputs:
     command: 'pack'
     packagesToPack: 'sonar-secrets-dotnet/src/SonarLint.Secrets.DotNet/SonarLint.Secrets.DotNet.csproj'
     nobuild: true
+    configurationToPack: '$(buildConfiguration)'
+    buildProperties: 'SignAssembly=$(signArtefacts);AssemblyOriginatorKeyFile="$(snk.secureFilePath)";OBFUSCATOR_EXE_PATH=$(Agent.TempDirectory)\dotNET_Reactor.Console.exe'
     packDestination: '$(Build.ArtifactStagingDirectory)'
 
-#- task: PublishPipelineArtifact@1
-#  displayName: 'Publish the NuGet package as a pipeline artifact'
-#  inputs:
-#    path: '$(Build.ArtifactStagingDirectory)'
-#    artifact: DotNetNuGet
+- task: PublishPipelineArtifact@1
+  condition: eq(variables.publishPipelineArtifact, 'true')
+  displayName: 'Publish the NuGet package as a pipeline artifact'
+  inputs:
+    path: '$(Build.ArtifactStagingDirectory)'
+    artifact: DotNetNuGet
     
 #- task: NuGetAuthenticate@0
 #  displayName: 'NuGet authenticate'
