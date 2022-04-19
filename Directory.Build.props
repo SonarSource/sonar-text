@@ -1,5 +1,7 @@
 <Project>
 
+  <Import Project="build\*.targets" />
+
   <PropertyGroup Label="Package locking">
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
 
