@@ -13,7 +13,7 @@ namespace SonarLint.Secrets.DotNet
 {
     [Export(typeof(ISecretDetector))]
     [PartCreationPolicy(CreationPolicy.Shared)]
-    public sealed class DummySecretDetector : ISecretDetector
+    internal sealed class DummySecretDetector : ISecretDetector
     {
         private const string PasswordPattern = "sonarlint\\.internal\\.dummy\\.password\\=(?<pwd>[\\w-]+)\\s";
         private static readonly Regex StackRegExp = new Regex(PasswordPattern);
