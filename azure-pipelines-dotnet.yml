@@ -1,5 +1,5 @@
 # New variable(s):
-# * publishPipelineArtifact : boolean. True to publish to the pipeline (not to the NuGet feed). WARNING - setting this to true means the artefact will be publicly visible in the pipeline results.
+# * forcePublishPipelineArtifact : boolean. True to publish to the pipeline (not to the NuGet feed). WARNING - setting this to true means the artifact will be publicly visible in the pipeline results.
 
 
 # Only run this pipeline for changes in the dotnet code
@@ -33,8 +33,11 @@ variables:
   - name: nugetFeed
     value: '399fb241-ecc7-4802-8697-dcdd01fbb832/423b576f-2263-43a1-93bd-69f4def19102'
     # only sign if (1) forceSign is true OR (2) is master OR (3) is branch-*
-  - name: signArtefacts
+  - name: signArtifacts
     value: $[ or (eq(variables['forceSign'], 'true') , or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/branch-'))) ]
+    # only publish signed artifacts if (a) branch is master or (b) forcePublishPipelineArtifact is true
+  - name: publishPipelineArtifact
+    value: $[ and (eq(variables['signArtifacts'], 'true') , or(eq(variables['forcePublishPipelineArtifact'], 'true') , eq(variables['Build.SourceBranch'], 'refs/heads/master'))) ]
 
 steps:
 
@@ -67,14 +70,14 @@ steps:
     Write-Host 'Sign tool location ' + $signtool.FullName
     Write-Host "##vso[task.setvariable variable=SIGNTOOL_PATH;]$signtool"
   displayName: 'Locate signing tool'
-  condition: and(succeeded(), eq(variables.signArtefacts, 'true'))
+  condition: and(succeeded(), eq(variables.signArtifacts, 'true'))
 
 - task: DownloadSecureFile@1
   displayName: 'Download pfx'
   name: pfx
   inputs:
     secureFile: 'SonarSource-2021-2023.pfx'
-  condition: and(succeeded(), eq(variables.signArtefacts, 'true'))
+  condition: and(succeeded(), eq(variables.signArtifacts, 'true'))
 
 - task: NuGetCommand@2
   displayName: 'Restore NuGet packages'
@@ -99,7 +102,7 @@ steps:
     solution: $(slnPath)
     platform: 'Any CPU'
     configuration: '$(buildConfiguration)'
-    msbuildArgs: '-p:SignAssembly=$(signArtefacts) -p:AssemblyOriginatorKeyFile="$(snk.secureFilePath)" /p:CommitId=$(Build.SourceVersion) /p:BranchName=$(Build.SourceBranchName) /p:BuildNumber=$(Build.BuildId) $(additionalMSBuildProperties) '
+    msbuildArgs: '-p:SignAssembly=$(signArtifacts) -p:AssemblyOriginatorKeyFile="$(snk.secureFilePath)" /p:CommitId=$(Build.SourceVersion) /p:BranchName=$(Build.SourceBranchName) /p:BuildNumber=$(Build.BuildId) $(additionalMSBuildProperties) '
 
 
 - task: VSTest@2
@@ -160,7 +163,7 @@ steps:
     packagesToPack: 'sonar-secrets-dotnet/src/SonarLint.Secrets.DotNet/SonarLint.Secrets.DotNet.csproj'
     nobuild: true
     configurationToPack: '$(buildConfiguration)'
-    buildProperties: 'SignAssembly=$(signArtefacts);AssemblyOriginatorKeyFile="$(snk.secureFilePath)";OBFUSCATOR_EXE_PATH=$(Agent.TempDirectory)\dotNET_Reactor.Console.exe'
+    buildProperties: 'SignAssembly=$(signArtifacts);AssemblyOriginatorKeyFile="$(snk.secureFilePath)";OBFUSCATOR_EXE_PATH=$(Agent.TempDirectory)\dotNET_Reactor.Console.exe'
     packDestination: '$(Build.ArtifactStagingDirectory)'
 
 - task: DotNetCoreCLI@2
@@ -168,21 +171,14 @@ steps:
   inputs:
     command: 'test'
     projects: 'sonar-secrets-dotnet/src/IntegrationTests/IntegrationTests.sln'
-    arguments: '-c $(BuildConfiguration) -p:SignAssembly=$(signArtefacts)'
+    arguments: '-c $(BuildConfiguration) -p:SignAssembly=$(signArtifacts)'
 
+# NB this only publishes the artifacts to the build pipeline.
+# There is a separate release pipeline to push the NuGet package to the internal
+# NuGet feed so it can be consumed by SLVS.
 - task: PublishPipelineArtifact@1
   condition: eq(variables.publishPipelineArtifact, 'true')
   displayName: 'Publish the NuGet package as a pipeline artifact'
   inputs:
     path: '$(Build.ArtifactStagingDirectory)'
     artifact: DotNetNuGet
-    
-#- task: NuGetAuthenticate@0
-#  displayName: 'NuGet authenticate'
-
-#- task: NuGetCommand@2
-#  displayName: 'Nuget push'
-#  inputs:
-#    command: 'push'
-#    publishVstsFeed: $(nugetFeed)
-#    allowPackageConflicts: true
