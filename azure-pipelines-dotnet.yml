@@ -163,6 +163,13 @@ steps:
     buildProperties: 'SignAssembly=$(signArtefacts);AssemblyOriginatorKeyFile="$(snk.secureFilePath)";OBFUSCATOR_EXE_PATH=$(Agent.TempDirectory)\dotNET_Reactor.Console.exe'
     packDestination: '$(Build.ArtifactStagingDirectory)'
 
+- task: DotNetCoreCLI@2
+  displayName: 'Build and run post-build integration tests'
+  inputs:
+    command: 'test'
+    projects: 'sonar-secrets-dotnet/src/IntegrationTests/IntegrationTests.sln'
+    arguments: '-c $(BuildConfiguration) -p:SignAssembly=$(signArtefacts)'
+
 - task: PublishPipelineArtifact@1
   condition: eq(variables.publishPipelineArtifact, 'true')
   displayName: 'Publish the NuGet package as a pipeline artifact'
