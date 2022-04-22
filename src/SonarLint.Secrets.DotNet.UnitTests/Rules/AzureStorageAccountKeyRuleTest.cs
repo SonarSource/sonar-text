@@ -1,4 +1,10 @@
-﻿using FluentAssertions;
+﻿/*
+ * Copyright (C) 2021-2022 SonarSource SA
+ * All rights reserved
+ * mailto:info AT sonarsource DOT com
+ */
+
+using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SonarLint.Secrets.DotNet.Rules;
 using SonarLint.VisualStudio.Integration.UnitTests;
