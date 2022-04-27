@@ -29,7 +29,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         {
             var testSubject = new AwsAccessKeyRule();
 
-            testSubject.RuleKey.Should().Be("S6290");
+            testSubject.RuleKey.Should().Be("secrets:S6290");
             testSubject.Name.Should().Be("Amazon Web Services credentials should not be disclosed");
         }
 
