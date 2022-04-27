@@ -20,7 +20,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.DotNetOnly
         {
             var testSubject = new ConcreteSecretRule("my key", "my name", "my message");
 
-            testSubject.RuleKey.Should().Be("my key");
+            testSubject.RuleKey.Should().Be("secrets:my key");
             testSubject.Name.Should().Be("my name");
             testSubject.Message.Should().Be("my message");
         }

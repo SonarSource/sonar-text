@@ -27,7 +27,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         {
             var testSubject = new AzureStorageAccountKeyRule();
 
-            testSubject.RuleKey.Should().Be("S6338");
+            testSubject.RuleKey.Should().Be("secrets:S6338");
             testSubject.Name.Should().Be("Azure Storage Account Keys should not be disclosed");
             testSubject.Message.Should().Be("Make sure this Azure Storage Account Key is not disclosed.");
         }
