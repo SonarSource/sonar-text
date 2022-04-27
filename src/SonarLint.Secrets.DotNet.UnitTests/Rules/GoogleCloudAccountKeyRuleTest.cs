@@ -30,7 +30,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         {
             var testSubject = new GoogleCloudAccountKeyRule();
 
-            testSubject.RuleKey.Should().Be("S6335");
+            testSubject.RuleKey.Should().Be("secrets:S6335");
             testSubject.Name.Should().Be("Google Cloud service accounts keys should not be disclosed");
             testSubject.Message.Should().Be("Make sure this Google Cloud service account key is not disclosed.");
         }
