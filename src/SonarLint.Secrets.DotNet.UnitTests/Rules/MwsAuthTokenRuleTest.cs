@@ -29,7 +29,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         {
             var testSubject = new MwsAuthTokenRule();
 
-            testSubject.RuleKey.Should().Be("S6292");
+            testSubject.RuleKey.Should().Be("secrets:S6292");
             testSubject.Name.Should().Be("Amazon MWS credentials should not be disclosed");
         }
 

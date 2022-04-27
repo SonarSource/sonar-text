@@ -29,7 +29,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         {
             var testSubject = new AlibabaCloudAccessKeyIDsRule();
 
-            testSubject.RuleKey.Should().Be("S6336");
+            testSubject.RuleKey.Should().Be("secrets:S6336");
             testSubject.Name.Should().Be("Alibaba Cloud AccessKeys should not be disclosed");
             testSubject.Message.Should().Be("Make sure this Alibaba Cloud Access Key ID is not disclosed.");
         }
