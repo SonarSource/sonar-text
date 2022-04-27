@@ -18,7 +18,12 @@ namespace SonarLint.Secrets.DotNet.Rules
 
         protected AbstractSecretRule(string ruleKey, string name, string message, params ISecretsMatcher[] matchers)
         {
-            RuleKey = ruleKey;
+            // Rule keys are in the form "[repo id]:[rule id]".
+            // The repo id for all SonarLint secrets rules has to be "secrets"
+            // to match what is used on the rules website e.g.
+            //   https://rules.sonarsource.com/secrets/RSPEC-6290
+            RuleKey = "secrets:" + ruleKey;
+
             Name = name;
             Message = message;
             this.matchers = matchers.ToList();
