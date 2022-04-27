@@ -13,7 +13,7 @@
              This will be used for the product version and the NuGet package version.
              Don't change any of the other version properties.
         -->
-        <Version>1.0.1</Version>
+        <Version>1.0.2</Version>
 
         <!-- Properties used by the integration tests to select the package version to test. -->
         <SonarLintSecretsPackageVersionToTest>$(Version)</SonarLintSecretsPackageVersionToTest>
