@@ -20,9 +20,9 @@ env:
   CIRRUS_CLONE_DEPTH: 1
 
 linux_image_template: &LINUX_IMAGE
-  image: gcr.io/language-team/base:latest
-  cluster_name: cirrus-ci-lt-cluster
-  zone: us-central1-a
+  image: eu.gcr.io/release-engineering-ci-prod/base:j11-latest
+  cluster_name: cirrus-ci
+  zone: europe-west4-b
   namespace: default
   use_in_memory_disk: true
 
