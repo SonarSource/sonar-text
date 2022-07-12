@@ -14,7 +14,7 @@
   <packaging>sonar-plugin</packaging>
 
   <name>SonarSource Text Analyzer :: Plugin</name>
-  <description>Plugin to analyze text files</description>
+  <description>Analyzer for Text Files</description>
   <inceptionYear>2021</inceptionYear>
   <organization>
     <name>SonarSource</name>
