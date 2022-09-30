@@ -165,7 +165,12 @@ steps:
     configurationToPack: '$(buildConfiguration)'
     buildProperties: 'SignAssembly=$(signArtifacts);AssemblyOriginatorKeyFile="$(snk.secureFilePath)";OBFUSCATOR_EXE_PATH=$(Agent.TempDirectory)\dotNET_Reactor.Console.exe'
     packDestination: '$(Build.ArtifactStagingDirectory)'
-
+    
+- powershell: |
+    nuget.exe sign "$(Build.ArtifactStagingDirectory)/**/SonarLint.Secrets.DotNet*.nupkg" -CertificatePath "$(pfx.secureFilePath)" -CertificatePassword "$(pfxPassword2021-2023)" -Timestamper "http://timestamp.digicert.com" -NonInteractive
+  displayName: 'Sign NuGet package'
+  condition: and(succeeded(), eq(variables.signArtifacts, 'true'))
+    
 - task: DotNetCoreCLI@2
   displayName: 'Build and run post-build integration tests'
   inputs:
