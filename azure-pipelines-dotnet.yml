@@ -79,6 +79,12 @@ steps:
     secureFile: 'SonarSource-2021-2023.pfx'
   condition: and(succeeded(), eq(variables.signArtifacts, 'true'))
 
+# Specify the version of the NuGet tools to use
+# Otherwise, we'll default to whatever is installed on the build agent, which might be old/insecure
+- task: NuGetToolInstaller@1
+  inputs:
+    versionSpec: '6.3.x'
+
 - task: NuGetCommand@2
   displayName: 'Restore NuGet packages'
   inputs:
