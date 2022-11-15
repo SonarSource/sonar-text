@@ -45,6 +45,7 @@ public class Tests {
 
   static {
     ORCHESTRATOR = Orchestrator.builderEnv()
+      .useDefaultAdminCredentialsForBuilds(true)
       .setSonarVersion(System.getProperty(SQ_VERSION_PROPERTY, DEFAULT_SQ_VERSION))
       .addPlugin(PLUGIN_LOCATION)
       .addPlugin(MavenLocation.of("org.sonarsource.php", "sonar-php-plugin", SONAR_PHP_VERSION))
