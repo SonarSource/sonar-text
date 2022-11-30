@@ -92,7 +92,7 @@ qa_plugin_task:
   <<: *LINUX_2_CPU_4G
   env:
     matrix:
-      - SQ_VERSION: LATEST_RELEASE[9.2]
+      - SQ_VERSION: LATEST_RELEASE
       - SQ_VERSION: DEV
   maven_cache:
     folder: ${CIRRUS_WORKING_DIR}/.m2/repository
