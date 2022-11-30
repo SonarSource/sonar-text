@@ -28,12 +28,15 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Scanner;
 import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 import org.sonar.check.Rule;
 import org.sonar.plugins.text.api.CheckContext;
 
 @Rule(key = "S6389")
 public class BIDICharacterCheck extends AbstractCheck {
 
+  private static final Logger LOG = Loggers.get(BIDICharacterCheck.class);
   public static final String MESSAGE_FORMAT = "This line contains a bidirectional character in column %d. Make sure that using bidirectional characters is safe here.";
 
   private static final List<Character> BIDI_FORMATTING_CHARS = List.of(
@@ -60,7 +63,7 @@ public class BIDICharacterCheck extends AbstractCheck {
     try (InputStream stream = inputFile.inputStream()) {
       analyzeStream(stream, inputFile.charset());
     } catch (IOException e) {
-      throw new IllegalStateException("Fail to read file input stream");
+      LOG.error("Fail to read file input stream");
     }
   }
 
