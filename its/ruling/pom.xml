@@ -7,11 +7,11 @@
     <parent>
         <groupId>org.sonarsource.text</groupId>
         <artifactId>text-its</artifactId>
-        <version>1.1-SNAPSHOT</version>
+        <version>1.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>its-ruling</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.2-SNAPSHOT</version>
 
     <name>SonarSource Text Analyzer :: ITs :: Ruling</name>
 
