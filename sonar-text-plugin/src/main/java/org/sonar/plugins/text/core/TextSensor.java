@@ -103,7 +103,8 @@ public class TextSensor implements Sensor {
       URI inputFileUri = inputFileContext.inputFile.uri();
       String message = String.format("Unable to analyze file %s: %s", inputFileUri, e.getMessage());
       inputFileContext.reportAnalysisError(message);
-      LOG.error(message, e);
+      LOG.warn(message);
+      LOG.debug(e.toString());
     }
   }
 }
