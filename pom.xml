@@ -69,7 +69,8 @@
     <gitRepositoryName>sonar-text</gitRepositoryName>
 
     <!-- dependency versions -->
-    <sonar.version>9.2.4.50792</sonar.version>
+    <sonar.version>9.7.1.62043</sonar.version>
+    <sonar.api.version>9.13.0.360</sonar.api.version>
     <analyzer.commons.version>1.15.0.699</analyzer.commons.version>
     <orchestrator.version>3.40.0.183</orchestrator.version>
     <junit.version>5.7.1</junit.version>
@@ -93,9 +94,9 @@
     <dependencies>
       <!-- Provided dependencies -->
       <dependency>
-        <groupId>org.sonarsource.sonarqube</groupId>
+        <groupId>org.sonarsource.api.plugin</groupId>
         <artifactId>sonar-plugin-api</artifactId>
-        <version>${sonar.version}</version>
+        <version>${sonar.api.version}</version>
         <scope>provided</scope>
       </dependency>
 

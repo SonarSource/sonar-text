@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TextRulingTest {
 
   private static final String SQ_VERSION_PROPERTY = "sonar.runtimeVersion";
-  private static final String DEFAULT_SQ_VERSION = "LATEST_RELEASE[8.9]";
+  private static final String DEFAULT_SQ_VERSION = "LATEST_RELEASE";
   private static final String LITS_PLUGIN_VERSION = "0.8.0.1209";
   private static final String PHP_PLUGIN_VERSION = "LATEST_RELEASE";
   private static final File LITS_DIFFERENCES_FILE = FileLocation.of("target/differences").getFile();
