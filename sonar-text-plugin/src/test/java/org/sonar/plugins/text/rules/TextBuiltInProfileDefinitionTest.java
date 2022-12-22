@@ -35,7 +35,7 @@ class TextBuiltInProfileDefinitionTest {
     BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile("text", "Sonar way");
     assertThat(profile.language()).isEqualTo("text");
     assertThat(profile.name()).isEqualTo("Sonar way");
-    assertThat(profile.rules().size()).isLessThanOrEqualTo(CheckList.checks().size());
+    assertThat(profile.rules()).hasSizeLessThanOrEqualTo(CheckList.checks().size());
   }
 
 }
