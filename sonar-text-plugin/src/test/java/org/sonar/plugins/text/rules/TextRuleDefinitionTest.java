@@ -20,7 +20,10 @@
 package org.sonar.plugins.text.rules;
 
 import org.junit.jupiter.api.Test;
+import org.sonar.api.SonarRuntime;
+import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.server.rule.RulesDefinition;
+import org.sonar.api.utils.Version;
 import org.sonar.plugins.text.checks.CheckList;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,7 +32,8 @@ class TextRuleDefinitionTest {
 
   @Test
   void test_rule_activation() {
-    TextRuleDefinition rulesDefinition = new TextRuleDefinition();
+    SonarRuntime sonarRuntime = SonarRuntimeImpl.forSonarLint(Version.parse("7.2.1.58118"));
+    TextRuleDefinition rulesDefinition = new TextRuleDefinition(sonarRuntime);
     RulesDefinition.Context context = new RulesDefinition.Context();
     rulesDefinition.define(context);
     RulesDefinition.Repository repository = context.repository("text");

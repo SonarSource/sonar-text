@@ -20,6 +20,7 @@
 package org.sonar.plugins.text.rules;
 
 import java.util.ArrayList;
+import org.sonar.api.SonarRuntime;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.plugins.text.TextPlugin;
 import org.sonar.plugins.text.checks.CheckList;
@@ -31,11 +32,18 @@ import static org.sonar.plugins.text.TextPlugin.REPOSITORY_NAME;
 public class TextRuleDefinition implements RulesDefinition {
 
   static final String RESOURCE_FOLDER = "org/sonar/l10n/text/rules/text";
+  static final String SONAR_WAY_PATH = "/" + RESOURCE_FOLDER +"/Sonar_way_profile.json";
+
+  private final SonarRuntime sonarRuntime;
+
+  public TextRuleDefinition(SonarRuntime sonarRuntime) {
+    this.sonarRuntime = sonarRuntime;
+  }
 
   @Override
   public void define(Context context) {
     NewRepository repository = context.createRepository(TextPlugin.REPOSITORY_KEY, TextLanguage.KEY).setName(REPOSITORY_NAME);
-    RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RESOURCE_FOLDER);
+    RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RESOURCE_FOLDER, SONAR_WAY_PATH, sonarRuntime);
     ruleMetadataLoader.addRulesByAnnotatedClass(repository, new ArrayList<>(CheckList.checks()));
     repository.done();
   }
