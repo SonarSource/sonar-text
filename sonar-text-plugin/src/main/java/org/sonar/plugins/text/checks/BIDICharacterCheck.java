@@ -37,10 +37,10 @@ public class BIDICharacterCheck extends AbstractCheck {
   public static final String MESSAGE_FORMAT = "This line contains a bidirectional character in column %d. Make sure that using bidirectional characters is safe here.";
 
   private static final List<Character> BIDI_FORMATTING_CHARS = List.of(
-    '\u202A',	// Left-To-Right Embedding
+    '\u202A', // Left-To-Right Embedding
     '\u202B', // Right-To-Left Embedding
     '\u202D', // Left-To-Right Override
-    '\u202E' // Right-To-Left Override
+    '\u202E'  // Right-To-Left Override
   );
   private static final List<Character> BIDI_ISOLATE_CHARS = List.of(
     '\u2066', // Left-To-Right Isolate
