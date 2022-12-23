@@ -17,23 +17,18 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text.core;
+package org.sonar.plugins.secrets.rules;
 
-import org.sonar.api.resources.AbstractLanguage;
+import org.sonar.plugins.secrets.NormalizedInputFile;
+import java.util.List;
+import org.sonarsource.api.sonarlint.SonarLintSide;
 
-public class TextLanguage extends AbstractLanguage {
+@SonarLintSide
+public interface SecretRule {
+  
+  String getRuleKey();
 
-  public static final String KEY = "text";
-  public static final String NAME = "Text";
+  String getMessage();
 
-  public TextLanguage() {
-    super(KEY, NAME);
-  }
-
-  @Override
-  public String[] getFileSuffixes() {
-    // We do not want any files to be associated with this language. The sole purpose of registering the language is to have rules and
-    // quality profiles associated to it.
-    return new String[]{"sonarShouldNotExistExtension"};
-  }
+  List<Secret> findSecretsIn(NormalizedInputFile inputFile);
 }

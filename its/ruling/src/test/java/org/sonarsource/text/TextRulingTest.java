@@ -55,8 +55,10 @@ public class TextRulingTest {
     ProfileGenerator.RulesConfiguration parameters = new ProfileGenerator.RulesConfiguration();
 
     String serverUrl = ORCHESTRATOR.getServer().getUrl();
-    File profileFile = ProfileGenerator.generateProfile(serverUrl, "text", "text", parameters, Collections.emptySet());
-    ORCHESTRATOR.getServer().restoreProfile(FileLocation.of(profileFile));
+    File textProfileFile = ProfileGenerator.generateProfile(serverUrl, "text", "text", parameters, Collections.emptySet());
+    ORCHESTRATOR.getServer().restoreProfile(FileLocation.of(textProfileFile));
+    File secretsProfileFile = ProfileGenerator.generateProfile(serverUrl, "secrets", "secrets", parameters, Collections.emptySet());
+    ORCHESTRATOR.getServer().restoreProfile(FileLocation.of(secretsProfileFile));
     ORCHESTRATOR.getServer().restoreProfile(FileLocation.of("src/test/resources/no_rules_php.xml"));
   }
 
@@ -64,6 +66,7 @@ public class TextRulingTest {
   public void test() throws Exception {
     ORCHESTRATOR.getServer().provisionProject("project", "project");
     ORCHESTRATOR.getServer().associateProjectToQualityProfile("project", "text", "rules");
+    ORCHESTRATOR.getServer().associateProjectToQualityProfile("project", "secrets", "rules");
     ORCHESTRATOR.getServer().associateProjectToQualityProfile("project", "php", "rules");
     SonarScanner build = SonarScanner.create(FileLocation.of("src/test/resources/sources").getFile())
       .setProjectKey("project")

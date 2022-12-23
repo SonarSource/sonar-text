@@ -41,6 +41,10 @@ mvn -s empty-settings.xml versions:display-dependency-updates
 rm empty-settings.xml
 ```
 
+### Update rule description
+
+java -jar ../sonar-rule-api/target/rule-api-2.4.0-SNAPSHOT.jar update
+
 ### License
 
 Copyright 2012-2021 SonarSource.

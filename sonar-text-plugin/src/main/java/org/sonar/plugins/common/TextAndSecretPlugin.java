@@ -17,24 +17,33 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text;
+package org.sonar.plugins.common;
 
 import org.sonar.api.Plugin;
-import org.sonar.plugins.text.core.TextLanguage;
 import org.sonar.plugins.text.core.TextSensor;
 import org.sonar.plugins.text.rules.TextBuiltInProfileDefinition;
 import org.sonar.plugins.text.rules.TextRuleDefinition;
+import org.sonar.plugins.secrets.SecretLanguage;
+import org.sonar.plugins.secrets.SecretsBuiltInProfileDefinition;
+import org.sonar.plugins.secrets.SecretsSensor;
+import org.sonar.plugins.secrets.rules.SecretsRulesDefinition;
+import org.sonar.plugins.text.text.TextLanguage;
 
-public class TextPlugin implements Plugin {
-
-  public static final String REPOSITORY_KEY = "text";
-  public static final String REPOSITORY_NAME = "SonarQube";
+public class TextAndSecretPlugin implements Plugin {
 
   @Override
   public void define(Context context) {
-    context.addExtension(TextLanguage.class);
-    context.addExtension(TextBuiltInProfileDefinition.class);
-    context.addExtension(TextRuleDefinition.class);
-    context.addExtension(TextSensor.class);
+    context.addExtensions(
+      // Text
+      TextLanguage.class,
+      TextBuiltInProfileDefinition.class,
+      TextRuleDefinition.class,
+      TextSensor.class,
+
+      // Secrets
+      SecretLanguage.class,
+      SecretsRulesDefinition.class,
+      SecretsBuiltInProfileDefinition.class,
+      SecretsSensor.class);
   }
 }

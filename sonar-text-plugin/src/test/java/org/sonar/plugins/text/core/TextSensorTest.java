@@ -45,10 +45,10 @@ import org.sonar.api.batch.sensor.issue.IssueLocation;
 import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.log.LogTesterJUnit5;
-import org.sonar.plugins.text.TextPlugin;
 import org.sonar.plugins.text.api.TextCheck;
 import org.sonar.plugins.text.checks.AbstractCheck;
 import org.sonar.plugins.text.checks.BIDICharacterCheck;
+import org.sonar.plugins.text.rules.TextRuleDefinition;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -60,7 +60,7 @@ class TextSensorTest {
   @RegisterExtension
   public LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
-  private static final String REPOSITORY_KEY = TextPlugin.REPOSITORY_KEY;
+  private static final String REPOSITORY_KEY = TextRuleDefinition.REPOSITORY_KEY;
 
   @TempDir
   protected File baseDir;

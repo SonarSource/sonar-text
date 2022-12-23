@@ -24,7 +24,7 @@ import org.sonar.api.SonarRuntime;
 import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.api.utils.Version;
-import org.sonar.plugins.text.checks.CheckList;
+import org.sonar.plugins.text.checks.TextCheckList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,6 +40,6 @@ class TextRuleDefinitionTest {
     assertThat(repository).isNotNull();
     assertThat(repository.name()).isEqualTo("SonarQube");
     assertThat(repository.language()).isEqualTo("text");
-    assertThat(repository.rules()).hasSize(CheckList.checks().size());
+    assertThat(repository.rules()).hasSize(TextCheckList.checks().size());
   }
 }

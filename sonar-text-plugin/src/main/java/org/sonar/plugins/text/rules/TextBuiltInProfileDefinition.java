@@ -20,8 +20,7 @@
 package org.sonar.plugins.text.rules;
 
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonar.plugins.text.TextPlugin;
-import org.sonar.plugins.text.core.TextLanguage;
+import org.sonar.plugins.text.text.TextLanguage;
 import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
 
 public class TextBuiltInProfileDefinition implements BuiltInQualityProfilesDefinition {
@@ -32,7 +31,7 @@ public class TextBuiltInProfileDefinition implements BuiltInQualityProfilesDefin
   @Override
   public void define(Context context) {
     NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(SONAR_WAY_PROFILE, TextLanguage.KEY);
-    BuiltInQualityProfileJsonLoader.load(profile, TextPlugin.REPOSITORY_KEY, SONAR_WAY_PATH);
+    BuiltInQualityProfileJsonLoader.load(profile, TextRuleDefinition.REPOSITORY_KEY, SONAR_WAY_PATH);
     profile.setDefault(true);
     profile.done();
   }

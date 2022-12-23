@@ -17,5 +17,20 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-@javax.annotation.ParametersAreNonnullByDefault
-package org.sonar.plugins.text;
+package org.sonar.plugins.secrets.rules;
+
+import org.sonar.plugins.secrets.EntropyChecker;
+import org.sonar.plugins.secrets.rules.matching.RegexMatcher;
+
+public class IbmApiKeyRule extends AbstractSecretRule {
+
+  public IbmApiKeyRule() {
+    super("S6337", "Make sure this IBM API key is not disclosed.",
+      new RegexMatcher("(?is)(?:ibm|apikey).{0,50}['\"`]([a-z0-9_\\-]{44})['\"`]"));
+  }
+
+  @Override
+  public boolean isProbablyFalsePositive(String matchedText) {
+    return EntropyChecker.hasLowEntropy(matchedText);
+  }
+}

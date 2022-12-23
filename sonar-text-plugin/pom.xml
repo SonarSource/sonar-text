@@ -22,7 +22,7 @@
   </organization>
 
   <properties>
-    <sonar.pluginClass>org.sonar.plugins.text.TextPlugin</sonar.pluginClass>
+    <sonar.pluginClass>org.sonar.plugins.common.TextAndSecretPlugin</sonar.pluginClass>
     <sonar.pluginName>Text file Code Quality and Security</sonar.pluginName>
   </properties>
 
@@ -64,9 +64,12 @@
         <groupId>org.sonarsource.sonar-packaging-maven-plugin</groupId>
         <artifactId>sonar-packaging-maven-plugin</artifactId>
         <configuration>
-          <sonarLintSupported>false</sonarLintSupported>
-          <sonarQubeMinVersion>8.9</sonarQubeMinVersion>
+          <pluginName>Text Code Quality and Security</pluginName>
           <skipDependenciesPackaging>true</skipDependenciesPackaging>
+          <pluginClass>org.sonar.plugins.common.TextAndSecretPlugin</pluginClass>
+          <sonarLintSupported>true</sonarLintSupported>
+          <sonarQubeMinVersion>9.8</sonarQubeMinVersion>
+          <jreMinVersion>11</jreMinVersion>
         </configuration>
       </plugin>
       <plugin>

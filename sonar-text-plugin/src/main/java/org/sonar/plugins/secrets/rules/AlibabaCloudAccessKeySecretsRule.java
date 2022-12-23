@@ -17,28 +17,22 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text;
+package org.sonar.plugins.secrets.rules;
 
-import org.junit.jupiter.api.Test;
-import org.sonar.api.Plugin;
-import org.sonar.api.SonarEdition;
-import org.sonar.api.SonarQubeSide;
-import org.sonar.api.SonarRuntime;
-import org.sonar.api.internal.SonarRuntimeImpl;
-import org.sonar.api.utils.Version;
+import org.sonar.plugins.secrets.EntropyChecker;
+import org.sonar.plugins.secrets.rules.matching.RegexMatcher;
 
-import static org.assertj.core.api.Assertions.assertThat;
+public class AlibabaCloudAccessKeySecretsRule extends AbstractAlibabaCloudAccessKeyRule {
 
-class TextPluginTest {
-
-  private static final Version VERSION_8_9 = Version.create(8, 9);
-
-  @Test
-  void sonarqube_extensions() {
-    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(VERSION_8_9, SonarQubeSide.SCANNER, SonarEdition.COMMUNITY);
-    Plugin.Context context = new Plugin.Context(runtime);
-    Plugin plugin = new TextPlugin();
-    plugin.define(context);
-    assertThat(context.getExtensions()).hasSize(4);
+  public AlibabaCloudAccessKeySecretsRule() {
+    super("Make sure this Alibaba Cloud Access Key Secret is not disclosed.",
+      new RegexMatcher("(?i)ali(?:yun|baba|cloud).{0,50}['\"`]([0-9a-z]{30})['\"`]"),
+      new RegexMatcher("(?i)(?:SECRET_?(?:ACCESS)?_?KEY|(?:ACCESS)?_?KEY_?SECRET)\\b[^0-9a-z]{0,10}([0-9a-z]{30})[^a-z0-9\\/+=$\\-_]"));
   }
+
+  @Override
+  public boolean isProbablyFalsePositive(String matchedText) {
+    return EntropyChecker.hasLowEntropy(matchedText);
+  }
+
 }

@@ -20,14 +20,18 @@
 package org.sonar.plugins.text.core;
 
 import org.junit.jupiter.api.Test;
+import org.sonar.plugins.text.text.TextLanguage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TextLanguageTest {
 
   @Test
-  void should_return_fake_suffix() {
+  void properties() {
     TextLanguage language = new TextLanguage();
-    assertThat(language.getFileSuffixes()).containsExactly("sonarShouldNotExistExtension");
+    assertThat(language.getKey()).isEqualTo("text");
+    assertThat(language.getName()).isEqualTo("Text");
+    assertThat(language.getFileSuffixes()).isEmpty();
   }
+
 }

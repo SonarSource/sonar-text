@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class CheckListTest {
+class TextCheckListTest {
 
   /**
    * Enforces that each check is declared in the list.
@@ -44,7 +44,7 @@ class CheckListTest {
         count++;
       }
     }
-    assertThat(CheckList.checks()).hasSize(count);
+    assertThat(TextCheckList.checks()).hasSize(count);
   }
 
   /**
@@ -52,7 +52,7 @@ class CheckListTest {
    */
   @Test
   void test() {
-    List<Class<?>> checks = CheckList.checks();
+    List<Class<?>> checks = TextCheckList.checks();
     for (Class<?> cls : checks) {
       String testName = '/' + cls.getName().replace('.', '/') + "Test.class";
       assertThat(getClass().getResource(testName))

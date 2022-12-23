@@ -1,0 +1,12 @@
+{
+  "type": "dummy_account",
+  "project_id": "sample_project",
+  "private_key_id": "df14f1790632497ffadd9a9ba6ce47629d8e7f6g",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nWlQKvHwr2SWL2BxsRc/0mJj66+8ICu0djuCfLRMunzN8teUknpKDlUTncWA\n-----END PRIVATE KEY-----\n",
+  "client_email": "user@some.company.com",
+  "client_id": "141790632497996476298",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/user%40some.company.com"
+}

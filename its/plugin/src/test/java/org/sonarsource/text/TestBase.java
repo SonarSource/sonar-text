@@ -40,7 +40,6 @@ import static java.util.Collections.singletonList;
 public abstract class TestBase {
 
   private static final String LANGUAGE_KEY = "text";
-  protected static final String BIDI_RULE_ID = "S6389";
 
   @ClassRule
   public static final Orchestrator ORCHESTRATOR = Tests.ORCHESTRATOR;

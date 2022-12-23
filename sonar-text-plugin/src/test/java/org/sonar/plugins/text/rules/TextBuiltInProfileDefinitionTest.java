@@ -21,7 +21,7 @@ package org.sonar.plugins.text.rules;
 
 import org.junit.jupiter.api.Test;
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonar.plugins.text.checks.CheckList;
+import org.sonar.plugins.text.checks.TextCheckList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,7 +35,7 @@ class TextBuiltInProfileDefinitionTest {
     BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile("text", "Sonar way");
     assertThat(profile.language()).isEqualTo("text");
     assertThat(profile.name()).isEqualTo("Sonar way");
-    assertThat(profile.rules()).hasSizeLessThanOrEqualTo(CheckList.checks().size());
+    assertThat(profile.rules().size()).isLessThanOrEqualTo(TextCheckList.checks().size());
   }
 
 }

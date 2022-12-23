@@ -33,9 +33,9 @@ import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
-import org.sonar.plugins.text.TextPlugin;
 import org.sonar.plugins.text.api.TextCheck;
-import org.sonar.plugins.text.checks.CheckList;
+import org.sonar.plugins.text.checks.TextCheckList;
+import org.sonar.plugins.text.rules.TextRuleDefinition;
 import org.sonar.plugins.text.visitor.ChecksVisitor;
 import org.sonarsource.analyzer.commons.ProgressReport;
 
@@ -46,8 +46,8 @@ public class TextSensor implements Sensor {
   private final Checks<TextCheck> checks;
 
   public TextSensor(CheckFactory checkFactory) {
-    this.checks = checkFactory.create(TextPlugin.REPOSITORY_KEY);
-    this.checks.addAnnotatedChecks(CheckList.checks());
+    this.checks = checkFactory.create(TextRuleDefinition.REPOSITORY_KEY);
+    this.checks.addAnnotatedChecks(TextCheckList.checks());
   }
 
   @Override

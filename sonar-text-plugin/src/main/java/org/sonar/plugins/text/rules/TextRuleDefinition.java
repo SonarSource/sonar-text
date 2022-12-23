@@ -22,14 +22,15 @@ package org.sonar.plugins.text.rules;
 import java.util.ArrayList;
 import org.sonar.api.SonarRuntime;
 import org.sonar.api.server.rule.RulesDefinition;
-import org.sonar.plugins.text.TextPlugin;
-import org.sonar.plugins.text.checks.CheckList;
-import org.sonar.plugins.text.core.TextLanguage;
+import org.sonar.plugins.text.checks.TextCheckList;
+import org.sonar.plugins.text.text.TextLanguage;
 import org.sonarsource.analyzer.commons.RuleMetadataLoader;
 
-import static org.sonar.plugins.text.TextPlugin.REPOSITORY_NAME;
 
 public class TextRuleDefinition implements RulesDefinition {
+
+  public static final String REPOSITORY_KEY = "text";
+  public static final String REPOSITORY_NAME = "SonarQube";
 
   static final String RESOURCE_FOLDER = "org/sonar/l10n/text/rules/text";
   static final String SONAR_WAY_PATH = "/" + RESOURCE_FOLDER +"/Sonar_way_profile.json";
@@ -42,9 +43,9 @@ public class TextRuleDefinition implements RulesDefinition {
 
   @Override
   public void define(Context context) {
-    NewRepository repository = context.createRepository(TextPlugin.REPOSITORY_KEY, TextLanguage.KEY).setName(REPOSITORY_NAME);
+    NewRepository repository = context.createRepository(REPOSITORY_KEY, TextLanguage.KEY).setName(REPOSITORY_NAME);
     RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RESOURCE_FOLDER, SONAR_WAY_PATH, sonarRuntime);
-    ruleMetadataLoader.addRulesByAnnotatedClass(repository, new ArrayList<>(CheckList.checks()));
+    ruleMetadataLoader.addRulesByAnnotatedClass(repository, new ArrayList<>(TextCheckList.checks()));
     repository.done();
   }
 }
