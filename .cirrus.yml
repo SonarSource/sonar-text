@@ -33,9 +33,10 @@ linux_1_cpu_1G_template: &LINUX_1_CPU_1G
     cpu: 1
     memory: 1G
 
-linux_2_cpu_4G_template: &LINUX_2_CPU_4G
+linux_2_cpu_4G_java_17_template: &LINUX_2_CPU_4G_JAVA_17
   eks_container:
     <<: *LINUX_IMAGE
+    image: ${CIRRUS_AWS_ACCOUNT}.dkr.ecr.eu-central-1.amazonaws.com/base:j17-latest
     cpu: 2
     memory: 4G
 
@@ -87,7 +88,7 @@ ws_scan_task:
 
 qa_plugin_task:
   <<: *QA_TASK_FILTER
-  <<: *LINUX_2_CPU_4G
+  <<: *LINUX_2_CPU_4G_JAVA_17
   env:
     matrix:
       - SQ_VERSION: LATEST_RELEASE
@@ -103,7 +104,7 @@ qa_plugin_task:
 
 qa_ruling_task:
   <<: *QA_TASK_FILTER
-  <<: *LINUX_2_CPU_4G
+  <<: *LINUX_2_CPU_4G_JAVA_17
   maven_cache:
     folder: ${CIRRUS_WORKING_DIR}/.m2/repository
   ruling_script:
