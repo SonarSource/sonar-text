@@ -19,31 +19,26 @@
  */
 package org.sonar.plugins.common;
 
+import org.junit.jupiter.api.Test;
 import org.sonar.api.Plugin;
-import org.sonar.plugins.text.core.TextSensor;
-import org.sonar.plugins.text.rules.TextBuiltInProfileDefinition;
-import org.sonar.plugins.text.rules.TextRuleDefinition;
-import org.sonar.plugins.secrets.SecretLanguage;
-import org.sonar.plugins.secrets.SecretsBuiltInProfileDefinition;
-import org.sonar.plugins.secrets.SecretsSensor;
-import org.sonar.plugins.secrets.rules.SecretsRulesDefinition;
-import org.sonar.plugins.text.text.TextLanguage;
+import org.sonar.api.SonarEdition;
+import org.sonar.api.SonarQubeSide;
+import org.sonar.api.SonarRuntime;
+import org.sonar.api.internal.SonarRuntimeImpl;
+import org.sonar.api.utils.Version;
 
-public class TextAndSecretPlugin implements Plugin {
+import static org.assertj.core.api.Assertions.assertThat;
 
-  @Override
-  public void define(Context context) {
-    context.addExtensions(
-      // Text
-      TextLanguage.class,
-      TextBuiltInProfileDefinition.class,
-      TextRuleDefinition.class,
-      TextSensor.class,
+class TextAndSecretsPluginTest {
 
-      // Secrets
-      SecretLanguage.class,
-      SecretsRulesDefinition.class,
-      SecretsBuiltInProfileDefinition.class,
-      SecretsSensor.class);
+  private static final Version VERSION_8_9 = Version.create(8, 9);
+
+  @Test
+  void sonarqube_extensions() {
+    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(VERSION_8_9, SonarQubeSide.SCANNER, SonarEdition.COMMUNITY);
+    Plugin.Context context = new Plugin.Context(runtime);
+    Plugin plugin = new TextAndSecretsPlugin();
+    plugin.define(context);
+    assertThat(context.getExtensions()).hasSize(7);
   }
 }

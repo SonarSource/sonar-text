@@ -22,7 +22,7 @@
   </organization>
 
   <properties>
-    <sonar.pluginClass>org.sonar.plugins.common.TextAndSecretPlugin</sonar.pluginClass>
+    <sonar.pluginClass>org.sonar.plugins.common.TextAndSecretsPlugin</sonar.pluginClass>
     <sonar.pluginName>Text file Code Quality and Security</sonar.pluginName>
   </properties>
 
@@ -66,7 +66,7 @@
         <configuration>
           <pluginName>Text Code Quality and Security</pluginName>
           <skipDependenciesPackaging>true</skipDependenciesPackaging>
-          <pluginClass>org.sonar.plugins.common.TextAndSecretPlugin</pluginClass>
+          <pluginClass>org.sonar.plugins.common.TextAndSecretsPlugin</pluginClass>
           <sonarLintSupported>true</sonarLintSupported>
           <sonarQubeMinVersion>9.8</sonarQubeMinVersion>
           <jreMinVersion>11</jreMinVersion>

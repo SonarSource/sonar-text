@@ -20,15 +20,15 @@
 package org.sonar.plugins.text.core;
 
 import org.junit.jupiter.api.Test;
-import org.sonar.plugins.secrets.SecretLanguage;
+import org.sonar.plugins.secrets.SecretsLanguage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class SecretLanguageTest {
+public class SecretsLanguageTest {
 
   @Test
   void properties() {
-    SecretLanguage language = new SecretLanguage();
+    SecretsLanguage language = new SecretsLanguage();
     assertThat(language.getKey()).isEqualTo("secrets");
     assertThat(language.getName()).isEqualTo("Secrets");
     assertThat(language.getFileSuffixes()).isEmpty();

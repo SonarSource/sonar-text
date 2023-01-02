@@ -45,6 +45,7 @@ import org.sonar.api.batch.sensor.issue.IssueLocation;
 import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.log.LogTesterJUnit5;
+import org.sonar.plugins.common.TextAndSecretsSensor;
 import org.sonar.plugins.text.api.TextCheck;
 import org.sonar.plugins.text.checks.AbstractCheck;
 import org.sonar.plugins.text.checks.BIDICharacterCheck;
@@ -77,7 +78,7 @@ class TextSensorTest {
   void should_return_sensor_descriptor() {
     DefaultSensorDescriptor descriptor = new DefaultSensorDescriptor();
     sensor().describe(descriptor);
-    assertThat(descriptor.name()).isEqualTo("Text Sensor");
+    assertThat(descriptor.name()).isEqualTo("TextAndSecretsSensor");
     assertThat(descriptor.languages()).isEmpty();
   }
 
@@ -216,12 +217,12 @@ class TextSensorTest {
     sensor.execute(context);
   }
 
-  private TextSensor sensor(String... rules) {
+  private TextAndSecretsSensor sensor(String... rules) {
     return sensor(checkFactory(rules));
   }
 
-  private TextSensor sensor(CheckFactory checkFactory) {
-    return new TextSensor(checkFactory);
+  private TextAndSecretsSensor sensor(CheckFactory checkFactory) {
+    return new TextAndSecretsSensor(checkFactory);
   }
 
   private CheckFactory mockCheckFactory(TextCheck check, String ruleName) {

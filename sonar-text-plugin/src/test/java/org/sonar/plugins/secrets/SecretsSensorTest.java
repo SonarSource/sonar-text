@@ -24,29 +24,29 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
+import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.internal.ActiveRulesBuilder;
 import org.sonar.api.batch.rule.internal.NewActiveRule;
-import org.sonar.api.batch.sensor.SensorDescriptor;
+import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.batch.sensor.issue.IIssue;
 import org.sonar.api.rule.RuleKey;
+import org.sonar.plugins.common.TextAndSecretsSensor;
 import org.sonar.plugins.secrets.rules.SecretCheckList;
 import org.sonar.plugins.secrets.rules.SecretRule;
-import org.sonar.plugins.secrets.rules.SecretsRulesDefinition;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 public class SecretsSensorTest {
 
-  SecretsSensor underTest;
+  TextAndSecretsSensor underTest;
 
   @Rule
   public TemporaryFolder tmp = new TemporaryFolder();
@@ -57,17 +57,26 @@ public class SecretsSensorTest {
   public void init() throws IOException {
     path = tmp.newFolder().toPath();
     context = SensorContextTester.create(this.path);
-    underTest = new SecretsSensor();
+
+    ActiveRulesBuilder activeRules = new ActiveRulesBuilder();
+    Arrays.asList("S6290", "S6292", "S6334", "S6335", "S6336", "S6337", "S6338").stream()
+            .map(key -> new NewActiveRule.Builder().setRuleKey(RuleKey.of("secrets", key)).build())
+            .forEach(activeRules::addRule);
+    context.setActiveRules(activeRules.build());
+
+    CheckFactory checkFactory = new CheckFactory(context.activeRules());
+
+    underTest = new TextAndSecretsSensor(checkFactory);
   }
 
   @Test
   public void describeTest() {
-    SensorDescriptor descriptor = mock(SensorDescriptor.class);
-
+    DefaultSensorDescriptor descriptor = new DefaultSensorDescriptor();
     underTest.describe(descriptor);
 
-    verify(descriptor).name("Sonar Secrets Detection Sensor");
-    verify(descriptor).createIssuesForRuleRepositories(SecretsRulesDefinition.REPOSITORY_KEY);
+    assertThat(descriptor.name()).isEqualTo("TextAndSecretsSensor");
+    assertThat(descriptor.isProcessesFilesIndependently()).isTrue();
+    assertThat(descriptor.ruleRepositories()).containsExactlyInAnyOrder("text", "secrets");
   }
 
   @Test

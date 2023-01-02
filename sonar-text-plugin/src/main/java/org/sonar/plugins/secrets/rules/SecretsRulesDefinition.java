@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.sonar.api.SonarRuntime;
 import org.sonar.api.server.rule.RulesDefinition;
-import org.sonar.plugins.secrets.SecretLanguage;
+import org.sonar.plugins.secrets.SecretsLanguage;
 import org.sonarsource.analyzer.commons.RuleMetadataLoader;
 
 public class SecretsRulesDefinition implements RulesDefinition {
@@ -42,7 +42,7 @@ public class SecretsRulesDefinition implements RulesDefinition {
 
   @Override
   public void define(Context context) {
-    NewRepository repository = context.createRepository(REPOSITORY_KEY, SecretLanguage.KEY).setName(REPOSITORY_NAME);
+    NewRepository repository = context.createRepository(REPOSITORY_KEY, SecretsLanguage.KEY).setName(REPOSITORY_NAME);
 
     RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RESOURCE_BASE_PATH, SONAR_WAY_PATH, sonarRuntime);
     List<String> ruleKeys = SecretCheckList.createInstances().stream()

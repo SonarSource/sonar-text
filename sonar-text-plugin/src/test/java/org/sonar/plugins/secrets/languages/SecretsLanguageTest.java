@@ -17,25 +17,20 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets;
+package org.sonar.plugins.secrets.languages;
 
-import org.sonar.api.resources.AbstractLanguage;
+import org.junit.Test;
+import org.sonar.plugins.secrets.SecretsLanguage;
 
-public class SecretLanguage extends AbstractLanguage {
+import static org.assertj.core.api.Assertions.assertThat;
 
-  public static final String KEY = "secrets";
+public class SecretsLanguageTest {
 
-  public static final String NAME = "Secrets";
+  @Test
+  public void getFileSuffixesTest() {
+    SecretsLanguage underTest = new SecretsLanguage();
 
-  public SecretLanguage() {
-    super(KEY, NAME);
-  }
-
-  @Override
-  public String[] getFileSuffixes() {
-    // We do not want any files to be associated with this language.
-    // The sole purpose of registering the language is to have rules and quality profiles associated to it.
-    return new String[0];
+    assertThat(underTest.getFileSuffixes()).isEmpty();
   }
 
 }
