@@ -19,9 +19,7 @@
  */
 package org.sonar.plugins.common;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -94,8 +92,17 @@ public class TextAndSecretsSensor implements Sensor {
           success = false;
           break;
         }
+        InputFileContext inputFileContext = new InputFileContext(sensorContext, inputFile);
+        try {
+          inputFileContext.loadContent();
+        } catch (IOException e) {
+          logAnalysisError(inputFileContext, e);
+          continue;
+        }
+        if (inputFileContext.isBinaryFile()) {
+          continue;
+        }
         if (inputFile.language() != null) {
-          InputFileContext inputFileContext = new InputFileContext(sensorContext, inputFile);
           try {
             textChecksVisitor.scan(inputFileContext);
           } catch (RuntimeException e) {
@@ -103,10 +110,10 @@ public class TextAndSecretsSensor implements Sensor {
           }
         }
         try {
-          NormalizedInputFile normalizedInputFile = read(inputFile);
+          NormalizedInputFile normalizedInputFile = new NormalizedInputFile(inputFile, inputFileContext.content());
           secretsActiveRules.forEach(rule ->
                   rule.findSecretsIn(normalizedInputFile)
-                          .forEach(secret -> createIssue(sensorContext, rule.getRuleKey(), inputFile, secret.getTextRange(), rule.getMessage())));
+                          .forEach(secret -> createSecretsIssue(sensorContext, rule.getRuleKey(), inputFile, secret.getTextRange(), rule.getMessage())));
         } catch (Exception e) {
           LOG.error("Can't analyze file", e);
         }
@@ -128,12 +135,7 @@ public class TextAndSecretsSensor implements Sensor {
             .collect(Collectors.toList());
   }
 
-  private static NormalizedInputFile read(InputFile file) throws IOException {
-    BufferedReader reader = new BufferedReader(new InputStreamReader(file.inputStream(), file.charset()));
-    return new NormalizedInputFile(file, reader.lines().collect(Collectors.joining("\n")));
-  }
-
-  private static void createIssue(SensorContext context, String ruleKey, InputFile file, TextRange textRange, String message) {
+  private static void createSecretsIssue(SensorContext context, String ruleKey, InputFile file, TextRange textRange, String message) {
     NewIssue newIssue = context.newIssue()
             .forRule(RuleKey.of(SecretsRulesDefinition.REPOSITORY_KEY, ruleKey));
 
@@ -146,7 +148,7 @@ public class TextAndSecretsSensor implements Sensor {
   }
 
   private static void logAnalysisError(InputFileContext inputFileContext, Exception e) {
-    URI inputFileUri = inputFileContext.inputFile.uri();
+    URI inputFileUri = inputFileContext.uri();
     String message = String.format("Unable to analyze file %s: %s", inputFileUri, e.getMessage());
     inputFileContext.reportAnalysisError(message);
     LOG.warn(message);

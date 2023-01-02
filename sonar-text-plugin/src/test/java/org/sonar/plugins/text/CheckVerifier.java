@@ -24,7 +24,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -34,8 +33,10 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
-import org.sonar.plugins.text.api.CheckContext;
+import org.sonar.api.batch.sensor.internal.SensorContextTester;
+import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.plugins.text.api.TextCheck;
+import org.sonar.plugins.text.core.InputFileContext;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -46,14 +47,20 @@ public class CheckVerifier {
    * {@link LineIssue#message} can be empty for expected issues. In that case the message is not considered in the comparison.
    * <b>It is currently not possible to test multiple issues on the same line.</b>
    */
-  public static void verify(TextCheck check, String testFileRelativePath, LineIssue... expected) {
-    TestContext ctx = new TestContext();
-    check.initialize(ctx);
-    check.analyze(inputFile(testFileRelativePath));
-    verifyLineIssues(ctx.raisedLineIssues, Arrays.asList(expected));
+  public static void verify(TextCheck check, String testFileRelativePath, LineIssue... expected) throws IOException {
+    SensorContextTester context = SensorContextTester.create(Paths.get("src/test/resources"));
+    InputFileContext inputFileContext = new InputFileContext(context, inputFile(testFileRelativePath));
+    inputFileContext.loadContent();
+    check.analyze(inputFileContext);
+    verifyLineIssues(context, Arrays.asList(expected));
   }
 
-  private static void verifyLineIssues(List<LineIssue> actual, List<LineIssue> expected) {
+  private static void verifyLineIssues(SensorContextTester context, List<LineIssue> expected) {
+    List<LineIssue> actual = context.allIssues().stream()
+            .map(Issue::primaryLocation)
+            .map(location -> new LineIssue(location.textRange().start().line(), location.message()))
+            .collect(Collectors.toList());
+
     List<LineIssue> missing = missingBasedOnLine(actual, expected);
     List<LineIssue> unexpected = missingBasedOnLine(expected, actual);
 
@@ -91,16 +98,6 @@ public class CheckVerifier {
     return comparedTo.stream()
       .filter(e -> !(fromLines.contains(e.lineNumber)))
       .collect(Collectors.toList());
-  }
-
-  static class TestContext implements CheckContext {
-
-    List<LineIssue> raisedLineIssues = new ArrayList<>();
-
-    @Override
-    public void reportLineIssue(int line, String message) {
-      raisedLineIssues.add(new LineIssue(line, message));
-    }
   }
 
   public static class LineIssue {
@@ -149,4 +146,5 @@ public class CheckVerifier {
     }
     return result;
   }
+
 }

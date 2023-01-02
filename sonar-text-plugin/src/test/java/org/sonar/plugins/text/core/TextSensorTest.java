@@ -47,7 +47,6 @@ import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.log.LogTesterJUnit5;
 import org.sonar.plugins.common.TextAndSecretsSensor;
 import org.sonar.plugins.text.api.TextCheck;
-import org.sonar.plugins.text.checks.AbstractCheck;
 import org.sonar.plugins.text.checks.BIDICharacterCheck;
 import org.sonar.plugins.text.rules.TextRuleDefinition;
 
@@ -62,6 +61,8 @@ class TextSensorTest {
   public LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
   private static final String REPOSITORY_KEY = TextRuleDefinition.REPOSITORY_KEY;
+
+  private static final RuleKey VALID_RULE_KEY = RuleKey.of(REPOSITORY_KEY, "valid");
 
   @TempDir
   protected File baseDir;
@@ -91,13 +92,8 @@ class TextSensorTest {
 
   @Test
   void valid_check_on_valid_file_should_raise_issue() {
-    TextCheck validCheck = new AbstractCheck() {
-      @Override
-      public void analyze(InputFile inputFile) {
-        ctx.reportLineIssue(1, "testIssue");
-      }
-    };
-    CheckFactory checkFactory = mockCheckFactory(validCheck, "valid");
+    TextCheck validCheck = ctx -> ctx.reportLineIssue(VALID_RULE_KEY, 1, "testIssue");
+    CheckFactory checkFactory = mockCheckFactory(validCheck, VALID_RULE_KEY.rule());
 
     InputFile inputFile = inputFile("file1.ts", "foo");
     analyse(sensor(checkFactory), inputFile);
@@ -114,13 +110,8 @@ class TextSensorTest {
 
   @Test
   void stop_on_cancellation() {
-    TextCheck validCheck = new AbstractCheck() {
-      @Override
-      public void analyze(InputFile inputFile) {
-        ctx.reportLineIssue(1, "testIssue");
-      }
-    };
-    CheckFactory checkFactory = mockCheckFactory(validCheck, "valid");
+    TextCheck validCheck = ctx -> ctx.reportLineIssue(VALID_RULE_KEY,1, "testIssue");
+    CheckFactory checkFactory = mockCheckFactory(validCheck, VALID_RULE_KEY.rule());
 
     context.setCancelled(true);
     analyse(sensor(checkFactory), inputFile("file1.ts", "{}"));
@@ -130,14 +121,11 @@ class TextSensorTest {
 
   @Test
   void issue_should_not_be_raised_twice_on_same_line() {
-    TextCheck validCheck = new AbstractCheck() {
-      @Override
-      public void analyze(InputFile inputFile) {
-        ctx.reportLineIssue(1, "testIssue");
-        ctx.reportLineIssue(1, "testIssue");
-      }
+    TextCheck validCheck = ctx -> {
+      ctx.reportLineIssue(VALID_RULE_KEY, 1, "testIssue");
+      ctx.reportLineIssue(VALID_RULE_KEY, 1, "testIssue");
     };
-    CheckFactory checkFactory = mockCheckFactory(validCheck, "valid");
+    CheckFactory checkFactory = mockCheckFactory(validCheck, VALID_RULE_KEY.rule());
 
     InputFile inputFile = inputFile("file1.ts", "foo");
     analyse(sensor(checkFactory), inputFile);
@@ -148,13 +136,8 @@ class TextSensorTest {
 
   @Test
   void file_should_not_be_handled_when_not_assigned_to_any_language() {
-    TextCheck validCheck = new AbstractCheck() {
-      @Override
-      public void analyze(InputFile inputFile) {
-        ctx.reportLineIssue(1, "testIssue");
-      }
-    };
-    CheckFactory checkFactory = mockCheckFactory(validCheck, "valid");
+    TextCheck validCheck = ctx -> ctx.reportLineIssue(VALID_RULE_KEY, 1, "testIssue");
+    CheckFactory checkFactory = mockCheckFactory(validCheck, VALID_RULE_KEY.rule());
 
     InputFile inputFile = inputFile("file1.ts", "foo", null);
     analyse(sensor(checkFactory), inputFile);
@@ -165,11 +148,8 @@ class TextSensorTest {
 
   @Test
   void analysis_error_should_be_raised_on_failure_in_check() {
-    TextCheck failingCheck = new AbstractCheck() {
-      @Override
-      public void analyze(InputFile inputFile) {
-        throw new IllegalStateException("Crash");
-      }
+    TextCheck failingCheck = inputFile -> {
+      throw new IllegalStateException("Crash");
     };
     CheckFactory checkFactory = mockCheckFactory(failingCheck, "failing");
 
@@ -189,7 +169,7 @@ class TextSensorTest {
     CheckFactory checkFactory = mockCheckFactory(new BIDICharacterCheck(), "failing");
     InputFile inputFile = inputFile("fakeFile.ts", "\n{}");
     InputFile spyInputFile = spy(inputFile);
-    when(spyInputFile.inputStream()).thenThrow(IOException.class);
+    when(spyInputFile.inputStream()).thenThrow(new IOException("Fail to read file input stream"));
     analyse(sensor(checkFactory), spyInputFile);
 
     Collection<AnalysisError> analysisErrors = context.allAnalysisErrors();

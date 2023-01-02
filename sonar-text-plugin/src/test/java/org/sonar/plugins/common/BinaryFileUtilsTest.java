@@ -17,9 +17,22 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text.api;
+package org.sonar.plugins.common;
 
-public interface CheckContext {
+import org.junit.jupiter.api.Test;
 
-  void reportLineIssue(int line, String message);
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.sonar.plugins.common.BinaryFileUtils.hasControlCharacters;
+
+class BinaryFileUtilsTest {
+
+  @Test
+  void has_control_characters() {
+    assertThat(hasControlCharacters("")).isFalse();
+    assertThat(hasControlCharacters("abc\tdef\r\n")).isFalse();
+    assertThat(hasControlCharacters("abc\tdef\r\n\u00FF")).isFalse();
+    assertThat(hasControlCharacters("\0abc")).isTrue();
+    assertThat(hasControlCharacters("abc\u0007def")).isTrue();
+    assertThat(hasControlCharacters("\nabc\u0007def")).isTrue();
+  }
 }

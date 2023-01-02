@@ -19,20 +19,22 @@
  */
 package org.sonar.plugins.text.checks;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
-import java.util.Scanner;
-import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.rule.RuleKey;
 import org.sonar.check.Rule;
-import org.sonar.plugins.text.api.CheckContext;
+import org.sonar.plugins.text.api.TextCheck;
+import org.sonar.plugins.text.core.InputFileContext;
+import org.sonar.plugins.text.rules.TextRuleDefinition;
 
-@Rule(key = "S6389")
-public class BIDICharacterCheck extends AbstractCheck {
+@Rule(key = BIDICharacterCheck.KEY)
+public class BIDICharacterCheck implements TextCheck {
+
+  static final String KEY = "S6389";
+
+  private static final RuleKey RULE_KEY = RuleKey.of(TextRuleDefinition.REPOSITORY_KEY, KEY);
 
   public static final String MESSAGE_FORMAT = "This line contains a bidirectional character in column %d. Make sure that using bidirectional characters is safe here.";
 
@@ -56,24 +58,14 @@ public class BIDICharacterCheck extends AbstractCheck {
   private static final char PDI = '\u2069'; // Pop Directional Isolate
 
   @Override
-  public void analyze(InputFile inputFile) {
-    try (InputStream stream = inputFile.inputStream()) {
-      analyzeStream(stream, inputFile.charset());
-    } catch (IOException e) {
-      throw new IllegalStateException("Fail to read file input stream");
+  public void analyze(InputFileContext ctx) {
+    List<String> lines = ctx.lines();
+    for (int lineOffset = 0; lineOffset < lines.size(); lineOffset++) {
+      checkLine(ctx, lines.get(lineOffset), lineOffset + 1);
     }
   }
 
-  private void analyzeStream(InputStream stream, Charset charset) {
-    Scanner scanner = new Scanner(stream, charset);
-    int lineNumber = 0;
-    while (scanner.hasNextLine()) {
-      lineNumber++;
-      checkLine(ctx, scanner.nextLine(), lineNumber);
-    }
-  }
-
-  private static void checkLine(CheckContext ctx, String lineContent, int lineNumber) {
+  private static void checkLine(InputFileContext ctx, String lineContent, int lineNumber) {
     for (Character bidiChar : BIDI_CHARS) {
       if (lineContent.indexOf(bidiChar) >= 0) {
         // The line contains at least one BIDI character, let's do a more thorough analysis
@@ -88,7 +80,7 @@ public class BIDICharacterCheck extends AbstractCheck {
    * - There has to be one closing PDF for every LRE, RLE, LRO, RLO
    * - There has to be one closing PDI for every LRI, RLI, FSI
    */
-  private static void checkLineBIDIChars(CheckContext ctx, String lineContent, int lineNumber) {
+  private static void checkLineBIDIChars(InputFileContext ctx, String lineContent, int lineNumber) {
     Deque<Integer> unclosedFormattingColumns = new ArrayDeque<>();
     Deque<Integer> unclosedIsolateColumns = new ArrayDeque<>();
 
@@ -108,7 +100,7 @@ public class BIDICharacterCheck extends AbstractCheck {
     maybeReportOnFirstColumn(ctx, lineNumber, unclosedFormattingColumns, unclosedIsolateColumns);
   }
 
-  private static void maybeReportOnFirstColumn(CheckContext ctx, int lineNumber, Deque<Integer> unclosedFormattingColumns,
+  private static void maybeReportOnFirstColumn(InputFileContext ctx, int lineNumber, Deque<Integer> unclosedFormattingColumns,
     Deque<Integer> unclosedIsolateColumns) {
     if (unclosedFormattingColumns.isEmpty() && unclosedIsolateColumns.isEmpty()) {
       // Everything was closed correctly. Nothing to report.
@@ -125,6 +117,6 @@ public class BIDICharacterCheck extends AbstractCheck {
       columnToReport = unclosedIsolateColumns.getFirst();
     }
 
-    ctx.reportLineIssue(lineNumber, String.format(MESSAGE_FORMAT, columnToReport + 1));
+    ctx.reportLineIssue(RULE_KEY, lineNumber, String.format(MESSAGE_FORMAT, columnToReport + 1));
   }
 }

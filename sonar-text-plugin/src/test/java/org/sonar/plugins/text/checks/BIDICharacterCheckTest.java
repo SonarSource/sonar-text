@@ -19,13 +19,14 @@
  */
 package org.sonar.plugins.text.checks;
 
+import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.sonar.plugins.text.CheckVerifier;
 
 class BIDICharacterCheckTest {
 
   @Test
-  void test() {
+  void test() throws IOException {
     CheckVerifier.verify(new BIDICharacterCheck(), "BIDICharacterCheck/test.php",
       new CheckVerifier.LineIssue(3, "" +
         "This line contains a bidirectional character in column 12. Make sure that using bidirectional characters is safe here."),

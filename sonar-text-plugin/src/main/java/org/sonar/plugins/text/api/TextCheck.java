@@ -19,11 +19,8 @@
  */
 package org.sonar.plugins.text.api;
 
-import org.sonar.api.batch.fs.InputFile;
+import org.sonar.plugins.text.core.InputFileContext;
 
 public interface TextCheck {
-
-  void initialize(CheckContext ctx);
-
-  void analyze(InputFile inputFile);
+  void analyze(InputFileContext inputFile);
 }
