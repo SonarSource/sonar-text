@@ -20,7 +20,6 @@
 package org.sonar.plugins.text.core;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
@@ -33,7 +32,7 @@ public class InputFileContext {
 
   public final SensorContext sensorContext;
   public final InputFile inputFile;
-  private final Set<Integer> raisedIssues = new HashSet<>();
+  private final Set<String> raisedIssues = new HashSet<>();
 
   public InputFileContext(SensorContext sensorContext, InputFile inputFile) {
     this.sensorContext = sensorContext;
@@ -41,7 +40,7 @@ public class InputFileContext {
   }
 
   public void reportLineIssue(RuleKey ruleKey, int line, String message) {
-    if (raisedIssues.add(issueHash(ruleKey, line))) {
+    if (raisedIssues.add(ruleKey + ":" + line)) {
       NewIssue issue = sensorContext.newIssue();
       NewIssueLocation issueLocation = issue.newLocation()
         .on(inputFile)
@@ -61,7 +60,4 @@ public class InputFileContext {
     error.save();
   }
 
-  private static int issueHash(RuleKey ruleKey, int line) {
-    return Objects.hash(ruleKey, line);
-  }
 }
