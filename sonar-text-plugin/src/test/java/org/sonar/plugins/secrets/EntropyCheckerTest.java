@@ -23,30 +23,29 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import org.junit.Test;
-import org.sonar.plugins.secrets.EntropyChecker;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-public class EntropyCheckerTest {
+class EntropyCheckerTest {
 
   @Test
-  public void computeSampleValue() {
+  void computeSampleValue() {
     assertThat(EntropyChecker.calculateShannonEntropy("0040878d3579659158d09ad09b6a9849d18e0e22")).isEqualTo(3.587326145256008);
   }
 
   @Test
-  public void entropyCheckPositive() {
+  void entropyCheckPositive() {
     assertThat(EntropyChecker.hasLowEntropy("06c6d5715a1ede6c51fc39ff67fd647f740b656d")).isTrue();
   }
 
   @Test
-  public void entropyCheckNegative() {
+  void entropyCheckNegative() {
     assertThat(EntropyChecker.hasLowEntropy("qAhEMdXy/MPwEuDlhh7O0AFBuzGvNy7AxpL3sX3q")).isFalse();
   }
 
   @Test
-  public void thresholdSplitsFalsePositiveGoodEnough() throws IOException {
+  void thresholdSplitsFalsePositiveGoodEnough() throws IOException {
     double falsePositivesAboveThreshold = processFile("src/test/files/false-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
     double truePositivesAboveThreshold = processFile("src/test/files/true-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
 

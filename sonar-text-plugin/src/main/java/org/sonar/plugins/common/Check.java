@@ -32,11 +32,11 @@ public interface Check {
   default String ruleId() {
     Rule ruleAnnotation = AnnotationUtils.getAnnotation(getClass(), Rule.class);
     if (ruleAnnotation == null) {
-      throw new IllegalStateException("No Rule annotation was found on " + getClass().getName());
+      throw new IllegalStateException("@Rule annotation was not found on " + getClass().getName());
     }
     String ruleKey = ruleAnnotation.key();
     if (ruleKey.length() == 0) {
-      throw new IllegalStateException("Empty key");
+      throw new IllegalStateException("Empty @Rule key on " + getClass().getName());
     }
     return ruleKey;
   }

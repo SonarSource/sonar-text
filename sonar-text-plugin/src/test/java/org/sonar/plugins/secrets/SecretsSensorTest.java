@@ -23,7 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.internal.ActiveRulesBuilder;
@@ -38,12 +38,12 @@ import org.sonar.plugins.common.TextAndSecretsSensor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
-public class SecretsSensorTest {
+class SecretsSensorTest {
 
   @Test
   public void describeTest() {
     DefaultSensorDescriptor descriptor = new DefaultSensorDescriptor();
-    SensorContextTester context =  sensorContext(new File("."));
+    SensorContextTester context = sensorContext(new File("."));
     sensor(context).describe(descriptor);
 
     assertThat(descriptor.name()).isEqualTo("TextAndSecretsSensor");
@@ -52,9 +52,9 @@ public class SecretsSensorTest {
   }
 
   @Test
-  public void should_raise_an_issue_when_a_secret_is_detected() throws IOException {
+  void should_raise_an_issue_when_a_secret_is_detected() throws IOException {
     File baseDir = new File("src/test/files/google-cloud-account-key/").getAbsoluteFile();
-    SensorContextTester context =  sensorContext(baseDir, "S6290", "S6292", "S6334", "S6335", "S6336", "S6337", "S6338");
+    SensorContextTester context = sensorContext(baseDir, "S6290", "S6292", "S6334", "S6335", "S6336", "S6337", "S6338");
     context.fileSystem().add(new TestInputFileBuilder("moduleKey", "GoogleCloudAccountPositive.json")
       .setModuleBaseDir(baseDir.toPath())
       .setCharset(StandardCharsets.UTF_8)
@@ -69,14 +69,14 @@ public class SecretsSensorTest {
   }
 
   @Test
-  public void should_not_raise_an_issue_when_no_rule_is_active() throws IOException {
+  void should_not_raise_an_issue_when_no_rule_is_active() throws IOException {
     File baseDir = new File("src/test/files/google-cloud-account-key/").getAbsoluteFile();
-    SensorContextTester context =  sensorContext(baseDir);
+    SensorContextTester context = sensorContext(baseDir);
     context.fileSystem().add(new TestInputFileBuilder("moduleKey", "GoogleCloudAccountPositive.json")
-            .setModuleBaseDir(baseDir.toPath())
-            .setCharset(StandardCharsets.UTF_8)
-            .initMetadata(new String(Files.readAllBytes(new File(baseDir, "GoogleCloudAccountPositive.json").toPath()), StandardCharsets.UTF_8))
-            .build());
+      .setModuleBaseDir(baseDir.toPath())
+      .setCharset(StandardCharsets.UTF_8)
+      .initMetadata(new String(Files.readAllBytes(new File(baseDir, "GoogleCloudAccountPositive.json").toPath()), StandardCharsets.UTF_8))
+      .build());
     context.setActiveRules(new ActiveRulesBuilder().build());
 
     sensor(context).execute(context);
@@ -85,9 +85,9 @@ public class SecretsSensorTest {
   }
 
   @Test
-  public void should_not_raise_an_issue_or_error_when_the_input_file_does_not_exist() {
+  void should_not_raise_an_issue_or_error_when_the_input_file_does_not_exist() {
     File baseDir = new File("src/test/files/").getAbsoluteFile();
-    SensorContextTester context =  sensorContext(baseDir, "S6290", "S6292", "S6334", "S6335", "S6336", "S6337", "S6338");
+    SensorContextTester context = sensorContext(baseDir, "S6290", "S6292", "S6334", "S6335", "S6336", "S6337", "S6338");
     context.fileSystem().add(new TestInputFileBuilder("moduleKey", "Missing.java")
       .build());
 
@@ -101,8 +101,8 @@ public class SecretsSensorTest {
     ActiveRulesBuilder activeRulesBuilder = new ActiveRulesBuilder();
     for (String activeRule : activeRules) {
       activeRulesBuilder.addRule(new NewActiveRule.Builder()
-              .setRuleKey(RuleKey.of("secrets", activeRule))
-              .build());
+        .setRuleKey(RuleKey.of("secrets", activeRule))
+        .build());
     }
     context.setActiveRules(activeRulesBuilder.build());
     return context;

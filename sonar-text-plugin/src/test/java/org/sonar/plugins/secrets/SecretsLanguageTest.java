@@ -19,14 +19,14 @@
  */
 package org.sonar.plugins.secrets;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class SecretsLanguageTest {
+class SecretsLanguageTest {
 
   @Test
-  public void properties() {
+  void properties() {
     SecretsLanguage language = new SecretsLanguage();
     assertThat(language.getKey()).isEqualTo("secrets");
     assertThat(language.getName()).isEqualTo("Secrets");

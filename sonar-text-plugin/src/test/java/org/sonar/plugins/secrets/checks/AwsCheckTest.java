@@ -21,7 +21,7 @@ package org.sonar.plugins.secrets.checks;
 
 import java.io.IOException;
 import java.util.Collection;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.plugins.common.Check;
 
@@ -30,12 +30,12 @@ import static org.sonar.plugins.common.TestUtils.analyze;
 import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 
-public class AwsCheckTest {
+class AwsCheckTest {
 
   Check check = new AwsCheck();
 
   @Test
-  public void testAwsAccessKeyIdPositive() throws IOException {
+  void testAwsAccessKeyIdPositive() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("public class Foo {\n"
       + "  public static final String KEY = \"AKIAIGKECZXA7AEIJLMQ\"\n"
       + "}"));
@@ -44,7 +44,7 @@ public class AwsCheckTest {
   }
 
   @Test
-  public void testAwsAccessKeyIdNegative() throws IOException {
+  void testAwsAccessKeyIdNegative() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("public class Foo {\n"
       + "  public static final String KEY = \"AKIGIGKECZXA7AEIJLMQ\"\n"
       + "}"));
@@ -52,7 +52,7 @@ public class AwsCheckTest {
   }
 
   @Test
-  public void testAwsAccessKeyIdExamplePositive() throws IOException {
+  void testAwsAccessKeyIdExamplePositive() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("public class Foo {\n"
       + "  public static final String KEY = \"AKIAIGKECZXA7EXAMPLF\"\n"
       + "}"));
@@ -61,7 +61,7 @@ public class AwsCheckTest {
   }
 
   @Test
-  public void testAwsAccessKeyIdExampleNegative() throws IOException {
+  void testAwsAccessKeyIdExampleNegative() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("public class Foo {\n"
       + "  public static final String KEY = \"AKIAIGKECZXA7EXAMPLE\"\n"
       + "}"));
@@ -69,7 +69,7 @@ public class AwsCheckTest {
   }
 
   @Test
-  public void testAwsAccessKeyFirstPositive() throws IOException {
+  void testAwsAccessKeyFirstPositive() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("var creds = new AWS.Credentials({ " +
       "     secretAccessKey: 'kHeUAwnSUizTWpSbyGAz4f+As5LshPIjvtpswqGb' " +
       "});"));
@@ -78,14 +78,14 @@ public class AwsCheckTest {
   }
 
   @Test
-  public void testAwsAccessKeySecondPositive() throws IOException {
+  void testAwsAccessKeySecondPositive() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("aws_secret_access_key=kHeUAwnSUizTWpSbyGAz4f+As5LshPIjvtpswqGb"));
     assertThat(asString(issues)).containsExactly(
       "secrets:S6290 [1:22-1:62] Make sure this AWS Secret Access Key is not disclosed.");
   }
 
   @Test
-  public void testAwsAccessKeyNegative() throws IOException {
+  void testAwsAccessKeyNegative() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("public class Foo {\n"
       + "  public static final String KEY = \"AKIGKECZXA7AEIJLMQ\"\n"
       + "}"));
@@ -93,7 +93,7 @@ public class AwsCheckTest {
   }
 
   @Test
-  public void testAwsSessionTokenPositive() throws IOException {
+  void testAwsSessionTokenPositive() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("AWS_SESSION_TOKEN=IQoJb3JpZ2luX2VjEKL//////////wE" +
       "aDGV1LWNlbnRyYWwtMSJHMEUCIQDFlDUEvUa6slxlkKKn8zbLkN/j1f7lKJdXJ03PQ5T5ZwIgDYlshciO8nyfnmjUfFy4I2+rEuPHBe" +
       "xsvfBo3MlCdgQqugMISxAAGgw4NTk4OTY2NzUzMDYiDFKPV7D/QmnqFWRYpiqXAypJf6TksPZXImVpIUU0Yj0uJhNN0o/HcO8hfQ4BX" +
@@ -111,7 +111,7 @@ public class AwsCheckTest {
   }
 
   @Test
-  public void testAwsSessionTokenNegative() throws IOException {
+  void testAwsSessionTokenNegative() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("AWS_SESS_TOK=IQoJb3JpZ2luX2VjEKL//////////wEaDGV1" +
       "LWNlbnRyYWwtMSJHMEUCIQDFlDUEvUa6slxlkKKn8zbLkN/j1f7lKJdXJ03PQ5T5ZwIgDYlshciO8nyfnmjUfFy4I2+rEuPHBexsvfB" +
       "o3MlCdgQqugMISxAAGgw4NTk4OTY2NzUzMDYiDFKPV7D/QmnqFWRYpiqXAypJf6TksPZXImVpIUU0Yj0uJhNN0o/HcO8hfQ4BXuCvpm" +

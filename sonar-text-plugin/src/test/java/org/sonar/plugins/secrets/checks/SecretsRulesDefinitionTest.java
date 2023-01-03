@@ -19,7 +19,7 @@
  */
 package org.sonar.plugins.secrets.checks;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.rules.RuleType;
 import org.sonar.api.server.rule.RulesDefinition;
@@ -29,12 +29,12 @@ import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.secrets.SecretsRulesDefinition.REPOSITORY_KEY;
 
-public class SecretsRulesDefinitionTest {
+class SecretsRulesDefinitionTest {
 
   SecretsRulesDefinition underTest = new SecretsRulesDefinition(SonarRuntimeImpl.forSonarLint(Version.create(8, 9)));
 
   @Test
-  public void defineTest() {
+  void defineTest() {
     RulesDefinition.Context context = new RulesDefinition.Context();
     underTest.define(context);
 

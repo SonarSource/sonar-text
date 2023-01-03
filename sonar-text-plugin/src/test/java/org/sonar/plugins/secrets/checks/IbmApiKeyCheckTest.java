@@ -21,7 +21,7 @@ package org.sonar.plugins.secrets.checks;
 
 import java.io.IOException;
 import java.util.Collection;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.plugins.common.Check;
 
@@ -30,24 +30,24 @@ import static org.sonar.plugins.common.TestUtils.analyze;
 import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 
-public class IbmApiKeyCheckTest {
+class IbmApiKeyCheckTest {
   Check check = new IbmApiKeyCheck();
 
   @Test
-  public void testRuleRegexPositive() throws IOException {
+  void testRuleRegexPositive() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("\"apikey\": \"iT5wxMGq2-ZJlMAHYoODl5EuTeCPvNRkSp1h3m99HWrc\""));
     assertThat(asString(issues)).containsExactly(
-            "secrets:S6337 [1:11-1:55] Make sure this IBM API key is not disclosed.");
+      "secrets:S6337 [1:11-1:55] Make sure this IBM API key is not disclosed.");
   }
 
   @Test
-  public void testRuleRegexNegative() throws IOException {
+  void testRuleRegexNegative() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("\"apikey\": \"iT5wxMGq2-ZJlMAHYoODl5EuTeCPvWrc\""));
     assertThat(issues).isEmpty();
   }
 
   @Test
-  public void testRuleRegexNegativeLowEntropy() throws IOException {
+  void testRuleRegexNegativeLowEntropy() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("\"apikey\": \"01234567890123456789012345678901234567890123\""));
     assertThat(issues).isEmpty();
   }

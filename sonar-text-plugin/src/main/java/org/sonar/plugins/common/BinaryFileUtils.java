@@ -21,7 +21,7 @@ package org.sonar.plugins.common;
 
 import java.util.regex.Pattern;
 
-public class BinaryFileUtils {
+public final class BinaryFileUtils {
 
   private static final Pattern CONTROL_CHARACTERS = Pattern.compile("["
     // Include:
@@ -38,6 +38,10 @@ public class BinaryFileUtils {
     + "\u000E-\u001F"
     // Exclude all characters >= 20 Space
     + "]");
+
+  private BinaryFileUtils() {
+    // utility class
+  }
 
   public static boolean hasControlCharacters(String text) {
     return CONTROL_CHARACTERS.matcher(text).find();

@@ -21,7 +21,7 @@ package org.sonar.plugins.secrets.checks;
 
 import java.io.IOException;
 import java.util.Collection;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.plugins.common.Check;
 
@@ -30,12 +30,12 @@ import static org.sonar.plugins.common.TestUtils.analyze;
 import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 
-public class AzureStorageAccountKeyCheckTest {
+class AzureStorageAccountKeyCheckTest {
 
   Check check = new AzureStorageAccountKeyCheck();
 
   @Test
-  public void testRuleFirstRegexPositive() throws IOException {
+  void testRuleFirstRegexPositive() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("async function main() {\n" +
       "  const account = process.env.ACCOUNT_NAME || \"accountname\";\n" +
       "  const accountKey = process.env.ACCOUNT_KEY || \"4dVw+l0W8My+FwuZ08dWXn+gHxcmBtS7esLAQSrm6/Om3jeyUKKGMkfAh38kWZlItThQYsg31v23A0w/uVP4pg==\";\n" +
@@ -50,7 +50,7 @@ public class AzureStorageAccountKeyCheckTest {
   }
 
   @Test
-  public void testRuleSecondRegexPositive() throws IOException {
+  void testRuleSecondRegexPositive() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile(
       "const connStr = \"DefaultEndpointsProtocol=https;AccountName=testaccountname;AccountKey=4dVw+l0W8My+FwuZ08dWXn+gHxcmBtS7esLAQSrm6/Om3jeyUKKGMkfAh38kWZlItThQYsg31v23A0w/uVP4pg==\";"));
     assertThat(asString(issues)).containsExactly(
@@ -58,7 +58,7 @@ public class AzureStorageAccountKeyCheckTest {
   }
 
   @Test
-  public void testRuleSecondRegexPositiveEvenWhenCoreWindowsNetStringPresent() throws IOException {
+  void testRuleSecondRegexPositiveEvenWhenCoreWindowsNetStringPresent() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile(
       "const connStr = \"DefaultEndpointsProtocol=https;AccountName=testaccountname;AccountKey=4dVw+l0W8My+FwuZ08dWXn+gHxcmBtS7esLAQSrm6/Om3jeyUKKGMkfAh38kWZlItThQYsg31v23A0w/uVP4pg==;EndpointSuffix=core.windows.net\";"));
     assertThat(asString(issues)).containsExactly(
@@ -66,7 +66,7 @@ public class AzureStorageAccountKeyCheckTest {
   }
 
   @Test
-  public void testRuleRegexNegative() throws IOException {
+  void testRuleRegexNegative() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile(
       "AccountKey=BtS7esLAQSrm6/Om3jeyUKKGMkfAh38kWZlItThQYsg31v23A0w/uVP4pg==\";"));
     assertThat(issues).isEmpty();

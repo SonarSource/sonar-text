@@ -21,7 +21,7 @@ package org.sonar.plugins.secrets.checks;
 
 import java.nio.file.Path;
 import java.util.Collection;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.plugins.common.Check;
 
@@ -31,12 +31,12 @@ import static org.sonar.plugins.common.TestUtils.analyze;
 import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 
-public class GoogleCloudAccountKeyCheckTest {
+class GoogleCloudAccountKeyCheckTest {
 
   Check check = new GoogleCloudAccountKeyCheck();
 
   @Test
-  public void testRuleRegexPositive() throws Exception {
+  void testRuleRegexPositive() throws Exception {
     Collection<Issue> issues = analyze(check, inputFile(
       Path.of("src", "test", "files", "google-cloud-account-key", "GoogleCloudAccountPositive.json"), UTF_8));
     assertThat(asString(issues)).containsExactly(
@@ -44,7 +44,7 @@ public class GoogleCloudAccountKeyCheckTest {
   }
 
   @Test
-  public void testRuleRegexNegative() throws Exception {
+  void testRuleRegexNegative() throws Exception {
     Collection<Issue> issues = analyze(check, inputFile(
       Path.of("src", "test", "files", "google-cloud-account-key", "GoogleCloudAccountNegative.json"), UTF_8));
     assertThat(issues).isEmpty();

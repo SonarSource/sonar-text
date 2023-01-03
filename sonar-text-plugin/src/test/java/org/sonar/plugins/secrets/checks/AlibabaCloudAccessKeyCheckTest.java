@@ -22,7 +22,7 @@ package org.sonar.plugins.secrets.checks;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.plugins.common.Check;
 
@@ -32,52 +32,52 @@ import static org.sonar.plugins.common.TestUtils.analyze;
 import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 
-public class AlibabaCloudAccessKeyCheckTest {
+class AlibabaCloudAccessKeyCheckTest {
 
   Check check = new AlibabaCloudAccessKeyCheck();
 
   @Test
-  public void testAlibabaCloudAccessKeyIDsPositive() throws IOException {
+  void testAlibabaCloudAccessKeyIDsPositive() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("LTAI5tBcc9SecYAomgyUSFs8"));
     assertThat(asString(issues)).containsExactly(
       "secrets:S6336 [1:0-1:24] Make sure this Alibaba Cloud Access Key ID is not disclosed.");
   }
 
   @Test
-  public void testAlibabaCloudAccessKeyIDsNegative() throws IOException {
+  void testAlibabaCloudAccessKeyIDsNegative() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("LNTTAI5tBcc9SecYAomgyUSFs8"));
     assertThat(issues).isEmpty();
   }
 
   @Test
-  public void testAlibabaCloudAccessKeySecrets1Positive() throws IOException {
+  void testAlibabaCloudAccessKeySecrets1Positive() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("String aliyunAccessKeySecret=\"KmkwlDrPBC68bgvZiNtrjonKIYmVT8\";"));
     assertThat(asString(issues)).containsExactly(
       "secrets:S6336 [1:30-1:60] Make sure this Alibaba Cloud Access Key Secret is not disclosed.");
   }
 
   @Test
-  public void testAlibabaCloudAccessKeySecrets2Positive() throws IOException {
+  void testAlibabaCloudAccessKeySecrets2Positive() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("static string AccessKeySecret = \"l0GdwcDYdJwB1VJ5pv0ormyTV9nhvW \";"));
     assertThat(asString(issues)).containsExactly(
       "secrets:S6336 [1:33-1:63] Make sure this Alibaba Cloud Access Key Secret is not disclosed.");
   }
 
   @Test
-  public void testAlibabaCloudAccessKeySecretsNegative() throws Exception {
+  void testAlibabaCloudAccessKeySecretsNegative() throws Exception {
     Collection<Issue> issues = analyze(check, inputFile(Path.of("src", "test", "files", "google-cloud-account-key", "GoogleCloudAccountNegative.json"), UTF_8));
     assertThat(issues).isEmpty();
   }
 
   @Test
-  public void testAlibabaCloudAccessKeySecretsExamplePositive() throws IOException {
+  void testAlibabaCloudAccessKeySecretsExamplePositive() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("String aliyunAccessKeySecret=\"KmkwlDrPBC68bgvZiNtrjonKIYmVT8\";"));
     assertThat(asString(issues)).containsExactly(
       "secrets:S6336 [1:30-1:60] Make sure this Alibaba Cloud Access Key Secret is not disclosed.");
   }
 
   @Test
-  public void testAlibabaCloudAccessKeySecretsExampleNegativeLowEntropy() throws IOException {
+  void testAlibabaCloudAccessKeySecretsExampleNegativeLowEntropy() throws IOException {
     Collection<Issue> issues = analyze(check, inputFile("String aliyunAccessKeySecret=\"100000000000000000000000000000\";"));
     assertThat(issues).isEmpty();
   }
