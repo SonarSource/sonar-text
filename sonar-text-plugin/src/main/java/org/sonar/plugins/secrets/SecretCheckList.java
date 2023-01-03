@@ -19,20 +19,29 @@
  */
 package org.sonar.plugins.secrets;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
+import java.util.List;
+import org.sonar.plugins.secrets.checks.AlibabaCloudAccessKeyCheck;
+import org.sonar.plugins.secrets.checks.AwsCheck;
+import org.sonar.plugins.secrets.checks.AzureStorageAccountKeyCheck;
+import org.sonar.plugins.secrets.checks.GoogleApiKeyCheck;
+import org.sonar.plugins.secrets.checks.GoogleCloudAccountKeyCheck;
+import org.sonar.plugins.secrets.checks.IbmApiKeyCheck;
+import org.sonar.plugins.secrets.checks.MwsAuthTokenCheck;
 
-public class SecretsBuiltInProfileDefinition implements BuiltInQualityProfilesDefinition {
+public final class SecretCheckList {
+  private SecretCheckList() {
+    // utility class
+  }
 
-    public static final String SONAR_WAY_PROFILE = "Sonar way";
-    public static final String SONAR_WAY_PATH = "org/sonar/l10n/secrets/rules/secrets/Sonar_way_profile.json";
-
-    @Override
-    public void define(Context context) {
-        NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(SONAR_WAY_PROFILE, SecretsLanguage.KEY);
-        BuiltInQualityProfileJsonLoader.load(profile, SecretsRulesDefinition.REPOSITORY_KEY, SONAR_WAY_PATH);
-        profile.setDefault(true);
-        profile.done();
-    }
+  public static List<Class<?>> checks() {
+    return List.of(
+      AlibabaCloudAccessKeyCheck.class,
+      AwsCheck.class,
+      AzureStorageAccountKeyCheck.class,
+      GoogleApiKeyCheck.class,
+      GoogleCloudAccountKeyCheck.class,
+      IbmApiKeyCheck.class,
+      MwsAuthTokenCheck.class);
+  }
 
 }

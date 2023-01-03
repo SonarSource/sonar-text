@@ -17,22 +17,18 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets;
+package org.sonar.plugins.secrets.checks;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
+import org.sonar.check.Rule;
+import org.sonar.plugins.secrets.api.RegexMatcher;
+import org.sonar.plugins.secrets.api.SecretCheck;
+import org.sonar.plugins.secrets.api.SecretRule;
 
-public class SecretsBuiltInProfileDefinition implements BuiltInQualityProfilesDefinition {
-
-    public static final String SONAR_WAY_PROFILE = "Sonar way";
-    public static final String SONAR_WAY_PATH = "org/sonar/l10n/secrets/rules/secrets/Sonar_way_profile.json";
-
-    @Override
-    public void define(Context context) {
-        NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(SONAR_WAY_PROFILE, SecretsLanguage.KEY);
-        BuiltInQualityProfileJsonLoader.load(profile, SecretsRulesDefinition.REPOSITORY_KEY, SONAR_WAY_PATH);
-        profile.setDefault(true);
-        profile.done();
-    }
-
+@Rule(key = "S6292")
+public class MwsAuthTokenCheck extends SecretCheck {
+  public MwsAuthTokenCheck() {
+    super(new SecretRule(
+      "Make sure this Amazon MWS Auth Token is not disclosed.",
+      new RegexMatcher("(amzn\\.mws\\.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})")));
+  }
 }

@@ -17,22 +17,28 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets;
+package org.sonar.plugins.common;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
+import org.sonar.api.rule.RuleKey;
+import org.sonar.api.utils.AnnotationUtils;
+import org.sonar.check.Rule;
 
-public class SecretsBuiltInProfileDefinition implements BuiltInQualityProfilesDefinition {
+public interface Check {
 
-    public static final String SONAR_WAY_PROFILE = "Sonar way";
-    public static final String SONAR_WAY_PATH = "org/sonar/l10n/secrets/rules/secrets/Sonar_way_profile.json";
+  void analyze(InputFileContext ctx);
 
-    @Override
-    public void define(Context context) {
-        NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(SONAR_WAY_PROFILE, SecretsLanguage.KEY);
-        BuiltInQualityProfileJsonLoader.load(profile, SecretsRulesDefinition.REPOSITORY_KEY, SONAR_WAY_PATH);
-        profile.setDefault(true);
-        profile.done();
+  RuleKey ruleKey();
+
+  default String ruleId() {
+    Rule ruleAnnotation = AnnotationUtils.getAnnotation(getClass(), Rule.class);
+    if (ruleAnnotation == null) {
+      throw new IllegalStateException("No Rule annotation was found on " + getClass().getName());
     }
+    String ruleKey = ruleAnnotation.key();
+    if (ruleKey.length() == 0) {
+      throw new IllegalStateException("Empty key");
+    }
+    return ruleKey;
+  }
 
 }

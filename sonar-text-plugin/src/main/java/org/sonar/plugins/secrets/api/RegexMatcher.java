@@ -17,22 +17,29 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets;
+package org.sonar.plugins.secrets.api;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class SecretsBuiltInProfileDefinition implements BuiltInQualityProfilesDefinition {
+public class RegexMatcher implements SecretsMatcher {
+  private final Pattern pattern;
 
-    public static final String SONAR_WAY_PROFILE = "Sonar way";
-    public static final String SONAR_WAY_PATH = "org/sonar/l10n/secrets/rules/secrets/Sonar_way_profile.json";
+  public RegexMatcher(String stringPattern) {
+    this.pattern = Pattern.compile(stringPattern);
+  }
 
-    @Override
-    public void define(Context context) {
-        NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(SONAR_WAY_PROFILE, SecretsLanguage.KEY);
-        BuiltInQualityProfileJsonLoader.load(profile, SecretsRulesDefinition.REPOSITORY_KEY, SONAR_WAY_PATH);
-        profile.setDefault(true);
-        profile.done();
+  @Override
+  public List<Match> findIn(String content) {
+    List<Match> matches = new ArrayList<>();
+    Matcher matcher = pattern.matcher(content);
+    while (matcher.find()) {
+      MatchResult matchResult = matcher.toMatchResult();
+      matches.add(new Match(matchResult.group(1), matchResult.start(1), matchResult.end(1)));
     }
-
+    return matches;
+  }
 }

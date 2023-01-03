@@ -17,22 +17,23 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets;
+package org.sonar.plugins.text;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
+import org.sonar.api.resources.AbstractLanguage;
 
-public class SecretsBuiltInProfileDefinition implements BuiltInQualityProfilesDefinition {
+public class TextLanguage extends AbstractLanguage {
 
-    public static final String SONAR_WAY_PROFILE = "Sonar way";
-    public static final String SONAR_WAY_PATH = "org/sonar/l10n/secrets/rules/secrets/Sonar_way_profile.json";
+  public static final String KEY = "text";
+  public static final String NAME = "Text";
 
-    @Override
-    public void define(Context context) {
-        NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(SONAR_WAY_PROFILE, SecretsLanguage.KEY);
-        BuiltInQualityProfileJsonLoader.load(profile, SecretsRulesDefinition.REPOSITORY_KEY, SONAR_WAY_PATH);
-        profile.setDefault(true);
-        profile.done();
-    }
+  public TextLanguage() {
+    super(KEY, NAME);
+  }
 
+  @Override
+  public String[] getFileSuffixes() {
+    // We do not want any files to be associated with this language.
+    // The sole purpose of registering the language is to have rules and quality profiles associated to it.
+    return new String[0];
+  }
 }

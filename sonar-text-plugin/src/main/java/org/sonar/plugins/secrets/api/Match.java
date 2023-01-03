@@ -17,22 +17,28 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets;
+package org.sonar.plugins.secrets.api;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
+public class Match {
+  private final String text;
+  private final int fileStartOffset;
+  private final int fileEndOffset;
 
-public class SecretsBuiltInProfileDefinition implements BuiltInQualityProfilesDefinition {
+  public Match(String text, int fileStartOffset, int fileEndOffset) {
+    this.text = text;
+    this.fileStartOffset = fileStartOffset;
+    this.fileEndOffset = fileEndOffset;
+  }
 
-    public static final String SONAR_WAY_PROFILE = "Sonar way";
-    public static final String SONAR_WAY_PATH = "org/sonar/l10n/secrets/rules/secrets/Sonar_way_profile.json";
+  public String getText() {
+    return text;
+  }
 
-    @Override
-    public void define(Context context) {
-        NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(SONAR_WAY_PROFILE, SecretsLanguage.KEY);
-        BuiltInQualityProfileJsonLoader.load(profile, SecretsRulesDefinition.REPOSITORY_KEY, SONAR_WAY_PATH);
-        profile.setDefault(true);
-        profile.done();
-    }
+  public int getFileStartOffset() {
+    return fileStartOffset;
+  }
 
+  public int getFileEndOffset() {
+    return fileEndOffset;
+  }
 }

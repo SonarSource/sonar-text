@@ -17,22 +17,20 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets;
+package org.sonar.plugins.text;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
+import org.junit.jupiter.api.Test;
 
-public class SecretsBuiltInProfileDefinition implements BuiltInQualityProfilesDefinition {
+import static org.assertj.core.api.Assertions.assertThat;
 
-    public static final String SONAR_WAY_PROFILE = "Sonar way";
-    public static final String SONAR_WAY_PATH = "org/sonar/l10n/secrets/rules/secrets/Sonar_way_profile.json";
+class TextLanguageTest {
 
-    @Override
-    public void define(Context context) {
-        NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(SONAR_WAY_PROFILE, SecretsLanguage.KEY);
-        BuiltInQualityProfileJsonLoader.load(profile, SecretsRulesDefinition.REPOSITORY_KEY, SONAR_WAY_PATH);
-        profile.setDefault(true);
-        profile.done();
-    }
+  @Test
+  void properties() {
+    TextLanguage language = new TextLanguage();
+    assertThat(language.getKey()).isEqualTo("text");
+    assertThat(language.getName()).isEqualTo("Text");
+    assertThat(language.getFileSuffixes()).isEmpty();
+  }
 
 }

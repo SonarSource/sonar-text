@@ -23,18 +23,12 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
-import org.sonar.api.rule.RuleKey;
 import org.sonar.check.Rule;
+import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.text.api.TextCheck;
-import org.sonar.plugins.text.core.InputFileContext;
-import org.sonar.plugins.text.rules.TextRuleDefinition;
 
-@Rule(key = BIDICharacterCheck.KEY)
+@Rule(key = "S6389")
 public class BIDICharacterCheck implements TextCheck {
-
-  static final String KEY = "S6389";
-
-  private static final RuleKey RULE_KEY = RuleKey.of(TextRuleDefinition.REPOSITORY_KEY, KEY);
 
   public static final String MESSAGE_FORMAT = "This line contains a bidirectional character in column %d. Make sure that using bidirectional characters is safe here.";
 
@@ -59,13 +53,16 @@ public class BIDICharacterCheck implements TextCheck {
 
   @Override
   public void analyze(InputFileContext ctx) {
+    if (ctx.language() == null) {
+      return;
+    }
     List<String> lines = ctx.lines();
     for (int lineOffset = 0; lineOffset < lines.size(); lineOffset++) {
       checkLine(ctx, lines.get(lineOffset), lineOffset + 1);
     }
   }
 
-  private static void checkLine(InputFileContext ctx, String lineContent, int lineNumber) {
+  private void checkLine(InputFileContext ctx, String lineContent, int lineNumber) {
     for (Character bidiChar : BIDI_CHARS) {
       if (lineContent.indexOf(bidiChar) >= 0) {
         // The line contains at least one BIDI character, let's do a more thorough analysis
@@ -80,7 +77,7 @@ public class BIDICharacterCheck implements TextCheck {
    * - There has to be one closing PDF for every LRE, RLE, LRO, RLO
    * - There has to be one closing PDI for every LRI, RLI, FSI
    */
-  private static void checkLineBIDIChars(InputFileContext ctx, String lineContent, int lineNumber) {
+  private void checkLineBIDIChars(InputFileContext ctx, String lineContent, int lineNumber) {
     Deque<Integer> unclosedFormattingColumns = new ArrayDeque<>();
     Deque<Integer> unclosedIsolateColumns = new ArrayDeque<>();
 
@@ -100,7 +97,7 @@ public class BIDICharacterCheck implements TextCheck {
     maybeReportOnFirstColumn(ctx, lineNumber, unclosedFormattingColumns, unclosedIsolateColumns);
   }
 
-  private static void maybeReportOnFirstColumn(InputFileContext ctx, int lineNumber, Deque<Integer> unclosedFormattingColumns,
+  private void maybeReportOnFirstColumn(InputFileContext ctx, int lineNumber, Deque<Integer> unclosedFormattingColumns,
     Deque<Integer> unclosedIsolateColumns) {
     if (unclosedFormattingColumns.isEmpty() && unclosedIsolateColumns.isEmpty()) {
       // Everything was closed correctly. Nothing to report.
@@ -117,6 +114,6 @@ public class BIDICharacterCheck implements TextCheck {
       columnToReport = unclosedIsolateColumns.getFirst();
     }
 
-    ctx.reportLineIssue(RULE_KEY, lineNumber, String.format(MESSAGE_FORMAT, columnToReport + 1));
+    ctx.reportLineIssue(ruleKey(), lineNumber, String.format(MESSAGE_FORMAT, columnToReport + 1));
   }
 }

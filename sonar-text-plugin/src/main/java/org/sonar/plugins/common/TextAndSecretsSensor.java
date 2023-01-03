@@ -27,26 +27,19 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
-import org.sonar.api.batch.sensor.issue.NewIssue;
-import org.sonar.api.batch.sensor.issue.NewIssueLocation;
-import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
-import org.sonar.plugins.secrets.NormalizedInputFile;
-import org.sonar.plugins.secrets.rules.SecretCheckList;
-import org.sonar.plugins.secrets.rules.SecretRule;
-import org.sonar.plugins.secrets.rules.SecretsRulesDefinition;
+import org.sonar.plugins.secrets.api.SecretCheck;
+import org.sonar.plugins.secrets.SecretCheckList;
+import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.text.api.TextCheck;
-import org.sonar.plugins.text.checks.TextCheckList;
-import org.sonar.plugins.text.core.InputFileContext;
-import org.sonar.plugins.text.rules.TextRuleDefinition;
-import org.sonar.plugins.text.visitor.ChecksVisitor;
+import org.sonar.plugins.text.TextCheckList;
+import org.sonar.plugins.text.TextRuleDefinition;
 import org.sonarsource.analyzer.commons.ProgressReport;
 
 public class TextAndSecretsSensor implements Sensor {
@@ -69,18 +62,17 @@ public class TextAndSecretsSensor implements Sensor {
 
   @Override
   public void execute(SensorContext sensorContext) {
+    ChecksVisitor checksVisitor = createChecksVisitor();
+    if (checksVisitor.activeChecks().isEmpty()) {
+      return;
+    }
+
     FileSystem fileSystem = sensorContext.fileSystem();
     List<InputFile> allInputFiles = new ArrayList<>();
     fileSystem.inputFiles(fileSystem.predicates().all()).forEach(allInputFiles::add);
     if (allInputFiles.isEmpty()) {
       return;
     }
-
-    Checks<TextCheck> textChecks = checkFactory.create(TextRuleDefinition.REPOSITORY_KEY);
-    textChecks.addAnnotatedChecks(TextCheckList.checks());
-    ChecksVisitor textChecksVisitor = new ChecksVisitor(textChecks);
-
-    List<SecretRule> secretsActiveRules = getSecretsActiveRules(sensorContext);
 
     List<String> filenames = allInputFiles.stream().map(InputFile::toString).collect(Collectors.toList());
     ProgressReport progressReport = new ProgressReport("Progress of the text and secrets analysis", TimeUnit.SECONDS.toMillis(10));
@@ -102,20 +94,10 @@ public class TextAndSecretsSensor implements Sensor {
         if (inputFileContext.isBinaryFile()) {
           continue;
         }
-        if (inputFile.language() != null) {
-          try {
-            textChecksVisitor.scan(inputFileContext);
-          } catch (RuntimeException e) {
-            logAnalysisError(inputFileContext, e);
-          }
-        }
         try {
-          NormalizedInputFile normalizedInputFile = new NormalizedInputFile(inputFile, inputFileContext.content());
-          secretsActiveRules.forEach(rule ->
-                  rule.findSecretsIn(normalizedInputFile)
-                          .forEach(secret -> createSecretsIssue(sensorContext, rule.getRuleKey(), inputFile, secret.getTextRange(), rule.getMessage())));
-        } catch (Exception e) {
-          LOG.error("Can't analyze file", e);
+          checksVisitor.scan(inputFileContext);
+        } catch (RuntimeException e) {
+          logAnalysisError(inputFileContext, e);
         }
         progressReport.nextFile();
       }
@@ -129,22 +111,14 @@ public class TextAndSecretsSensor implements Sensor {
 
   }
 
-  private static List<SecretRule> getSecretsActiveRules(SensorContext context) {
-    return SecretCheckList.createInstances().stream()
-            .filter(rule -> context.activeRules().find(RuleKey.of(SecretsRulesDefinition.REPOSITORY_KEY, rule.getRuleKey())) != null)
-            .collect(Collectors.toList());
-  }
+  protected ChecksVisitor createChecksVisitor() {
+    Checks<TextCheck> textChecks = checkFactory.create(TextRuleDefinition.REPOSITORY_KEY);
+    textChecks.addAnnotatedChecks(TextCheckList.checks());
 
-  private static void createSecretsIssue(SensorContext context, String ruleKey, InputFile file, TextRange textRange, String message) {
-    NewIssue newIssue = context.newIssue()
-            .forRule(RuleKey.of(SecretsRulesDefinition.REPOSITORY_KEY, ruleKey));
+    Checks<SecretCheck> secretChecks = checkFactory.create(SecretsRulesDefinition.REPOSITORY_KEY);
+    secretChecks.addAnnotatedChecks(SecretCheckList.checks());
 
-    NewIssueLocation primaryLocation = newIssue.newLocation()
-            .on(file)
-            .at(textRange)
-            .message(message);
-    newIssue.at(primaryLocation);
-    newIssue.save();
+    return new ChecksVisitor(textChecks.all(), secretChecks.all());
   }
 
   private static void logAnalysisError(InputFileContext inputFileContext, Exception e) {

@@ -17,22 +17,23 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets;
+package org.sonar.plugins.secrets.api;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Predicate;
 
-public class SecretsBuiltInProfileDefinition implements BuiltInQualityProfilesDefinition {
+public class ConditionalMatcher implements SecretsMatcher {
+  private final Predicate<String> predicate;
+  private final SecretsMatcher ifTrue;
 
-    public static final String SONAR_WAY_PROFILE = "Sonar way";
-    public static final String SONAR_WAY_PATH = "org/sonar/l10n/secrets/rules/secrets/Sonar_way_profile.json";
+  public ConditionalMatcher(Predicate<String> predicate, SecretsMatcher ifTrue) {
+    this.predicate = predicate;
+    this.ifTrue = ifTrue;
+  }
 
-    @Override
-    public void define(Context context) {
-        NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(SONAR_WAY_PROFILE, SecretsLanguage.KEY);
-        BuiltInQualityProfileJsonLoader.load(profile, SecretsRulesDefinition.REPOSITORY_KEY, SONAR_WAY_PATH);
-        profile.setDefault(true);
-        profile.done();
-    }
-
+  @Override
+  public List<Match> findIn(String content) {
+    return predicate.test(content) ? ifTrue.findIn(content) : Collections.emptyList();
+  }
 }

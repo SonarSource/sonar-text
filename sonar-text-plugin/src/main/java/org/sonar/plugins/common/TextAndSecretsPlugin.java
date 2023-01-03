@@ -22,10 +22,10 @@ package org.sonar.plugins.common;
 import org.sonar.api.Plugin;
 import org.sonar.plugins.secrets.SecretsBuiltInProfileDefinition;
 import org.sonar.plugins.secrets.SecretsLanguage;
-import org.sonar.plugins.secrets.rules.SecretsRulesDefinition;
-import org.sonar.plugins.text.rules.TextBuiltInProfileDefinition;
-import org.sonar.plugins.text.rules.TextRuleDefinition;
-import org.sonar.plugins.text.text.TextLanguage;
+import org.sonar.plugins.secrets.SecretsRulesDefinition;
+import org.sonar.plugins.text.TextBuiltInProfileDefinition;
+import org.sonar.plugins.text.TextRuleDefinition;
+import org.sonar.plugins.text.TextLanguage;
 
 public class TextAndSecretsPlugin implements Plugin {
 

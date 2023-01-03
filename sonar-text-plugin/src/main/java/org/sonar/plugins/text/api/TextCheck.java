@@ -19,8 +19,15 @@
  */
 package org.sonar.plugins.text.api;
 
-import org.sonar.plugins.text.core.InputFileContext;
+import org.sonar.api.rule.RuleKey;
+import org.sonar.plugins.common.Check;
+import org.sonar.plugins.common.InputFileContext;
+import org.sonar.plugins.text.TextRuleDefinition;
 
-public interface TextCheck {
-  void analyze(InputFileContext inputFile);
+public interface TextCheck extends Check {
+  void analyze(InputFileContext ctx);
+
+  default RuleKey ruleKey() {
+    return RuleKey.of(TextRuleDefinition.REPOSITORY_KEY, ruleId());
+  }
 }

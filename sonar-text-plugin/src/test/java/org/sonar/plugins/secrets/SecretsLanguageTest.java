@@ -19,20 +19,18 @@
  */
 package org.sonar.plugins.secrets;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
+import org.junit.Test;
 
-public class SecretsBuiltInProfileDefinition implements BuiltInQualityProfilesDefinition {
+import static org.assertj.core.api.Assertions.assertThat;
 
-    public static final String SONAR_WAY_PROFILE = "Sonar way";
-    public static final String SONAR_WAY_PATH = "org/sonar/l10n/secrets/rules/secrets/Sonar_way_profile.json";
+public class SecretsLanguageTest {
 
-    @Override
-    public void define(Context context) {
-        NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(SONAR_WAY_PROFILE, SecretsLanguage.KEY);
-        BuiltInQualityProfileJsonLoader.load(profile, SecretsRulesDefinition.REPOSITORY_KEY, SONAR_WAY_PATH);
-        profile.setDefault(true);
-        profile.done();
-    }
+  @Test
+  public void properties() {
+    SecretsLanguage language = new SecretsLanguage();
+    assertThat(language.getKey()).isEqualTo("secrets");
+    assertThat(language.getName()).isEqualTo("Secrets");
+    assertThat(language.getFileSuffixes()).isEmpty();
+  }
 
 }

@@ -17,22 +17,18 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets;
+package org.sonar.plugins.secrets.checks;
 
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
-import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
+import org.sonar.check.Rule;
+import org.sonar.plugins.secrets.api.RegexMatcher;
+import org.sonar.plugins.secrets.api.SecretCheck;
+import org.sonar.plugins.secrets.api.SecretRule;
 
-public class SecretsBuiltInProfileDefinition implements BuiltInQualityProfilesDefinition {
-
-    public static final String SONAR_WAY_PROFILE = "Sonar way";
-    public static final String SONAR_WAY_PATH = "org/sonar/l10n/secrets/rules/secrets/Sonar_way_profile.json";
-
-    @Override
-    public void define(Context context) {
-        NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(SONAR_WAY_PROFILE, SecretsLanguage.KEY);
-        BuiltInQualityProfileJsonLoader.load(profile, SecretsRulesDefinition.REPOSITORY_KEY, SONAR_WAY_PATH);
-        profile.setDefault(true);
-        profile.done();
-    }
-
+@Rule(key = "S6334")
+public class GoogleApiKeyCheck extends SecretCheck {
+  public GoogleApiKeyCheck() {
+    super(new SecretRule(
+      "Make sure this Google API Key is not disclosed.",
+      new RegexMatcher("(AIza[0-9A-Za-z\\-_]{35})\\b")));
+  }
 }
