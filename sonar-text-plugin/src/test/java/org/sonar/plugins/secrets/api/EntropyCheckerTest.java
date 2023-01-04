@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets;
+package org.sonar.plugins.secrets.api;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -35,6 +35,11 @@ class EntropyCheckerTest {
   }
 
   @Test
+  void emptyValue() {
+    assertThat(EntropyChecker.calculateShannonEntropy("")).isEqualTo(0.0);
+  }
+
+  @Test
   void entropyCheckPositive() {
     assertThat(EntropyChecker.hasLowEntropy("06c6d5715a1ede6c51fc39ff67fd647f740b656d")).isTrue();
   }
@@ -46,8 +51,8 @@ class EntropyCheckerTest {
 
   @Test
   void thresholdSplitsFalsePositiveGoodEnough() throws IOException {
-    double falsePositivesAboveThreshold = processFile("src/test/files/false-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
-    double truePositivesAboveThreshold = processFile("src/test/files/true-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
+    double falsePositivesAboveThreshold = processFile("src/test/resources/EntropyChecker/false-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
+    double truePositivesAboveThreshold = processFile("src/test/resources/EntropyChecker/true-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
 
     // this assertions can be changed if we will get more data that, for example, will show more false positives
     // the goal of the test to fail if threshold value will be changed, since current value is the sweet spot on data we have so far
@@ -57,19 +62,19 @@ class EntropyCheckerTest {
 
   private double processFile(String fileName, double threshold) throws IOException {
     File file = new File(fileName);
-    FileReader fileReader = new FileReader(file);
-    BufferedReader bufferedReader = new BufferedReader(fileReader);
     int aboveThreshold = 0;
     int total = 0;
-    String line;
-    while ((line = bufferedReader.readLine()) != null) {
-      total++;
-      double entropy = EntropyChecker.calculateShannonEntropy(line);
-      if (entropy > threshold) {
-        aboveThreshold++;
+    try (FileReader fileReader = new FileReader(file)) {
+      BufferedReader bufferedReader = new BufferedReader(fileReader);
+      String line;
+      while ((line = bufferedReader.readLine()) != null) {
+        total++;
+        double entropy = EntropyChecker.calculateShannonEntropy(line);
+        if (entropy > threshold) {
+          aboveThreshold++;
+        }
       }
     }
-    fileReader.close();
     return 1.0 * aboveThreshold / total * 100;
   }
 }

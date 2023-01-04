@@ -20,7 +20,6 @@
 package org.sonar.plugins.common;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -28,17 +27,12 @@ import java.util.stream.Collectors;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
-import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
-import org.sonar.plugins.secrets.api.SecretCheck;
-import org.sonar.plugins.secrets.SecretCheckList;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
-import org.sonar.plugins.text.api.TextCheck;
-import org.sonar.plugins.text.TextCheckList;
 import org.sonar.plugins.text.TextRuleDefinition;
 import org.sonarsource.analyzer.commons.ProgressReport;
 
@@ -62,8 +56,8 @@ public class TextAndSecretsSensor implements Sensor {
 
   @Override
   public void execute(SensorContext sensorContext) {
-    ChecksVisitor checksVisitor = createChecksVisitor();
-    if (checksVisitor.activeChecks().isEmpty()) {
+    List<Check> activeChecks = getActiveChecks();
+    if (activeChecks.isEmpty()) {
       return;
     }
 
@@ -77,53 +71,50 @@ public class TextAndSecretsSensor implements Sensor {
     List<String> filenames = allInputFiles.stream().map(InputFile::toString).collect(Collectors.toList());
     ProgressReport progressReport = new ProgressReport("Progress of the text and secrets analysis", TimeUnit.SECONDS.toMillis(10));
     progressReport.start(filenames);
-    boolean success = true;
+    boolean cancelled = false;
     try {
       for (InputFile inputFile : allInputFiles) {
         if (sensorContext.isCancelled()) {
-          success = false;
+          cancelled = true;
           break;
         }
-        InputFileContext inputFileContext = new InputFileContext(sensorContext, inputFile);
-        try {
-          inputFileContext.loadContent();
-        } catch (IOException e) {
-          logAnalysisError(inputFileContext, e);
-          continue;
-        }
-        if (inputFileContext.isBinaryFile()) {
-          continue;
-        }
-        try {
-          checksVisitor.scan(inputFileContext);
-        } catch (RuntimeException e) {
-          logAnalysisError(inputFileContext, e);
-        }
+        analyze(sensorContext, activeChecks, inputFile);
         progressReport.nextFile();
       }
     } finally {
-      if (success) {
-        progressReport.stop();
-      } else {
+      if (cancelled) {
         progressReport.cancel();
+      } else {
+        progressReport.stop();
       }
     }
 
   }
 
-  protected ChecksVisitor createChecksVisitor() {
-    Checks<TextCheck> textChecks = checkFactory.create(TextRuleDefinition.REPOSITORY_KEY);
-    textChecks.addAnnotatedChecks(TextCheckList.checks());
+  private static void analyze(SensorContext sensorContext, List<Check> activeChecks, InputFile inputFile) {
+    InputFileContext inputFileContext = new InputFileContext(sensorContext, inputFile);
+    try {
+      if (!inputFileContext.isBinaryFile()) {
+        for (Check check : activeChecks) {
+          check.analyze(inputFileContext);
+        }
+      }
+    } catch (IOException | RuntimeException e) {
+      logAnalysisError(inputFileContext, e);
+    }
+  }
 
-    Checks<SecretCheck> secretChecks = checkFactory.create(SecretsRulesDefinition.REPOSITORY_KEY);
-    secretChecks.addAnnotatedChecks(SecretCheckList.checks());
-
-    return new ChecksVisitor(textChecks.all(), secretChecks.all());
+  protected List<Check> getActiveChecks() {
+    List<Check> checks = new ArrayList<>();
+    checks.addAll(checkFactory.<Check>create(TextRuleDefinition.REPOSITORY_KEY)
+      .addAnnotatedChecks(TextRuleDefinition.checks()).all());
+    checks.addAll(checkFactory.<Check>create(SecretsRulesDefinition.REPOSITORY_KEY)
+      .addAnnotatedChecks(SecretsRulesDefinition.checks()).all());
+    return checks;
   }
 
   private static void logAnalysisError(InputFileContext inputFileContext, Exception e) {
-    URI inputFileUri = inputFileContext.uri();
-    String message = String.format("Unable to analyze file %s: %s", inputFileUri, e.getMessage());
+    String message = String.format("Unable to analyze file %s: %s", inputFileContext, e.getMessage());
     inputFileContext.reportAnalysisError(message);
     LOG.warn(message);
     LOG.debug(e.toString());

@@ -19,30 +19,29 @@
  */
 package org.sonar.plugins.text;
 
+import java.util.List;
 import org.sonar.api.SonarRuntime;
-import org.sonar.api.server.rule.RulesDefinition;
-import org.sonarsource.analyzer.commons.RuleMetadataLoader;
+import org.sonar.plugins.common.CommonRulesDefinition;
+import org.sonar.plugins.common.DefaultQualityProfileDefinition;
+import org.sonar.plugins.text.checks.BIDICharacterCheck;
 
-
-public class TextRuleDefinition implements RulesDefinition {
+public class TextRuleDefinition extends CommonRulesDefinition {
 
   public static final String REPOSITORY_KEY = "text";
   public static final String REPOSITORY_NAME = "SonarQube";
 
-  static final String RESOURCE_FOLDER = "/org/sonar/l10n/text/rules/text";
-  static final String SONAR_WAY_PATH = RESOURCE_FOLDER +"/Sonar_way_profile.json";
-
-  private final SonarRuntime sonarRuntime;
-
   public TextRuleDefinition(SonarRuntime sonarRuntime) {
-    this.sonarRuntime = sonarRuntime;
+    super(sonarRuntime, REPOSITORY_KEY, REPOSITORY_NAME, TextLanguage.KEY, checks());
   }
 
-  @Override
-  public void define(Context context) {
-    NewRepository repository = context.createRepository(REPOSITORY_KEY, TextLanguage.KEY).setName(REPOSITORY_NAME);
-    RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RESOURCE_FOLDER, SONAR_WAY_PATH, sonarRuntime);
-    ruleMetadataLoader.addRulesByAnnotatedClass(repository, TextCheckList.checks());
-    repository.done();
+  public static class DefaultQualityProfile extends DefaultQualityProfileDefinition {
+    public DefaultQualityProfile() {
+      super(REPOSITORY_KEY, TextLanguage.KEY);
+    }
   }
+
+  public static List<Class<?>> checks() {
+    return List.of(BIDICharacterCheck.class);
+  }
+
 }

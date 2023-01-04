@@ -19,30 +19,42 @@
  */
 package org.sonar.plugins.secrets;
 
+import java.util.List;
 import org.sonar.api.SonarRuntime;
-import org.sonar.api.server.rule.RulesDefinition;
-import org.sonarsource.analyzer.commons.RuleMetadataLoader;
+import org.sonar.plugins.common.CommonRulesDefinition;
+import org.sonar.plugins.common.DefaultQualityProfileDefinition;
+import org.sonar.plugins.secrets.checks.AlibabaCloudAccessKeyCheck;
+import org.sonar.plugins.secrets.checks.AwsCheck;
+import org.sonar.plugins.secrets.checks.AzureStorageAccountKeyCheck;
+import org.sonar.plugins.secrets.checks.GoogleApiKeyCheck;
+import org.sonar.plugins.secrets.checks.GoogleCloudAccountKeyCheck;
+import org.sonar.plugins.secrets.checks.IbmApiKeyCheck;
+import org.sonar.plugins.secrets.checks.MwsAuthTokenCheck;
 
-public class SecretsRulesDefinition implements RulesDefinition {
+public class SecretsRulesDefinition extends CommonRulesDefinition {
 
   public static final String REPOSITORY_KEY = "secrets";
   public static final String REPOSITORY_NAME = "Sonar Secrets Analyzer";
-  private static final String RESOURCE_FOLDER = "/org/sonar/l10n/secrets/rules/secrets";
-
-  private static final String SONAR_WAY_PATH = RESOURCE_FOLDER +"/Sonar_way_profile.json";
-
-  private final SonarRuntime sonarRuntime;
 
   public SecretsRulesDefinition(SonarRuntime sonarRuntime) {
-    this.sonarRuntime = sonarRuntime;
+    super(sonarRuntime, REPOSITORY_KEY, REPOSITORY_NAME, SecretsLanguage.KEY, checks());
   }
 
-  @Override
-  public void define(Context context) {
-    NewRepository repository = context.createRepository(REPOSITORY_KEY, SecretsLanguage.KEY).setName(REPOSITORY_NAME);
-    RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(RESOURCE_FOLDER, SONAR_WAY_PATH, sonarRuntime);
-    ruleMetadataLoader.addRulesByAnnotatedClass(repository, SecretCheckList.checks());
-    repository.done();
+  public static class DefaultQualityProfile extends DefaultQualityProfileDefinition {
+    public DefaultQualityProfile() {
+      super(REPOSITORY_KEY, SecretsLanguage.KEY);
+    }
+  }
+
+  public static List<Class<?>> checks() {
+    return List.of(
+      AlibabaCloudAccessKeyCheck.class,
+      AwsCheck.class,
+      AzureStorageAccountKeyCheck.class,
+      GoogleApiKeyCheck.class,
+      GoogleCloudAccountKeyCheck.class,
+      IbmApiKeyCheck.class,
+      MwsAuthTokenCheck.class);
   }
 
 }

@@ -20,18 +20,25 @@
 package org.sonar.plugins.common;
 
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextRange;
-import org.sonar.api.batch.sensor.internal.SensorContextTester;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
+import static org.sonar.plugins.common.TestUtils.defaultSensorContext;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 
 class InputFileContextTest {
+
   @Test
   void should_convert_when_offset_are_identical_and_on_same_line() throws IOException {
     InputFileContext ctx = inputFileContext("first");
+    ctx.content();
 
     TextRange range = ctx.newTextRangeFromFileOffsets(0, 1);
 
@@ -44,6 +51,7 @@ class InputFileContextTest {
   @Test
   void should_convert_when_offsets_are_on_different_lines_separated_by_line_feed() throws IOException {
     InputFileContext ctx = inputFileContext("first\nsecond");
+    ctx.content();
 
     TextRange range = ctx.newTextRangeFromFileOffsets(0, 12);
 
@@ -56,6 +64,7 @@ class InputFileContextTest {
   @Test
   void should_convert_when_offsets_are_not_on_the_first_line() throws IOException {
     InputFileContext ctx = inputFileContext("first\nsecond\nthird\nfourth");
+    ctx.content();
 
     TextRange range = ctx.newTextRangeFromFileOffsets(19, 25);
 
@@ -65,11 +74,71 @@ class InputFileContextTest {
     assertThat(range.end().lineOffset()).isEqualTo(6);
   }
 
-  private static InputFileContext inputFileContext(String content) throws IOException {
-    SensorContextTester context = SensorContextTester.create(Paths.get("."));
-    InputFileContext ctx = new InputFileContext(context, inputFile(content));
-    ctx.loadContent();
-    return ctx;
+  @Test
+  void should_fail_when_offsets_invalid() throws IOException {
+    InputFileContext ctx = inputFileContext("01234");
+    ctx.content();
+
+    assertThatThrownBy(() -> ctx.newTextRangeFromFileOffsets(5, 6))
+            .hasMessage("Invalid offsets: startOffset=5, endOffset=6");
+
+    assertThatThrownBy(() -> ctx.newTextRangeFromFileOffsets(6, 5))
+            .hasMessage("Invalid offsets: startOffset=6, endOffset=5");
+
+    assertThatThrownBy(() -> ctx.newTextRangeFromFileOffsets(2, 6))
+            .hasMessage("Invalid offsets: startOffset=2, endOffset=6");
+  }
+
+  @Test
+  void should_fail_to_load_content_if_file_does_not_exist() throws IOException {
+
+    InputFile inputFile = inputFile(Path.of("invalid-path.txt"));
+    InputFileContext ctx = new InputFileContext(defaultSensorContext(), inputFile);
+
+    assertThatThrownBy(ctx::content)
+            .isInstanceOf(NoSuchFileException.class)
+            .hasMessageContaining("invalid-path");
+
+    assertThat(ctx.isBinaryFile()).isFalse();
+    assertThat(ctx.lines()).isEmpty();
+    assertThat(ctx.content()).isEmpty();
+  }
+
+  @Test
+  void should_fail_to_load_content_if_corrupted_file() throws IOException {
+    InputFile inputFile = spy(inputFile("{}"));
+    when(inputFile.inputStream()).thenThrow(new IOException("Fail to read file input stream"));
+
+    InputFileContext ctx = new InputFileContext(defaultSensorContext(), inputFile);
+
+    assertThatThrownBy(ctx::content)
+            .isInstanceOf(IOException.class)
+            .hasMessageContaining("Fail to read file input stream");
+
+    assertThat(ctx.isBinaryFile()).isFalse();
+    assertThat(ctx.lines()).isEmpty();
+    assertThat(ctx.content()).isEmpty();
+  }
+
+  @Test
+  void should_identify_binary_file() throws IOException {
+    Path binaryFile = Path.of("target","test-classes","org","sonar","plugins","common","InputFileContextTest.class");
+    InputFile inputFile = inputFile(binaryFile);
+    InputFileContext ctx = new InputFileContext(defaultSensorContext(), inputFile);
+    assertThat(ctx.isBinaryFile()).isTrue();
+    assertThat(ctx.lines()).isEmpty();
+    assertThat(ctx.content()).isEmpty();
+  }
+
+  @Test
+  void to_string_should_return_the_path() {
+    InputFile inputFile = inputFile(Path.of("foo.txt"));
+    InputFileContext ctx = new InputFileContext(defaultSensorContext(), inputFile);
+    assertThat(ctx).hasToString("foo.txt");
+  }
+
+  private InputFileContext inputFileContext(String content) throws IOException {
+    return new InputFileContext(defaultSensorContext(), inputFile(content));
   }
 
 }

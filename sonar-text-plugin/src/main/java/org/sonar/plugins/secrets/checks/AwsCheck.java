@@ -20,7 +20,7 @@
 package org.sonar.plugins.secrets.checks;
 
 import org.sonar.check.Rule;
-import org.sonar.plugins.secrets.EntropyChecker;
+import org.sonar.plugins.secrets.api.EntropyChecker;
 import org.sonar.plugins.secrets.api.RegexMatcher;
 import org.sonar.plugins.secrets.api.SecretCheck;
 import org.sonar.plugins.secrets.api.SecretRule;
@@ -28,6 +28,7 @@ import org.sonar.plugins.secrets.api.SecretRule;
 @Rule(key = "S6290")
 public class AwsCheck extends SecretCheck {
   private static final String NO_MATCH_SUFFIX = "EXAMPLE";
+
   public AwsCheck() {
     super(
       // Aws Access Key

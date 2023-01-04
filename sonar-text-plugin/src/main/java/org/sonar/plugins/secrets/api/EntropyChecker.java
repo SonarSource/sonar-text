@@ -17,31 +17,40 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets;
+package org.sonar.plugins.secrets.api;
 
-import java.util.List;
-import org.sonar.plugins.secrets.checks.AlibabaCloudAccessKeyCheck;
-import org.sonar.plugins.secrets.checks.AwsCheck;
-import org.sonar.plugins.secrets.checks.AzureStorageAccountKeyCheck;
-import org.sonar.plugins.secrets.checks.GoogleApiKeyCheck;
-import org.sonar.plugins.secrets.checks.GoogleCloudAccountKeyCheck;
-import org.sonar.plugins.secrets.checks.IbmApiKeyCheck;
-import org.sonar.plugins.secrets.checks.MwsAuthTokenCheck;
+import java.util.HashMap;
+import java.util.Map;
 
-public final class SecretCheckList {
-  private SecretCheckList() {
+public final class EntropyChecker {
+
+  public static final double ENTROPY_THRESHOLD = 4.2;
+
+  private EntropyChecker() {
     // utility class
   }
 
-  public static List<Class<?>> checks() {
-    return List.of(
-      AlibabaCloudAccessKeyCheck.class,
-      AwsCheck.class,
-      AzureStorageAccountKeyCheck.class,
-      GoogleApiKeyCheck.class,
-      GoogleCloudAccountKeyCheck.class,
-      IbmApiKeyCheck.class,
-      MwsAuthTokenCheck.class);
+  public static boolean hasLowEntropy(String str) {
+    return calculateShannonEntropy(str) < ENTROPY_THRESHOLD;
+  }
+
+  public static double calculateShannonEntropy(String str) {
+    if (str.isEmpty()) {
+      return 0.0;
+    }
+    Map<Character, Integer> charMap = new HashMap<>();
+    for (int i = 0; i < str.length(); i++) {
+      char c = str.charAt(i);
+      charMap.putIfAbsent(c, 0);
+      charMap.put(c, charMap.get(c) + 1);
+    }
+
+    double entropy = 0.0;
+    for (Integer count : charMap.values()) {
+      double frequency = 1.0 * count / str.length();
+      entropy -= frequency * Math.log(frequency) / Math.log(2);
+    }
+    return entropy;
   }
 
 }

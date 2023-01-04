@@ -23,7 +23,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -48,47 +47,51 @@ public class InputFileContext {
 
   private boolean isBinaryFile;
 
-  public List<String> lines;
-  public String normalizedContent;
+  private List<String> lines = null;
+  private String normalizedContent = null;
 
   private final Set<String> raisedIssues = new HashSet<>();
 
   public InputFileContext(SensorContext sensorContext, InputFile inputFile) {
     this.sensorContext = sensorContext;
     this.inputFile = inputFile;
-    isBinaryFile = false;
-    lines = Collections.emptyList();
-    normalizedContent = "";
   }
 
-  public void loadContent() throws IOException {
-    List<String> contentLines = new ArrayList<>();
-    try (InputStream in = inputFile.inputStream()) {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(in, inputFile.charset()));
-      String line = reader.readLine();
-      while (line != null) {
-        if (BinaryFileUtils.hasControlCharacters(line)) {
-          isBinaryFile = true;
-          return;
+  private void loadContentIfNeeded() throws IOException {
+    if (normalizedContent == null) {
+      lines = Collections.emptyList();
+      normalizedContent = "";
+
+      List<String> contentLines = new ArrayList<>();
+      try (InputStream in = inputFile.inputStream()) {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in, inputFile.charset()));
+        String line = reader.readLine();
+        while (line != null) {
+          if (BinaryFileUtils.hasControlCharacters(line)) {
+            isBinaryFile = true;
+            return;
+          }
+          contentLines.add(line);
+          line = reader.readLine();
         }
-        contentLines.add(line);
-        line = reader.readLine();
       }
+      lines = contentLines;
+      normalizedContent = String.join("\n", contentLines);
     }
-    isBinaryFile = false;
-    lines = contentLines;
-    normalizedContent = String.join("\n", contentLines);
   }
 
-  public boolean isBinaryFile() {
+  public boolean isBinaryFile() throws IOException {
+    loadContentIfNeeded();
     return isBinaryFile;
   }
 
-  public String content() {
+  public String content() throws IOException {
+    loadContentIfNeeded();
     return normalizedContent;
   }
 
-  public List<String> lines() {
+  public List<String> lines() throws IOException {
+    loadContentIfNeeded();
     return lines;
   }
 
@@ -97,11 +100,12 @@ public class InputFileContext {
     return inputFile.language();
   }
 
-  public URI uri() {
-    return inputFile.uri();
+  @Override
+  public String toString() {
+    return inputFile.toString();
   }
 
-  public void reportLineIssue(RuleKey ruleKey, int line, String message) {
+  public void reportIssue(RuleKey ruleKey, int line, String message) {
     if (raisedIssues.add(ruleKey + ":" + line)) {
       NewIssue issue = sensorContext.newIssue();
       issue

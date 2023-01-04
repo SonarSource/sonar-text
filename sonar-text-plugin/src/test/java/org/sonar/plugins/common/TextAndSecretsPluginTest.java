@@ -34,7 +34,7 @@ class TextAndSecretsPluginTest {
   private static final Version VERSION_8_9 = Version.create(8, 9);
 
   @Test
-  void sonarqube_extensions() {
+  void define_extensions() {
     SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(VERSION_8_9, SonarQubeSide.SCANNER, SonarEdition.COMMUNITY);
     Plugin.Context context = new Plugin.Context(runtime);
     Plugin plugin = new TextAndSecretsPlugin();

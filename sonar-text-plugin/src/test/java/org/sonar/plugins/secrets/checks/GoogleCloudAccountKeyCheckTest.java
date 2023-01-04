@@ -20,15 +20,12 @@
 package org.sonar.plugins.secrets.checks;
 
 import java.nio.file.Path;
-import java.util.Collection;
 import org.junit.jupiter.api.Test;
-import org.sonar.api.batch.sensor.issue.Issue;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.common.Check;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.analyze;
-import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 
 class GoogleCloudAccountKeyCheckTest {
@@ -36,18 +33,16 @@ class GoogleCloudAccountKeyCheckTest {
   Check check = new GoogleCloudAccountKeyCheck();
 
   @Test
-  void testRuleRegexPositive() throws Exception {
-    Collection<Issue> issues = analyze(check, inputFile(
-      Path.of("src", "test", "files", "google-cloud-account-key", "GoogleCloudAccountPositive.json"), UTF_8));
-    assertThat(asString(issues)).containsExactly(
+  void positive() throws Exception {
+    InputFile file = inputFile(Path.of("src", "test", "resources", "checks", "GoogleCloudAccountKeyCheck", "GoogleCloudAccountPositive.json"));
+    assertThat(analyze(check, file)).containsExactly(
       "secrets:S6335 [5:18-5:1750] Make sure this Google Cloud service account key is not disclosed.");
   }
 
   @Test
-  void testRuleRegexNegative() throws Exception {
-    Collection<Issue> issues = analyze(check, inputFile(
-      Path.of("src", "test", "files", "google-cloud-account-key", "GoogleCloudAccountNegative.json"), UTF_8));
-    assertThat(issues).isEmpty();
+  void negative() throws Exception {
+    InputFile file = inputFile(Path.of("src", "test", "resources", "checks", "GoogleCloudAccountKeyCheck", "GoogleCloudAccountNegative.json"));
+    assertThat(analyze(check, file)).isEmpty();
   }
 
 }

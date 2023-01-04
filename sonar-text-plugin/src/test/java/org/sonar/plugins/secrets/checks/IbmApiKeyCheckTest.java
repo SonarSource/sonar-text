@@ -20,36 +20,32 @@
 package org.sonar.plugins.secrets.checks;
 
 import java.io.IOException;
-import java.util.Collection;
 import org.junit.jupiter.api.Test;
-import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.plugins.common.Check;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.analyze;
-import static org.sonar.plugins.common.TestUtils.asString;
-import static org.sonar.plugins.common.TestUtils.inputFile;
 
 class IbmApiKeyCheckTest {
   Check check = new IbmApiKeyCheck();
 
   @Test
-  void testRuleRegexPositive() throws IOException {
-    Collection<Issue> issues = analyze(check, inputFile("\"apikey\": \"iT5wxMGq2-ZJlMAHYoODl5EuTeCPvNRkSp1h3m99HWrc\""));
-    assertThat(asString(issues)).containsExactly(
+  void positive() throws IOException {
+    String fileContent = "\"apikey\": \"iT5wxMGq2-ZJlMAHYoODl5EuTeCPvNRkSp1h3m99HWrc\"";
+    assertThat(analyze(check, fileContent)).containsExactly(
       "secrets:S6337 [1:11-1:55] Make sure this IBM API key is not disclosed.");
   }
 
   @Test
-  void testRuleRegexNegative() throws IOException {
-    Collection<Issue> issues = analyze(check, inputFile("\"apikey\": \"iT5wxMGq2-ZJlMAHYoODl5EuTeCPvWrc\""));
-    assertThat(issues).isEmpty();
+  void negative() throws IOException {
+    String fileContent = "\"apikey\": \"iT5wxMGq2-ZJlMAHYoODl5EuTeCPvWrc\"";
+    assertThat(analyze(check, fileContent)).isEmpty();
   }
 
   @Test
-  void testRuleRegexNegativeLowEntropy() throws IOException {
-    Collection<Issue> issues = analyze(check, inputFile("\"apikey\": \"01234567890123456789012345678901234567890123\""));
-    assertThat(issues).isEmpty();
+  void negative_low_entropy() throws IOException {
+    String fileContent = "\"apikey\": \"01234567890123456789012345678901234567890123\"";
+    assertThat(analyze(check, fileContent)).isEmpty();
   }
 
 }

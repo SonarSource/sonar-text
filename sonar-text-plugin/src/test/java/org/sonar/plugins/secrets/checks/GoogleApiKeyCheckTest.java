@@ -20,30 +20,26 @@
 package org.sonar.plugins.secrets.checks;
 
 import java.io.IOException;
-import java.util.Collection;
 import org.junit.jupiter.api.Test;
-import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.plugins.common.Check;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.analyze;
-import static org.sonar.plugins.common.TestUtils.asString;
-import static org.sonar.plugins.common.TestUtils.inputFile;
 
 class GoogleApiKeyCheckTest {
   Check check = new GoogleApiKeyCheck();
 
   @Test
-  void testRuleRegexPositive() throws IOException {
-    Collection<Issue> issues = analyze(check, inputFile("android:value=\"AIzaSyCis4NzxMw1aJyvUIrjGILjPkSdxrRfof4\""));
-    assertThat(asString(issues)).containsExactly(
+  void positive() throws IOException {
+    String fileContent = "android:value=\"AIzaSyCis4NzxMw1aJyvUIrjGILjPkSdxrRfof4\"";
+    assertThat(analyze(check, fileContent)).containsExactly(
       "secrets:S6334 [1:15-1:54] Make sure this Google API Key is not disclosed.");
   }
 
   @Test
-  void testRuleRegexNegative() throws IOException {
-    Collection<Issue> issues = analyze(check, inputFile("android:value=\"AIzaSyCis4NzxMw1aJyvUIrjGfof4\""));
-    assertThat(issues).isEmpty();
+  void negative() throws IOException {
+    String fileContent = "android:value=\"AIzaSyCis4NzxMw1aJyvUIrjGfof4\"";
+    assertThat(analyze(check, fileContent)).isEmpty();
   }
 
 }

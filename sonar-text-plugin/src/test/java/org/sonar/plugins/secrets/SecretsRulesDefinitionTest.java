@@ -17,26 +17,31 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets.checks;
+package org.sonar.plugins.secrets;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
+import org.sonar.api.SonarRuntime;
 import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.rules.RuleType;
+import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.api.utils.Version;
-import org.sonar.plugins.secrets.SecretsRulesDefinition;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.secrets.SecretsRulesDefinition.REPOSITORY_KEY;
 
 class SecretsRulesDefinitionTest {
 
-  SecretsRulesDefinition underTest = new SecretsRulesDefinition(SonarRuntimeImpl.forSonarLint(Version.create(8, 9)));
-
   @Test
-  void defineTest() {
+  void define_rules() {
+    SonarRuntime sonarRuntime = SonarRuntimeImpl.forSonarLint(Version.create(8, 9));
+    SecretsRulesDefinition rulesDefinition = new SecretsRulesDefinition(sonarRuntime);
     RulesDefinition.Context context = new RulesDefinition.Context();
-    underTest.define(context);
+    rulesDefinition.define(context);
 
     assertThat(context.repositories()).hasSize(1);
     RulesDefinition.Repository repository = context.repository(REPOSITORY_KEY);
@@ -50,6 +55,26 @@ class SecretsRulesDefinitionTest {
     assertThat(ruleS7529.activatedByDefault()).isTrue();
     assertThat(ruleS7529.htmlDescription()).contains("AWS credentials are designed to authenticate and authorize requests to AWS.");
     assertThat(ruleS7529.type()).isEqualTo(RuleType.VULNERABILITY);
+  }
+
+  @Test
+  void define_sonar_way_profile() {
+    BuiltInQualityProfilesDefinition.Context context = new BuiltInQualityProfilesDefinition.Context();
+    BuiltInQualityProfilesDefinition profileDefinition = new SecretsRulesDefinition.DefaultQualityProfile();
+    profileDefinition.define(context);
+    BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile("secrets", "Sonar way");
+    assertThat(profile.language()).isEqualTo("secrets");
+    assertThat(profile.name()).isEqualTo("Sonar way");
+    assertThat(profile.rules()).hasSize(7);
+  }
+
+  @Test
+  void each_check_should_be_declared_in_the_check_list() throws IOException {
+    Path checksPackage = Path.of("src","main","java","org","sonar","plugins","secrets","checks");
+    try (Stream<Path> list = Files.list(checksPackage)) {
+      int expectedCount = (int) list.filter(file -> file.toString().endsWith("Check.java")).count();
+      assertThat(SecretsRulesDefinition.checks()).hasSize(expectedCount);
+    }
   }
 
 }

@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.secrets.api;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import org.sonar.api.rule.RuleKey;
@@ -28,20 +29,22 @@ import org.sonar.plugins.secrets.SecretsRulesDefinition;
 
 public class SecretCheck implements Check {
 
-    private final List<SecretRule> rules;
+  private final List<SecretRule> rules;
 
-    public SecretCheck(SecretRule... rules) {
-        this.rules = Arrays.asList(rules);
-    }
+  public SecretCheck(SecretRule... rules) {
+    this.rules = Arrays.asList(rules);
+  }
 
-    @Override
-    public RuleKey ruleKey() {
-        return RuleKey.of(SecretsRulesDefinition.REPOSITORY_KEY, ruleId());
-    }
+  @Override
+  public RuleKey ruleKey() {
+    return RuleKey.of(SecretsRulesDefinition.REPOSITORY_KEY, ruleId());
+  }
 
-    @Override
-    public void analyze(InputFileContext ctx) {
-        rules.forEach(rule -> rule.analyze(this, ctx));
+  @Override
+  public void analyze(InputFileContext ctx) throws IOException {
+    for (SecretRule rule : rules) {
+      rule.analyze(this, ctx);
     }
+  }
 
 }

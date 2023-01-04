@@ -19,13 +19,14 @@
  */
 package org.sonar.plugins.common;
 
+import java.io.IOException;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.AnnotationUtils;
 import org.sonar.check.Rule;
 
 public interface Check {
 
-  void analyze(InputFileContext ctx);
+  void analyze(InputFileContext ctx) throws IOException;
 
   RuleKey ruleKey();
 
@@ -35,7 +36,7 @@ public interface Check {
       throw new IllegalStateException("@Rule annotation was not found on " + getClass().getName());
     }
     String ruleKey = ruleAnnotation.key();
-    if (ruleKey.length() == 0) {
+    if (ruleKey.isEmpty()) {
       throw new IllegalStateException("Empty @Rule key on " + getClass().getName());
     }
     return ruleKey;

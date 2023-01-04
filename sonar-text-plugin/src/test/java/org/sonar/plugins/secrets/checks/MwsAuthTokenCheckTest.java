@@ -20,31 +20,27 @@
 package org.sonar.plugins.secrets.checks;
 
 import java.io.IOException;
-import java.util.Collection;
 import org.junit.jupiter.api.Test;
-import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.plugins.common.Check;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.analyze;
-import static org.sonar.plugins.common.TestUtils.asString;
-import static org.sonar.plugins.common.TestUtils.inputFile;
 
 class MwsAuthTokenCheckTest {
 
   Check check = new MwsAuthTokenCheck();
 
   @Test
-  void testRuleRegexPositive() throws IOException {
-    Collection<Issue> issues = analyze(check, inputFile("export MWS_TOKEN=amzn.mws.4ea38b7b-f563-7709-4bae-12ba540c0ac5"));
-    assertThat(asString(issues)).containsExactly(
+  void positive() throws IOException {
+    String fileContent = "export MWS_TOKEN=amzn.mws.4ea38b7b-f563-7709-4bae-12ba540c0ac5";
+    assertThat(analyze(check, fileContent)).containsExactly(
       "secrets:S6292 [1:17-1:62] Make sure this Amazon MWS Auth Token is not disclosed.");
   }
 
   @Test
-  void testRuleRegexNegative() throws IOException {
-    Collection<Issue> issues = analyze(check, inputFile("export MWS_TOKEN=amz.mws.4ea38b7b-f563-7709-4bae-12ba540c0ac5"));
-    assertThat(issues).isEmpty();
+  void negative() throws IOException {
+    String fileContent = "export MWS_TOKEN=amz.mws.4ea38b7b-f563-7709-4bae-12ba540c0ac5";
+    assertThat(analyze(check, fileContent)).isEmpty();
   }
 
 }

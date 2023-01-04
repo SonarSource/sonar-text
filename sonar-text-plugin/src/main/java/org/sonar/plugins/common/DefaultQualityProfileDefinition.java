@@ -17,22 +17,33 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.text;
+package org.sonar.plugins.common;
 
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
 import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
 
-public class TextBuiltInProfileDefinition implements BuiltInQualityProfilesDefinition {
+public class DefaultQualityProfileDefinition implements BuiltInQualityProfilesDefinition {
 
-  public static final String SONAR_WAY_PROFILE = "Sonar way";
-  public static final String SONAR_WAY_PATH = "org/sonar/l10n/text/rules/text/Sonar_way_profile.json";
+  public static final String NAME = "Sonar way";
+  public static final String FILE_NAME = "Sonar_way_profile.json";
 
-  @Override
-  public void define(Context context) {
-    NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(SONAR_WAY_PROFILE, TextLanguage.KEY);
-    BuiltInQualityProfileJsonLoader.load(profile, TextRuleDefinition.REPOSITORY_KEY, SONAR_WAY_PATH);
+  public final String repositoryKey;
+  public final String languageKey;
+
+  public DefaultQualityProfileDefinition(String repositoryKey, String languageKey) {
+    this.repositoryKey = repositoryKey;
+    this.languageKey = languageKey;
+  }
+
+  public void define(BuiltInQualityProfilesDefinition.Context context) {
+    BuiltInQualityProfilesDefinition.NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(NAME, languageKey);
+    BuiltInQualityProfileJsonLoader.load(profile, repositoryKey, profilePath(repositoryKey, languageKey));
     profile.setDefault(true);
     profile.done();
+  }
+
+  public static String profilePath(String repository, String language) {
+    return CommonRulesDefinition.resourcePath(repository, language) + "/" + FILE_NAME;
   }
 
 }

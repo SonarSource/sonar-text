@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.text.checks;
 
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -36,12 +37,12 @@ public class BIDICharacterCheck implements TextCheck {
     '\u202A', // Left-To-Right Embedding
     '\u202B', // Right-To-Left Embedding
     '\u202D', // Left-To-Right Override
-    '\u202E'  // Right-To-Left Override
+    '\u202E' // Right-To-Left Override
   );
   private static final List<Character> BIDI_ISOLATE_CHARS = List.of(
     '\u2066', // Left-To-Right Isolate
     '\u2067', // Right-To-Left Isolate
-    '\u2068'  // First Strong Isolate
+    '\u2068' // First Strong Isolate
   );
   private static final List<Character> BIDI_CHARS = new ArrayList<>(BIDI_FORMATTING_CHARS);
   static {
@@ -52,7 +53,7 @@ public class BIDICharacterCheck implements TextCheck {
   private static final char PDI = '\u2069'; // Pop Directional Isolate
 
   @Override
-  public void analyze(InputFileContext ctx) {
+  public void analyze(InputFileContext ctx) throws IOException {
     if (ctx.language() == null) {
       return;
     }
@@ -106,14 +107,13 @@ public class BIDICharacterCheck implements TextCheck {
 
     int columnToReport = 0;
     if (!unclosedFormattingColumns.isEmpty() && !unclosedIsolateColumns.isEmpty()) {
-      columnToReport = (unclosedFormattingColumns.getFirst() < unclosedIsolateColumns.getFirst()) ? unclosedFormattingColumns.getFirst() :
-        unclosedIsolateColumns.getFirst();
+      columnToReport = (unclosedFormattingColumns.getFirst() < unclosedIsolateColumns.getFirst()) ? unclosedFormattingColumns.getFirst() : unclosedIsolateColumns.getFirst();
     } else if (!unclosedFormattingColumns.isEmpty()) {
       columnToReport = unclosedFormattingColumns.getFirst();
     } else {
       columnToReport = unclosedIsolateColumns.getFirst();
     }
 
-    ctx.reportLineIssue(ruleKey(), lineNumber, String.format(MESSAGE_FORMAT, columnToReport + 1));
+    ctx.reportIssue(ruleKey(), lineNumber, String.format(MESSAGE_FORMAT, columnToReport + 1));
   }
 }

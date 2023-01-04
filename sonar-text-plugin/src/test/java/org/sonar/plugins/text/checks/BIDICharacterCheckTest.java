@@ -21,15 +21,12 @@ package org.sonar.plugins.text.checks;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 import org.junit.jupiter.api.Test;
-import org.sonar.api.batch.sensor.issue.Issue;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.common.Check;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.analyze;
-import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 
 class BIDICharacterCheckTest {
@@ -38,9 +35,8 @@ class BIDICharacterCheckTest {
 
   @Test
   void test() throws IOException {
-    Path file = Path.of("src", "test", "resources", "checks", "BIDICharacterCheck", "test.php");
-    Collection<Issue> issues = analyze(check, inputFile(file, UTF_8));
-    assertThat(asString(issues)).containsExactly(
+    InputFile file = inputFile(Path.of("src", "test", "resources", "checks", "BIDICharacterCheck", "test.php"));
+    assertThat(analyze(check, file)).containsExactly(
       "text:S6389 [3:0-3:20] This line contains a bidirectional character in column 12. Make sure that using bidirectional characters is safe here.",
       "text:S6389 [4:0-4:20] This line contains a bidirectional character in column 12. Make sure that using bidirectional characters is safe here.",
       "text:S6389 [5:0-5:20] This line contains a bidirectional character in column 12. Make sure that using bidirectional characters is safe here.",
