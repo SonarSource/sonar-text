@@ -22,22 +22,21 @@ package org.sonar.plugins.secrets.api;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import org.sonar.api.rule.RuleKey;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 
-public class SecretCheck implements Check {
+public abstract class SecretCheck extends Check {
 
   private final List<SecretRule> rules;
 
-  public SecretCheck(SecretRule... rules) {
+  protected SecretCheck(SecretRule... rules) {
     this.rules = Arrays.asList(rules);
   }
 
   @Override
-  public RuleKey ruleKey() {
-    return RuleKey.of(SecretsRulesDefinition.REPOSITORY_KEY, ruleId());
+  protected String repositoryKey() {
+    return SecretsRulesDefinition.REPOSITORY_KEY;
   }
 
   @Override

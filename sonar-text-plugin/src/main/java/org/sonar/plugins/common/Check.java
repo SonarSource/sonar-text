@@ -24,22 +24,24 @@ import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.AnnotationUtils;
 import org.sonar.check.Rule;
 
-public interface Check {
+public abstract class Check {
 
-  void analyze(InputFileContext ctx) throws IOException;
+  public final RuleKey ruleKey;
 
-  RuleKey ruleKey();
-
-  default String ruleId() {
+  protected Check() {
     Rule ruleAnnotation = AnnotationUtils.getAnnotation(getClass(), Rule.class);
     if (ruleAnnotation == null) {
       throw new IllegalStateException("@Rule annotation was not found on " + getClass().getName());
     }
-    String ruleKey = ruleAnnotation.key();
-    if (ruleKey.isEmpty()) {
+    String ruleId = ruleAnnotation.key();
+    if (ruleId.isEmpty()) {
       throw new IllegalStateException("Empty @Rule key on " + getClass().getName());
     }
-    return ruleKey;
+    ruleKey = RuleKey.of(repositoryKey(), ruleId);
   }
+
+  protected abstract String repositoryKey();
+
+  public abstract void analyze(InputFileContext ctx) throws IOException;
 
 }

@@ -44,7 +44,7 @@ public class SecretRule {
     this.isMatchedTextFalsePositive = isMatchedTextFalsePositive;
   }
 
-  public void analyze(Check check, InputFileContext ctx) throws IOException {
+  public final void analyze(Check check, InputFileContext ctx) throws IOException {
     List<TextRange> foundSecrets = new ArrayList<>();
     String content = ctx.content();
     matchers.stream()
@@ -55,7 +55,7 @@ public class SecretRule {
         boolean notOverlapsExisting = foundSecrets.stream().noneMatch(foundSecret -> foundSecret.overlap(textRange));
         if (notOverlapsExisting) {
           foundSecrets.add(textRange);
-          ctx.reportIssue(check.ruleKey(), textRange, message);
+          ctx.reportIssue(check.ruleKey, textRange, message);
         }
       });
   }

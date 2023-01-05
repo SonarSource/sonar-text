@@ -109,7 +109,7 @@ public class TestUtils {
       .flatMap(Collection::stream)
       .map(checkClass -> {
         try {
-          return ((Check) checkClass.getDeclaredConstructor().newInstance()).ruleKey().toString();
+          return ((Check) checkClass.getDeclaredConstructor().newInstance()).ruleKey.toString();
         } catch (ReflectiveOperationException e) {
           throw new RuntimeException(e);
         }
@@ -118,7 +118,7 @@ public class TestUtils {
   }
 
   public static SensorContextTester sensorContext(Check check) {
-    return sensorContext(check.ruleKey().toString());
+    return sensorContext(check.ruleKey.toString());
   }
 
   public static SensorContextTester defaultSensorContext() {

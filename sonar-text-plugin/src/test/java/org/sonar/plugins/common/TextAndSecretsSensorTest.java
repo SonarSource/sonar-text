@@ -121,9 +121,9 @@ class TextAndSecretsSensorTest {
   }
 
   @Rule(key = "IssueAtLineOne")
-  class ReportIssueAtLineOneCheck implements TextCheck {
+  class ReportIssueAtLineOneCheck extends TextCheck {
     public void analyze(InputFileContext ctx) {
-      ctx.reportIssue(ruleKey(), 1, "testIssue");
+      ctx.reportIssue(ruleKey, 1, "testIssue");
     }
   }
 
@@ -155,10 +155,10 @@ class TextAndSecretsSensorTest {
   @Test
   void issue_should_not_be_raised_twice_on_same_line() {
     @Rule(key = "IssueAtLineOne")
-    class ReportDuplicatedIssuesCheck implements TextCheck {
+    class ReportDuplicatedIssuesCheck extends TextCheck {
       public void analyze(InputFileContext ctx) {
-        ctx.reportIssue(ruleKey(), 1, "testIssue");
-        ctx.reportIssue(ruleKey(), 1, "testIssue");
+        ctx.reportIssue(ruleKey, 1, "testIssue");
+        ctx.reportIssue(ruleKey, 1, "testIssue");
       }
     }
     Check check = new ReportDuplicatedIssuesCheck();
@@ -189,7 +189,7 @@ class TextAndSecretsSensorTest {
   @Test
   void analysis_error_should_be_raised_on_failure_in_check() {
     @Rule(key = "Crash")
-    class CrashCheck implements TextCheck {
+    class CrashCheck extends TextCheck {
       public void analyze(InputFileContext ctx) {
         throw new IllegalStateException("Crash");
       }
@@ -210,7 +210,7 @@ class TextAndSecretsSensorTest {
   @Test
   void should_not_execute_checks_on_binary_files() {
     @Rule(key = "Boom")
-    class BoomCheck implements TextCheck {
+    class BoomCheck extends TextCheck {
       public void analyze(InputFileContext ctx) {
         throw new IllegalStateException("Should not occurs because there are only binary files");
       }
@@ -251,7 +251,7 @@ class TextAndSecretsSensorTest {
   }
 
   private TextAndSecretsSensor sensor(Check check) {
-    CheckFactory checkFactory = new CheckFactory(activeRules(check.ruleKey().toString()));
+    CheckFactory checkFactory = new CheckFactory(activeRules(check.ruleKey.toString()));
     return new TextAndSecretsSensor(checkFactory) {
       @Override
       protected List<Check> getActiveChecks() {

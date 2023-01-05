@@ -20,7 +20,6 @@
 package org.sonar.plugins.common;
 
 import org.junit.jupiter.api.Test;
-import org.sonar.api.rule.RuleKey;
 import org.sonar.check.Rule;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,28 +30,27 @@ class CheckTest {
   @Test
   void rule_id() {
     Check validRuleKeyCheck = new ValidRuleKeyCheck();
-    assertThat(validRuleKeyCheck.ruleId()).isEqualTo("bar");
+    assertThat(validRuleKeyCheck.ruleKey.repository()).isEqualTo("test");
+    assertThat(validRuleKeyCheck.ruleKey.rule()).isEqualTo("bar");
 
-    Check emptyCheck = new EmptyCheck();
-    assertThatThrownBy(emptyCheck::ruleId)
+    assertThatThrownBy(EmptyCheck::new)
       .isInstanceOf(IllegalStateException.class)
       .hasMessage("@Rule annotation was not found on org.sonar.plugins.common.CheckTest$EmptyCheck");
 
-    Check invalidRuleKeyCheck = new InvalidRuleKeyCheck();
-    assertThatThrownBy(invalidRuleKeyCheck::ruleId)
+    assertThatThrownBy(InvalidRuleKeyCheck::new)
       .isInstanceOf(IllegalStateException.class)
       .hasMessage("Empty @Rule key on org.sonar.plugins.common.CheckTest$InvalidRuleKeyCheck");
   }
 
-  static class EmptyCheck implements Check {
+  static class EmptyCheck extends Check {
     @Override
-    public void analyze(InputFileContext ctx) {
-      // empty
+    protected String repositoryKey() {
+      return "test";
     }
 
     @Override
-    public RuleKey ruleKey() {
-      return null;
+    public void analyze(InputFileContext ctx) {
+      // empty
     }
   }
 

@@ -19,12 +19,12 @@
  */
 package org.sonar.plugins.text.api;
 
-import org.sonar.api.rule.RuleKey;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.text.TextRuleDefinition;
 
-public interface TextCheck extends Check {
-  default RuleKey ruleKey() {
-    return RuleKey.of(TextRuleDefinition.REPOSITORY_KEY, ruleId());
+public abstract class TextCheck extends Check {
+  @Override
+  protected String repositoryKey() {
+    return TextRuleDefinition.REPOSITORY_KEY;
   }
 }

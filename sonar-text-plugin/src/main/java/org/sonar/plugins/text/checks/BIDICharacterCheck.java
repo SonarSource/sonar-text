@@ -29,7 +29,7 @@ import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.text.api.TextCheck;
 
 @Rule(key = "S6389")
-public class BIDICharacterCheck implements TextCheck {
+public class BIDICharacterCheck extends TextCheck {
 
   public static final String MESSAGE_FORMAT = "This line contains a bidirectional character in column %d. Make sure that using bidirectional characters is safe here.";
 
@@ -114,6 +114,6 @@ public class BIDICharacterCheck implements TextCheck {
       columnToReport = unclosedIsolateColumns.getFirst();
     }
 
-    ctx.reportIssue(ruleKey(), lineNumber, String.format(MESSAGE_FORMAT, columnToReport + 1));
+    ctx.reportIssue(ruleKey, lineNumber, String.format(MESSAGE_FORMAT, columnToReport + 1));
   }
 }
