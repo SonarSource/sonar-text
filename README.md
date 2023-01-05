@@ -43,7 +43,12 @@ rm empty-settings.xml
 
 ### Update rule description
 
-java -jar ../sonar-rule-api/target/rule-api-2.4.0-SNAPSHOT.jar update
+```shell
+cd sonarpedia-secrets
+java -jar ../../sonar-rule-api/target/rule-api-2.4.0-SNAPSHOT.jar update
+cd ../sonarpedia-text
+java -jar ../../sonar-rule-api/target/rule-api-2.4.0-SNAPSHOT.jar update
+```
 
 ### License
 
