@@ -73,7 +73,7 @@
           <pluginName>Text Code Quality and Security</pluginName>
           <skipDependenciesPackaging>true</skipDependenciesPackaging>
           <pluginClass>org.sonar.plugins.common.TextAndSecretsPlugin</pluginClass>
-          <sonarLintSupported>true</sonarLintSupported>
+          <sonarLintSupported>false</sonarLintSupported>
           <sonarQubeMinVersion>9.8</sonarQubeMinVersion>
           <jreMinVersion>11</jreMinVersion>
         </configuration>
