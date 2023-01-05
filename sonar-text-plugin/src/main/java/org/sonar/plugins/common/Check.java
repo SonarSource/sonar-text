@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.common;
 
-import java.io.IOException;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.AnnotationUtils;
 import org.sonar.check.Rule;
@@ -42,6 +41,6 @@ public abstract class Check {
 
   protected abstract String repositoryKey();
 
-  public abstract void analyze(InputFileContext ctx) throws IOException;
+  public abstract void analyze(InputFileContext ctx);
 
 }

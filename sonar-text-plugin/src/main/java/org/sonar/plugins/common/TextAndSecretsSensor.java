@@ -92,15 +92,15 @@ public class TextAndSecretsSensor implements Sensor {
   }
 
   private static void analyze(SensorContext sensorContext, List<Check> activeChecks, InputFile inputFile) {
-    InputFileContext inputFileContext = new InputFileContext(sensorContext, inputFile);
     try {
+      InputFileContext inputFileContext = new InputFileContext(sensorContext, inputFile);
       if (!inputFileContext.isBinaryFile()) {
         for (Check check : activeChecks) {
           check.analyze(inputFileContext);
         }
       }
     } catch (IOException | RuntimeException e) {
-      logAnalysisError(inputFileContext, e);
+      logAnalysisError(sensorContext, inputFile, e);
     }
   }
 
@@ -113,9 +113,12 @@ public class TextAndSecretsSensor implements Sensor {
     return checks;
   }
 
-  private static void logAnalysisError(InputFileContext inputFileContext, Exception e) {
-    String message = String.format("Unable to analyze file %s: %s", inputFileContext, e.getMessage());
-    inputFileContext.reportAnalysisError(message);
+  private static void logAnalysisError(SensorContext sensorContext, InputFile inputFile, Exception e) {
+    String message = String.format("Unable to analyze file %s: %s", inputFile, e.getMessage());
+    sensorContext.newAnalysisError()
+            .message(message)
+            .onFile(inputFile)
+            .save();
     LOG.warn(message);
     LOG.debug(e.toString());
   }

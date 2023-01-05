@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.secrets.api;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import org.sonar.plugins.common.Check;
@@ -40,7 +39,7 @@ public abstract class SecretCheck extends Check {
   }
 
   @Override
-  public void analyze(InputFileContext ctx) throws IOException {
+  public void analyze(InputFileContext ctx) {
     for (SecretRule rule : rules) {
       rule.analyze(this, ctx);
     }

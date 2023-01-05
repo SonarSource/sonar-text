@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.secrets.api;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -44,11 +43,10 @@ public class SecretRule {
     this.isMatchedTextFalsePositive = isMatchedTextFalsePositive;
   }
 
-  public final void analyze(Check check, InputFileContext ctx) throws IOException {
+  public final void analyze(Check check, InputFileContext ctx) {
     List<TextRange> foundSecrets = new ArrayList<>();
-    String content = ctx.content();
     matchers.stream()
-      .flatMap(matcher -> matcher.findIn(content).stream())
+      .flatMap(matcher -> matcher.findIn(ctx.content()).stream())
       .filter(match -> !isMatchedTextFalsePositive.test(match.getText()))
       .map(match -> ctx.newTextRangeFromFileOffsets(match.getFileStartOffset(), match.getFileEndOffset()))
       .forEach(textRange -> {

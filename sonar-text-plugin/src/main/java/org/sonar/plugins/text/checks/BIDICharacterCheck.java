@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.text.checks;
 
-import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -53,7 +52,7 @@ public class BIDICharacterCheck extends TextCheck {
   private static final char PDI = '\u2069'; // Pop Directional Isolate
 
   @Override
-  public void analyze(InputFileContext ctx) throws IOException {
+  public void analyze(InputFileContext ctx) {
     if (ctx.language() == null) {
       return;
     }

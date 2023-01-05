@@ -67,7 +67,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void should_raise_an_issue_when_a_secret_is_detected() throws IOException {
+  void should_raise_an_issue_when_a_secret_is_detected() {
     SensorContextTester context = defaultSensorContext();
     context.fileSystem().add(inputFile(Path.of("src", "test", "resources", "checks", "GoogleCloudAccountKeyCheck", "GoogleCloudAccountPositive.json")));
     sensor(context).execute(context);
@@ -80,7 +80,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void should_not_start_analysis_when_no_rule_is_active() throws IOException {
+  void should_not_start_analysis_when_no_rule_is_active() {
     String[] emptyActiveRuleList = {};
     SensorContextTester context = sensorContext(emptyActiveRuleList);
     context.fileSystem().add(inputFile(Path.of("src", "test", "resources", "checks", "GoogleCloudAccountKeyCheck", "GoogleCloudAccountPositive.json")));
@@ -91,7 +91,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void should_not_start_analysis_when_no_file_to_analyze() throws IOException {
+  void should_not_start_analysis_when_no_file_to_analyze() {
     SensorContextTester context = defaultSensorContext();
     sensor(context).execute(context);
 

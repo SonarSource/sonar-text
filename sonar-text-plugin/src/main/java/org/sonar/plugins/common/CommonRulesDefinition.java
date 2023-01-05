@@ -26,7 +26,7 @@ import org.sonarsource.analyzer.commons.RuleMetadataLoader;
 
 public class CommonRulesDefinition implements RulesDefinition {
 
-  public static final String RESOURCE_FOLDER_FORMAT = "/org/sonar/l10n/%s/rules/%s";
+  private static final String RESOURCE_FOLDER_FORMAT = "/org/sonar/l10n/%s/rules/%s";
 
   private final SonarRuntime sonarRuntime;
   public final String repositoryKey;
