@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.CheckForNull;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextPointer;
 import org.sonar.api.batch.fs.TextRange;
@@ -85,11 +84,6 @@ public class InputFileContext {
 
   public List<String> lines() {
     return lines;
-  }
-
-  @CheckForNull
-  public String language() {
-    return inputFile.language();
   }
 
   @Override

@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.sonar.api.batch.fs.InputFile;
@@ -39,7 +40,6 @@ import org.sonar.check.Rule;
 import org.sonar.plugins.text.api.TextCheck;
 import org.sonar.plugins.text.checks.BIDICharacterCheck;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -174,19 +174,6 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void file_should_not_be_handled_when_not_assigned_to_any_language() throws IOException {
-    SensorContextTester context = defaultSensorContext();
-    Path file = Path.of("src", "test", "resources", "checks", "BIDICharacterCheck", "test.php");
-    InputFile inputFile = inputFile(file, Files.readString(file, UTF_8), null);
-    analyse(sensor(context), context, inputFile);
-
-    assertThat(context.allIssues()).isEmpty();
-    assertThat(logTester.logs()).containsExactly(
-      "1 source file to be analyzed",
-      "1/1 source file has been analyzed");
-  }
-
-  @Test
   void analysis_error_should_be_raised_on_failure_in_check() {
     @Rule(key = "Crash")
     class CrashCheck extends TextCheck {
@@ -207,22 +194,39 @@ class TextAndSecretsSensorTest {
     assertThat(logTester.logs()).anyMatch(log -> log.startsWith("Unable to analyze"));
   }
 
+  @Rule(key = "Boom")
+  class BoomCheck extends TextCheck {
+    public void analyze(InputFileContext ctx) {
+      throw new IllegalStateException("Should not occurs because there are only binary files");
+    }
+  }
+
   @Test
   void should_not_execute_checks_on_binary_files() {
-    @Rule(key = "Boom")
-    class BoomCheck extends TextCheck {
-      public void analyze(InputFileContext ctx) {
-        throw new IllegalStateException("Should not occurs because there are only binary files");
-      }
-    }
     Check check = new BoomCheck();
     SensorContextTester context = sensorContext(check);
     Path binaryFile = Path.of("target", "test-classes", "org", "sonar", "plugins", "common", "InputFileContextTest.class");
     analyse(sensor(check), context, inputFile(binaryFile));
 
-    assertThat(logTester.logs()).containsExactly(
-      "1 source file to be analyzed",
-      "1/1 source file has been analyzed");
+    // does not even contain "1/1 source file has been analyzed"
+    assertThat(logTester.logs()).isEmpty();
+  }
+
+  @Test
+  void should_exclude_binary_file_extension_dynamically() throws IOException {
+    Check check = new BoomCheck();
+    SensorContextTester context = sensorContext(check);
+    analyseDirectory(sensor(check), context, Path.of("src", "test", "resources", "binary-files"));
+    assertThat(logTester.logs()).containsExactlyInAnyOrder(
+      // 4 and not 5 because Foo.class is excluded
+      "4 source files to be analyzed",
+      // Because of this warning about 'Foo.unknown1' we will not have any error about 'Bar.unknown1'
+      "'unknown1' was added to the binary file filter because the file 'src/test/resources/binary-files/Foo.unknown1' is a binary file.",
+      // help is displayed only once for '.unknown1'
+      "To remove the previous warning you can add the '.unknown1' extension to the 'sonar.text.excluded.file.suffixes' property.",
+      "'myprogram' was added to the binary file filter because the file 'src/test/resources/binary-files/myprogram' is a binary file.",
+      "'unknown2' was added to the binary file filter because the file 'src/test/resources/binary-files/Foo.unknown2' is a binary file.",
+      "4/4 source files have been analyzed");
   }
 
   @Test
@@ -241,6 +245,13 @@ class TextAndSecretsSensorTest {
     assertThat(analysisError.location()).isNull();
 
     assertThat(logTester.logs()).anyMatch(log -> log.startsWith("Unable to analyze"));
+  }
+
+  private void analyseDirectory(Sensor sensor, SensorContextTester context, Path directory) throws IOException {
+    try (Stream<Path> list = Files.list(directory)) {
+      list.sorted().forEach(file -> context.fileSystem().add(inputFile(file)));
+    }
+    sensor.execute(context);
   }
 
   private void analyse(Sensor sensor, SensorContextTester context, InputFile... inputFiles) {

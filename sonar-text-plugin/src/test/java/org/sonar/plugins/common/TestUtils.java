@@ -68,7 +68,7 @@ public class TestUtils {
   }
 
   public static InputFile inputFile(String fileContent) {
-    return inputFile(Path.of("file.txt"), fileContent, "text");
+    return inputFile(Path.of("file.txt"), fileContent);
   }
 
   public static InputFile inputFile(Path path) {
@@ -78,13 +78,13 @@ public class TestUtils {
     } catch (IOException e) {
       // ignored, so InputFile.inputStream() will fail
     }
-    return inputFile(path, content, "text");
+    return inputFile(path, content);
   }
 
-  public static InputFile inputFile(Path path, @Nullable String content, @Nullable String language) {
+  public static InputFile inputFile(Path path, @Nullable String content) {
     TestInputFileBuilder builder = new TestInputFileBuilder(".", path.toString())
       .setType(InputFile.Type.MAIN)
-      .setLanguage(language)
+      .setLanguage(null)
       .setCharset(UTF_8);
     if (content != null) {
       builder.setContents(content);

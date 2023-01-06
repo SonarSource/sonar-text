@@ -40,7 +40,13 @@ public class TextAndSecretsSensor implements Sensor {
 
   private static final Logger LOG = Loggers.get(TextAndSecretsSensor.class);
 
+  public static final String EXCLUDED_FILE_SUFFIXES_KEY = "sonar.text.excluded.file.suffixes";
+
+  public static final String TEXT_CATEGORY = "text";
+
   private final CheckFactory checkFactory;
+
+  private boolean displayHelpAboutExcludingBinaryFile = true;
 
   public TextAndSecretsSensor(CheckFactory checkFactory) {
     this.checkFactory = checkFactory;
@@ -61,9 +67,8 @@ public class TextAndSecretsSensor implements Sensor {
       return;
     }
 
-    FileSystem fileSystem = sensorContext.fileSystem();
-    List<InputFile> allInputFiles = new ArrayList<>();
-    fileSystem.inputFiles(fileSystem.predicates().all()).forEach(allInputFiles::add);
+    BinaryFilePredicate binaryFilePredicate = binaryFilePredicate(sensorContext);
+    List<InputFile> allInputFiles = getAllInputFiles(sensorContext, binaryFilePredicate);
     if (allInputFiles.isEmpty()) {
       return;
     }
@@ -78,7 +83,7 @@ public class TextAndSecretsSensor implements Sensor {
           cancelled = true;
           break;
         }
-        analyze(sensorContext, activeChecks, inputFile);
+        analyze(sensorContext, activeChecks, inputFile, binaryFilePredicate);
         progressReport.nextFile();
       }
     } finally {
@@ -91,16 +96,41 @@ public class TextAndSecretsSensor implements Sensor {
 
   }
 
-  private static void analyze(SensorContext sensorContext, List<Check> activeChecks, InputFile inputFile) {
-    try {
-      InputFileContext inputFileContext = new InputFileContext(sensorContext, inputFile);
-      if (!inputFileContext.isBinaryFile()) {
-        for (Check check : activeChecks) {
-          check.analyze(inputFileContext);
-        }
+  private static BinaryFilePredicate binaryFilePredicate(SensorContext sensorContext) {
+    return new BinaryFilePredicate(sensorContext.config().getStringArray(TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY));
+  }
+
+  private static List<InputFile> getAllInputFiles(SensorContext sensorContext, BinaryFilePredicate binaryFilePredicate) {
+    List<InputFile> allInputFiles = new ArrayList<>();
+    FileSystem fileSystem = sensorContext.fileSystem();
+    for (InputFile inputFile : fileSystem.inputFiles(fileSystem.predicates().all())) {
+      if (!binaryFilePredicate.isBinaryFile(inputFile.filename())) {
+        allInputFiles.add(inputFile);
       }
-    } catch (IOException | RuntimeException e) {
-      logAnalysisError(sensorContext, inputFile, e);
+    }
+    return allInputFiles;
+  }
+
+  private void analyze(SensorContext sensorContext, List<Check> activeChecks, InputFile inputFile, BinaryFilePredicate binaryFilePredicate) {
+    if (!binaryFilePredicate.isBinaryFile(inputFile.filename())) {
+      try {
+        InputFileContext inputFileContext = new InputFileContext(sensorContext, inputFile);
+        if (!inputFileContext.isBinaryFile()) {
+          for (Check check : activeChecks) {
+            check.analyze(inputFileContext);
+          }
+        } else {
+          String extension = BinaryFilePredicate.extension(inputFile.filename());
+          binaryFilePredicate.addBinaryFileExtension(extension);
+          LOG.warn("'{}' was added to the binary file filter because the file '{}' is a binary file.", extension, inputFile);
+          if (displayHelpAboutExcludingBinaryFile) {
+            displayHelpAboutExcludingBinaryFile = false;
+            LOG.info("To remove the previous warning you can add the '.{}' extension to the '{}' property.", extension, TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY);
+          }
+        }
+      } catch (IOException | RuntimeException e) {
+        logAnalysisError(sensorContext, inputFile, e);
+      }
     }
   }
 
@@ -116,9 +146,9 @@ public class TextAndSecretsSensor implements Sensor {
   private static void logAnalysisError(SensorContext sensorContext, InputFile inputFile, Exception e) {
     String message = String.format("Unable to analyze file %s: %s", inputFile, e.getMessage());
     sensorContext.newAnalysisError()
-            .message(message)
-            .onFile(inputFile)
-            .save();
+      .message(message)
+      .onFile(inputFile)
+      .save();
     LOG.warn(message);
     LOG.debug(e.toString());
   }

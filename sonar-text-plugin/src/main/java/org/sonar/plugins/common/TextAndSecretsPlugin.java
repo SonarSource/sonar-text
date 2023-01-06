@@ -20,6 +20,8 @@
 package org.sonar.plugins.common;
 
 import org.sonar.api.Plugin;
+import org.sonar.api.config.PropertyDefinition;
+import org.sonar.api.resources.Qualifiers;
 import org.sonar.plugins.secrets.SecretsLanguage;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.text.TextLanguage;
@@ -32,6 +34,15 @@ public class TextAndSecretsPlugin implements Plugin {
     context.addExtensions(
       // Common
       TextAndSecretsSensor.class,
+      PropertyDefinition.builder(TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY)
+        .defaultValue("")
+        .category(TextAndSecretsSensor.TEXT_CATEGORY)
+        .name("Additional binary file suffixes")
+        .multiValues(true)
+        .description("Additional list of binary file suffixes that should not be analyzed with rules targeting text files.")
+        .subCategory("General")
+        .onQualifiers(Qualifiers.PROJECT)
+        .build(),
 
       // Text
       TextLanguage.class,

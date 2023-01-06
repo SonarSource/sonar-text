@@ -53,9 +53,6 @@ public class BIDICharacterCheck extends TextCheck {
 
   @Override
   public void analyze(InputFileContext ctx) {
-    if (ctx.language() == null) {
-      return;
-    }
     List<String> lines = ctx.lines();
     for (int lineOffset = 0; lineOffset < lines.size(); lineOffset++) {
       checkLine(ctx, lines.get(lineOffset), lineOffset + 1);
