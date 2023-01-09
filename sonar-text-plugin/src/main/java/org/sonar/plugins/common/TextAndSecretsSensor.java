@@ -104,7 +104,7 @@ public class TextAndSecretsSensor implements Sensor {
     List<InputFile> allInputFiles = new ArrayList<>();
     FileSystem fileSystem = sensorContext.fileSystem();
     for (InputFile inputFile : fileSystem.inputFiles(fileSystem.predicates().all())) {
-      if (!binaryFilePredicate.isBinaryFile(inputFile.filename())) {
+      if (!binaryFilePredicate.hasBinaryFileName(inputFile.filename())) {
         allInputFiles.add(inputFile);
       }
     }
@@ -112,24 +112,30 @@ public class TextAndSecretsSensor implements Sensor {
   }
 
   private void analyze(SensorContext sensorContext, List<Check> activeChecks, InputFile inputFile, BinaryFilePredicate binaryFilePredicate) {
-    if (!binaryFilePredicate.isBinaryFile(inputFile.filename())) {
+    if (!binaryFilePredicate.hasBinaryFileName(inputFile.filename())) {
       try {
         InputFileContext inputFileContext = new InputFileContext(sensorContext, inputFile);
-        if (!inputFileContext.isBinaryFile()) {
+        if (inputFileContext.hasNonTextCharacters()) {
+          excludeBinaryFileExtension(binaryFilePredicate, inputFile);
+        } else {
           for (Check check : activeChecks) {
             check.analyze(inputFileContext);
-          }
-        } else {
-          String extension = BinaryFilePredicate.extension(inputFile.filename());
-          binaryFilePredicate.addBinaryFileExtension(extension);
-          LOG.warn("'{}' was added to the binary file filter because the file '{}' is a binary file.", extension, inputFile);
-          if (displayHelpAboutExcludingBinaryFile) {
-            displayHelpAboutExcludingBinaryFile = false;
-            LOG.info("To remove the previous warning you can add the '.{}' extension to the '{}' property.", extension, TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY);
           }
         }
       } catch (IOException | RuntimeException e) {
         logAnalysisError(sensorContext, inputFile, e);
+      }
+    }
+  }
+
+  private void excludeBinaryFileExtension(BinaryFilePredicate binaryFilePredicate, InputFile inputFile) {
+    String extension = BinaryFilePredicate.extension(inputFile.filename());
+    if (extension != null) {
+      binaryFilePredicate.addBinaryFileExtension(extension);
+      LOG.warn("'{}' was added to the binary file filter because the file '{}' is a binary file.", extension, inputFile);
+      if (displayHelpAboutExcludingBinaryFile) {
+        displayHelpAboutExcludingBinaryFile = false;
+        LOG.info("To remove the previous warning you can add the '.{}' extension to the '{}' property.", extension, TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY);
       }
     }
   }

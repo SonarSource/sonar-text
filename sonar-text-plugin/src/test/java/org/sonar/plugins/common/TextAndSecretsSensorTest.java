@@ -202,14 +202,42 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void should_not_execute_checks_on_binary_files() {
+  void should_not_execute_checks_on_binary_file_names() {
     Check check = new BoomCheck();
     SensorContextTester context = sensorContext(check);
-    Path binaryFile = Path.of("target", "test-classes", "org", "sonar", "plugins", "common", "InputFileContextTest.class");
-    analyse(sensor(check), context, inputFile(binaryFile));
+    analyse(sensor(check), context, inputFile(Path.of("Foo.class"), "abc", null));
 
     // does not even contain "1/1 source file has been analyzed"
     assertThat(logTester.logs()).isEmpty();
+  }
+
+  @Test
+  void should_not_exclude_binary_file_content_if_language_is_not_null() throws IOException {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = defaultSensorContext();
+    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), "\u0002\u0004", "java"));
+
+    assertThat(asString(context.allIssues())).containsExactly(
+      "text:IssueAtLineOne [1:0-1:2] testIssue");
+    assertThat(logTester.logs()).containsExactly(
+      "1 source file to be analyzed",
+      "1/1 source file has been analyzed");
+  }
+
+  @Test
+  void should_exclude_binary_file_content_if_language_is_null_and_exclude_the_extension() throws IOException {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = defaultSensorContext();
+    analyse(sensor(check), context,
+      inputFile(Path.of("Foo.txt"), "\u0002\u0004", null),
+      inputFile(Path.of("FileWithoutExtension"), "\u0002\u0004", null));
+
+    assertThat(asString(context.allIssues())).isEmpty();
+    assertThat(logTester.logs()).containsExactlyInAnyOrder(
+      "2 source files to be analyzed",
+      "'txt' was added to the binary file filter because the file 'Foo.txt' is a binary file.",
+      "To remove the previous warning you can add the '.txt' extension to the 'sonar.text.excluded.file.suffixes' property.",
+      "2/2 source files have been analyzed");
   }
 
   @Test
@@ -224,7 +252,6 @@ class TextAndSecretsSensorTest {
       "'unknown1' was added to the binary file filter because the file 'src/test/resources/binary-files/Foo.unknown1' is a binary file.",
       // help is displayed only once for '.unknown1'
       "To remove the previous warning you can add the '.unknown1' extension to the 'sonar.text.excluded.file.suffixes' property.",
-      "'myprogram' was added to the binary file filter because the file 'src/test/resources/binary-files/myprogram' is a binary file.",
       "'unknown2' was added to the binary file filter because the file 'src/test/resources/binary-files/Foo.unknown2' is a binary file.",
       "4/4 source files have been analyzed");
   }

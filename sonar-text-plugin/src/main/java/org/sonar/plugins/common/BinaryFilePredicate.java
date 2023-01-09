@@ -25,7 +25,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import org.sonar.plugins.secrets.api.EntropyChecker;
 
 public class BinaryFilePredicate {
 
@@ -37,6 +40,7 @@ public class BinaryFilePredicate {
     "7z",
     "a",
     "aac",
+    "aar",
     "adp",
     "ai",
     "aif",
@@ -49,29 +53,43 @@ public class BinaryFilePredicate {
     "ar",
     "arj",
     "asf",
+    "at",
     "au",
     "avi",
+    "b",
     "bak",
     "baml",
+    "bfc",
     "bh",
     "bin",
     "bk",
     "bmp",
+    "br",
     "btif",
+    "bytes",
     "bz2",
     "bzip2",
     "cab",
     "caf",
+    "cer",
+    "cfe",
+    "cfs",
     "cgm",
+    "changesubtype",
+    "ckp",
     "class",
     "cmx",
     "cpio",
     "cr2",
     "cur",
     "dat",
+    "data",
+    "db",
     "dcm",
     "deb",
     "dex",
+    "dii",
+    "dim",
     "djvu",
     "dll",
     "dmg",
@@ -82,35 +100,50 @@ public class BinaryFilePredicate {
     "dot",
     "dotm",
     "dra",
-    "DS_Store",
+    "ds_store",
     "dsk",
     "dts",
     "dtshd",
     "dvb",
+    "dvd",
+    "dvm",
     "dwg",
     "dxf",
+    "dylib",
     "ecelp4800",
     "ecelp7470",
     "ecelp9600",
     "egg",
+    "enc",
     "eol",
     "eot",
+    "eps",
     "epub",
     "exe",
+    "exec",
     "f4v",
     "fbs",
+    "fdm",
+    "fdt",
+    "fdx",
+    "fe",
     "fh",
     "fla",
     "flac",
     "flatpak",
     "fli",
     "flv",
+    "fnm",
     "fpx",
     "fst",
     "fvt",
     "g3",
+    "gch",
+    "gem",
+    "gem",
     "gh",
     "gif",
+    "gpg",
     "graffle",
     "gz",
     "gzip",
@@ -118,20 +151,37 @@ public class BinaryFilePredicate {
     "h263",
     "h264",
     "heif",
+    "hmap",
     "icns",
     "ico",
+    "idx",
     "ief",
     "img",
     "ipa",
+    "ir",
     "iso",
     "jar",
+    "jce",
+    "jce",
+    "jks",
+    "jks",
+    "jnilib",
     "jpeg",
     "jpg",
     "jpgv",
     "jpm",
     "jxr",
+    "kdbx",
+    "kdd",
+    "kdi",
+    "kdm",
     "key",
+    "keystore",
+    "keystream",
+    "kjsm",
+    "kotlin_module",
     "ktx",
+    "ldf",
     "lha",
     "lib",
     "lvp",
@@ -142,17 +192,24 @@ public class BinaryFilePredicate {
     "m3u",
     "m4a",
     "m4v",
+    "macho32",
+    "macho64",
     "mar",
+    "mdf",
     "mdi",
+    "meta",
     "mht",
     "mid",
     "midi",
     "mj2",
     "mka",
     "mkv",
+    "mmdb",
     "mmr",
     "mng",
+    "mo",
     "mobi",
+    "mobileprovision",
     "mov",
     "movie",
     "mp3",
@@ -164,9 +221,14 @@ public class BinaryFilePredicate {
     "mxu",
     "nef",
     "nes",
+    "nib",
+    "node",
     "npx",
+    "npz",
     "numbers",
     "nupkg",
+    "nvd",
+    "nvm",
     "o",
     "odp",
     "ods",
@@ -176,16 +238,29 @@ public class BinaryFilePredicate {
     "ogv",
     "otf",
     "ott",
+    "p12",
     "pages",
     "pbm",
+    "pcap",
+    "pch",
     "pcx",
     "pdb",
     "pdf",
     "pea",
+    "pf",
+    "pfx",
     "pgm",
+    "phar",
     "pic",
+    "pkcs12",
+    "pkenc",
+    "pkg",
+    "pkl",
+    "plaso",
+    "plist",
     "png",
     "pnm",
+    "pos",
     "pot",
     "potm",
     "potx",
@@ -198,8 +273,11 @@ public class BinaryFilePredicate {
     "ppt",
     "pptm",
     "pptx",
+    "proto",
+    "protobuf",
     "ps",
     "psd",
+    "pxm",
     "pya",
     "pyc",
     "pyo",
@@ -208,6 +286,7 @@ public class BinaryFilePredicate {
     "rar",
     "ras",
     "raw",
+    "res",
     "resources",
     "rgb",
     "rip",
@@ -215,25 +294,35 @@ public class BinaryFilePredicate {
     "rmf",
     "rmvb",
     "rpm",
+    "rsc",
     "rtf",
     "rz",
     "s3m",
     "s7z",
+    "scc",
     "scpt",
     "sgi",
     "shar",
-    "snap",
+    "si",
+    "signature",
     "sil",
     "sketch",
     "slk",
     "smv",
+    "snap",
     "snk",
     "so",
     "sqlite",
+    "sqlite3",
+    "st",
+    "stack2",
     "stl",
-    "suo",
     "sub",
+    "suo",
+    "swc",
     "swf",
+    "tab",
+    "tab_i",
     "tar",
     "tbz",
     "tbz2",
@@ -242,10 +331,21 @@ public class BinaryFilePredicate {
     "thmx",
     "tif",
     "tiff",
+    "tim",
+    "tip",
+    "tlog",
     "tlz",
+    "tmd",
+    "truststore",
     "ttc",
     "ttf",
+    "tvd",
+    "tvm",
+    "tvx",
     "txz",
+    "typedefs",
+    "ucfg",
+    "ucfgs",
     "udf",
     "uvh",
     "uvi",
@@ -256,6 +356,7 @@ public class BinaryFilePredicate {
     "viv",
     "vob",
     "war",
+    "wasm",
     "wav",
     "wax",
     "wbmp",
@@ -274,6 +375,8 @@ public class BinaryFilePredicate {
     "wrm",
     "wvx",
     "xbm",
+    "xcf",
+    "xcuserstate",
     "xif",
     "xla",
     "xlam",
@@ -295,12 +398,17 @@ public class BinaryFilePredicate {
     "zipx",
     "zstd"));
 
+  private static final List<String> DEFAULT_BINARY_SUFFIXES = List.of("cacerts");
+
+  private static final Pattern HEX_REGEX = Pattern.compile("\\p{XDigit}++");
+  private static final double MD5_AND_SHA_MIN_ENTROPY = 3.1;
+
   private final Set<String> binaryFileExtensions;
   private final List<String> binaryFileSuffixes;
 
   public BinaryFilePredicate(String... additionalBinarySuffixes) {
     binaryFileExtensions = new HashSet<>(DEFAULT_BINARY_EXTENSIONS);
-    binaryFileSuffixes = new ArrayList<>();
+    binaryFileSuffixes = new ArrayList<>(DEFAULT_BINARY_SUFFIXES);
     List<String> cleanedSuffixes = Arrays.stream(additionalBinarySuffixes)
       .map(String::trim)
       .filter(value -> !value.isEmpty())
@@ -316,19 +424,29 @@ public class BinaryFilePredicate {
     }
   }
 
-  public boolean isBinaryFile(String filename) {
-    return binaryFileExtensions.contains(extension(filename)) ||
-      binaryFileSuffixes.stream().anyMatch(filename::endsWith);
+  public boolean hasBinaryFileName(String filename) {
+    String extension = extension(filename);
+    return (extension != null && binaryFileExtensions.contains(extension)) ||
+      binaryFileSuffixes.stream().anyMatch(filename::endsWith) ||
+      isMd5OrSha1(filename);
+  }
+
+  public boolean isMd5OrSha1(String filename) {
+    int len = filename.length();
+    return ( /* md5 */ len == 32 || /* sha1 */ len == 40 || /* sha256 */ len == 64 || /* sha512 */ len == 128) &&
+      HEX_REGEX.matcher(filename).matches() && EntropyChecker.calculateShannonEntropy(filename) > MD5_AND_SHA_MIN_ENTROPY;
+
   }
 
   public void addBinaryFileExtension(String extension) {
     binaryFileExtensions.add(extension);
   }
 
+  @Nullable
   public static String extension(String filename) {
     int dotPos = filename.lastIndexOf('.');
     if (dotPos == -1 || dotPos == filename.length() - 1) {
-      return filename;
+      return null;
     }
     return filename.substring(dotPos + 1).toLowerCase(Locale.ROOT);
   }

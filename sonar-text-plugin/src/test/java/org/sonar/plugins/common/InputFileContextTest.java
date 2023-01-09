@@ -107,7 +107,7 @@ class InputFileContextTest {
     Path binaryFile = Path.of("target","test-classes","org","sonar","plugins","common","InputFileContextTest.class");
     InputFile inputFile = inputFile(binaryFile);
     InputFileContext ctx = new InputFileContext(defaultSensorContext(), inputFile);
-    assertThat(ctx.isBinaryFile()).isTrue();
+    assertThat(ctx.hasNonTextCharacters()).isTrue();
     assertThat(ctx.lines()).isEmpty();
     assertThat(ctx.content()).isEmpty();
     String path = ctx.toString().replace('\\', '/');

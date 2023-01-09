@@ -82,9 +82,13 @@ public class TestUtils {
   }
 
   public static InputFile inputFile(Path path, @Nullable String content) {
+    return  inputFile( path, content, null);
+  }
+
+  public static InputFile inputFile(Path path, @Nullable String content, @Nullable String language) {
     TestInputFileBuilder builder = new TestInputFileBuilder(".", path.toString())
       .setType(InputFile.Type.MAIN)
-      .setLanguage(null)
+      .setLanguage(language)
       .setCharset(UTF_8);
     if (content != null) {
       builder.setContents(content);

@@ -44,7 +44,7 @@ public class InputFileContext {
   private final SensorContext sensorContext;
   private final InputFile inputFile;
 
-  private final boolean isBinaryFile;
+  private final boolean hasNonTextCharacters;
 
   private final List<String> lines;
   private final String normalizedContent;
@@ -54,13 +54,14 @@ public class InputFileContext {
   public InputFileContext(SensorContext sensorContext, InputFile inputFile) throws IOException {
     this.sensorContext = sensorContext;
     this.inputFile = inputFile;
+    boolean checkNonTextCharacters = inputFile.language() == null;
     List<String> contentLines = new ArrayList<>();
     try (InputStream in = inputFile.inputStream()) {
       BufferedReader reader = new BufferedReader(new InputStreamReader(in, inputFile.charset()));
       String line = reader.readLine();
       while (line != null) {
-        if (BinaryFileUtils.hasControlCharacters(line)) {
-          isBinaryFile = true;
+        if (checkNonTextCharacters && BinaryFileUtils.hasNonTextCharacters(line)) {
+          hasNonTextCharacters = true;
           lines = Collections.emptyList();
           normalizedContent = "";
           return;
@@ -69,13 +70,13 @@ public class InputFileContext {
         line = reader.readLine();
       }
     }
-    isBinaryFile = false;
+    hasNonTextCharacters = false;
     lines = contentLines;
     normalizedContent = String.join("\n", contentLines);
   }
 
-  public boolean isBinaryFile() {
-    return isBinaryFile;
+  public boolean hasNonTextCharacters() {
+    return hasNonTextCharacters;
   }
 
   public String content() {

@@ -22,17 +22,19 @@ package org.sonar.plugins.common;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.sonar.plugins.common.BinaryFileUtils.hasControlCharacters;
+import static org.sonar.plugins.common.BinaryFileUtils.hasNonTextCharacters;
 
 class BinaryFileUtilsTest {
 
   @Test
-  void has_control_characters() {
-    assertThat(hasControlCharacters("")).isFalse();
-    assertThat(hasControlCharacters("abc\tdef\r\n")).isFalse();
-    assertThat(hasControlCharacters("abc\tdef\r\n\u00FF")).isFalse();
-    assertThat(hasControlCharacters("\0abc")).isTrue();
-    assertThat(hasControlCharacters("abc\u0007def")).isTrue();
-    assertThat(hasControlCharacters("\nabc\u0007def")).isTrue();
+  void has_non_text_characters() {
+    assertThat(hasNonTextCharacters("")).isFalse();
+    assertThat(hasNonTextCharacters("abc\tdef\r\n")).isFalse();
+    assertThat(hasNonTextCharacters("abc\tdef\r\n\u00FF")).isFalse();
+    assertThat(hasNonTextCharacters("\u0001abc")).isTrue();
+    assertThat(hasNonTextCharacters("abc\u0007def")).isTrue();
+    assertThat(hasNonTextCharacters("\nabc\u0007def")).isTrue();
+    assertThat(hasNonTextCharacters("abc\u001B[1m;def\u0008ghi\0")).isFalse();
   }
+
 }
