@@ -40,6 +40,15 @@ linux_2_cpu_4G_java_17_template: &LINUX_2_CPU_4G_JAVA_17
     cpu: 2
     memory: 4G
 
+win_vm_definition: &WINDOWS_VM_DEFINITION
+  ec2_instance:
+    experimental: true # see https://github.com/cirruslabs/cirrus-ci-docs/issues/1051
+    image: base-windows-dotnet-v*
+    region: eu-central-1
+    subnet_id: ${CIRRUS_AWS_SUBNET}
+    type: t2.medium # see https://aws.amazon.com/ec2/instance-types/
+    platform: windows
+
 only_sonarsource_qa: &ONLY_IF_SONARSOURCE_QA
   only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "dogfood-on-.*")
 
@@ -47,6 +56,12 @@ qa_task_filter_template: &QA_TASK_FILTER
   depends_on:
     - build
   <<: *ONLY_IF_SONARSOURCE_QA
+
+build_sonar_secretes_dotnet_task:
+  <<: *WINDOWS_VM_DEFINITION
+  build_script:
+    - cd sonar-secrets-dotnet
+    - dotnet build SonarLint.Secrets.DotNet.sln
 
 build_task:
   <<: *ONLY_IF_SONARSOURCE_QA
