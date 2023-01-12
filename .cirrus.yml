@@ -47,6 +47,7 @@ win_vm_definition: &WINDOWS_VM_DEFINITION
     region: eu-central-1
     subnet_id: ${CIRRUS_AWS_SUBNET}
     type: t2.medium # see https://aws.amazon.com/ec2/instance-types/
+    platform: windows
 
 only_sonarsource_qa: &ONLY_IF_SONARSOURCE_QA
   only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "dogfood-on-.*")
