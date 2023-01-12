@@ -19,6 +19,7 @@ env:
   CIRRUS_SHELL: bash
   # Allows to run builds for the 50 last commits in a branch:
   CIRRUS_CLONE_DEPTH: 1
+  NUGET_FEED: '399fb241-ecc7-4802-8697-dcdd01fbb832/423b576f-2263-43a1-93bd-69f4def19102'
 
 linux_image_template: &LINUX_IMAGE
   image: ${CIRRUS_AWS_ACCOUNT}.dkr.ecr.eu-central-1.amazonaws.com/base:j11-latest
@@ -142,7 +143,7 @@ promote_task:
   script: cirrus_promote_maven
   cleanup_before_cache_script: cleanup_maven_repository
 
-build_sonar_secretes_dotnet_task:
+build_sonar_secrets_dotnet_task:
   <<: *WINDOWS_VM_DEFINITION
   restore_script:
     - cd sonar-secrets-dotnet
