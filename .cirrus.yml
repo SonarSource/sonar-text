@@ -56,10 +56,11 @@ qa_task_filter_template: &QA_TASK_FILTER
     - build
   <<: *ONLY_IF_SONARSOURCE_QA
 
-simple_task:
+build_sonar_secretes_dotnet_task:
   <<: *WINDOWS_VM_DEFINITION
-  simple_script:
-    - "echo It's working"
+  build_script:
+    - cd sonar-secrets-dotnet
+    - dotnet build SonarLint.Secrets.DotNet.sln
 
 build_task:
   <<: *ONLY_IF_SONARSOURCE_QA
