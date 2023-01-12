@@ -57,12 +57,6 @@ qa_task_filter_template: &QA_TASK_FILTER
     - build
   <<: *ONLY_IF_SONARSOURCE_QA
 
-build_sonar_secretes_dotnet_task:
-  <<: *WINDOWS_VM_DEFINITION
-  build_script:
-    - cd sonar-secrets-dotnet
-    - dotnet build SonarLint.Secrets.DotNet.sln
-
 build_task:
   <<: *ONLY_IF_SONARSOURCE_QA
   <<: *LINUX_1_CPU_1G
@@ -147,3 +141,10 @@ promote_task:
     folder: ${CIRRUS_WORKING_DIR}/.m2/repository
   script: cirrus_promote_maven
   cleanup_before_cache_script: cleanup_maven_repository
+
+build_sonar_secretes_dotnet_task:
+  <<: *WINDOWS_VM_DEFINITION
+  restore_script:
+    - cd sonar-secrets-dotnet
+    - nuget restore SonarLint.Secrets.DotNet.sln -LockedMode
+
