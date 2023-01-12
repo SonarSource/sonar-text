@@ -38,7 +38,6 @@ public class TextRulingTest {
   private static final String SQ_VERSION_PROPERTY = "sonar.runtimeVersion";
   private static final String DEFAULT_SQ_VERSION = "LATEST_RELEASE";
   private static final String LITS_PLUGIN_VERSION = "0.8.0.1209";
-  private static final String PHP_PLUGIN_VERSION = "LATEST_RELEASE";
   private static final File LITS_DIFFERENCES_FILE = FileLocation.of("target/differences").getFile();
 
   @ClassRule
@@ -47,7 +46,6 @@ public class TextRulingTest {
     .setSonarVersion(System.getProperty(SQ_VERSION_PROPERTY, DEFAULT_SQ_VERSION))
     .addPlugin(FileLocation.byWildcardMavenFilename(new File("../../sonar-text-plugin/target"), "sonar-text-plugin-*.jar"))
     .addPlugin(MavenLocation.of("org.sonarsource.sonar-lits-plugin", "sonar-lits-plugin", LITS_PLUGIN_VERSION))
-    .addPlugin(MavenLocation.of("org.sonarsource.php", "sonar-php-plugin", PHP_PLUGIN_VERSION))
     .build();
 
   @BeforeClass
@@ -55,16 +53,17 @@ public class TextRulingTest {
     ProfileGenerator.RulesConfiguration parameters = new ProfileGenerator.RulesConfiguration();
 
     String serverUrl = ORCHESTRATOR.getServer().getUrl();
-    File profileFile = ProfileGenerator.generateProfile(serverUrl, "text", "text", parameters, Collections.emptySet());
-    ORCHESTRATOR.getServer().restoreProfile(FileLocation.of(profileFile));
-    ORCHESTRATOR.getServer().restoreProfile(FileLocation.of("src/test/resources/no_rules_php.xml"));
+    File textProfileFile = ProfileGenerator.generateProfile(serverUrl, "text", "text", parameters, Collections.emptySet());
+    ORCHESTRATOR.getServer().restoreProfile(FileLocation.of(textProfileFile));
+    File secretsProfileFile = ProfileGenerator.generateProfile(serverUrl, "secrets", "secrets", parameters, Collections.emptySet());
+    ORCHESTRATOR.getServer().restoreProfile(FileLocation.of(secretsProfileFile));
   }
 
   @Test
   public void test() throws Exception {
     ORCHESTRATOR.getServer().provisionProject("project", "project");
     ORCHESTRATOR.getServer().associateProjectToQualityProfile("project", "text", "rules");
-    ORCHESTRATOR.getServer().associateProjectToQualityProfile("project", "php", "rules");
+    ORCHESTRATOR.getServer().associateProjectToQualityProfile("project", "secrets", "rules");
     SonarScanner build = SonarScanner.create(FileLocation.of("src/test/resources/sources").getFile())
       .setProjectKey("project")
       .setProjectName("project")

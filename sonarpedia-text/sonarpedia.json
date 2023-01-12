@@ -1,0 +1,11 @@
+{
+  "rules-metadata-path": "../sonar-text-plugin/src/main/resources/org/sonar/l10n/text/rules/text",
+  "languages": [
+    "TEXT"
+  ],
+  "latest-update": "2023-01-05T18:13:27.396584Z",
+  "options": {
+    "no-language-in-filenames": true,
+    "preserve-filenames": true
+  }
+}

@@ -5,6 +5,51 @@
 
 Plugin used to analyze all files containing text.
 
+### Build
+
+*Prerequisite*
+
+- Java 11
+- maven
+
+```shell
+mvn clean install
+```
+
+### Plugin Integration tests
+
+```shell
+cd its/ruling
+mvn verify -Dsonar.runtimeVersion=LATEST_RELEASE -B -e -V
+```
+
+### Rules Integration tests
+
+```shell
+cd its/plugin
+mvn verify -Dsonar.runtimeVersion=LATEST_RELEASE -B -e -V
+```
+
+### Check if dependencies need to be updated
+
+If you have a `~/.m2/settings.xml` containing some private servers and repositories, it's safer to use
+a custom emtpy `settings.xml` to only look for latest version publicly available on maven central.
+
+```shell
+echo "<settings/>" > empty-settings.xml
+mvn -s empty-settings.xml versions:display-dependency-updates
+rm empty-settings.xml
+```
+
+### Update rule description
+
+```shell
+cd sonarpedia-secrets
+java -jar ../../sonar-rule-api/target/rule-api-2.4.0-SNAPSHOT.jar update
+cd ../sonarpedia-text
+java -jar ../../sonar-rule-api/target/rule-api-2.4.0-SNAPSHOT.jar update
+```
+
 ### License
 
 Copyright 2012-2021 SonarSource.

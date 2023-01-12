@@ -19,11 +19,12 @@
  */
 package org.sonar.plugins.text.api;
 
-import org.sonar.api.batch.fs.InputFile;
+import org.sonar.plugins.common.Check;
+import org.sonar.plugins.text.TextRuleDefinition;
 
-public interface TextCheck {
-
-  void initialize(CheckContext ctx);
-
-  void analyze(InputFile inputFile);
+public abstract class TextCheck extends Check {
+  @Override
+  protected String repositoryKey() {
+    return TextRuleDefinition.REPOSITORY_KEY;
+  }
 }
