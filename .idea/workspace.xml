@@ -4,23 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e0de9495-2df9-45cd-b8b1-e95d7a4f33a7" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Directory.Build.props" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/SonarLint.Secrets.DotNet.sln" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/azure-pipelines-dotnet.yml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/nuget.config" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/SonarLint.Secrets.DotNet.UnitTests/CopiedSLVS/Exceptions.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/SonarLint.Secrets.DotNet.UnitTests/CopiedSLVS/MefTestHelpers.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/SonarLint.Secrets.DotNet.UnitTests/CopiedSLVS/SingleObjectImporter.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/SonarLint.Secrets.DotNet.UnitTests/DummySecretDetectorTests.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/SonarLint.Secrets.DotNet.UnitTests/SonarLint.Secrets.DotNet.UnitTests.csproj" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/SonarLint.Secrets.DotNet.UnitTests/packages.lock.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/SonarLint.Secrets.DotNet/DummySecretDetector.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/SonarLint.Secrets.DotNet/InternalsVisibleTo.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/SonarLint.Secrets.DotNet/SonarLint.Secrets.DotNet.csproj" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/SonarLint.Secrets.DotNet/packages.lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" />
-    </list>
+    <list default="true" id="e0de9495-2df9-45cd-b8b1-e95d7a4f33a7" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
