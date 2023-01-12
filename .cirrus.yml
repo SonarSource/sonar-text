@@ -19,7 +19,6 @@ env:
   CIRRUS_SHELL: bash
   # Allows to run builds for the 50 last commits in a branch:
   CIRRUS_CLONE_DEPTH: 1
-  NUGET_FEED: '399fb241-ecc7-4802-8697-dcdd01fbb832/423b576f-2263-43a1-93bd-69f4def19102'
 
 linux_image_template: &LINUX_IMAGE
   image: ${CIRRUS_AWS_ACCOUNT}.dkr.ecr.eu-central-1.amazonaws.com/base:j11-latest
@@ -148,4 +147,4 @@ build_sonar_secrets_dotnet_task:
   restore_script:
     - cd sonar-secrets-dotnet
     - nuget restore SonarLint.Secrets.DotNet.sln -LockedMode
-
+    - dotnet build SonarLint.Secrets.DotNet.sln /nologo /nr:false /p:platform="Any CPU" /p:configuration="Release" /p:VisualStudioVersion="17.0"
