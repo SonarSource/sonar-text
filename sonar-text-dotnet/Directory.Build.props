@@ -1,0 +1,25 @@
+<Project>
+    <Import Project="build\*.targets" />
+
+    <PropertyGroup Label="Package locking">
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+
+        <!-- Set the compilation constant if strong-naming -->
+        <DefineConstants Condition=" '$(SignAssembly)' == true ">$(DefineConstants);SignAssembly</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Label="Versioning">
+        <!-- NB set Version to a three-part version number.
+             This will be used for the product version and the NuGet package version.
+             Don't change any of the other version properties.
+        -->
+        <Version>1.0.3</Version>
+
+        <!-- Properties used by the integration tests to select the package version to test. -->
+        <SonarLintSecretsPackageVersionToTest>$(Version)</SonarLintSecretsPackageVersionToTest>
+
+        <!-- This path must match the one in the integration tests nuget.config file. -->
+        <LocalTestFeedPath>$(MSBuildThisFileDirectory).localTestFeed</LocalTestFeedPath>
+    </PropertyGroup>
+
+</Project>
