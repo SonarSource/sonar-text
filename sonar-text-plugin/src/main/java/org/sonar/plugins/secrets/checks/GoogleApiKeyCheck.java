@@ -29,6 +29,6 @@ public class GoogleApiKeyCheck extends SecretCheck {
   public GoogleApiKeyCheck() {
     super(new SecretRule(
       "Make sure this Google API Key is not disclosed.",
-      new RegexMatcher("(AIza[0-9A-Za-z\\-_]{35})\\b")));
+      new RegexMatcher("\\b(AIza[0-9A-Za-z\\-_]{35})\\b")));
   }
 }

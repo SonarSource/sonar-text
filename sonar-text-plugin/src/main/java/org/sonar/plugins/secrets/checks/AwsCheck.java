@@ -36,12 +36,12 @@ public class AwsCheck extends SecretCheck {
         "Make sure this AWS Secret Access Key is not disclosed.",
         EntropyChecker::hasLowEntropy,
         new RegexMatcher("(?i)aws.{0,50}['\"`]([0-9a-z\\/+]{40})['\"`]"),
-        new RegexMatcher("(?i)\\b(?:AWS)?_?SECRET_?(?:ACCESS)?_?KEY\\b.{0,10}([0-9a-z\\/+]{40})")),
+        new RegexMatcher("(?i)\\b(?:AWS)?_?SECRET_?(?:ACCESS)?_?KEY\\b.{0,10}\\b([0-9a-z\\/+]{40})\\b")),
       // Aws Access Key ID
       new SecretRule(
         "Make sure this AWS Access Key ID is not disclosed.",
         (String matchedText) -> matchedText.endsWith(NO_MATCH_SUFFIX),
-        new RegexMatcher("((?:AKIA|ASIA)[A-Z0-9]{16})\\b")),
+        new RegexMatcher("\\b((?:AKIA|ASIA)[A-Z0-9]{16})\\b")),
       // Aws Session Token
       new SecretRule(
         "Make sure this AWS Session Token is not disclosed.",

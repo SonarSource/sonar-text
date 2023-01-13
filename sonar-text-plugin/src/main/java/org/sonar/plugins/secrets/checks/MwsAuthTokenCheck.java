@@ -29,6 +29,6 @@ public class MwsAuthTokenCheck extends SecretCheck {
   public MwsAuthTokenCheck() {
     super(new SecretRule(
       "Make sure this Amazon MWS Auth Token is not disclosed.",
-      new RegexMatcher("(amzn\\.mws\\.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})")));
+      new RegexMatcher("\\b(amzn\\.mws\\.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\\b")));
   }
 }
