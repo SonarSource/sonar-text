@@ -34,7 +34,14 @@ class AlibabaCloudAccessKeyCheckTest {
   Check check = new AlibabaCloudAccessKeyCheck();
 
   @Test
-  void key_id_positive() throws IOException {
+  void key_id_positive_short_format() throws IOException {
+    String fileContent = "LTAI5tBcc9SecYAo";
+    assertThat(analyze(check, fileContent)).containsExactly(
+      "secrets:S6336 [1:0-1:16] Make sure this Alibaba Cloud Access Key ID is not disclosed.");
+  }
+
+  @Test
+  void key_id_positive_long_format() throws IOException {
     String fileContent = "LTAI5tBcc9SecYAomgyUSFs8";
     assertThat(analyze(check, fileContent)).containsExactly(
       "secrets:S6336 [1:0-1:24] Make sure this Alibaba Cloud Access Key ID is not disclosed.");
@@ -44,6 +51,14 @@ class AlibabaCloudAccessKeyCheckTest {
   void key_id_negative() throws IOException {
     String fileContent = "LNTTAI5tBcc9SecYAomgyUSFs8";
     assertThat(analyze(check, fileContent)).isEmpty();
+  }
+
+  @Test
+  void key_id_negative_extra_characters() throws IOException {
+    // extra characters before
+    assertThat(analyze(check, "BEFLNTTAI5tBcc9SecYAomgyUSFs8")).isEmpty();
+    // extra characters after
+    assertThat(analyze(check, "LNTTAI5tBcc9SecYAomgyUSFs8AFT")).isEmpty();
   }
 
   @Test

@@ -21,6 +21,8 @@ package org.sonar.plugins.secrets.checks;
 
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.sonar.plugins.common.Check;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,9 +38,15 @@ class GoogleApiKeyCheckTest {
       "secrets:S6334 [1:15-1:54] Make sure this Google API Key is not disclosed.");
   }
 
-  @Test
-  void negative() throws IOException {
-    String fileContent = "android:value=\"AIzaSyCis4NzxMw1aJyvUIrjGfof4\"";
+  @ParameterizedTest
+  @ValueSource(strings = {
+    "android:value=\"AIzaSyCis4NzxMw1aJyvUIrjGfof4\"",
+    // extra characters before
+    "android:value=\"KatitioAIzaSyCis4NzxMw1aJyvUIrjGILjPkSdxrRfof4\"",
+    // extra characters after
+    "android:value=\"AIzaSyCis4NzxMw1aJyvUIrjGfof4abc\""
+  })
+  void negative(String fileContent) throws IOException {
     assertThat(analyze(check, fileContent)).isEmpty();
   }
 

@@ -89,6 +89,12 @@ class AwsCheckTest {
 
   @ParameterizedTest
   @ValueSource(strings = {
+    // extra characters before
+    "public static final String KEY = \"BACAKIAIGKECZXA7AEIJLMQ\";\n",
+    "\tsecretKey := stellar1.SecretKey(\"SDGCPMBQHYAIWM3PQOEKWICDMLVT7REJ24J26QEYJYGB6FJ\")",
+    // extra characters after
+    "public static final String KEY = \"AKIAIGKECZXA7AEIJLMQBAC\";\n",
+    "\tsecretKey := stellar1.SecretKey(\"QHYAIWM3PQOEKWICDMLVT7REJ24J26QEYJYGB6FJRPTKDULQX\")",
     // not a key id
     "public class Foo {\n" +
       "  public static final String KEY = \"AKIGIGKECZXA7AEIJLMQ\"\n" +
