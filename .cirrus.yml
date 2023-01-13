@@ -144,15 +144,10 @@ win_vm_definition: &WINDOWS_VM_DEFINITION
 
 build_sonar_secrets_dotnet_task:
   <<: *WINDOWS_VM_DEFINITION
-  restore_script:
-    - cd sonar-text-dotnet
-    - nuget restore SonarLint.Secrets.DotNet.sln -LockedMode
-    - dotnet msbuild //nologo //nr:false //p:platform="Any CPU" //p:configuration="Release" //p:VisualStudioVersion="17.0"
-
-dotnet_UTs_and_analysis_task:
-  depends_on:
-    - build_sonar_secrets_dotnet
-  <<: *WINDOWS_VM_DEFINITION
-  dotnet_UTs_and_analysis_script:
-    - cd sonar-text-dotnet
-    - dotnet test C:\\Windows\\TEMP\\cirrus-ci-build\\sonar-text-dotnet\\src\\SonarLint.Secrets.DotNet.UnitTests\\bin\\Release\\net48\\SonarLint.Secrets.DotNet.UnitTests.dll
+  env:
+    PROJECT_DIR: ${CIRRUS_WORKING_DIR}\\sonar-text-dotnet
+  build_and_restore_script:
+    - cd ${PROJECT_DIR}
+    - dotnet build //nologo //nr:false //p:platform="Any CPU" //p:configuration="Release" //p:VisualStudioVersion="17.0"
+  test_script:
+    dotnet test ${PROJECT_DIR}\\sonar-text-dotnet\\src\\SonarLint.Secrets.DotNet.UnitTests\\bin\\Release\\net48\\SonarLint.Secrets.DotNet.UnitTests.dll
