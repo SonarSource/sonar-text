@@ -28,9 +28,11 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.sonar.api.batch.fs.FilePredicate;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.secrets.api.EntropyChecker;
 
-public class BinaryFilePredicate {
+public class NotBinaryFilePredicate implements FilePredicate {
 
   private static final Set<String> DEFAULT_BINARY_EXTENSIONS = new HashSet<>(Arrays.asList(
     "3dm",
@@ -406,7 +408,7 @@ public class BinaryFilePredicate {
   private final Set<String> binaryFileExtensions;
   private final List<String> binaryFileSuffixes;
 
-  public BinaryFilePredicate(String... additionalBinarySuffixes) {
+  public NotBinaryFilePredicate(String... additionalBinarySuffixes) {
     binaryFileExtensions = new HashSet<>(DEFAULT_BINARY_EXTENSIONS);
     binaryFileSuffixes = new ArrayList<>(DEFAULT_BINARY_SUFFIXES);
     List<String> cleanedSuffixes = Arrays.stream(additionalBinarySuffixes)
@@ -424,11 +426,14 @@ public class BinaryFilePredicate {
     }
   }
 
-  public boolean hasBinaryFileName(String filename) {
+  @Override
+  public boolean apply(InputFile inputFile) {
+    String filename = inputFile.filename();
     String extension = extension(filename);
-    return (extension != null && binaryFileExtensions.contains(extension)) ||
-      binaryFileSuffixes.stream().anyMatch(filename::endsWith) ||
-      isMd5OrSha1(filename);
+    boolean hasBinaryExtension = extension != null && binaryFileExtensions.contains(extension);
+    return !hasBinaryExtension &&
+      binaryFileSuffixes.stream().noneMatch(filename::endsWith) &&
+      !isMd5OrSha1(filename);
   }
 
   public boolean isMd5OrSha1(String filename) {

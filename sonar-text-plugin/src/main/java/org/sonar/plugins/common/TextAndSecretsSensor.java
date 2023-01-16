@@ -67,8 +67,8 @@ public class TextAndSecretsSensor implements Sensor {
       return;
     }
 
-    BinaryFilePredicate binaryFilePredicate = binaryFilePredicate(sensorContext);
-    List<InputFile> allInputFiles = getAllInputFiles(sensorContext, binaryFilePredicate);
+    NotBinaryFilePredicate notBinaryFilePredicate = binaryFilePredicate(sensorContext);
+    List<InputFile> allInputFiles = getAllInputFiles(sensorContext, notBinaryFilePredicate);
     if (allInputFiles.isEmpty()) {
       return;
     }
@@ -83,7 +83,7 @@ public class TextAndSecretsSensor implements Sensor {
           cancelled = true;
           break;
         }
-        analyze(sensorContext, activeChecks, inputFile, binaryFilePredicate);
+        analyze(sensorContext, activeChecks, inputFile, notBinaryFilePredicate);
         progressReport.nextFile();
       }
     } finally {
@@ -96,27 +96,25 @@ public class TextAndSecretsSensor implements Sensor {
 
   }
 
-  private static BinaryFilePredicate binaryFilePredicate(SensorContext sensorContext) {
-    return new BinaryFilePredicate(sensorContext.config().getStringArray(TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY));
+  private static NotBinaryFilePredicate binaryFilePredicate(SensorContext sensorContext) {
+    return new NotBinaryFilePredicate(sensorContext.config().getStringArray(TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY));
   }
 
-  private static List<InputFile> getAllInputFiles(SensorContext sensorContext, BinaryFilePredicate binaryFilePredicate) {
+  private static List<InputFile> getAllInputFiles(SensorContext sensorContext, NotBinaryFilePredicate notBinaryFilePredicate) {
     List<InputFile> allInputFiles = new ArrayList<>();
     FileSystem fileSystem = sensorContext.fileSystem();
-    for (InputFile inputFile : fileSystem.inputFiles(fileSystem.predicates().all())) {
-      if (!binaryFilePredicate.hasBinaryFileName(inputFile.filename())) {
-        allInputFiles.add(inputFile);
-      }
+    for (InputFile inputFile : fileSystem.inputFiles(notBinaryFilePredicate)) {
+      allInputFiles.add(inputFile);
     }
     return allInputFiles;
   }
 
-  private void analyze(SensorContext sensorContext, List<Check> activeChecks, InputFile inputFile, BinaryFilePredicate binaryFilePredicate) {
-    if (!binaryFilePredicate.hasBinaryFileName(inputFile.filename())) {
+  private void analyze(SensorContext sensorContext, List<Check> activeChecks, InputFile inputFile, NotBinaryFilePredicate notBinaryFilePredicate) {
+    if (notBinaryFilePredicate.apply(inputFile)) {
       try {
         InputFileContext inputFileContext = new InputFileContext(sensorContext, inputFile);
         if (inputFileContext.hasNonTextCharacters()) {
-          excludeBinaryFileExtension(binaryFilePredicate, inputFile);
+          excludeBinaryFileExtension(notBinaryFilePredicate, inputFile);
         } else {
           for (Check check : activeChecks) {
             check.analyze(inputFileContext);
@@ -128,10 +126,10 @@ public class TextAndSecretsSensor implements Sensor {
     }
   }
 
-  private void excludeBinaryFileExtension(BinaryFilePredicate binaryFilePredicate, InputFile inputFile) {
-    String extension = BinaryFilePredicate.extension(inputFile.filename());
+  private void excludeBinaryFileExtension(NotBinaryFilePredicate notBinaryFilePredicate, InputFile inputFile) {
+    String extension = NotBinaryFilePredicate.extension(inputFile.filename());
     if (extension != null) {
-      binaryFilePredicate.addBinaryFileExtension(extension);
+      notBinaryFilePredicate.addBinaryFileExtension(extension);
       LOG.warn("'{}' was added to the binary file filter because the file '{}' is a binary file.", extension, inputFile);
       if (displayHelpAboutExcludingBinaryFile) {
         displayHelpAboutExcludingBinaryFile = false;
