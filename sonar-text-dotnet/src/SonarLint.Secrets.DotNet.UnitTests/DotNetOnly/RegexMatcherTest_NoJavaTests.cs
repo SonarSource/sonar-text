@@ -35,7 +35,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.DotNetOnly
             actual.First().Length.Should().Be(3);
             actual.First().Text.Should().Be("123");
 
-            actual.Last().StartIndex.Should().Be(52);
+            actual.Last().StartIndex.Should().Be(50);
             actual.Last().Length.Should().Be(6);
             actual.Last().Text.Should().Be("abcdef");
         }
