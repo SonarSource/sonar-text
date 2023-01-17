@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 SonarSource SA
+ * Copyright (C) 2023 SonarSource SA
  * All rights reserved
  * mailto:info AT sonarsource DOT com
  */
@@ -60,7 +60,7 @@ namespace SonarLint.Secrets.DotNet.NuGetPkg.Tests
             // Check the certificate date is valid
             var fromDate = DateTimeOffset.Parse(cert.GetEffectiveDateString());
             fromDate.Should().BeBefore(DateTimeOffset.UtcNow);
-            
+
             var toDate = DateTimeOffset.Parse(cert.GetExpirationDateString());
             toDate.Should().BeAfter(DateTimeOffset.UtcNow);
         }
