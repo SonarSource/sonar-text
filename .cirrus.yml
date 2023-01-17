@@ -149,5 +149,5 @@ build_sonar_secrets_dotnet_task:
   build_and_restore_script:
     - cd ${PROJECT_DIR}
     - dotnet build //nologo //nr:false //p:platform="Any CPU" //p:configuration="Release" //p:VisualStudioVersion="17.0"
-  test_script:
-    dotnet test ${PROJECT_DIR}\\sonar-text-dotnet\\src\\SonarLint.Secrets.DotNet.UnitTests\\bin\\Release\\net48\\SonarLint.Secrets.DotNet.UnitTests.dll
+  unit_test_script:
+    dotnet test ${PROJECT_DIR}\\src\\SonarLint.Secrets.DotNet.UnitTests\\bin\\Release\\net48\\SonarLint.Secrets.DotNet.UnitTests.dll
