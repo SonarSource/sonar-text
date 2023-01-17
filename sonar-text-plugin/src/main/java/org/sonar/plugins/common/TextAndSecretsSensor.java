@@ -42,7 +42,7 @@ public class TextAndSecretsSensor implements Sensor {
 
   public static final String EXCLUDED_FILE_SUFFIXES_KEY = "sonar.text.excluded.file.suffixes";
 
-  public static final String TEXT_CATEGORY = "text";
+  public static final String TEXT_CATEGORY = "Secrets";
 
   private final CheckFactory checkFactory;
 
