@@ -151,3 +151,21 @@ build_sonar_secrets_dotnet_task:
     - dotnet build //nologo //nr:false //p:platform="Any CPU" //p:configuration="Release" //p:VisualStudioVersion="17.0"
   unit_test_script:
     dotnet test ${PROJECT_DIR}\\src\\SonarLint.Secrets.DotNet.UnitTests\\bin\\Release\\net48\\SonarLint.Secrets.DotNet.UnitTests.dll
+
+
+locate_signing_tool:
+  depends_on:
+    - build_sonar_secrets_dotnet_task
+  <<: *WINDOWS_VM_DEFINITION
+  env:
+    CIRRUS_SHELL: powershell
+  search_for_tool_script:
+    $searchRoot = ${env:ProgramFiles(x86)} + '\Windows Kits\10\bin\10*'
+    $exeName = 'signtool.exe'
+    $signtool = Get-ChildItem -Path $searchRoot -Filter $exeName -Recurse -ErrorAction SilentlyContinue -Force | Select -Last 1
+    if (!$signtool){
+      throw 'Unable to find ' + $exeName + ' under ' + $searchRoot
+    }
+    Write-Host 'Sign tool location ' + $signtool.FullName
+    Write-Host "##vso[task.setvariable variable=SIGNTOOL_PATH;]$signtool"
+
