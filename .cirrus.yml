@@ -153,9 +153,9 @@ build_sonar_secrets_dotnet_task:
     dotnet test ${PROJECT_DIR}\\src\\SonarLint.Secrets.DotNet.UnitTests\\bin\\Release\\net48\\SonarLint.Secrets.DotNet.UnitTests.dll
 
 
-locate_signing_tool:
+locate_signing_tool_task:
   depends_on:
-    - build_sonar_secrets_dotnet_task
+    - build_sonar_secrets_dotnet
   <<: *WINDOWS_VM_DEFINITION
   env:
     CIRRUS_SHELL: powershell
