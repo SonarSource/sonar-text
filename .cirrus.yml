@@ -160,6 +160,5 @@ locate_signing_tool_task:
   env:
     CIRRUS_SHELL: powershell
   search_for_tool_script:
-    - ps: $searchRoot = ${env:ProgramFiles(x86)} + '\Windows Kits\10\bin\10*'
-          Write-Host $searchRoot
+    - ps: Write-Host "It would be so nice to write something here"
 
