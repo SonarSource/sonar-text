@@ -20,115 +20,137 @@ env:
   # Allows to run builds for the 50 last commits in a branch:
   CIRRUS_CLONE_DEPTH: 1
 
-linux_image_template: &LINUX_IMAGE
-  image: ${CIRRUS_AWS_ACCOUNT}.dkr.ecr.eu-central-1.amazonaws.com/base:j11-latest
-  cluster_name: ${CIRRUS_CLUSTER_NAME}
-  region: eu-central-1
-  namespace: default
-  use_in_memory_disk: true
+win_vm_definition: &WINDOWS_VM_DEFINITION
+  ec2_instance:
+    experimental: true # see https://github.com/cirruslabs/cirrus-ci-docs/issues/1051
+    image: base-windows-dotnet-v*
+    region: eu-central-1
+    subnet_id: ${CIRRUS_AWS_SUBNET}
+    type: t2.medium # see https://aws.amazon.com/ec2/instance-types/
+    platform: windows
 
-linux_1_cpu_1G_template: &LINUX_1_CPU_1G
-  eks_container:
-    <<: *LINUX_IMAGE
-    cpu: 1
-    memory: 1G
+#linux_image_template: &LINUX_IMAGE
+#  image: ${CIRRUS_AWS_ACCOUNT}.dkr.ecr.eu-central-1.amazonaws.com/base:j11-latest
+#  cluster_name: ${CIRRUS_CLUSTER_NAME}
+#  region: eu-central-1
+#  namespace: default
+#  use_in_memory_disk: true
+#
+#linux_1_cpu_1G_template: &LINUX_1_CPU_1G
+#  eks_container:
+#    <<: *LINUX_IMAGE
+#    cpu: 1
+#    memory: 1G
+#
+#linux_2_cpu_4G_java_17_template: &LINUX_2_CPU_4G_JAVA_17
+#  eks_container:
+#    <<: *LINUX_IMAGE
+#    image: ${CIRRUS_AWS_ACCOUNT}.dkr.ecr.eu-central-1.amazonaws.com/base:j17-latest
+#    cpu: 2
+#    memory: 4G
+#
+#only_sonarsource_qa: &ONLY_IF_SONARSOURCE_QA
+#  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "dogfood-on-.*")
+#
+#qa_task_filter_template: &QA_TASK_FILTER
+#  depends_on:
+#    - build
+#  <<: *ONLY_IF_SONARSOURCE_QA
+#
+#build_task:
+#  <<: *ONLY_IF_SONARSOURCE_QA
+#  <<: *LINUX_1_CPU_1G
+#  env:
+#    SIGN_KEY: VAULT[development/kv/data/sign data.key]
+#    PGP_PASSPHRASE: VAULT[development/kv/data/sign data.passphrase]
+#    # analysis on next
+#    SONAR_TOKEN: VAULT[development/kv/data/next data.token]
+#    SONAR_HOST_URL: https://next.sonarqube.com/sonarqube
+#    #allow deployment of pull request artifacts to repox
+#    DEPLOY_PULL_REQUEST: true
+#  maven_cache:
+#    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
+#  build_script:
+#    - source cirrus-env BUILD
+#    - regular_mvn_build_deploy_analyze
+#  cleanup_before_cache_script: cleanup_maven_repository
+#
+#ws_scan_task:
+#  depends_on:
+#    - build
+#  <<: *LINUX_1_CPU_1G
+#  # run only on master and long-term branches
+#  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*")
+#  env:
+#    WS_APIKEY: VAULT[development/kv/data/mend data.apikey]
+#  maven_cache:
+#    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
+#  whitesource_script:
+#    - source cirrus-env QA
+#    - source set_maven_build_version $BUILD_NUMBER
+#    - mvn clean install -DskipTests
+#    - source ws_scan.sh
+#  allow_failures: "true"
+#  always:
+#    ws_artifacts:
+#      path: "whitesource/**/*"
+#
+#qa_plugin_task:
+#  <<: *QA_TASK_FILTER
+#  <<: *LINUX_2_CPU_4G_JAVA_17
+#  env:
+#    matrix:
+#      - SQ_VERSION: LATEST_RELEASE
+#      - SQ_VERSION: DEV
+#  maven_cache:
+#    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
+#  plugin_script:
+#    - source cirrus-env QA
+#    - source set_maven_build_version $BUILD_NUMBER
+#    - cd its/plugin
+#    - mvn verify -Drevision=${PROJECT_VERSION} -Dsonar.runtimeVersion=${SQ_VERSION} -B -e -V
+#  cleanup_before_cache_script: cleanup_maven_repository
+#
+#qa_ruling_task:
+#  <<: *QA_TASK_FILTER
+#  <<: *LINUX_2_CPU_4G_JAVA_17
+#  maven_cache:
+#    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
+#  ruling_script:
+#    - source cirrus-env QA
+#    - source set_maven_build_version $BUILD_NUMBER
+#    - cd its/ruling
+#    - mvn verify -Dsonar.runtimeVersion=LATEST_RELEASE -B -e -V
+#  cleanup_before_cache_script: cleanup_maven_repository
+#
+#promote_task:
+#  depends_on:
+#    - build
+#    - qa_plugin
+#    - ws_scan
+#  <<: *ONLY_IF_SONARSOURCE_QA
+#  <<: *LINUX_1_CPU_1G
+#  env:
+#    #promotion cloud function
+#    GCF_ACCESS_TOKEN: VAULT[development/kv/data/promote data.token]
+#    PROMOTE_URL: VAULT[development/kv/data/promote data.url]
+#    GITHUB_TOKEN: VAULT[development/github/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promotion token]
+#    #artifacts that will have downloadable links in burgr
+#    ARTIFACTS: org.sonarsource.text:sonar-text-plugin:jar
+#  maven_cache:
+#    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
+#  script: cirrus_promote_maven
+#  cleanup_before_cache_script: cleanup_maven_repository
 
-linux_2_cpu_4G_java_17_template: &LINUX_2_CPU_4G_JAVA_17
-  eks_container:
-    <<: *LINUX_IMAGE
-    image: ${CIRRUS_AWS_ACCOUNT}.dkr.ecr.eu-central-1.amazonaws.com/base:j17-latest
-    cpu: 2
-    memory: 4G
-
-only_sonarsource_qa: &ONLY_IF_SONARSOURCE_QA
-  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "dogfood-on-.*")
-
-qa_task_filter_template: &QA_TASK_FILTER
-  depends_on:
-    - build
-  <<: *ONLY_IF_SONARSOURCE_QA
-
-build_task:
-  <<: *ONLY_IF_SONARSOURCE_QA
-  <<: *LINUX_1_CPU_1G
+build_sonar_secrets_dotnet_task:
+  <<: *WINDOWS_VM_DEFINITION
   env:
-    SIGN_KEY: VAULT[development/kv/data/sign data.key]
-    PGP_PASSPHRASE: VAULT[development/kv/data/sign data.passphrase]
-    # analysis on next
-    SONAR_TOKEN: VAULT[development/kv/data/next data.token]
-    SONAR_HOST_URL: https://next.sonarqube.com/sonarqube
-    #allow deployment of pull request artifacts to repox
-    DEPLOY_PULL_REQUEST: true
-  maven_cache:
-    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
-  build_script:
-    - source cirrus-env BUILD
-    - regular_mvn_build_deploy_analyze
-  cleanup_before_cache_script: cleanup_maven_repository
-
-ws_scan_task:
-  depends_on:
-    - build
-  <<: *LINUX_1_CPU_1G
-  # run only on master and long-term branches
-  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*")
-  env:
-    WS_APIKEY: VAULT[development/kv/data/mend data.apikey]
-  maven_cache:
-    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
-  whitesource_script:
-    - source cirrus-env QA
-    - source set_maven_build_version $BUILD_NUMBER
-    - mvn clean install -DskipTests
-    - source ws_scan.sh
-  allow_failures: "true"
-  always:
-    ws_artifacts:
-      path: "whitesource/**/*"
-
-qa_plugin_task:
-  <<: *QA_TASK_FILTER
-  <<: *LINUX_2_CPU_4G_JAVA_17
-  env:
-    matrix:
-      - SQ_VERSION: LATEST_RELEASE
-      - SQ_VERSION: DEV
-  maven_cache:
-    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
-  plugin_script:
-    - source cirrus-env QA
-    - source set_maven_build_version $BUILD_NUMBER
-    - cd its/plugin
-    - mvn verify -Drevision=${PROJECT_VERSION} -Dsonar.runtimeVersion=${SQ_VERSION} -B -e -V
-  cleanup_before_cache_script: cleanup_maven_repository
-
-qa_ruling_task:
-  <<: *QA_TASK_FILTER
-  <<: *LINUX_2_CPU_4G_JAVA_17
-  maven_cache:
-    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
-  ruling_script:
-    - source cirrus-env QA
-    - source set_maven_build_version $BUILD_NUMBER
-    - cd its/ruling
-    - mvn verify -Dsonar.runtimeVersion=LATEST_RELEASE -B -e -V
-  cleanup_before_cache_script: cleanup_maven_repository
-
-promote_task:
-  depends_on:
-    - build
-    - qa_plugin
-    - ws_scan
-  <<: *ONLY_IF_SONARSOURCE_QA
-  <<: *LINUX_1_CPU_1G
-  env:
-    #promotion cloud function
-    GCF_ACCESS_TOKEN: VAULT[development/kv/data/promote data.token]
-    PROMOTE_URL: VAULT[development/kv/data/promote data.url]
-    GITHUB_TOKEN: VAULT[development/github/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promotion token]
-    #artifacts that will have downloadable links in burgr
-    ARTIFACTS: org.sonarsource.text:sonar-text-plugin:jar
-  maven_cache:
-    folder: ${CIRRUS_WORKING_DIR}/.m2/repository
-  script: cirrus_promote_maven
-  cleanup_before_cache_script: cleanup_maven_repository
+    PROJECT_DIR: ${CIRRUS_WORKING_DIR}\\sonar-text-dotnet
+    SOLUTION_DIR: ${PROJECT_DIR}\\SonarLint.Secrets.DotNet.sln
+    PIPELINE_SCRIPTS_DIR: ${PROJECT_DIR}\\pipeline_scripts
+    CIRRUS_SHELL: bash # it's needed to be able to run the cirrus-env scripts.
+  restore_and_build_script:
+    - source cirrus-env BUILD # sets the $BUILD_NUMBER that is needed for the project version
+    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\build_and_restore_solution.ps1"
+  unit_test_script:
+    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\run_uts.ps1"
