@@ -39,7 +39,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests
             actual.First().StartIndex.Should().Be(34);
             actual.First().Length.Should().Be(36);
 
-            actual.Last().StartIndex.Should().Be(173);
+            actual.Last().StartIndex.Should().Be(169);
             actual.Last().Length.Should().Be(36);
         }
     }

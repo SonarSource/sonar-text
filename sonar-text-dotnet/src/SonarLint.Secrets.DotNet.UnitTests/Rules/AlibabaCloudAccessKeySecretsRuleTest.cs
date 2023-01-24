@@ -68,7 +68,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.Rules
         {
             var testSubject = new AlibabaCloudAccessKeySecretsRule();
 
-            var secrets = testSubject.Find(readFileAndNormalize("src/test/files/google-cloud-account-key/GoogleCloudAccountNegative.json", UTF_8));
+            var secrets = testSubject.Find(readFileAndNormalize("..\\sonar-text-plugin\\src\\test\\resources\\checks\\GoogleCloudAccountKeyCheck\\GoogleCloudAccountNegative.json", UTF_8));
 
             secrets.Should().BeEmpty();
         }

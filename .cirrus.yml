@@ -20,6 +20,18 @@ env:
   # Allows to run builds for the 50 last commits in a branch:
   CIRRUS_CLONE_DEPTH: 1
 
+  SONAR_TOKEN: VAULT[development/kv/data/next data.token]
+  SONAR_HOST_URL: https://next.sonarqube.com/sonarqube
+
+win_vm_definition: &WINDOWS_VM_DEFINITION
+  ec2_instance:
+    experimental: true # see https://github.com/cirruslabs/cirrus-ci-docs/issues/1051
+    image: base-windows-dotnet-v*
+    region: eu-central-1
+    subnet_id: ${CIRRUS_AWS_SUBNET}
+    type: t2.medium # see https://aws.amazon.com/ec2/instance-types/
+    platform: windows
+
 linux_image_template: &LINUX_IMAGE
   image: ${CIRRUS_AWS_ACCOUNT}.dkr.ecr.eu-central-1.amazonaws.com/base:j11-latest
   cluster_name: ${CIRRUS_CLUSTER_NAME}
@@ -54,9 +66,6 @@ build_task:
   env:
     SIGN_KEY: VAULT[development/kv/data/sign data.key]
     PGP_PASSPHRASE: VAULT[development/kv/data/sign data.passphrase]
-    # analysis on next
-    SONAR_TOKEN: VAULT[development/kv/data/next data.token]
-    SONAR_HOST_URL: https://next.sonarqube.com/sonarqube
     #allow deployment of pull request artifacts to repox
     DEPLOY_PULL_REQUEST: true
   maven_cache:
@@ -91,8 +100,8 @@ qa_plugin_task:
   <<: *LINUX_2_CPU_4G_JAVA_17
   env:
     matrix:
-      - SQ_VERSION: LATEST_RELEASE
-      - SQ_VERSION: DEV
+    - SQ_VERSION: LATEST_RELEASE
+    - SQ_VERSION: DEV
   maven_cache:
     folder: ${CIRRUS_WORKING_DIR}/.m2/repository
   plugin_script:
@@ -132,3 +141,44 @@ promote_task:
     folder: ${CIRRUS_WORKING_DIR}/.m2/repository
   script: cirrus_promote_maven
   cleanup_before_cache_script: cleanup_maven_repository
+
+
+sonar_text_dotnet_analysis_task:
+  depends_on:
+    - promote
+  <<: *ONLY_IF_SONARSOURCE_QA
+  <<: *WINDOWS_VM_DEFINITION
+  env:
+    PROJECT_DIR: ${CIRRUS_WORKING_DIR}\\sonar-text-dotnet
+    SOLUTION_DIR: ${PROJECT_DIR}\\SonarLint.Secrets.DotNet.sln
+    PIPELINE_SCRIPTS_DIR: ${PROJECT_DIR}\\pipeline_scripts
+    # analysis on next
+    PROJECT_NAME: "sonar-secrets-dotnet"
+  analysis_begin_step_script:
+    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\analysis_begin_step.ps1"
+  build_script:
+    - $nuget_feed="https:////pkgs.dev.azure.com/sonarsource//399fb241-ecc7-4802-8697-dcdd01fbb832//_packaging//slvs_input/nuget//v3//index.json"
+    - dotnet build --source ${nuget_feed} -restoreProperty:RestoreLockedMode=true
+  analysis_end_step_script:
+    - cd $PROJECT_DIR
+    - ps: SonarScanner.MSBuild.exe end /d:sonar.login="$env:SONAR_TOKEN"
+  unit_test_script:
+    - echo "Running Unit Tests"
+    - dotnet test ${SOLUTION_DIR} --configuration ${BUILD_CONFIGURATION} --no-build
+
+
+build_and_release_sonar_secrets_dotnet_task:
+  depends_on:
+    - sonar_text_dotnet_analysis
+  <<: *ONLY_IF_SONARSOURCE_QA
+  <<: *WINDOWS_VM_DEFINITION
+  env:
+    PROJECT_DIR: ${CIRRUS_WORKING_DIR}\\sonar-text-dotnet
+    SOLUTION_DIR: ${PROJECT_DIR}\\SonarLint.Secrets.DotNet.sln
+    PIPELINE_SCRIPTS_DIR: ${PROJECT_DIR}\\pipeline_scripts
+    # analysis on next
+    PROJECT_NAME: "sonar-secrets-dotnet"
+  restore_and_build_script:
+    - source cirrus-env BUILD # sets the $BUILD_NUMBER that is needed for the project version
+    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\build_and_restore_solution.ps1"
+
