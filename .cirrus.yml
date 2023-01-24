@@ -160,12 +160,5 @@ locate_signing_tool_task:
   env:
     CIRRUS_SHELL: powershell
   search_for_tool_script:
-    - ps: $searchRoot = ${env:ProgramFiles(x86)} + '\Windows Kits\10\bin\10*'
-    - ps: $exeName = 'signtool.exe'
-    - ps: $signtool = Get-ChildItem -Path $searchRoot -Filter $exeName -Recurse -ErrorAction SilentlyContinue -Force | Select -Last 1
-    - ps: if (!$signtool) { 
-          Write-Host 'Unable to find ' + $exeName + ' under ' + $searchRoot 
-          }
-    - ps: Write-Host 'Sign tool location ' + $signtool.FullName
-    - ps: Write-Host "##vso[task.setvariable variable=SIGNTOOL_PATH;]$signtool"
+    - ps: .\scripts\locate-sign-tool.ps1
     
