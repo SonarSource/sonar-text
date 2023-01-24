@@ -1,9 +1,0 @@
-{
-  "ExpandedNodes": [
-    "\\src\\IntegrationTests",
-    "\\src\\IntegrationTests\\SonarLint.Secrets.DotNet.NuGetPkg.Tests",
-    "\\src\\SonarLint.Secrets.DotNet",
-    "\\src\\SonarLint.Secrets.DotNet.UnitTests"
-  ],
-  "PreviewInSolutionExplorer": false
-}
