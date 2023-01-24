@@ -146,8 +146,18 @@ build_sonar_secrets_dotnet_task:
   <<: *WINDOWS_VM_DEFINITION
   env:
     PROJECT_DIR: ${CIRRUS_WORKING_DIR}\\sonar-text-dotnet
-  build_and_restore_script:
+    SOLUTION_DIR: ${PROJECT_DIR}\\SonarLint.Secrets.DotNet.sln
+    CIRRUS_SHELL: bash # it's needed to be able to run the cirrus-env scripts.
+  restore_and_build_script:
+    - source cirrus-env BUILD # sets the $BUILD_NUMBER that is needed for the project version
+    - echo "Build number is $BUILD_NUMBER"
     - cd ${PROJECT_DIR}
-    - dotnet build //nologo //nr:false //p:platform="Any CPU" //p:configuration="Release" //p:VisualStudioVersion="17.0"
+    - echo Restoring ${SOLUTION_DIR}
+    - nuget restore -LockedMode -Source https://pkgs.dev.azure.com/sonarsource/399fb241-ecc7-4802-8697-dcdd01fbb832/_packaging/slvs_input/nuget/v3/index.json  # nuget version is 6.3.1 https://github.com/SonarSource/re-ci-images/blob/master/ec2-images/build-base-windows-dotnet.pkr.hcl#L39
+    - echo Building ${SOLUTION_DIR}
+    - echo "Build number is $BUILD_NUMBER"
+    - dotnet build --no-restore //nologo //nr:false //p:platform="Any CPU" //p:configuration="Release" //p:VisualStudioVersion="17.0"
+    - PowerShell -NonInteractive -NoProfile -File "${PROJECT_DIR}\\pipeline_scripts\\calculate_sonar_secrets_dotnet_version.ps1"
   unit_test_script:
-    dotnet test ${PROJECT_DIR}\\src\\SonarLint.Secrets.DotNet.UnitTests\\bin\\Release\\net48\\SonarLint.Secrets.DotNet.UnitTests.dll
+    - dotnet test ${PROJECT_DIR}\\src\\SonarLint.Secrets.DotNet.UnitTests\\bin\\Release\\net48\\SonarLint.Secrets.DotNet.UnitTests.dll
+
