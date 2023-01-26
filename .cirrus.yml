@@ -171,7 +171,6 @@ build_sonar_secrets_dotnet_task:
     - source cirrus-env BUILD # sets the $BUILD_NUMBER that is needed for the project version
     - PowerShell -NonInteractive -NoProfile -File "${PROJECT_DIR}\\pipeline_scripts\\build_and_restore_solution.ps1"
     - PowerShell -NonInteractive -NoProfile -File "${PROJECT_DIR}\\pipeline_scripts\\calculate_sonar_secrets_dotnet_version.ps1"
-    - ps: Write-Host "File path is:" $sign_cert_pfx_file.path
   unit_test_script:
     - dotnet test ${PROJECT_DIR}\\src\\SonarLint.Secrets.DotNet.UnitTests\\bin\\Release\\net48\\SonarLint.Secrets.DotNet.UnitTests.dll
 
