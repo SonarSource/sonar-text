@@ -147,8 +147,8 @@ download_snk_file_task:
   environment:
     SONARSOURCE_SNK: VAULT[development/team/languages/kv/data/strong_named_key data.SonarSourceSecret_snk]
   sonarSourceSecret_snk_file:
-    secureFilePath: ${CIRRUS_WORKING_DIR}/SonarSourceSecret_snk 
-    secureFile: SONARSOURCE_SNK
+    path: ${CIRRUS_WORKING_DIR}/SonarSourceSecret_snk 
+    variable_name: SONARSOURCE_SNK
 
 build_sonar_secrets_dotnet_task:
   depends_on:
