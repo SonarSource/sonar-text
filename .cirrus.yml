@@ -49,8 +49,8 @@ win_vm_definition: &WINDOWS_VM_DEFINITION
 #    cpu: 2
 #    memory: 4G
 #
-#only_sonarsource_qa: &ONLY_IF_SONARSOURCE_QA
-#  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "dogfood-on-.*")
+only_sonarsource_qa: &ONLY_IF_SONARSOURCE_QA
+  only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "dogfood-on-.*")
 #
 #qa_task_filter_template: &QA_TASK_FILTER
 #  depends_on:
