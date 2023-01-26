@@ -152,7 +152,7 @@ only_sonarsource_qa: &ONLY_IF_SONARSOURCE_QA
 
 download_pfx_file_task:
   <<: *WINDOWS_VM_DEFINITION
-  environment:
+  env:
     SIGN_PASSPHRASE: VAULT[development/kv/data/sign/dotnet data.passphrase]
     SIGN_CERT_PFX:   VAULT[development/kv/data/sign/dotnet data.cert_pfx]
   sign_cert_pfx_file:
@@ -171,7 +171,7 @@ build_sonar_secrets_dotnet_task:
     - source cirrus-env BUILD # sets the $BUILD_NUMBER that is needed for the project version
     - PowerShell -NonInteractive -NoProfile -File "${PROJECT_DIR}\\pipeline_scripts\\build_and_restore_solution.ps1"
     - PowerShell -NonInteractive -NoProfile -File "${PROJECT_DIR}\\pipeline_scripts\\calculate_sonar_secrets_dotnet_version.ps1"
-    - ps: Write-Host File path is: $sign_cert_pfx_file.path
+    - ps: Write-Host "File path is:" $sign_cert_pfx_file.path
   unit_test_script:
     - dotnet test ${PROJECT_DIR}\\src\\SonarLint.Secrets.DotNet.UnitTests\\bin\\Release\\net48\\SonarLint.Secrets.DotNet.UnitTests.dll
 
