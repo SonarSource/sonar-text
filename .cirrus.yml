@@ -145,13 +145,18 @@ win_vm_definition: &WINDOWS_VM_DEFINITION
 build_sonar_secrets_dotnet_task:
   <<: *WINDOWS_VM_DEFINITION
   env:
+    PROJECT_NAME: "sonar-secrets-dotnet"
+    SONAR_TOKEN: VAULT[development/kv/data/next data.token]
+    SONAR_HOST_URL: https://next.sonarqube.com/sonarqube
     PROJECT_DIR: ${CIRRUS_WORKING_DIR}\\sonar-text-dotnet
     SOLUTION_DIR: ${PROJECT_DIR}\\SonarLint.Secrets.DotNet.sln
     PIPELINE_SCRIPTS_DIR: ${PROJECT_DIR}\\pipeline_scripts
     CIRRUS_SHELL: bash # it's needed to be able to run the cirrus-env scripts.
+  analysis_begin_step_script:
+    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\analysis_begin_step.ps1"
   restore_and_build_script:
     - source cirrus-env BUILD # sets the $BUILD_NUMBER that is needed for the project version
-    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\\\build_and_restore_solution.ps1"
+    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\build_and_restore_solution.ps1"
     - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\calculate_sonar_secrets_dotnet_version.ps1"
   unit_test_script:
     - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\run_uts.ps1"
