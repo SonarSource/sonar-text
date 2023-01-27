@@ -144,15 +144,15 @@ only_sonarsource_qa: &ONLY_IF_SONARSOURCE_QA
 
 build_sonar_secrets_dotnet_task:
   <<: *WINDOWS_VM_DEFINITION
-  env:
+  environment:
     SIGN_PASSPHRASE: VAULT[development/kv/data/sign/dotnet data.passphrase]
     SIGN_CERT_PFX:   VAULT[development/kv/data/sign/dotnet data.cert_pfx]
     PROJECT_DIR: ${CIRRUS_WORKING_DIR}\\sonar-text-dotnet
     SOLUTION_DIR: ${PROJECT_DIR}\\SonarLint.Secrets.DotNet.sln
     CIRRUS_SHELL: bash # it's needed to be able to run the cirrus-env scripts.
-  sign_cert_pfx_file:
-    path: ${CIRRUS_WORKING_DIR}/blafasel.pfx
-    variable_name: SIGN_CERT_PFX
+  # sign_cert_pfx_file:
+    # path: ${CIRRUS_WORKING_DIR}/blafasel.pfx
+    # variable_name: SIGN_CERT_PFX
   restore_and_build_script:
     - source cirrus-env BUILD # sets the $BUILD_NUMBER that is needed for the project version
     - PowerShell -NonInteractive -NoProfile -File "${PROJECT_DIR}\\pipeline_scripts\\build_and_restore_solution.ps1"
