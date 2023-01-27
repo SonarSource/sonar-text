@@ -143,8 +143,6 @@ only_sonarsource_qa: &ONLY_IF_SONARSOURCE_QA
 #  cleanup_before_cache_script: cleanup_maven_repository
 
 build_sonar_secrets_dotnet_task:
-  depends_on:
-    - download_pfx_file
   <<: *WINDOWS_VM_DEFINITION
   env:
     SIGN_PASSPHRASE: VAULT[development/kv/data/sign/dotnet data.passphrase]
