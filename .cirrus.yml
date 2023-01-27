@@ -142,13 +142,13 @@ only_sonarsource_qa: &ONLY_IF_SONARSOURCE_QA
 #  script: cirrus_promote_maven
 #  cleanup_before_cache_script: cleanup_maven_repository
 
-#download_snk_file_task:
-#  <<: *WINDOWS_VM_DEFINITION
-#  environment:
-#    SONARSOURCE_SNK: VAULT[development/team/languages/kv/data/strong_named_key data.SonarSourceSecret_snk]
-#  sonarSourceSecret_snk_file:
-#    path: ${CIRRUS_WORKING_DIR}/SonarSourceSecret_snk 
-#    variable_name: SONARSOURCE_SNK
+download_snk_file_task:
+  <<: *WINDOWS_VM_DEFINITION
+  environment:
+    SONARSOURCE_SNK: VAULT[development/team/languages/kv/data/strong_named_key data.SonarSourceSecret_snk]
+  sonarSourceSecret_snk_file:
+    path: ${CIRRUS_WORKING_DIR}/SonarSourceSecret_snk 
+    variable_name: SONARSOURCE_SNK
 
 download_pfx_file_task:
   <<: *WINDOWS_VM_DEFINITION
