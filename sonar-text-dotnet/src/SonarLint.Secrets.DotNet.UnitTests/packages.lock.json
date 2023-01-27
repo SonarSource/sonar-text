@@ -1,7 +1,7 @@
 {
   "version": 1,
   "dependencies": {
-    ".NETFramework,Version=v4.8": {
+    ".NETFramework,Version=v4.7.2": {
       "FluentAssertions": {
         "type": "Direct",
         "requested": "[5.9.0, )",
@@ -61,9 +61,6 @@
         "dependencies": {
           "System.Runtime.CompilerServices.Unsafe": "4.5.0"
         }
-      },
-      "sonarlint.secrets.dotnet": {
-        "type": "Project"
       }
     }
   }

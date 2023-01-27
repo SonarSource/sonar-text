@@ -1,4 +1,3 @@
-
 $versionFilePath = "$env:CIRRUS_WORKING_DIR\sonar-text-dotnet\src\SonarLint.Secrets.DotNet\SonarLint.Secrets.DotNet.csproj"
 Write-Host "Reading the Sonar project version from '${versionFilePath}' ..."
 # Read the version from the file

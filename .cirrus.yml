@@ -147,11 +147,12 @@ build_sonar_secrets_dotnet_task:
   env:
     PROJECT_DIR: ${CIRRUS_WORKING_DIR}\\sonar-text-dotnet
     SOLUTION_DIR: ${PROJECT_DIR}\\SonarLint.Secrets.DotNet.sln
+    PIPELINE_SCRIPTS_DIR: ${PROJECT_DIR}\\pipeline_scripts
     CIRRUS_SHELL: bash # it's needed to be able to run the cirrus-env scripts.
   restore_and_build_script:
     - source cirrus-env BUILD # sets the $BUILD_NUMBER that is needed for the project version
-    - PowerShell -NonInteractive -NoProfile -File "${PROJECT_DIR}\\pipeline_scripts\\build_and_restore_solution.ps1"
-    - PowerShell -NonInteractive -NoProfile -File "${PROJECT_DIR}\\pipeline_scripts\\calculate_sonar_secrets_dotnet_version.ps1"
+    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\\\build_and_restore_solution.ps1"
+    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\calculate_sonar_secrets_dotnet_version.ps1"
   unit_test_script:
-    - dotnet test ${PROJECT_DIR}\\src\\SonarLint.Secrets.DotNet.UnitTests\\bin\\Release\\net48\\SonarLint.Secrets.DotNet.UnitTests.dll
+    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\run_uts.ps1"
 
