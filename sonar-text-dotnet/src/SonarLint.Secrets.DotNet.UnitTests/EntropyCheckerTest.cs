@@ -16,8 +16,6 @@ namespace SonarLint.Secrets.DotNet.UnitTests
     [TestClass]
     public class EntropyCheckerTest
     {
-        private const string commonTestFilePath = "..\\sonar-text-plugin\\src\\test\\resources\\EntropyChecker\\";
-
         [TestMethod]
         public void computeSampleValue(){
             assertThat(EntropyChecker.CalculateShannonEntropy("0040878d3579659158d09ad09b6a9849d18e0e22")).isEqualTo(3.587326145256008);
@@ -35,8 +33,8 @@ namespace SonarLint.Secrets.DotNet.UnitTests
 
         [TestMethod]
         public void thresholdSplitsFalsePositiveGoodEnough() {
-            double falsePositivesAboveThreshold = ProcessFile(commonTestFilePath + "false-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
-            double truePositivesAboveThreshold = ProcessFile(commonTestFilePath + "true-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
+            double falsePositivesAboveThreshold = ProcessFile(TestConstants.RootTestFileDirectory + "EntropyChecker\\false-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
+            double truePositivesAboveThreshold = ProcessFile(TestConstants.RootTestFileDirectory + "EntropyChecker\\true-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
 
             // this assertions can be changed if we will get more data that, for example, will show more false positives
             // the goal of the test to fail if threshold value will be changed, since current value is the sweet spot on data we have so far
