@@ -150,6 +150,15 @@ download_snk_file_task:
     path: ${CIRRUS_WORKING_DIR}/SonarSourceSecret_snk 
     variable_name: SONARSOURCE_SNK
 
+download_pfx_file_task:
+  <<: *WINDOWS_VM_DEFINITION
+  environment:
+    SIGN_PASSPHRASE: VAULT[development/kv/data/sign/dotnet data.passphrase]
+    SIGN_CERT_PFX:   VAULT[development/kv/data/sign/dotnet data.cert_pfx]
+  sign_cert_pfx_file:
+    path: ${CIRRUS_WORKING_DIR}/blafasel.pfx
+    variable_name: SIGN_CERT_PFX
+
 build_sonar_secrets_dotnet_task:
   <<: *WINDOWS_VM_DEFINITION
   environment:
