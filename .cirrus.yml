@@ -145,14 +145,14 @@ only_sonarsource_qa: &ONLY_IF_SONARSOURCE_QA
 build_sonar_secrets_dotnet_task:
   <<: *WINDOWS_VM_DEFINITION
   env:
-    #SONARSOURCE_SNK: VAULT[development/team/languages/kv/data/strong_named_key data.SonarSourceSecret_snk]
+    SONARSOURCE_SNK: VAULT[development/team/languages/kv/data/strong_named_key data.SonarSourceSecret_snk]
     #SIGN_PASSPHRASE: VAULT[development/kv/data/sign/dotnet data.passphrase]
     #SIGN_CERT_PFX:   VAULT[development/kv/data/sign/dotnet data.cert_pfx]
     PROJECT_DIR: ${CIRRUS_WORKING_DIR}\\sonar-text-dotnet
     SOLUTION_DIR: ${PROJECT_DIR}\\SonarLint.Secrets.DotNet.sln
     CIRRUS_SHELL: bash # it's needed to be able to run the cirrus-env scripts.
   before_snk_script:
-    - echo "before snk"
+    - [[ -z "$SONARSOURCE_SNK" ]] && echo "NULL" || echo "Not NULL"
   sonarSourceSecret_snk_file:
     path: ${CIRRUS_WORKING_DIR}/SonarSourceSecret_snk 
     variable_name: SONARSOURCE_SNK
