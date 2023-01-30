@@ -11,8 +11,6 @@ env:
   #Possible values for ARTIFACTORY_DEPLOY_REPO: sonarsource-private-qa, sonarsource-public-qa
   ARTIFACTORY_DEPLOY_REPO: sonarsource-public-qa
   ARTIFACTORY_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-private-reader access_token]
-  SIGN_PASSPHRASE: VAULT[development/kv/data/sign/dotnet data.passphrase]
-  SIGN_CERT_PFX:   VAULT[development/kv/data/sign/dotnet data.cert_pfx]
   # burgr notification
   BURGR_URL: VAULT[development/kv/data/burgr data.url]
   BURGR_USERNAME: VAULT[development/kv/data/burgr data.cirrus_username]
@@ -144,11 +142,14 @@ only_sonarsource_qa: &ONLY_IF_SONARSOURCE_QA
 #  script: cirrus_promote_maven
 #  cleanup_before_cache_script: cleanup_maven_repository
 
+download_snk_file_task:
+  <<: *WINDOWS_VM_DEFINITION
+  environment:
+    SONARSOURCE_SNK: VAULT[development/team/languages/kv/data/strong_named_key data.SonarSourceSecret_snk]
+
 build_sonar_secrets_dotnet_task:
   <<: *WINDOWS_VM_DEFINITION
   environment:
-    #SIGN_PASSPHRASE: VAULT[development/kv/data/sign/dotnet data.passphrase]
-    #SIGN_CERT_PFX:   VAULT[development/kv/data/sign/dotnet data.cert_pfx]
     PROJECT_DIR: ${CIRRUS_WORKING_DIR}\\sonar-text-dotnet
     SOLUTION_DIR: ${PROJECT_DIR}\\SonarLint.Secrets.DotNet.sln
     CIRRUS_SHELL: bash # it's needed to be able to run the cirrus-env scripts.
