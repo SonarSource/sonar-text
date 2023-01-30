@@ -154,10 +154,16 @@ build_sonar_secrets_dotnet_task:
   sonarSourceSecret_snk_file:
     path: ${CIRRUS_WORKING_DIR}/SonarSourceSecret_snk 
     variable_name: SONARSOURCE_SNK
+  after_snk_script:
+    - echo "after snk"
   sign_cert_pfx_file:
     path: ${CIRRUS_WORKING_DIR}/blafasel.pfx
     variable_name: SIGN_CERT_PFX
+  after_pfx_script:
+    - echo "after pfx"
   restore_and_build_script:
+    - echo "Hello there"
+    - dir ${CIRRUS_WORKING_DIR}
     - source cirrus-env BUILD # sets the $BUILD_NUMBER that is needed for the project version
     - PowerShell -NonInteractive -NoProfile -File "${PROJECT_DIR}\\pipeline_scripts\\build_and_restore_solution.ps1"
     - PowerShell -NonInteractive -NoProfile -File "${PROJECT_DIR}\\pipeline_scripts\\calculate_sonar_secrets_dotnet_version.ps1"
