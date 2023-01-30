@@ -144,7 +144,7 @@ only_sonarsource_qa: &ONLY_IF_SONARSOURCE_QA
 
 build_sonar_secrets_dotnet_task:
   <<: *WINDOWS_VM_DEFINITION
-  environment:
+  env:
     SONARSOURCE_SNK: VAULT[development/team/languages/kv/data/strong_named_key data.SonarSourceSecret_snk]
     SIGN_PASSPHRASE: VAULT[development/kv/data/sign/dotnet data.passphrase]
     SIGN_CERT_PFX:   VAULT[development/kv/data/sign/dotnet data.cert_pfx]
