@@ -154,13 +154,14 @@ download_pfx_file_task:
 build_sonar_secrets_dotnet_task:
   <<: *WINDOWS_VM_DEFINITION
   environment:
-    PROJECT_DIR: ${CIRRUS_WORKING_DIR}\\sonar-text-dotnet
-    SOLUTION_DIR: ${PROJECT_DIR}\\SonarLint.Secrets.DotNet.sln
     SONARSOURCE_SNK: VAULT[development/team/languages/kv/data/strong_named_key data.SonarSourceSecret_snk]
-    CIRRUS_SHELL: bash # it's needed to be able to run the cirrus-env scripts.
   sonarSourceSecret_snk_file:
     path: ${CIRRUS_WORKING_DIR}/SonarSourceSecret_snk 
     variable_name: SONARSOURCE_SNK
+  environment:
+    PROJECT_DIR: ${CIRRUS_WORKING_DIR}\\sonar-text-dotnet
+    SOLUTION_DIR: ${PROJECT_DIR}\\SonarLint.Secrets.DotNet.sln
+    CIRRUS_SHELL: bash # it's needed to be able to run the cirrus-env scripts.
   restore_and_build_script:
     - source cirrus-env BUILD # sets the $BUILD_NUMBER that is needed for the project version
     - PowerShell -NonInteractive -NoProfile -File "${PROJECT_DIR}\\pipeline_scripts\\build_and_restore_solution.ps1"
