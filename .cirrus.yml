@@ -146,7 +146,6 @@ build_sonar_secrets_dotnet_task:
   <<: *WINDOWS_VM_DEFINITION
   env:
     SIGN_PASSPHRASE: VAULT[development/kv/data/sign/dotnet data.passphrase]
-    SIGN_CERT_PFX:   VAULT[development/kv/data/sign/dotnet data.cert_pfx]
     PROJECT_DIR: ${CIRRUS_WORKING_DIR}\\sonar-text-dotnet
     SOLUTION_DIR: ${PROJECT_DIR}\\SonarLint.Secrets.DotNet.sln
     CIRRUS_SHELL: bash # it's needed to be able to run the cirrus-env scripts.
