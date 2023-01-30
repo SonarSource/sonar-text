@@ -142,17 +142,17 @@ promote_task:
   script: cirrus_promote_maven
   cleanup_before_cache_script: cleanup_maven_repository
 
-build_and_release_sonar_secrets_dotnet_task:
-  depends_on:
-    - promote
+build_and_release_dotnet_task:
   <<: *ONLY_IF_SONARSOURCE_QA
   <<: *WINDOWS_VM_DEFINITION
   env:
+    BUILD_CONFIGURATION: "Release"
     PROJECT_DIR: ${CIRRUS_WORKING_DIR}\\sonar-text-dotnet
     SOLUTION_DIR: ${PROJECT_DIR}\\SonarLint.Secrets.DotNet.sln
     PIPELINE_SCRIPTS_DIR: ${PROJECT_DIR}\\pipeline_scripts
   restore_and_build_script:
-    - source cirrus-env BUILD # sets the $BUILD_NUMBER that is needed for the project version
+    - source cirrus-env BUILD # sets the $BUILD_NUMBER that is needed for the project version, see how here https://github.com/SonarSource/re-ci-images/blob/master/docker/bin/cirrus-env#L28
     - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\build_and_restore_solution.ps1"
   unit_test_script:
-    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\run_uts.ps1"
+    - echo "Running Unit Tests"
+    - dotnet test ${SOLUTION_DIR} --configuration ${BUILD_CONFIGURATION} --no-build

@@ -16,7 +16,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests
     [TestClass]
     public class EntropyCheckerTest
     {
-        private readonly string commonTestFilePath = "..\\sonar-text-plugin\\src\\test\\resources\\EntropyChecker\\";
+        private const string commonTestFilePath = "..\\sonar-text-plugin\\src\\test\\resources\\EntropyChecker\\";
 
         [TestMethod]
         public void computeSampleValue(){
