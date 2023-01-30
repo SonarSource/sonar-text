@@ -152,7 +152,7 @@ build_sonar_secrets_dotnet_task:
     SOLUTION_DIR: ${PROJECT_DIR}\\SonarLint.Secrets.DotNet.sln
     CIRRUS_SHELL: bash # it's needed to be able to run the cirrus-env scripts.
   before_snk_script:
-    - [[ -z "$SONARSOURCE_SNK" ]] && echo "NULL" || echo "Not NULL"
+    - ps: if ($SONARSOURCE_SNK) { Write-Host "variable is NOT null" }
   sonarSourceSecret_snk_file:
     path: ${CIRRUS_WORKING_DIR}/SonarSourceSecret_snk 
     variable_name: SONARSOURCE_SNK
