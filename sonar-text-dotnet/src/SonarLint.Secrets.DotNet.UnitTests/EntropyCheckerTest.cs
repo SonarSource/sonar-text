@@ -33,8 +33,8 @@ namespace SonarLint.Secrets.DotNet.UnitTests
 
         [TestMethod]
         public void thresholdSplitsFalsePositiveGoodEnough() {
-            double falsePositivesAboveThreshold = ProcessFile("src/test/files/false-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
-            double truePositivesAboveThreshold = ProcessFile("src/test/files/true-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
+            double falsePositivesAboveThreshold = ProcessFile(Constants.RootPath + "EntropyChecker\\false-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
+            double truePositivesAboveThreshold = ProcessFile(Constants.RootPath + "EntropyChecker\\true-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
 
             // this assertions can be changed if we will get more data that, for example, will show more false positives
             // the goal of the test to fail if threshold value will be changed, since current value is the sweet spot on data we have so far
