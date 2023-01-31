@@ -128,6 +128,7 @@ promote_task:
     - build
     - qa_plugin
     - ws_scan
+    - build_and_release_dotnet
   <<: *ONLY_IF_SONARSOURCE_QA
   <<: *LINUX_1_CPU_1G
   env:
@@ -143,8 +144,6 @@ promote_task:
   cleanup_before_cache_script: cleanup_maven_repository
 
 build_and_release_dotnet_task:
-  depends_on:
-    - promote
   <<: *ONLY_IF_SONARSOURCE_QA
   <<: *WINDOWS_VM_DEFINITION
   env:
@@ -153,7 +152,9 @@ build_and_release_dotnet_task:
     SOLUTION_DIR: ${PROJECT_DIR}\\SonarLint.Secrets.DotNet.sln
     PIPELINE_SCRIPTS_DIR: ${PROJECT_DIR}\\pipeline_scripts
   restore_and_build_script:
-    - source cirrus-env BUILD # sets the $BUILD_NUMBER that is needed for the project version, see how here https://github.com/SonarSource/re-ci-images/blob/master/docker/bin/cirrus-env#L28
+    # Sets the $BUILD_NUMBER; used for setting the project version.
+    # See https://github.com/SonarSource/re-ci-images/blob/master/docker/bin/cirrus-env#L28
+    - source cirrus-env QA 
     - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\build_and_restore_solution.ps1"
   unit_test_script:
     - echo "Running Unit Tests"
