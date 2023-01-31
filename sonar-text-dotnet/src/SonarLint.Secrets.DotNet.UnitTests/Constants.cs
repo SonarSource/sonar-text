@@ -6,9 +6,8 @@
 
 namespace SonarLint.Secrets.DotNet.UnitTests
 {
-    internal static class TestConstants
+    internal static class Constants
     {
-        public const string RootTestFileDirectory = "..\\sonar-text-plugin\\src\\test\\resources\\";
-
+        public const string RootPath = "..\\sonar-text-plugin\\src\\test\\resources\\";
     }
 }
