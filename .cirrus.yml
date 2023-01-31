@@ -128,7 +128,6 @@ promote_task:
     - build
     - qa_plugin
     - ws_scan
-    - build_and_release_dotnet
   <<: *ONLY_IF_SONARSOURCE_QA
   <<: *LINUX_1_CPU_1G
   env:
@@ -144,6 +143,8 @@ promote_task:
   cleanup_before_cache_script: cleanup_maven_repository
 
 build_and_release_dotnet_task:
+  depends_on:
+    - promote
   <<: *ONLY_IF_SONARSOURCE_QA
   <<: *WINDOWS_VM_DEFINITION
   env:
