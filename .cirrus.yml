@@ -160,8 +160,8 @@ build_sonar_secrets_dotnet_task:
     vault kv get -namespace=development -mount=kv -field=cert_pfx sign/dotnet > ${PFX_PATH}
     file ${SNK_PATH}
     file ${PFX_PATH}
-    "C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\sn.exe" -p ${SNK_PATH} token.snk
-    "C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\sn.exe" -tp token.snk
+#    "C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\sn.exe" -p ${SNK_PATH} token.snk
+#    "C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\sn.exe" -tp token.snk
   restore_and_build_script:
     - source cirrus-env BUILD # sets the $BUILD_NUMBER that is needed for the project version
     - PowerShell -NonInteractive -NoProfile -File "${PROJECT_DIR}\\pipeline_scripts\\build_and_restore_solution.ps1"
