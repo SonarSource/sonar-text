@@ -160,6 +160,7 @@ build_sonar_secrets_dotnet_task:
     vault kv get -namespace=development -mount=kv -field=cert_pfx sign/dotnet > ${PFX_PATH}
     file ${SNK_PATH}
     file ${PFX_PATH}
+    dir "C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\"
     "C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8.1 Tools\sn.exe" -p ${SNK_PATH} token.snk
     "C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8.1 Tools\sn.exe" -tp token.snk
   restore_and_build_script:
