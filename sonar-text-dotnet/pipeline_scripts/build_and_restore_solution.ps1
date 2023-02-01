@@ -3,7 +3,7 @@ Set-Location $env:PROJECT_DIR
 Write-Host Restoring $env:SOLUTION_DIR
 $nugetFeed = "https://pkgs.dev.azure.com/sonarsource/399fb241-ecc7-4802-8697-dcdd01fbb832/_packaging/slvs_input/nuget/v3/index.json"
 # For nuget version see: https://github.com/SonarSource/re-ci-images/blob/master/ec2-images/build-base-windows-dotnet.pkr.hcl#L39
-nuget restore -LockedMode -Source $nugetFeed 
+nuget restore -LockedMode -Source $nugetFeed
 
 Write-Host Building $env:SOLUTION_DIR
 dotnet build `
@@ -17,3 +17,7 @@ dotnet build `
      /p:CommitId=$env:CIRRUS_CHANGE_IN_REPO `
      /p:BranchName=$env:CIRRUS_BRANCH `
      /p:BuildNumber=$BUILD_NUMBER
+
+if ($LASTEXITCODE -eq 1) {
+    throw "Build Failed"
+}
