@@ -17,3 +17,7 @@ dotnet build `
      /p:CommitId=$env:CIRRUS_CHANGE_IN_REPO `
      /p:BranchName=$env:CIRRUS_BRANCH `
      /p:BuildNumber=$BUILD_NUMBER
+
+dotnet pack $env:SOLUTION_DIR -o $env:PROJECT_DIR\artifacts -c $env:BUILD_CONFIGURATION
+
+nuget sign $env:PROJECT_DIR\artifacts\*.nupkg -CertificatePath $env:PFX_PATH -CertificatePassword $env:SIGN_PASSPHRASE -Timestamper http://sha256timestamp.ws.symantec.com/sha256/timestamp
