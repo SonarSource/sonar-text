@@ -8,9 +8,7 @@ project.
 The assumption is that assembly will be:
 * strong-named
 * signed
-* obfuscated
 
-Local (dev-machine) builds of the NuGet package will not normally be signed or obfuscated,
+Local (dev-machine) builds of the NuGet package will not normally be signed,
 so these tests should normally only be run on a CI machine that is producing a publishable
 artefact.
-
