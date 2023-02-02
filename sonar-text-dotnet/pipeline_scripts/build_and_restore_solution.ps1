@@ -16,7 +16,7 @@ dotnet build `
      /p:VisualStudioVersion="17.0" `
      /p:CommitId=$env:CIRRUS_CHANGE_IN_REPO `
      /p:BranchName=$env:CIRRUS_BRANCH `
-     /p:BuildNumber=BUILD_NUMBER
+     /p:BuildNumber=$env:BUILD_NUMBER
 
         if (! $?)
         {
