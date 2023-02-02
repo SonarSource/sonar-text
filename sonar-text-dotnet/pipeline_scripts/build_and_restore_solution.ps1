@@ -14,14 +14,14 @@ Write-Host Building $env:SOLUTION_DIR
 dotnet build `
     $env:SOLUTION_DIR `
     --no-restore `
-     /nologo `
-     /nr:false `
-     /p:platform="Any CPU" `
-     /p:configuration=$env:BUILD_CONFIGURATION `
-     /p:VisualStudioVersion="17.0" `
-     /p:CommitId=$env:CIRRUS_CHANGE_IN_REPO `
-     /p:BranchName=$env:CIRRUS_BRANCH `
-     /p:BuildNumber=$env:BUILD_NUMBER
+    /nologo `
+    /nr:false `
+    /p:platform="Any CPU" `
+    /p:configuration=$env:BUILD_CONFIGURATION `
+    /p:VisualStudioVersion="17.0" `
+    /p:CommitId=$env:CIRRUS_CHANGE_IN_REPO `
+    /p:BranchName=$env:CIRRUS_BRANCH `
+    /p:BuildNumber=$env:BUILD_NUMBER
 
 if(!$?) {
     Write-Host "sonar-text-dotnet build failed."
