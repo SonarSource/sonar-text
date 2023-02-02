@@ -10,5 +10,5 @@ SonarScanner.MSBuild.exe begin `
 	/d:sonar.login=$env:SONAR_TOKEN `
 	/d:sonar.pullrequest.branch=$env:CIRRUS_BRANCH `
 	/d:sonar.pullrequest.key=$env:CIRRUS_PR `
-	/d:sonar.pullrequest.base=master
+	/d:sonar.pullrequest.base=$env:CIRRUS_BASE_BRANCH
 
