@@ -18,7 +18,7 @@ env:
   # Use bash (instead of sh on linux or cmd.exe on windows)
   CIRRUS_SHELL: bash
   # Allows to run builds for the 50 last commits in a branch:
-  CIRRUS_CLONE_DEPTH: 1
+  CIRRUS_CLONE_DEPTH: 0
   # analysis on next
   SONAR_TOKEN: VAULT[development/kv/data/next data.token]
   SONAR_HOST_URL: https://next.sonarqube.com/sonarqube
