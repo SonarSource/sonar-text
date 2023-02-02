@@ -153,11 +153,13 @@ build_sonar_secrets_dotnet_task:
     CIRRUS_SHELL: bash # it's needed to be able to run the cirrus-env scripts.
     VAULT_ADDR: ${CIRRUS_VAULT_URL}
     SNK_PATH: ${CIRRUS_WORKING_DIR}\\SonarSourceSecret.snk
+    SNKBASE64_PATH: ${CIRRUS_WORKING_DIR}\\SonarSourceSecretBase64.snk
     PFX_PATH: ${CIRRUS_WORKING_DIR}\\SonarSource-2021-2023.pfx
   provision_files_script: |
     export VAULT_TOKEN=$(vault write -non-interactive -field=token auth/jwt-cirrusci/login role="${CIRRUS_VAULT_ROLE}" jwt="${CIRRUS_OIDC_TOKEN}")
-    vault kv get -namespace=development/team/languages -mount=kv -field=SonarSourceSecret_snk_base64 strong_named_key > ${SNK_PATH}
+    vault kv get -namespace=development/team/languages -mount=kv -field=SonarSourceSecret_snk_base64 strong_named_key > ${SNKBASE64_PATH}
     vault kv get -namespace=development -mount=kv -field=cert_pfx sign/dotnet > ${PFX_PATH}
+    base64 --decode ${SNKBASE64_PATH} > ${SNK_PATH}
     file ${SNK_PATH}
     file ${PFX_PATH}
 #    "C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\sn.exe" -p ${SNK_PATH} token.snk
