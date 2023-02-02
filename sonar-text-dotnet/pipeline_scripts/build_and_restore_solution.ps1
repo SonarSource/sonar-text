@@ -16,8 +16,10 @@ dotnet build `
      /p:VisualStudioVersion="17.0" `
      /p:CommitId=$env:CIRRUS_CHANGE_IN_REPO `
      /p:BranchName=$env:CIRRUS_BRANCH `
-     /p:BuildNumber=$env:BUILD_NUMBER
+     /p:BuildNumber=BUILD_NUMBER
 
-if ($LASTEXITCODE -eq 1) {
-    throw "Build Failed"
-}
+        if (! $?)
+        {
+            Write-Output "Could not build $env:SOLUTION_DIR"
+            throw "Build Failed"
+        }
