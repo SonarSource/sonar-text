@@ -18,7 +18,10 @@ env:
   # Use bash (instead of sh on linux or cmd.exe on windows)
   CIRRUS_SHELL: bash
   # Allows to run builds for the 50 last commits in a branch:
-  CIRRUS_CLONE_DEPTH: 1
+  CIRRUS_CLONE_DEPTH: 0
+  # analysis on next
+  SONAR_TOKEN: VAULT[development/kv/data/next data.token]
+  SONAR_HOST_URL: https://next.sonarqube.com/sonarqube
 
 win_vm_definition: &WINDOWS_VM_DEFINITION
   ec2_instance:
@@ -63,9 +66,6 @@ build_task:
   env:
     SIGN_KEY: VAULT[development/kv/data/sign data.key]
     PGP_PASSPHRASE: VAULT[development/kv/data/sign data.passphrase]
-    # analysis on next
-    SONAR_TOKEN: VAULT[development/kv/data/next data.token]
-    SONAR_HOST_URL: https://next.sonarqube.com/sonarqube
     #allow deployment of pull request artifacts to repox
     DEPLOY_PULL_REQUEST: true
   maven_cache:
@@ -151,11 +151,18 @@ build_and_release_dotnet_task:
     PROJECT_DIR: ${CIRRUS_WORKING_DIR}\\sonar-text-dotnet
     SOLUTION_DIR: ${PROJECT_DIR}\\SonarLint.Secrets.DotNet.sln
     PIPELINE_SCRIPTS_DIR: ${PROJECT_DIR}\\pipeline_scripts
+    PROJECT_NAME: "sonar-secrets-dotnet"
+  analysis_begin_step_script:
+    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\analysis_begin_step.ps1"
   restore_and_build_script:
     # Sets the $BUILD_NUMBER; used for setting the project version.
     # See https://github.com/SonarSource/re-ci-images/blob/master/docker/bin/cirrus-env#L28
     - source cirrus-env QA
     - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\build_and_restore_solution.ps1"
+  analysis_end_step_script:
+    - cd $PROJECT_DIR
+    - ps: SonarScanner.MSBuild.exe end /d:sonar.login="$env:SONAR_TOKEN"
   unit_test_script:
     - echo "Running Unit Tests"
     - dotnet test ${SOLUTION_DIR} --configuration ${BUILD_CONFIGURATION} --no-build
+
