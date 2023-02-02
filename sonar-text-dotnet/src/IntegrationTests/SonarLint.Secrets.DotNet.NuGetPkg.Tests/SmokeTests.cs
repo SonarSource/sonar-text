@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition.Hosting;
 using System.Linq;
 
-// These smoke tests should work, regardless of whether the assemblies have been signed/strong-named/obfuscated.
+// These smoke tests should work, regardless of whether the assemblies have been signed/strong-named.
 
 namespace SonarLint.Secrets.DotNet.NuGetPkg.Tests
 {
