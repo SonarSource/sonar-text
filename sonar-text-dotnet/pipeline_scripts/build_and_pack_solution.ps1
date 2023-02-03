@@ -27,7 +27,7 @@ dotnet build `
     /p:CommitId=$env:CIRRUS_CHANGE_IN_REPO `
     /p:BranchName=$env:CIRRUS_BRANCH `
     /p:BuildNumber=$env:BUILD_NUMBER `
-    /p:SignAssembly="true" `
+    /p:SignAssembly=$SIGN_DOTNET_ASSEMBLY `
     /p:AssemblyOriginatorKeyFile=$env:SNK_PATH
 CheckIfSuccessful "build"
 
@@ -35,7 +35,9 @@ Write-Host Packing $env:SOLUTION_DIR
 dotnet pack $env:SOLUTION_DIR -o $env:PROJECT_DIR\artifacts -c $env:BUILD_CONFIGURATION --no-build
 CheckIfSuccessful "packaging"
 
-$ARTIFACT_PATH = resolve-path ${env:PROJECT_DIR}\artifacts\SonarLint.Secrets.DotNet.*.nupkg
-Write-Host "Signing the ${ARTIFACT_PATH} nuget package"
-nuget sign $ARTIFACT_PATH -CertificatePath $env:PFX_PATH -CertificatePassword $env:SIGN_PASSPHRASE -Timestamper http://sha256timestamp.ws.symantec.com/sha256/timestamp -NonInteractive
-CheckIfSuccessful "signing"
+if($SIGN_DOTNET_ASSEMBLY) {
+  $ARTIFACT_PATH = resolve-path ${env:PROJECT_DIR}\artifacts\SonarLint.Secrets.DotNet.*.nupkg
+  Write-Host "Signing the ${ARTIFACT_PATH} nuget package"
+  nuget sign $ARTIFACT_PATH -CertificatePath $env:PFX_PATH -CertificatePassword $env:SIGN_PASSPHRASE -Timestamper http://sha256timestamp.ws.symantec.com/sha256/timestamp -NonInteractive
+  CheckIfSuccessful "signing"
+}
