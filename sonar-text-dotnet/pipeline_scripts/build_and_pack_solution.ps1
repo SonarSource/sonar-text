@@ -6,7 +6,7 @@ function CheckIfSuccessful($StepName) {
 }
 
 Set-Location $env:PROJECT_DIR
-$SIGN_DOTNET_ASSEMBLY = "$CIRRUS_BRANCH" -eq "master" -or "$CIRRUS_BRANCH".startsWith("branch-.*")
+$SIGN_DOTNET_ASSEMBLY = "$CIRRUS_BRANCH" -eq "master" -or "$CIRRUS_BRANCH".startsWith("branch-")
 Write-Host "Should the assembly be signed: ${SIGN_DOTNET_ASSEMBLY}"
 
 Write-Host Restoring $env:SOLUTION_DIR
