@@ -176,7 +176,7 @@ build_and_release_dotnet_task:
     # Sets the $BUILD_NUMBER; used for setting the project version.
     # See https://github.com/SonarSource/re-ci-images/blob/master/docker/bin/cirrus-env#L28
     - source cirrus-env QA
-    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\build_and_restore_solution.ps1"
+    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\build_and_pack_solution.ps1"
     - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\extract_project_version.ps1"
   analysis_end_step_script:
     - cd $PROJECT_DIR
