@@ -1,8 +1,8 @@
 Set-Location $env:PROJECT_DIR
 
-if ($env:CIRRUS_BRANCH -eq "master") {
-    Write-Host "Execute analysis begin step for master branch" 
-    
+if ($env:CIRRUS_PR -eq "") {
+    Write-Host "Execute analysis begin step for master branch"
+
     SonarScanner.MSBuild.exe begin `
         /k:$env:PROJECT_NAME `
         /n:$env:PROJECT_NAME `
