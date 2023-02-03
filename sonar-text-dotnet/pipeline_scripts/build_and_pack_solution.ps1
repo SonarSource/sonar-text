@@ -1,8 +1,8 @@
 function CheckIfSuccessful($StepName) {
-if(!$?) {
+  if(!$?) {
     Write-Host "sonar-text-dotnet ${StepName} failed."
     Exit $LASTEXITCODE
-}
+  }
 }
 
 Set-Location $env:PROJECT_DIR
