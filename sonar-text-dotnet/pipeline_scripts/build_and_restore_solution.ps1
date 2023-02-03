@@ -5,15 +5,25 @@ $nugetFeed = "https://pkgs.dev.azure.com/sonarsource/399fb241-ecc7-4802-8697-dcd
 # For nuget version see: https://github.com/SonarSource/re-ci-images/blob/master/ec2-images/build-base-windows-dotnet.pkr.hcl#L39
 nuget restore -LockedMode -Source $nugetFeed
 
+if(!$?) {
+    Write-Host "Nuget restore failed."
+    Exit $LASTEXITCODE
+}
+
 Write-Host Building $env:SOLUTION_DIR
 dotnet build `
     $env:SOLUTION_DIR `
     --no-restore `
-     /nologo `
-     /nr:false `
-     /p:platform="Any CPU" `
-     /p:configuration=$env:BUILD_CONFIGURATION `
-     /p:VisualStudioVersion="17.0" `
-     /p:CommitId=$env:CIRRUS_CHANGE_IN_REPO `
-     /p:BranchName=$env:CIRRUS_BRANCH `
-     /p:BuildNumber=$env:BUILD_NUMBER
+    /nologo `
+    /nr:false `
+    /p:platform="Any CPU" `
+    /p:configuration=$env:BUILD_CONFIGURATION `
+    /p:VisualStudioVersion="17.0" `
+    /p:CommitId=$env:CIRRUS_CHANGE_IN_REPO `
+    /p:BranchName=$env:CIRRUS_BRANCH `
+    /p:BuildNumber=$env:BUILD_NUMBER
+
+if(!$?) {
+    Write-Host "sonar-text-dotnet build failed."
+    Exit $LASTEXITCODE
+}
