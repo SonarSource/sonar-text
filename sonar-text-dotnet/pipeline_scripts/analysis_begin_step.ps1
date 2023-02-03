@@ -7,6 +7,7 @@ if ($env:CIRRUS_PR -eq "") {
         /k:$env:PROJECT_NAME `
         /n:$env:PROJECT_NAME `
         /v:$env:CIRRUS_CHANGE_IN_REPO `
+        /v:env:$PROJECT_VERSION `
         /d:sonar.host.url=$env:SONAR_HOST_URL `
         /d:sonar.login=$env:SONAR_TOKEN `
 }
@@ -17,6 +18,7 @@ else {
         /k:$env:PROJECT_NAME `
         /n:$env:PROJECT_NAME `
         /v:$env:CIRRUS_CHANGE_IN_REPO `
+        /v:env:$PROJECT_VERSION `
         /d:sonar.host.url=$env:SONAR_HOST_URL `
         /d:sonar.login=$env:SONAR_TOKEN `
         /d:sonar.pullrequest.branch=$env:CIRRUS_BRANCH `
