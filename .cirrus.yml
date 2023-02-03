@@ -152,13 +152,31 @@ build_and_release_dotnet_task:
     SOLUTION_DIR: ${PROJECT_DIR}\\SonarLint.Secrets.DotNet.sln
     PIPELINE_SCRIPTS_DIR: ${PROJECT_DIR}\\pipeline_scripts
     PROJECT_NAME: "sonar-secrets-dotnet"
+    SNK_PATH: ${CIRRUS_WORKING_DIR}\\SonarSourceSecret.snk
+    ENCODED_SONARSOURCE_SNK: VAULT[development/team/languages/kv/data/strong_named_key data.SonarSourceSecret_snk]
+    ENCODED_SONARSOURCE_SNK_PATH: ${CIRRUS_WORKING_DIR}\\Encoded_SonarSourceSecret.snk
+    SIGN_PASSPHRASE: VAULT[development/kv/data/sign/dotnet data.passphrase]
+    PFX_PATH: ${CIRRUS_WORKING_DIR}\\SonarSource-2021-2023.pfx
+    ENCODED_PFX_CERT: VAULT[development/kv/data/sign/dotnet data.cert_pfx]
+    ENCODED_PFX_CERT_PATH: ${CIRRUS_WORKING_DIR}\\Encoded_SonarSource-2021-2023.pfx
+  sign_cert_pfx_file:
+    path: ${ENCODED_PFX_CERT_PATH}
+    variable_name: ENCODED_PFX_CERT
+  sonarSourceSecret_snk_file:
+    path: ${ENCODED_SONARSOURCE_SNK_PATH} # this is the base64 encoded file
+    variable_name: ENCODED_SONARSOURCE_SNK
+  base64_decode_files_script: |
+    base64 --decode ${ENCODED_SONARSOURCE_SNK_PATH} > ${SNK_PATH}
+    file ${SNK_PATH}
+    base64 --decode ${ENCODED_PFX_CERT_PATH} > ${PFX_PATH}
+    file ${PFX_PATH}
   analysis_begin_step_script:
     - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\analysis_begin_step.ps1"
-  restore_and_build_script:
+  build_and_pack_script:
     # Sets the $BUILD_NUMBER; used for setting the project version.
     # See https://github.com/SonarSource/re-ci-images/blob/master/docker/bin/cirrus-env#L28
     - source cirrus-env QA
-    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\build_and_restore_solution.ps1"
+    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\build_and_pack_solution.ps1"
     - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\extract_project_version.ps1"
   analysis_end_step_script:
     - cd $PROJECT_DIR
