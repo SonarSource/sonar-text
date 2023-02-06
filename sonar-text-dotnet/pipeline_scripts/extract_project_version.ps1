@@ -8,4 +8,4 @@ $sonarProjectVersion = $versionProps.Project.PropertyGroup.Version
 # Set persisten env variable PROJECT_VERSION
 [Environment]::SetEnvironmentVariable('PROJECT_VERSION', $sonarProjectVersion, 'Machine') # Persist this variable on machine level
 
-Write-Host "Version is env:$PROJECT_VERSION"
+Write-Host "Version: ${sonarProjectVersion}"

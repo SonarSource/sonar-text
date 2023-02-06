@@ -6,19 +6,24 @@ function CheckIfSuccessful($StepName) {
 }
 
 Set-Location $env:PROJECT_DIR
-$SIGN_DOTNET_ASSEMBLY = "$CIRRUS_BRANCH" -eq "master" -or "$CIRRUS_BRANCH".startsWith("branch-")
-Write-Host "Should the assembly be signed: ${SIGN_DOTNET_ASSEMBLY}"
 
-Write-Host Restoring $env:SOLUTION_DIR
-$nugetFeed = "https://pkgs.dev.azure.com/sonarsource/399fb241-ecc7-4802-8697-dcdd01fbb832/_packaging/slvs_input/nuget/v3/index.json"
-# For nuget version see: https://github.com/SonarSource/re-ci-images/blob/master/ec2-images/build-base-windows-dotnet.pkr.hcl#L39
-nuget restore -LockedMode -Source $nugetFeed
-CheckIfSuccessful "nuget restore"
+# In order to allow trackable builds in artifactory, we need to supply the `build-name` and `build-number` to nuget and dotnet commands.
+$buildId = $env:BUILD_NUMBER
+$buildName = $env:ARTIFACTORY_BUILD_NAME
+$nugetFeed = "https://repox.jfrog.io/artifactory/api/nuget/nuget"
 
-Write-Host Building $env:SOLUTION_DIR
-dotnet build `
-    $env:SOLUTION_DIR `
-    --no-restore `
+Write-Host "Setting up artifactory authentication for QA deploy"
+jf config add "repox" --url https://repox.jfrog.io --access-token $env:ARTIFACTORY_DEPLOY_PASSWORD
+jf rt ping # Check if the artifactory configuration is successfull
+
+Write-Host "Setting up artifactory dotnet configuration"
+jf dotnet-config --global --server-id-resolve repox --repo-resolve $nugetFeed
+
+$signAssembly = "$env:CIRRUS_BRANCH" -eq "master" -or "$env:CIRRUS_BRANCH".startsWith("branch-")
+Write-Host "Should the assembly be signed: ${signAssembly}"
+
+Write-Host "Building project"
+jf dotnet build `
     /nologo `
     /nr:false `
     /p:platform="Any CPU" `
@@ -27,17 +32,31 @@ dotnet build `
     /p:CommitId=$env:CIRRUS_CHANGE_IN_REPO `
     /p:BranchName=$env:CIRRUS_BRANCH `
     /p:BuildNumber=$env:BUILD_NUMBER `
-    /p:SignAssembly=$SIGN_DOTNET_ASSEMBLY `
-    /p:AssemblyOriginatorKeyFile=$env:SNK_PATH
+    /p:SignAssembly=$signAssembly `
+    /p:AssemblyOriginatorKeyFile=$env:SNK_PATH `
+    /p:RestoreLockedMode=true `
+    /p:RestoreConfigFile="nuget.Config" `
+    --build-name=$buildName `
+    --build-number=$buildId
 CheckIfSuccessful "build"
 
-Write-Host Packing $env:SOLUTION_DIR
-dotnet pack $env:SOLUTION_DIR -o $env:PROJECT_DIR\artifacts -c $env:BUILD_CONFIGURATION --no-build
+Write-Host "Packing project"
+jf dotnet pack "${env:PROJECT_DIR}\\src\\SonarLint.Secrets.DotNet\\SonarLint.Secrets.DotNet.csproj" -o $env:PROJECT_DIR\artifacts -c $env:BUILD_CONFIGURATION --no-build --build-name=$buildName --build-number=$buildId
 CheckIfSuccessful "packaging"
 
-if($SIGN_DOTNET_ASSEMBLY) {
-  $ARTIFACT_PATH = resolve-path ${env:PROJECT_DIR}\artifacts\SonarLint.Secrets.DotNet.*.nupkg
-  Write-Host "Signing the ${ARTIFACT_PATH} nuget package"
-  nuget sign $ARTIFACT_PATH -CertificatePath $env:PFX_PATH -CertificatePassword $env:SIGN_PASSPHRASE -Timestamper http://sha256timestamp.ws.symantec.com/sha256/timestamp -NonInteractive
+$artifactPath = resolve-path ${env:PROJECT_DIR}\artifacts\SonarLint.Secrets.DotNet.*.nupkg
+Write-Host "Artifact path: ${artifactPath}"
+
+if($signAssembly) {
+  Write-Host "Signing the ${artifactPath} nuget package"
+  dotnet nuget sign $artifactPath --certificate-path $env:PFX_PATH --certificate-password $env:SIGN_PASSPHRASE --timestamper http://sha256timestamp.ws.symantec.com/sha256/timestamp
   CheckIfSuccessful "signing"
 }
+
+Write-Host "Publish NuGet package to artifactory"
+jf rt upload $artifactPath sonarsource-nuget-qa --build-name=$buildName --build-number=$buildId
+CheckIfSuccessful "Upload the NuGet package to artifactory"
+
+Write-Host "Publish the collected build info to artifactory"
+jf rt build-publish $buildName $buildId
+CheckIfSuccessful "Publish the collected build info to artifactory"
