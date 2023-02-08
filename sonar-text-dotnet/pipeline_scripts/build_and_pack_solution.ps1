@@ -22,6 +22,19 @@ jf dotnet-config --global --server-id-resolve repox --repo-resolve $nugetFeed
 $signAssembly = "$env:CIRRUS_BRANCH" -eq "master" -or "$env:CIRRUS_BRANCH".startsWith("branch-")
 Write-Host "Should the assembly be signed: $signAssembly"
 
+Write-Host "Locating SignTool.exe"
+$searchRoot = ${env:ProgramFiles(x86)} + '\Windows Kits\10\bin\10*'
+$exeName = 'signtool.exe'
+$signtool = Get-ChildItem -Path $searchRoot -Filter $exeName -Recurse -ErrorAction SilentlyContinue -Force | Select -Last 1
+if (!$signtool){
+throw 'Unable to find ' + $exeName + ' under ' + $searchRoot
+}
+
+Write-Host 'Resolving paths '
+$env:PFX_PATH = resolve-path ${env:PFX_PATH}
+$signtool = resolve-path $signtool
+$env:SNK_PATH = resolve-path ${env:SNK_PATH}
+
 Write-Host "Building project"
 jf dotnet build `
     /nologo `
@@ -34,6 +47,10 @@ jf dotnet build `
     /p:BuildNumber=$env:BUILD_NUMBER `
     /p:SignAssembly=$signAssembly `
     /p:AssemblyOriginatorKeyFile=$env:SNK_PATH `
+    /p:PFX_PATH=$env:PFX_PATH `
+    /p:PFX_PASSWORD=$env:SIGN_PASSPHRASE `
+    /p:SIGNTOOL_PATH=$signtool `
+    /p:PFX_SHA1=$env:PFX_SHA1 `
     /p:RestoreLockedMode=true `
     /p:RestoreConfigFile="nuget.Config" `
     --build-name=$buildName `

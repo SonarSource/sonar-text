@@ -157,6 +157,7 @@ build_and_release_dotnet_task:
     ENCODED_SONARSOURCE_SNK_PATH: ${CIRRUS_WORKING_DIR}\\Encoded_SonarSourceSecret.snk
     SIGN_PASSPHRASE: VAULT[development/kv/data/sign/dotnet data.passphrase]
     PFX_PATH: ${CIRRUS_WORKING_DIR}\\SonarSource-2021-2023.pfx
+    PFX_SHA1: VAULT[development/kv/data/sign/dotnet data.pfx_sha1]
     ENCODED_PFX_CERT: VAULT[development/kv/data/sign/dotnet data.cert_pfx]
     ENCODED_PFX_CERT_PATH: ${CIRRUS_WORKING_DIR}\\Encoded_SonarSource-2021-2023.pfx
     ARTIFACTORY_BUILD_NAME: "sonar-text-dotnet" # artifactory dotnet build name
@@ -184,7 +185,10 @@ build_and_release_dotnet_task:
     - dotnet test -p:AltCover=true,AltCoverForce=true,AltCoverVisibleBranches=true,AltCoverAssemblyFilter="Moq",AltCoverReport=coverage.xml --configuration ${BUILD_CONFIGURATION} --no-build
   analysis_end_step_script:
     - cd $PROJECT_DIR
-    - ps: SonarScanner.MSBuild.exe end /d:sonar.login="$env:SONAR_TOKEN" 
+    - ps: SonarScanner.MSBuild.exe end /d:sonar.login="$env:SONAR_TOKEN"
+  integration_test_script:
+    - source cirrus-env QA
+    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\execute_integration_tests.ps1"
   promote_script:
     - source cirrus-env QA
     - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\promote.ps1"
