@@ -26,7 +26,8 @@ Write-Host "Locating SignTool.exe"
 $searchRoot = ${env:ProgramFiles(x86)} + '\Windows Kits\10\bin\10*'
 $exeName = 'signtool.exe'
 $signtool = Get-ChildItem -Path $searchRoot -Filter $exeName -Recurse -ErrorAction SilentlyContinue -Force | Select -Last 1
-if (!$signtool){
+if (!$signtool)
+{
 throw 'Unable to find ' + $exeName + ' under ' + $searchRoot
 }
 
@@ -64,7 +65,8 @@ CheckIfSuccessful "packaging"
 $artifactPath = resolve-path $env:PROJECT_DIR\artifacts\SonarLint.Secrets.DotNet.*.nupkg
 Write-Host "Artifact path: $artifactPath"
 
-if($signAssembly) {
+if($signAssembly)
+{
   Write-Host "Signing the $artifactPath nuget package"
   dotnet nuget sign $artifactPath --certificate-path $env:PFX_PATH --certificate-password $env:SIGN_PASSPHRASE --timestamper http://sha256timestamp.ws.symantec.com/sha256/timestamp
   CheckIfSuccessful "signing"
