@@ -9,6 +9,7 @@ if ([string]::IsNullOrEmpty($env:CIRRUS_PR)) {
         /v:$env:PROJECT_VERSION `
         /d:sonar.host.url=$env:SONAR_HOST_URL `
         /d:sonar.login=$env:SONAR_TOKEN `
+        /d:sonar.cs.opencover.reportsPaths="**/coverage.xml" 
 }
 else {
     Write-Host "Execute analysis begin step on branch $env:CIRRUS_BRANCH"
@@ -20,7 +21,8 @@ else {
         /d:sonar.login=$env:SONAR_TOKEN `
         /d:sonar.pullrequest.branch=$env:CIRRUS_BRANCH `
         /d:sonar.pullrequest.key=$env:CIRRUS_PR `
-        /d:sonar.pullrequest.base=$env:CIRRUS_BASE_BRANCH
+        /d:sonar.pullrequest.base=$env:CIRRUS_BASE_BRANCH `
+        /d:sonar.cs.opencover.reportsPaths="**/coverage.xml" 
 }
 
 if(!$?) {

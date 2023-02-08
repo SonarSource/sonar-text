@@ -179,13 +179,13 @@ build_and_release_dotnet_task:
     - source cirrus-env QA
     - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\build_and_pack_solution.ps1"
     - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\extract_project_version.ps1"
-  analysis_end_step_script:
-    - cd $PROJECT_DIR
-    - ps: SonarScanner.MSBuild.exe end /d:sonar.login="$env:SONAR_TOKEN"
   unit_test_script:
     - echo "Running Unit Tests"
     - cd $PROJECT_DIR
-    - dotnet test --configuration ${BUILD_CONFIGURATION} --no-build
+    - dotnet test -p:AltCover=true,AltCoverForce=true,AltCoverVisibleBranches=true,AltCoverAssemblyFilter="Moq",AltCoverReport=coverage.xml --configuration ${BUILD_CONFIGURATION} --no-build
+  analysis_end_step_script:
+    - cd $PROJECT_DIR
+    - ps: SonarScanner.MSBuild.exe end /d:sonar.login="$env:SONAR_TOKEN" 
   promote_script:
     - source cirrus-env QA
     - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\promote.ps1"
