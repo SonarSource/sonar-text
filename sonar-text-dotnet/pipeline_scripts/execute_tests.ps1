@@ -1,4 +1,5 @@
-$signAssembly = "$env:CIRRUS_BRANCH" -eq "master" -or "$env:CIRRUS_BRANCH".startsWith("branch-")
+#$signAssembly = "$env:CIRRUS_BRANCH" -eq "master" -or "$env:CIRRUS_BRANCH".startsWith("branch-")
+$signAssembly = "true"
 Write-Host "Should the assembly be signed: $signAssembly"
 
 Write-Host "Executing unit tests"
