@@ -2,6 +2,12 @@
   "version": 1,
   "dependencies": {
     ".NETFramework,Version=v4.8": {
+      "altcover": {
+        "type": "Direct",
+        "requested": "[8.6.14, )",
+        "resolved": "8.6.14",
+        "contentHash": "jrzD74phwi/6WNdS+2oSeSbk9B+e6DKlxfCRy/VfRr4T9CoTCc/BYQ5eHZpJaNNgFa/kXboLjPeT/0NFcklYXg=="
+      },
       "FluentAssertions": {
         "type": "Direct",
         "requested": "[5.9.0, )",
