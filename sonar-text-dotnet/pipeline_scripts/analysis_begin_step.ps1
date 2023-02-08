@@ -1,4 +1,4 @@
-$versionFilePath = "$env:CIRRUS_WORKING_DIR\sonar-text-dotnet\Directory.Build.props"
+$versionFilePath = "$env:PROJECT_DIR\Directory.Build.props"
 Write-Host "Reading the Sonar project version from '${versionFilePath}' ..."
 
 # Read the version from the file
