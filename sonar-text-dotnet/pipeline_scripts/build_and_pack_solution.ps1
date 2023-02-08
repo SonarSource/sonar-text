@@ -19,8 +19,7 @@ jf rt ping # Check if the artifactory configuration is successfull
 Write-Host "Setting up artifactory dotnet configuration"
 jf dotnet-config --global --server-id-resolve repox --repo-resolve $nugetFeed
 
-#$signAssembly = "$env:CIRRUS_BRANCH" -eq "master" -or "$env:CIRRUS_BRANCH".startsWith("branch-")
-$signAssembly = "true"
+$signAssembly = "$env:CIRRUS_BRANCH" -eq "master" -or "$env:CIRRUS_BRANCH".startsWith("branch-")
 Write-Host "Should the assembly be signed: $signAssembly"
 
 Write-Host "Locating SignTool.exe"
