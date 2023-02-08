@@ -11,6 +11,7 @@ env:
   #Possible values for ARTIFACTORY_DEPLOY_REPO: sonarsource-private-qa, sonarsource-public-qa
   ARTIFACTORY_DEPLOY_REPO: sonarsource-public-qa
   ARTIFACTORY_ACCESS_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-private-reader access_token]
+  ARTIFACTORY_PROMOTE_TOKEN: VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-promoter access_token]
   # burgr notification
   BURGR_URL: VAULT[development/kv/data/burgr data.url]
   BURGR_USERNAME: VAULT[development/kv/data/burgr data.cirrus_username]
@@ -126,9 +127,9 @@ qa_ruling_task:
 promote_task:
   depends_on:
     - build
+    - build_and_release_dotnet
     - qa_plugin
     - ws_scan
-    - build_and_release_dotnet
   <<: *ONLY_IF_SONARSOURCE_QA
   <<: *LINUX_1_CPU_1G
   env:
@@ -149,7 +150,6 @@ build_and_release_dotnet_task:
   env:
     BUILD_CONFIGURATION: "Release"
     PROJECT_DIR: ${CIRRUS_WORKING_DIR}\\sonar-text-dotnet
-    SOLUTION_DIR: ${PROJECT_DIR}\\SonarLint.Secrets.DotNet.sln
     PIPELINE_SCRIPTS_DIR: ${PROJECT_DIR}\\pipeline_scripts
     PROJECT_NAME: "sonar-secrets-dotnet"
     SNK_PATH: ${CIRRUS_WORKING_DIR}\\SonarSourceSecret.snk
@@ -159,6 +159,7 @@ build_and_release_dotnet_task:
     PFX_PATH: ${CIRRUS_WORKING_DIR}\\SonarSource-2021-2023.pfx
     ENCODED_PFX_CERT: VAULT[development/kv/data/sign/dotnet data.cert_pfx]
     ENCODED_PFX_CERT_PATH: ${CIRRUS_WORKING_DIR}\\Encoded_SonarSource-2021-2023.pfx
+    ARTIFACTORY_BUILD_NAME: "sonar-text-dotnet" # artifactory dotnet build name
   sign_cert_pfx_file:
     path: ${ENCODED_PFX_CERT_PATH}
     variable_name: ENCODED_PFX_CERT
@@ -183,4 +184,8 @@ build_and_release_dotnet_task:
     - ps: SonarScanner.MSBuild.exe end /d:sonar.login="$env:SONAR_TOKEN"
   unit_test_script:
     - echo "Running Unit Tests"
-    - dotnet test ${SOLUTION_DIR} --configuration ${BUILD_CONFIGURATION} --no-build
+    - cd $PROJECT_DIR
+    - dotnet test --configuration ${BUILD_CONFIGURATION} --no-build
+  promote_script:
+    - source cirrus-env QA
+    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\promote.ps1"
