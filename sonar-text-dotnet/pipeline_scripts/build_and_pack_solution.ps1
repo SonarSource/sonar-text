@@ -1,6 +1,6 @@
 function CheckIfSuccessful($StepName) {
   if(!$?) {
-    Write-Host "sonar-text-dotnet ${StepName} failed."
+    Write-Host "sonar-text-dotnet $StepName failed."
     Exit $LASTEXITCODE
   }
 }
@@ -20,7 +20,7 @@ Write-Host "Setting up artifactory dotnet configuration"
 jf dotnet-config --global --server-id-resolve repox --repo-resolve $nugetFeed
 
 $signAssembly = "$env:CIRRUS_BRANCH" -eq "master" -or "$env:CIRRUS_BRANCH".startsWith("branch-")
-Write-Host "Should the assembly be signed: ${signAssembly}"
+Write-Host "Should the assembly be signed: $signAssembly"
 
 Write-Host "Building project"
 jf dotnet build `
@@ -41,14 +41,14 @@ jf dotnet build `
 CheckIfSuccessful "build"
 
 Write-Host "Packing project"
-jf dotnet pack "${env:PROJECT_DIR}\\src\\SonarLint.Secrets.DotNet\\SonarLint.Secrets.DotNet.csproj" -o $env:PROJECT_DIR\artifacts -c $env:BUILD_CONFIGURATION --no-build --build-name=$buildName --build-number=$buildId
+jf dotnet pack "$env:PROJECT_DIR\\src\\SonarLint.Secrets.DotNet\\SonarLint.Secrets.DotNet.csproj" -o $env:PROJECT_DIR\artifacts -c $env:BUILD_CONFIGURATION --no-build --build-name=$buildName --build-number=$buildId
 CheckIfSuccessful "packaging"
 
-$artifactPath = resolve-path ${env:PROJECT_DIR}\artifacts\SonarLint.Secrets.DotNet.*.nupkg
-Write-Host "Artifact path: ${artifactPath}"
+$artifactPath = resolve-path $env:PROJECT_DIR\artifacts\SonarLint.Secrets.DotNet.*.nupkg
+Write-Host "Artifact path: $artifactPath"
 
 if($signAssembly) {
-  Write-Host "Signing the ${artifactPath} nuget package"
+  Write-Host "Signing the $artifactPath nuget package"
   dotnet nuget sign $artifactPath --certificate-path $env:PFX_PATH --certificate-password $env:SIGN_PASSPHRASE --timestamper http://sha256timestamp.ws.symantec.com/sha256/timestamp
   CheckIfSuccessful "signing"
 }
