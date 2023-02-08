@@ -182,7 +182,7 @@ build_and_release_dotnet_task:
   unit_test_script:
     - echo "Running Unit Tests"
     - cd $PROJECT_DIR
-    - dotnet test -p:AltCover=true,AltCoverForce=true,AltCoverVisibleBranches=true,AltCoverAssemblyFilter="Moq",AltCoverReport=coverage.xml --configuration ${BUILD_CONFIGURATION} --no-build
+    - dotnet test -p:AltCover=true,AltCoverForce=true,AltCoverVisibleBranches=true,AltCoverAssemblyFilter="Moq",AltCoverReport=coverage.xml,AltCoverStrongNameKey=${SNK_PATH} --configuration ${BUILD_CONFIGURATION} --no-build
   analysis_end_step_script:
     - cd $PROJECT_DIR
     - ps: SonarScanner.MSBuild.exe end /d:sonar.login="$env:SONAR_TOKEN"
