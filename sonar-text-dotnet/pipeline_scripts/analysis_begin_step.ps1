@@ -12,7 +12,7 @@ if ([string]::IsNullOrEmpty($env:CIRRUS_PR)) {
     Write-Host "Execute analysis begin step for master branch"
 
     SonarScanner.MSBuild.exe begin `
-        /k:$env:PROJECT_NAME `
+        /k:$env:PROJECT_KEY `
         /n:$env:PROJECT_NAME `
         /v:$sonarProjectVersion `
         /d:sonar.host.url=$env:SONAR_HOST_URL `
@@ -23,7 +23,7 @@ else {
     Write-Host "Execute analysis begin step on branch $env:CIRRUS_BRANCH"
 
     SonarScanner.MSBuild.exe begin `
-        /k:$env:PROJECT_NAME `
+        /k:$env:PROJECT_KEY `
         /n:$env:PROJECT_NAME `
         /v:$sonarProjectVersion `
         /d:sonar.host.url=$env:SONAR_HOST_URL `

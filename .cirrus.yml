@@ -151,7 +151,8 @@ build_and_release_dotnet_task:
     BUILD_CONFIGURATION: "Release"
     PROJECT_DIR: ${CIRRUS_WORKING_DIR}\\sonar-text-dotnet
     PIPELINE_SCRIPTS_DIR: ${PROJECT_DIR}\\pipeline_scripts
-    PROJECT_NAME: "sonar-secrets-dotnet"
+    PROJECT_KEY: "sonar-secrets-dotnet"
+    PROJECT_NAME: "sonar-text-dotnet"
     SNK_PATH: ${CIRRUS_WORKING_DIR}\\SonarSourceSecret.snk
     ENCODED_SONARSOURCE_SNK: VAULT[development/team/languages/kv/data/strong_named_key data.SonarSourceSecret_snk]
     ENCODED_SONARSOURCE_SNK_PATH: ${CIRRUS_WORKING_DIR}\\Encoded_SonarSourceSecret.snk
@@ -161,6 +162,8 @@ build_and_release_dotnet_task:
     ENCODED_PFX_CERT: VAULT[development/kv/data/sign/dotnet data.cert_pfx]
     ENCODED_PFX_CERT_PATH: ${CIRRUS_WORKING_DIR}\\Encoded_SonarSource-2021-2023.pfx
     ARTIFACTORY_BUILD_NAME: "sonar-text-dotnet" # artifactory dotnet build name
+    WS_APIKEY: VAULT[development/kv/data/mend data.apikey]
+    WS_PRODUCTNAME: "sonar-text"
   sign_cert_pfx_file:
     path: ${ENCODED_PFX_CERT_PATH}
     variable_name: ENCODED_PFX_CERT
@@ -185,6 +188,8 @@ build_and_release_dotnet_task:
   analysis_end_step_script:
     - cd $PROJECT_DIR
     - ps: SonarScanner.MSBuild.exe end /d:sonar.login="$env:SONAR_TOKEN"
+  execute_mend_scan_script:
+    - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\mend_scan.ps1"
   promote_script:
     - source cirrus-env QA
     - PowerShell -NonInteractive -NoProfile -File "${PIPELINE_SCRIPTS_DIR}\\promote.ps1"

@@ -76,6 +76,8 @@ Write-Host "Publish NuGet package to artifactory"
 jf rt upload $artifactPath sonarsource-nuget-qa --build-name=$buildName --build-number=$buildId
 CheckIfSuccessful "Upload the NuGet package to artifactory"
 
+jf rt bce $buildName $buildId
+
 Write-Host "Publish the collected build info to artifactory"
 jf rt build-publish $buildName $buildId
 CheckIfSuccessful "Publish the collected build info to artifactory"
