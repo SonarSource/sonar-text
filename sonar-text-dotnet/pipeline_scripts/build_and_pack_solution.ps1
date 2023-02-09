@@ -28,13 +28,13 @@ $exeName = 'signtool.exe'
 $signtool = Get-ChildItem -Path $searchRoot -Filter $exeName -Recurse -ErrorAction SilentlyContinue -Force | Select -Last 1
 if (!$signtool)
 {
-throw 'Unable to find ' + $exeName + ' under ' + $searchRoot
+  throw 'Unable to find ' + $exeName + ' under ' + $searchRoot
 }
 
 Write-Host 'Resolving paths '
-$env:PFX_PATH = resolve-path ${env:PFX_PATH}
+$pfxPath = resolve-path $env:PFX_PATH
 $signtool = resolve-path $signtool
-$env:SNK_PATH = resolve-path ${env:SNK_PATH}
+$snkPath = resolve-path $env:SNK_PATH
 
 Write-Host "Building project"
 jf dotnet build `
@@ -47,8 +47,8 @@ jf dotnet build `
     /p:BranchName=$env:CIRRUS_BRANCH `
     /p:BuildNumber=$env:BUILD_NUMBER `
     /p:SignAssembly=$signAssembly `
-    /p:AssemblyOriginatorKeyFile=$env:SNK_PATH `
-    /p:PFX_PATH=$env:PFX_PATH `
+    /p:AssemblyOriginatorKeyFile=$snkPath `
+    /p:PFX_PATH=$pfxPath `
     /p:PFX_PASSWORD=$env:SIGN_PASSPHRASE `
     /p:SIGNTOOL_PATH=$signtool `
     /p:PFX_SHA1=$env:PFX_SHA1 `
@@ -68,7 +68,7 @@ Write-Host "Artifact path: $artifactPath"
 if($signAssembly)
 {
   Write-Host "Signing the $artifactPath nuget package"
-  dotnet nuget sign $artifactPath --certificate-path $env:PFX_PATH --certificate-password $env:SIGN_PASSPHRASE --timestamper http://sha256timestamp.ws.symantec.com/sha256/timestamp
+  dotnet nuget sign $artifactPath --certificate-path $pfxPath --certificate-password $env:SIGN_PASSPHRASE --timestamper http://sha256timestamp.ws.symantec.com/sha256/timestamp
   CheckIfSuccessful "signing"
 }
 
