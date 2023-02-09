@@ -30,7 +30,7 @@ namespace SonarLint.Secrets.DotNet.Rules.Matching
 
         public RegexMatcher(string stringPattern)
         {
-            this.pattern = new Regex(stringPattern, RegexOptions.Compiled);
+            this.pattern = new Regex(stringPattern, RegexOptions.Compiled, RegexConstants.DefaultTimeout);
         }
 
         public List<Match> FindIn(string input)
