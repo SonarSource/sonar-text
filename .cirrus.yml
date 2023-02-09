@@ -163,7 +163,7 @@ build_and_release_dotnet_task:
     ENCODED_PFX_CERT_PATH: ${CIRRUS_WORKING_DIR}\\Encoded_SonarSource-2021-2023.pfx
     ARTIFACTORY_BUILD_NAME: "sonar-text-dotnet" # artifactory dotnet build name
     WS_APIKEY: VAULT[development/kv/data/mend data.apikey]
-    WS_PRODUCTNAME: "sonar-text"
+    WS_PRODUCTNAME: "SonarSource/sonar-text"
   sign_cert_pfx_file:
     path: ${ENCODED_PFX_CERT_PATH}
     variable_name: ENCODED_PFX_CERT
