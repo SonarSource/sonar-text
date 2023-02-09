@@ -22,6 +22,20 @@ jf dotnet-config --global --server-id-resolve repox --repo-resolve $nugetFeed
 $signAssembly = "$env:CIRRUS_BRANCH" -eq "master" -or "$env:CIRRUS_BRANCH".startsWith("branch-")
 Write-Host "Should the assembly be signed: $signAssembly"
 
+Write-Host "Locating SignTool.exe"
+$searchRoot = ${env:ProgramFiles(x86)} + '\Windows Kits\10\bin\10*'
+$exeName = 'signtool.exe'
+$signtool = Get-ChildItem -Path $searchRoot -Filter $exeName -Recurse -ErrorAction SilentlyContinue -Force | Select -Last 1
+if (!$signtool)
+{
+  throw 'Unable to find ' + $exeName + ' under ' + $searchRoot
+}
+
+Write-Host 'Resolving paths '
+$pfxPath = resolve-path $env:PFX_PATH
+$signtool = resolve-path $signtool
+$snkPath = resolve-path $env:SNK_PATH
+
 Write-Host "Building project"
 jf dotnet build `
     /nologo `
@@ -33,7 +47,11 @@ jf dotnet build `
     /p:BranchName=$env:CIRRUS_BRANCH `
     /p:BuildNumber=$env:BUILD_NUMBER `
     /p:SignAssembly=$signAssembly `
-    /p:AssemblyOriginatorKeyFile=$env:SNK_PATH `
+    /p:AssemblyOriginatorKeyFile=$snkPath `
+    /p:PFX_PATH=$pfxPath `
+    /p:PFX_PASSWORD=$env:SIGN_PASSPHRASE `
+    /p:SIGNTOOL_PATH=$signtool `
+    /p:PFX_SHA1=$env:PFX_SHA1 `
     /p:RestoreLockedMode=true `
     /p:RestoreConfigFile="nuget.Config" `
     --build-name=$buildName `
@@ -47,9 +65,10 @@ CheckIfSuccessful "packaging"
 $artifactPath = resolve-path $env:PROJECT_DIR\artifacts\SonarLint.Secrets.DotNet.*.nupkg
 Write-Host "Artifact path: $artifactPath"
 
-if($signAssembly) {
+if($signAssembly)
+{
   Write-Host "Signing the $artifactPath nuget package"
-  dotnet nuget sign $artifactPath --certificate-path $env:PFX_PATH --certificate-password $env:SIGN_PASSPHRASE --timestamper http://sha256timestamp.ws.symantec.com/sha256/timestamp
+  dotnet nuget sign $artifactPath --certificate-path $pfxPath --certificate-password $env:SIGN_PASSPHRASE --timestamper http://sha256timestamp.ws.symantec.com/sha256/timestamp
   CheckIfSuccessful "signing"
 }
 
