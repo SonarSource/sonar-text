@@ -67,7 +67,7 @@ if (-Not (Get-Content $shaPath).split(" ")[0] -eq (Get-FileHash $MendAgentPath).
 # - WS_PRODUCTNAME
 # - WS_PROJECTNAME
 
-$env:WS_PROJECTNAME = "$env:PROJECT_NAME $(Get-Version)"
+$env:WS_PROJECTNAME = "SonarSource/$env:PROJECT_NAME $(Get-Version)"
 
 Write-Host "Running the Mend unified agent for $env:WS_PROJECTNAME..."
 & "$env:JAVA_HOME\bin\java.exe" -jar $MendAgentPath -c "$PSScriptRoot\wss-unified-agent.config"
