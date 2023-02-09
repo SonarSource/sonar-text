@@ -3,7 +3,7 @@ function Get-Version {
   Write-Host "Reading the Sonar project version from '${versionFilePath}' ..."
   # Read the version from the file
   [xml]$versionProps = Get-Content "$versionFilePath"
-  return $versionProps.Project.PropertyGroup.Version
+  return $versionProps.Project.PropertyGroup.Version[1] # Versions is an array of objects in powershell
 }
 
 Set-Location $env:PROJECT_DIR
