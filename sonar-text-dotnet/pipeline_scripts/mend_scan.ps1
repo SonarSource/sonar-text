@@ -40,7 +40,7 @@ for ($num = 1 ; $num -le $NUM_RETRIES ; $num++)
 }
 
 Write-Host "Validating Mend agent jar signature..."
-& "$env:JAVA_HOME_11_X64\bin\jarsigner.exe" -verify -strict -verbose $MendAgentPath
+& "$env:JAVA_HOME\bin\jarsigner.exe" -verify -strict -verbose $MendAgentPath
 if (-Not $?) # if result is "jar is unsigned" exit code is false, otherwise it's true.
 {
   Write-Host "wss-unified-agent.jar signature verification failed."
@@ -70,4 +70,4 @@ if (-Not (Get-Content $shaPath).split(" ")[0] -eq (Get-FileHash $MendAgentPath).
 $env:WS_PROJECTNAME = "$env:PROJECT_NAME $(Get-Version)"
 
 Write-Host "Running the Mend unified agent for $env:WS_PROJECTNAME..."
-#& "$env:JAVA_HOME_11_X64\bin\java.exe" -jar $MendAgentPath -c "$PSScriptRoot\wss-unified-agent.config"
+#& "$env:JAVA_HOME\bin\java.exe" -jar $MendAgentPath -c "$PSScriptRoot\wss-unified-agent.config"
