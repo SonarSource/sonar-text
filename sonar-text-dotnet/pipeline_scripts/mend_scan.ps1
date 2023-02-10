@@ -6,6 +6,11 @@ function Get-Version {
   return $versionProps.Project.PropertyGroup.Version[1] # Versions is an array of objects in powershell
 }
 
+if ("$env:CIRRUS_BRANCH" -ne "master" -and (-not ("$env:CIRRUS_BRANCH".startsWith("branch-"))))
+{
+  Exit 0
+}
+
 Set-Location $env:PROJECT_DIR
 Write-host "Create tools directory"
 $toolsPath = "C:\tools"
