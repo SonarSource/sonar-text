@@ -35,13 +35,19 @@ namespace SonarLint.Secrets.DotNet.Rules.Matching
 
         public List<Match> FindIn(string input)
         {
-            List<Match> matches = new List<Match>();
-
-            foreach (MatchResult matchResult in pattern.Matches(input))
+            var matches = new List<Match>();
+            try
             {
-                // Note: hard-coded assumption that the text to highlight is in the second group (index = 1)
-                var group = matchResult.Groups[1];
-                matches.Add(new Match(group.Value, group.Index, group.Length));
+                foreach (MatchResult matchResult in pattern.Matches(input))
+                {
+                    // Note: hard-coded assumption that the text to highlight is in the second group (index = 1)
+                    var group = matchResult.Groups[1];
+                    matches.Add(new Match(group.Value, group.Index, group.Length));
+                }
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                return matches;
             }
 
             return matches;

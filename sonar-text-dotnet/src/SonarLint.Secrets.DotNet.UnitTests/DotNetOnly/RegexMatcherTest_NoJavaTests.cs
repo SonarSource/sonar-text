@@ -43,7 +43,7 @@ namespace SonarLint.Secrets.DotNet.UnitTests.DotNetOnly
 
             var actual = testSubject.FindIn(input);
 
-            actual.Count().Should().Be(2);
+            actual.Count.Should().Be(2);
 
             actual.First().StartIndex.Should().Be(9);
             actual.First().Length.Should().Be(3);
@@ -52,6 +52,20 @@ namespace SonarLint.Secrets.DotNet.UnitTests.DotNetOnly
             actual.Last().StartIndex.Should().Be(50);
             actual.Last().Length.Should().Be(6);
             actual.Last().Text.Should().Be("abcdef");
+        }
+
+        [TestMethod]
+        public void Find_RegexTimeout_DoesNotThrow()
+        {
+            const string pattern = @"([a-z]*)*";
+            var input = string.Join("", Enumerable.Repeat("a", 10_000_000));
+            var testSubject = new RegexMatcher(pattern);
+
+            // With this input the timeout is reached and an exception is thrown.
+            // This test ensures that the exception is not propagated further.
+            var actual = testSubject.FindIn(input);
+
+            actual.Count.Should().Be(0);
         }
     }
 }
