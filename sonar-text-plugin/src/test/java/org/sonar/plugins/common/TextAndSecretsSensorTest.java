@@ -202,6 +202,26 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
+  void shouldNotAnalyzeNonLanguageAssignedFilesInSonarQubeContext() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), "\u0002\u0004", null));
+    assertThat(context.allIssues()).isEmpty();
+  }
+
+  @Test
+  void shouldAnalyzeLanguageAssignedFilesInSonarQubeContext() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), "\u0002\u0004", "java"));
+    assertThat(context.allIssues()).hasSize(1);
+  }
+
+
+
+  @Test
   void should_not_execute_checks_on_binary_file_names() {
     Check check = new BoomCheck();
     SensorContextTester context = sensorContext(check);
