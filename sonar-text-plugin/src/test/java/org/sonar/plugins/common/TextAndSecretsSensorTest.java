@@ -35,6 +35,7 @@ import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.error.AnalysisError;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
+import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.utils.log.LogTesterJUnit5;
 import org.sonar.check.Rule;
 import org.sonar.plugins.text.api.TextCheck;
@@ -207,7 +208,7 @@ class TextAndSecretsSensorTest {
     SensorContextTester context = sensorContext(check);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.java"), "\u0002\u0004", null));
-    assertThat(context.allIssues()).isEmpty();
+    assertThat(logTester.logs()).doesNotContain( "1 source file to be analyzed");
   }
 
   @Test
@@ -216,10 +217,18 @@ class TextAndSecretsSensorTest {
     SensorContextTester context = sensorContext(check);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.java"), "\u0002\u0004", "java"));
-    assertThat(context.allIssues()).hasSize(1);
+    assertThat(logTester.logs()).contains("1 source file to be analyzed");
   }
 
-
+  @Test
+  void shouldNotAnalyzeNonLanguageAssignedFilesInSonarQubeContextWhenPropertyIsSet() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    context.setSettings(new MapSettings().setProperty("sonar.text.analyzeAllFiles", true));
+    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), "\u0002\u0004", null));
+    assertThat(logTester.logs()).contains("1 source file to be analyzed");
+  }
 
   @Test
   void should_not_execute_checks_on_binary_file_names() {

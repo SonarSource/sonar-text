@@ -44,6 +44,8 @@ public class TextAndSecretsSensor implements Sensor {
 
   public static final String EXCLUDED_FILE_SUFFIXES_KEY = "sonar.text.excluded.file.suffixes";
 
+  private static final String ANALYZE_ALL_FILES_KEY = "sonar.text.analyzeAllFiles";
+
   public static final String TEXT_CATEGORY = "Secrets";
 
   private static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
@@ -72,7 +74,8 @@ public class TextAndSecretsSensor implements Sensor {
     }
 
     NotBinaryFilePredicate notBinaryFilePredicate = binaryFilePredicate(sensorContext);
-    FilePredicate filePredicate = isSonarLintContext(sensorContext) ? notBinaryFilePredicate : LANGUAGE_FILE_PREDICATE;
+    FilePredicate filePredicate = isSonarLintContext(sensorContext) || analyzeAllFiles(sensorContext)
+      ? notBinaryFilePredicate : LANGUAGE_FILE_PREDICATE;
     List<InputFile> inputFiles = getInputFiles(sensorContext, filePredicate);
     if (inputFiles.isEmpty()) {
       return;
@@ -107,6 +110,10 @@ public class TextAndSecretsSensor implements Sensor {
 
   private static boolean isSonarLintContext(SensorContext sensorContext) {
     return sensorContext.runtime().getProduct().equals(SonarProduct.SONARLINT);
+  }
+
+  private static boolean analyzeAllFiles(SensorContext sensorContext) {
+    return "true".equals(sensorContext.config().get(ANALYZE_ALL_FILES_KEY).orElse("false"));
   }
 
   /**
