@@ -35,6 +35,7 @@ import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.error.AnalysisError;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
+import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.utils.log.LogTesterJUnit5;
 import org.sonar.check.Rule;
 import org.sonar.plugins.text.api.TextCheck;
@@ -50,6 +51,8 @@ import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
 
 class TextAndSecretsSensorTest {
+
+  private static final String SENSITIVE_BIDI_CHARS = "\u0002\u0004";
 
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
@@ -202,6 +205,36 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
+  void shouldNotAnalyzeNonLanguageAssignedFilesInSonarQubeContext() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, null));
+    assertThat(logTester.logs()).isEmpty();
+  }
+
+  @Test
+  void shouldAnalyzeLanguageAssignedFilesInSonarQubeContext() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, "java"));
+    assertThat(logTester.logs()).containsExactly(
+      "1 source file to be analyzed",
+      "1/1 source file has been analyzed");
+  }
+
+  @Test
+  void shouldNotAnalyzeNonLanguageAssignedFilesInSonarQubeContextWhenPropertyIsSet() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    context.setSettings(new MapSettings().setProperty("sonar.text.analyzeAllFiles", true));
+    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, null));
+    assertThat(logTester.logs()).contains("1 source file to be analyzed");
+  }
+
+  @Test
   void should_not_execute_checks_on_binary_file_names() {
     Check check = new BoomCheck();
     SensorContextTester context = sensorContext(check);
@@ -215,7 +248,7 @@ class TextAndSecretsSensorTest {
   void should_not_exclude_binary_file_content_if_language_is_not_null() throws IOException {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = defaultSensorContext();
-    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), "\u0002\u0004", "java"));
+    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, "java"));
 
     assertThat(asString(context.allIssues())).containsExactly(
       "text:IssueAtLineOne [1:0-1:2] testIssue");
@@ -229,8 +262,8 @@ class TextAndSecretsSensorTest {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = defaultSensorContext();
     analyse(sensor(check), context,
-      inputFile(Path.of("Foo.txt"), "\u0002\u0004", null),
-      inputFile(Path.of("FileWithoutExtension"), "\u0002\u0004", null));
+      inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of("FileWithoutExtension"), SENSITIVE_BIDI_CHARS, null));
 
     assertThat(asString(context.allIssues())).isEmpty();
     assertThat(logTester.logs()).containsExactlyInAnyOrder(

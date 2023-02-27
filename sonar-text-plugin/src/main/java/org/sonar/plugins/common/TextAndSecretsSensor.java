@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.sonar.api.SonarProduct;
+import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
@@ -42,7 +44,11 @@ public class TextAndSecretsSensor implements Sensor {
 
   public static final String EXCLUDED_FILE_SUFFIXES_KEY = "sonar.text.excluded.file.suffixes";
 
+  private static final String ANALYZE_ALL_FILES_KEY = "sonar.text.analyzeAllFiles";
+
   public static final String TEXT_CATEGORY = "Secrets";
+
+  private static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
 
   private final CheckFactory checkFactory;
 
@@ -68,17 +74,19 @@ public class TextAndSecretsSensor implements Sensor {
     }
 
     NotBinaryFilePredicate notBinaryFilePredicate = binaryFilePredicate(sensorContext);
-    List<InputFile> allInputFiles = getAllInputFiles(sensorContext, notBinaryFilePredicate);
-    if (allInputFiles.isEmpty()) {
+    FilePredicate filePredicate = isSonarLintContext(sensorContext) || analyzeAllFiles(sensorContext)
+      ? notBinaryFilePredicate : LANGUAGE_FILE_PREDICATE;
+    List<InputFile> inputFiles = getInputFiles(sensorContext, filePredicate);
+    if (inputFiles.isEmpty()) {
       return;
     }
 
-    List<String> filenames = allInputFiles.stream().map(InputFile::toString).collect(Collectors.toList());
+    List<String> filenames = inputFiles.stream().map(InputFile::toString).collect(Collectors.toList());
     ProgressReport progressReport = new ProgressReport("Progress of the text and secrets analysis", TimeUnit.SECONDS.toMillis(10));
     progressReport.start(filenames);
     boolean cancelled = false;
     try {
-      for (InputFile inputFile : allInputFiles) {
+      for (InputFile inputFile : inputFiles) {
         if (sensorContext.isCancelled()) {
           cancelled = true;
           break;
@@ -100,13 +108,25 @@ public class TextAndSecretsSensor implements Sensor {
     return new NotBinaryFilePredicate(sensorContext.config().getStringArray(TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY));
   }
 
-  private static List<InputFile> getAllInputFiles(SensorContext sensorContext, NotBinaryFilePredicate notBinaryFilePredicate) {
-    List<InputFile> allInputFiles = new ArrayList<>();
+  private static boolean isSonarLintContext(SensorContext sensorContext) {
+    return sensorContext.runtime().getProduct().equals(SonarProduct.SONARLINT);
+  }
+
+  private static boolean analyzeAllFiles(SensorContext sensorContext) {
+    return "true".equals(sensorContext.config().get(ANALYZE_ALL_FILES_KEY).orElse("false"));
+  }
+
+  /**
+   * In SonarLint context we want to analyze all non-binary input files, even when they are not analyzed or assigned to a language.
+   * To avoid analyzing all non-binary files to reduce time and memory consumption in a non SonarLint context only files assigned to a language are analyzed.
+   */
+  private static List<InputFile> getInputFiles(SensorContext sensorContext, FilePredicate filePredicate) {
+    List<InputFile> inputFiles = new ArrayList<>();
     FileSystem fileSystem = sensorContext.fileSystem();
-    for (InputFile inputFile : fileSystem.inputFiles(notBinaryFilePredicate)) {
-      allInputFiles.add(inputFile);
+    for (InputFile inputFile : fileSystem.inputFiles(filePredicate)) {
+      inputFiles.add(inputFile);
     }
-    return allInputFiles;
+    return inputFiles;
   }
 
   private void analyze(SensorContext sensorContext, List<Check> activeChecks, InputFile inputFile, NotBinaryFilePredicate notBinaryFilePredicate) {
