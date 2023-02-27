@@ -52,6 +52,8 @@ import static org.sonar.plugins.common.TestUtils.sensorContext;
 
 class TextAndSecretsSensorTest {
 
+  private static final String SENSITIVE_BIDI_CHARS = "\u0002\u0004";
+
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
@@ -207,8 +209,8 @@ class TextAndSecretsSensorTest {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
-    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), "\u0002\u0004", null));
-    assertThat(logTester.logs()).doesNotContain( "1 source file to be analyzed");
+    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, null));
+    assertThat(logTester.logs()).isEmpty();
   }
 
   @Test
@@ -216,8 +218,10 @@ class TextAndSecretsSensorTest {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
-    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), "\u0002\u0004", "java"));
-    assertThat(logTester.logs()).contains("1 source file to be analyzed");
+    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, "java"));
+    assertThat(logTester.logs()).containsExactly(
+      "1 source file to be analyzed",
+      "1/1 source file has been analyzed");
   }
 
   @Test
@@ -226,7 +230,7 @@ class TextAndSecretsSensorTest {
     SensorContextTester context = sensorContext(check);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     context.setSettings(new MapSettings().setProperty("sonar.text.analyzeAllFiles", true));
-    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), "\u0002\u0004", null));
+    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, null));
     assertThat(logTester.logs()).contains("1 source file to be analyzed");
   }
 
@@ -244,7 +248,7 @@ class TextAndSecretsSensorTest {
   void should_not_exclude_binary_file_content_if_language_is_not_null() throws IOException {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = defaultSensorContext();
-    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), "\u0002\u0004", "java"));
+    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, "java"));
 
     assertThat(asString(context.allIssues())).containsExactly(
       "text:IssueAtLineOne [1:0-1:2] testIssue");
@@ -258,8 +262,8 @@ class TextAndSecretsSensorTest {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = defaultSensorContext();
     analyse(sensor(check), context,
-      inputFile(Path.of("Foo.txt"), "\u0002\u0004", null),
-      inputFile(Path.of("FileWithoutExtension"), "\u0002\u0004", null));
+      inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of("FileWithoutExtension"), SENSITIVE_BIDI_CHARS, null));
 
     assertThat(asString(context.allIssues())).isEmpty();
     assertThat(logTester.logs()).containsExactlyInAnyOrder(
