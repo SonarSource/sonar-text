@@ -1,8 +1,8 @@
-provider:  
+provider:
   metadata:
-      name: AWS
-      category: Cloud provider
-      message: Make sure that disclosing this AWS secret is safe here.
+    name: AWS
+    category: Cloud provider
+    message: Make sure that disclosing this AWS secret is safe here.
 rules:
   - id: aws-access-key
     metadata:
@@ -11,12 +11,13 @@ rules:
     modules:
       matching:
         match-either:
-        - pattern-before: "AKIA[A-Z0-9]{16}"
-        - pattern: "[0-9a-z\\/+]{40}"
+          - pattern-before: "AKIA[A-Z0-9]{16}"
+          - pattern: "[0-9a-z\\/+]{40}"
+          - match-each:
+              - pattern-after: "pattern-after"
+              - pattern-around: "pattern-around"
     examples:
       - text: >
-          AWS_KEY_ID=AKIAAZERTYUIOP123456
-          AWS_SECRET_KEY=LGYIh8rDziCXCgDCUbJq1h7CKwNqnpA1il4MXL+y
+          example
+          text
         contains_secret: true
-
-
