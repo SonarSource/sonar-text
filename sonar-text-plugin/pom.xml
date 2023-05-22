@@ -35,6 +35,14 @@
       <groupId>org.sonarsource.analyzer-commons</groupId>
       <artifactId>sonar-analyzer-commons</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-yaml</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.networknt</groupId>
+      <artifactId>json-schema-validator</artifactId>
+    </dependency>
 
     <!-- unit tests -->
     <dependency>
@@ -91,8 +99,8 @@
             <configuration>
               <rules>
                 <requireFilesSize>
-                  <maxsize>950000</maxsize>
-                  <minsize>30000</minsize>
+                  <maxsize>2860000</maxsize>
+                  <minsize>2850000</minsize>
                   <files>
                     <file>${project.build.directory}/${project.build.finalName}.jar</file>
                   </files>

@@ -1,0 +1,100 @@
+provider:  
+  metadata:
+      name: AWS
+      category: Cloud provider
+      references:
+        - description: Reference 1
+          link: https://docs.aws.amazon.com/accounts/...
+          type: Standards
+        - description: Reference 2
+          link: https://docs.aws.amazon.com/IAM/...
+          type: Documentation
+        - description: Reference 3
+          link: https://docs.aws.amazon.com/IAM/...
+          type: Conference Presentations
+        - description: Reference 4
+          link: https://docs.aws.amazon.com/IAM/...
+          type: Articles & blog posts
+      message: Make sure that disclosing this AWS secret is safe here.
+      fix: >
+          The affected secret should be revoked. A new one should be generated
+          following the official AWS documentation. Moreover, recent accesses to
+          the AWS API should be reviewed to make sure no malicious use was
+          performed.
+      impact: Here is a string
+  modules:
+    pre:
+      include:
+        paths:
+          - "*.aws/config"
+          - ".env"
+        ext:
+          - ".config"
+        content:
+          - "amazonaws.com"
+          - "aws"
+      reject:
+        paths:
+          - "amazonaws.com"
+          - "aws"
+    matching:
+      match-either:
+      - match-each:
+        - match-either:
+          - pattern: "Test pattern"
+          - pattern-after: "Test pattern"
+        - pattern-before: "AKIA[A-Z0-9]{16}"
+        - pattern: "[0-9a-z\\/+]{40}"
+      - match-each: 
+        - pattern-after: "AKIA[A-Z0-9]{16}"
+        - pattern: "[0-9a-z\\/+]{40}"
+        - pattern-around: "Test pattern"
+        - pattern-not: "Test pattern"
+    post:
+      statistical-filter: 
+        threshold: 5
+        input-string: "Test string"
+      pattern-not: EXAMPLEKEY
+      heuristic-filter: 
+        heuristics: "exampleHeuristics"
+        input-string: "Test string"
+rules:
+  - id: aws-access-key
+    metadata:
+      name: AWS access key
+      disabled: false
+      charset: "[0-9a-z\\/+]"
+      message: Make sure disclosing this AWS access key is safe here.
+      impact: >
+        Depending on the privileges of the corresponding AWS IAM account,
+        disclosing an AWS access key will lead to the compromise of part or all
+        of the AWS infrastructure.
+    modules:
+      pre:
+        include:
+          paths: "Test String"
+          ext: "Test String"
+          content: "Test String"
+        reject:
+          paths: "Test String"
+      matching:
+        match-either:
+        - match-each:
+          - pattern-before: "AKIA[A-Z0-9]{16}"
+          - pattern: "[0-9a-z\\/+]{40}"
+        - match-each: 
+          - pattern-after: "AKIA[A-Z0-9]{16}"
+          - pattern: "[0-9a-z\\/+]{40}"
+    examples:
+      - text: >
+          AWS_KEY_ID=AKIAAZERTYUIOP123456
+          AWS_SECRET_KEY=LGYIh8rDziCXCgDCUbJq1h7CKwNqnpA1il4MXL+y
+        contains_secret: true
+        match: LGYIh8rDziCXCgDCUbJq1h7CKwNqnpA1il4MXL+y
+      - text: >
+          AWS_KEY_ID=AKIAAZERTYUIOP123456
+          AWS_SECRET_KEY=EXAMPLEKEYCXCgDCUbJq1h7CKwNqnpA1il4MXL+y
+        contains_secret: false
+
+
+
