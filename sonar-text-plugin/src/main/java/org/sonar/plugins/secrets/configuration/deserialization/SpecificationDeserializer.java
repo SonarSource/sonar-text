@@ -55,7 +55,7 @@ public class SpecificationDeserializer {
     } catch (IOException e) {
       String filePath = specification.getPath();
       String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
-      LOG.error(String.format("Deserialization of specification failed for %s", fileName));
+      LOG.error(String.format("Deserialization of specification failed for file: %s", fileName));
       throw new RuntimeException(e);
     }
   }

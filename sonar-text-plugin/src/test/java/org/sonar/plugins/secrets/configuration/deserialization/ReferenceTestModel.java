@@ -75,22 +75,32 @@ public class ReferenceTestModel {
   public static Modules constructModules() {
     Modules modules = new Modules();
 
-    PatternMatch patternBefore = new PatternMatch();
-    patternBefore.setType(PatternType.PATTERN_BEFORE);
-    patternBefore.setPattern("AKIA[A-Z0-9]{16}");
+    BooleanMatch matchEach = new BooleanMatch();
+    matchEach.setType(MatchingType.MATCH_EACH);
+    matchEach.setModules(List.of(
+      constructPatternMatch(PatternType.PATTERN_AFTER, "pattern-after"),
+      constructPatternMatch(PatternType.PATTERN_AROUND, "pattern-around")
+    ));
 
-    PatternMatch pattern = new PatternMatch();
-    pattern.setType(PatternType.PATTERN);
-    pattern.setPattern("[0-9a-z\\/+]{40}");
-    List<Match> patternMatches = List.of(patternBefore, pattern);
+    List<Match> matches = List.of(
+      constructPatternMatch(PatternType.PATTERN_BEFORE, "AKIA[A-Z0-9]{16}"),
+      constructPatternMatch(PatternType.PATTERN, "[0-9a-z\\/+]{40}"),
+      matchEach
+    );
 
-    BooleanMatch booleanMatch = new BooleanMatch();
-    booleanMatch.setType(MatchingType.MATCH_EITHER);
-    booleanMatch.setModules(patternMatches);
-    modules.setMatching(booleanMatch);
+    BooleanMatch matchEither = new BooleanMatch();
+    matchEither.setType(MatchingType.MATCH_EITHER);
+    matchEither.setModules(matches);
+    modules.setMatching(matchEither);
     return modules;
   }
 
+  public static PatternMatch constructPatternMatch(PatternType type, String pattern) {
+    PatternMatch patternMatch = new PatternMatch();
+    patternMatch.setType(type);
+    patternMatch.setPattern(pattern);
+    return patternMatch;
+  }
 
   public static RuleExample constructRuleExample() {
     RuleExample example = new RuleExample();

@@ -19,10 +19,12 @@
  */
 package org.sonar.plugins.secrets.configuration.deserialization;
 
+import java.net.URL;
 import org.junit.jupiter.api.Test;
 import org.sonar.plugins.secrets.configuration.model.Specification;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 class SpecificationDeserializerTest {
 
@@ -32,5 +34,12 @@ class SpecificationDeserializerTest {
     Specification expected = ReferenceTestModel.construct();
 
     assertThat(result).usingRecursiveComparison().isEqualTo(expected);
+  }
+
+  @Test
+  void throwExceptionOnInvalidFile() {
+    URL specificationUrl = Thread.currentThread().getContextClassLoader().getResource("secretsConfiguration/invalidEmptySpec.yaml");
+
+    assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> SpecificationDeserializer.deserialize(specificationUrl));
   }
 }
