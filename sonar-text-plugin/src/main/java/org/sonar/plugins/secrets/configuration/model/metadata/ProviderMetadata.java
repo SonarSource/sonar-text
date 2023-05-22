@@ -18,48 +18,39 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.sonar.plugins.secrets.configuration.model;
+package org.sonar.plugins.secrets.configuration.model.metadata;
 
-import java.util.List;
-import org.sonar.plugins.secrets.configuration.model.matching.Modules;
-import org.sonar.plugins.secrets.configuration.model.metadata.RuleMetadata;
+import javax.annotation.Nullable;
 
-public class Rule {
+public class ProviderMetadata extends Metadata {
 
-  private String id;
-  private RuleMetadata metadata;
-  private Modules modules;
-  private List<RuleExample> examples;
+  private String category;
+  private String message;
+  @Nullable
+  public String fix;
 
-  public String getId() {
-    return id;
+  public String getCategory() {
+    return category;
   }
 
-  public void setId(String id) {
-    this.id = id;
+  public void setCategory(String category) {
+    this.category = category;
   }
 
-  public RuleMetadata getMetadata() {
-    return metadata;
+  public String getMessage() {
+    return message;
   }
 
-  public void setMetadata(RuleMetadata metadata) {
-    this.metadata = metadata;
+  public void setMessage(String message) {
+    this.message = message;
   }
 
-  public Modules getModules() {
-    return modules;
+  @Nullable
+  public String getFix() {
+    return fix;
   }
 
-  public void setModules(Modules modules) {
-    this.modules = modules;
-  }
-
-  public List<RuleExample> getExamples() {
-    return examples;
-  }
-
-  public void setExamples(List<RuleExample> examples) {
-    this.examples = examples;
+  public void setFix(@Nullable String fix) {
+    this.fix = fix;
   }
 }

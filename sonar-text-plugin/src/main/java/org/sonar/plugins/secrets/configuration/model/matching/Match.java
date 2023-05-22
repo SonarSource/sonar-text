@@ -17,28 +17,12 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets.configuration.model;
 
-import java.util.List;
+package org.sonar.plugins.secrets.configuration.model.matching;
 
-public class Specification {
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import org.sonar.plugins.secrets.configuration.deserialization.MatchDeserializer;
 
-  private Provider provider;
-  private List<Rule> rules;
-
-  public Provider getProvider() {
-    return provider;
-  }
-
-  public void setProvider(Provider provider) {
-    this.provider = provider;
-  }
-
-  public List<Rule> getRules() {
-    return rules;
-  }
-
-  public void setRules(List<Rule> rules) {
-    this.rules = rules;
-  }
+@JsonDeserialize(using = MatchDeserializer.class)
+public interface Match {
 }

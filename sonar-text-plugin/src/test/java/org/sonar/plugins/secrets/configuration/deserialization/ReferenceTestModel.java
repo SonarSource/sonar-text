@@ -19,36 +19,49 @@
  */
 package org.sonar.plugins.secrets.configuration.deserialization;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.sonar.plugins.secrets.configuration.model.Provider;
-import org.sonar.plugins.secrets.configuration.model.ProviderMetadata;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.RuleExample;
-import org.sonar.plugins.secrets.configuration.model.RuleMetadata;
 import org.sonar.plugins.secrets.configuration.model.Specification;
-import org.sonar.plugins.secrets.configuration.model.modules.BooleanMatch;
-import org.sonar.plugins.secrets.configuration.model.modules.Match;
-import org.sonar.plugins.secrets.configuration.model.modules.MatchingType;
-import org.sonar.plugins.secrets.configuration.model.modules.Modules;
-import org.sonar.plugins.secrets.configuration.model.modules.PatternMatch;
-import org.sonar.plugins.secrets.configuration.model.modules.PatternType;
+import org.sonar.plugins.secrets.configuration.model.matching.BooleanMatch;
+import org.sonar.plugins.secrets.configuration.model.matching.Match;
+import org.sonar.plugins.secrets.configuration.model.matching.MatchingType;
+import org.sonar.plugins.secrets.configuration.model.matching.Modules;
+import org.sonar.plugins.secrets.configuration.model.matching.PatternMatch;
+import org.sonar.plugins.secrets.configuration.model.matching.PatternType;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.HeuristicsFilter;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.IncludedFilter;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.RejectFilter;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.StatisticalFilter;
+import org.sonar.plugins.secrets.configuration.model.metadata.ProviderMetadata;
+import org.sonar.plugins.secrets.configuration.model.metadata.Reference;
+import org.sonar.plugins.secrets.configuration.model.metadata.ReferenceType;
+import org.sonar.plugins.secrets.configuration.model.metadata.RuleMetadata;
 
 public class ReferenceTestModel {
 
-  public static Specification construct() {
+  // -------------------------------------------------------
+  // Methods to construct a minimum specification test model
+  // -------------------------------------------------------
+
+  public static Specification constructMinimumSpecification() {
     Specification specification = new Specification();
     specification.setProvider(constructProvider());
     specification.setRules(List.of(constructRule()));
     return specification;
   }
 
-  public static Provider constructProvider() {
+  private static Provider constructProvider() {
     Provider provider = new Provider();
     provider.setMetadata(constructProviderMetadata());
     return provider;
   }
 
-  public static ProviderMetadata constructProviderMetadata() {
+  private static ProviderMetadata constructProviderMetadata() {
     ProviderMetadata providerMetadata = new ProviderMetadata();
     providerMetadata.setCategory("Cloud provider");
     providerMetadata.setMessage("Make sure that disclosing this AWS secret is safe here.");
@@ -56,23 +69,23 @@ public class ReferenceTestModel {
     return providerMetadata;
   }
 
-  public static Rule constructRule() {
+  private static Rule constructRule() {
     Rule rule = new Rule();
     rule.setId("aws-access-key");
     rule.setMetadata(constructRuleMetadata());
-    rule.setModules(constructModules());
+    rule.setModules(constructModulesForRule());
     rule.setExamples(List.of(constructRuleExample()));
     return rule;
   }
 
-  public static RuleMetadata constructRuleMetadata() {
+  private static RuleMetadata constructRuleMetadata() {
     RuleMetadata ruleMetadata = new RuleMetadata();
     ruleMetadata.setName("AWS access key");
     ruleMetadata.setCharset("[0-9a-z\\/+]");
     return ruleMetadata;
   }
 
-  public static Modules constructModules() {
+  private static Modules constructModulesForRule() {
     Modules modules = new Modules();
 
     BooleanMatch matchEach = new BooleanMatch();
@@ -82,11 +95,10 @@ public class ReferenceTestModel {
       constructPatternMatch(PatternType.PATTERN_AROUND, "pattern-around")
     ));
 
-    List<Match> matches = List.of(
-      constructPatternMatch(PatternType.PATTERN_BEFORE, "AKIA[A-Z0-9]{16}"),
-      constructPatternMatch(PatternType.PATTERN, "[0-9a-z\\/+]{40}"),
-      matchEach
-    );
+    List<Match> matches = new ArrayList<>();
+    matches.add(constructPatternMatch(PatternType.PATTERN_BEFORE, "AKIA[A-Z0-9]{16}"));
+    matches.add(constructPatternMatch(PatternType.PATTERN, "[0-9a-z\\/+]{40}"));
+    matches.add(matchEach);
 
     BooleanMatch matchEither = new BooleanMatch();
     matchEither.setType(MatchingType.MATCH_EITHER);
@@ -95,17 +107,123 @@ public class ReferenceTestModel {
     return modules;
   }
 
-  public static PatternMatch constructPatternMatch(PatternType type, String pattern) {
+  private static PatternMatch constructPatternMatch(PatternType type, String pattern) {
     PatternMatch patternMatch = new PatternMatch();
     patternMatch.setType(type);
     patternMatch.setPattern(pattern);
     return patternMatch;
   }
 
-  public static RuleExample constructRuleExample() {
+  private static RuleExample constructRuleExample() {
     RuleExample example = new RuleExample();
     example.setContainsSecret(true);
     example.setText("example text\n");
     return example;
+  }
+
+  // --------------------------------------------------------------------------------------
+  // Methods to construct the reference specification model based on the minimum test model
+  // --------------------------------------------------------------------------------------
+
+  public static Specification constructReferenceSpecification() {
+    Specification specification = constructMinimumSpecification();
+
+    fillMetadata(specification.getProvider().getMetadata());
+    fillRule(specification.getRules().get(0));
+
+    return specification;
+  }
+
+  private static void fillRule(Rule rule) {
+    fillRuleMetadata(rule.getMetadata());
+    fillRuleExample(rule.getExamples().get(0));
+    fillModules(rule.getModules());
+  }
+
+  private static void fillMetadata(ProviderMetadata providerMetadata) {
+    providerMetadata.setReferences(constructReferenceList());
+    providerMetadata.setFix("The affected secret should be revoked. A new one should be generated" +
+      " following the official AWS documentation. Moreover, recent accesses to" +
+      " the AWS API should be reviewed to make sure no malicious use was" +
+      " performed.\n");
+    providerMetadata.setImpact("Impact String");
+  }
+
+  private static List<Reference> constructReferenceList() {
+    return List.of(
+      constructReference("Reference 1", ReferenceType.STANDARDS),
+      constructReference("Reference 2", ReferenceType.DOCUMENTATION),
+      constructReference("Reference 3", ReferenceType.CONFERENCE_PRESENTATIONS),
+      constructReference("Reference 4", ReferenceType.ARTICLES_AND_BLOG_POSTS)
+    );
+  }
+
+  private static Reference constructReference(String description, ReferenceType type) {
+    Reference reference = new Reference();
+    reference.setDescription(description);
+    reference.setLink("https://docs.aws.amazon.com/IAM/...");
+    reference.setType(type);
+    return reference;
+  }
+
+  private static void fillModules(Modules modules) {
+    modules.setPre(constructPreModule());
+    modules.setPost(constructPostModule());
+
+    BooleanMatch matchEither = new BooleanMatch();
+    matchEither.setType(MatchingType.MATCH_EITHER);
+    matchEither.setModules(List.of(
+      constructPatternMatch(PatternType.PATTERN_NOT, "pattern-not"),
+      constructPatternMatch(PatternType.PATTERN_AROUND, "pattern-around")
+    ));
+
+    modules.getMatching().getModules().add(matchEither);
+  }
+
+  private static PreModule constructPreModule() {
+    PreModule preModule = new PreModule();
+
+    IncludedFilter includedFilter = new IncludedFilter();
+    includedFilter.setPaths(List.of("*.aws/config", ".env"));
+    includedFilter.setExt(List.of(".config"));
+    includedFilter.setContent(List.of("amazonaws.com", "aws"));
+
+    RejectFilter rejectFilter = new RejectFilter();
+    rejectFilter.setPaths(List.of("amazonaws.com", "aws"));
+
+    preModule.setInclude(includedFilter);
+    preModule.setReject(rejectFilter);
+
+    return preModule;
+  }
+
+  private static PostModule constructPostModule() {
+    PostModule postModule = new PostModule();
+
+    StatisticalFilter statisticalFilter = new StatisticalFilter();
+    statisticalFilter.setInputString("Test String");
+    statisticalFilter.setThreshold(5);
+
+    HeuristicsFilter heuristicsFilter = new HeuristicsFilter();
+    heuristicsFilter.setHeuristics(List.of("exampleHeuristics"));
+    heuristicsFilter.setInputString("Test String");
+
+    postModule.setStatisticalFilter(statisticalFilter);
+    postModule.setPatternNot("EXAMPLEKEY");
+    postModule.setHeuristicFilter(heuristicsFilter);
+
+    return postModule;
+  }
+
+
+  private static void fillRuleMetadata(RuleMetadata ruleMetadata) {
+    ruleMetadata.setDisabled(false);
+    ruleMetadata.setCharset("[0-9a-z\\/+]");
+    ruleMetadata.setMessage("Make sure disclosing this AWS access key is safe here.");
+    ruleMetadata.setImpact("Impact String");
+  }
+
+  private static void fillRuleExample(RuleExample example) {
+    example.setMatch("LGYIh8rDziCXCgDCUbJq1h7CKwNqnpA1il4MXL+y");
   }
 }

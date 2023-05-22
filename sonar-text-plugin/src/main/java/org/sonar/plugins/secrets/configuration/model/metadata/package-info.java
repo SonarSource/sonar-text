@@ -17,17 +17,5 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets.configuration.model;
-
-public abstract class Metadata {
-
-  private String name;
-
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-}
+@javax.annotation.ParametersAreNonnullByDefault
+package org.sonar.plugins.secrets.configuration.model.metadata;

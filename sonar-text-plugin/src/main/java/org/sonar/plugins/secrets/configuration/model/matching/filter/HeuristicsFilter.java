@@ -17,12 +17,33 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
-package org.sonar.plugins.secrets.configuration.model.modules;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import java.util.List;
+import javax.annotation.Nullable;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import org.sonar.plugins.secrets.configuration.deserialization.MatchDeserializer;
+public class HeuristicsFilter {
 
-@JsonDeserialize(using = MatchDeserializer.class)
-public interface Match {
+  private List<String> heuristics;
+  @Nullable
+  @JsonAlias("input-string")
+  private String inputString;
+
+  public List<String> getHeuristics() {
+    return heuristics;
+  }
+
+  public void setHeuristics(List<String> heuristics) {
+    this.heuristics = heuristics;
+  }
+
+  @Nullable
+  public String getInputString() {
+    return inputString;
+  }
+
+  public void setInputString(@Nullable String inputString) {
+    this.inputString = inputString;
+  }
 }

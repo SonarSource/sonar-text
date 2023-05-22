@@ -17,24 +17,44 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets.configuration.model.modules;
 
-public enum MatchingType {
-  MATCH_EITHER("match-either"),
-  MATCH_EACH("match-each");
+package org.sonar.plugins.secrets.configuration.model.matching;
 
-  private final String label;
+import javax.annotation.Nullable;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
-  MatchingType(String label) {
-    this.label = label;
+public class Modules {
+  private BooleanMatch matching;
+
+  @Nullable
+  public PreModule pre;
+  @Nullable
+  public PostModule post;
+
+  public BooleanMatch getMatching() {
+    return matching;
   }
 
-  public static MatchingType valueOfLabel(String label) {
-    for (MatchingType type : values()) {
-      if (type.label.equals(label)) {
-        return type;
-      }
-    }
-    return null;
+  public void setMatching(BooleanMatch matching) {
+    this.matching = matching;
+  }
+
+  @Nullable
+  public PreModule getPre() {
+    return pre;
+  }
+
+  public void setPre(@Nullable PreModule pre) {
+    this.pre = pre;
+  }
+
+  @Nullable
+  public PostModule getPost() {
+    return post;
+  }
+
+  public void setPost(@Nullable PostModule post) {
+    this.post = post;
   }
 }

@@ -17,17 +17,44 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
-package org.sonar.plugins.secrets.configuration.model.modules;
+import java.util.List;
+import javax.annotation.Nullable;
 
-public class Modules {
-  private BooleanMatch matching;
+public class IncludedFilter {
 
-  public BooleanMatch getMatching() {
-    return matching;
+  @Nullable
+  private List<String> paths;
+  @Nullable
+  private List<String> ext;
+  @Nullable
+  private List<String> content;
+
+  @Nullable
+  public List<String> getPaths() {
+    return paths;
   }
 
-  public void setMatching(BooleanMatch matching) {
-    this.matching = matching;
+  public void setPaths(@Nullable List<String> paths) {
+    this.paths = paths;
+  }
+
+  @Nullable
+  public List<String> getExt() {
+    return ext;
+  }
+
+  public void setExt(@Nullable List<String> ext) {
+    this.ext = ext;
+  }
+
+  @Nullable
+  public List<String> getContent() {
+    return content;
+  }
+
+  public void setContent(@Nullable List<String> content) {
+    this.content = content;
   }
 }

@@ -18,48 +18,35 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.sonar.plugins.secrets.configuration.model;
+package org.sonar.plugins.secrets.configuration.model.metadata;
 
-import java.util.List;
-import org.sonar.plugins.secrets.configuration.model.matching.Modules;
-import org.sonar.plugins.secrets.configuration.model.metadata.RuleMetadata;
+public class Reference {
 
-public class Rule {
+  private String description;
+  private String link;
+  private ReferenceType type;
 
-  private String id;
-  private RuleMetadata metadata;
-  private Modules modules;
-  private List<RuleExample> examples;
-
-  public String getId() {
-    return id;
+  public String getDescription() {
+    return description;
   }
 
-  public void setId(String id) {
-    this.id = id;
+  public void setDescription(String description) {
+    this.description = description;
   }
 
-  public RuleMetadata getMetadata() {
-    return metadata;
+  public String getLink() {
+    return link;
   }
 
-  public void setMetadata(RuleMetadata metadata) {
-    this.metadata = metadata;
+  public void setLink(String link) {
+    this.link = link;
   }
 
-  public Modules getModules() {
-    return modules;
+  public ReferenceType getType() {
+    return type;
   }
 
-  public void setModules(Modules modules) {
-    this.modules = modules;
-  }
-
-  public List<RuleExample> getExamples() {
-    return examples;
-  }
-
-  public void setExamples(List<RuleExample> examples) {
-    this.examples = examples;
+  public void setType(ReferenceType type) {
+    this.type = type;
   }
 }

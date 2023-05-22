@@ -20,9 +20,15 @@
 
 package org.sonar.plugins.secrets.configuration.model;
 
+import javax.annotation.Nullable;
+import org.sonar.plugins.secrets.configuration.model.matching.Modules;
+import org.sonar.plugins.secrets.configuration.model.metadata.ProviderMetadata;
+
 public class Provider {
 
   private ProviderMetadata metadata;
+  @Nullable
+  public Modules modules;
 
   public ProviderMetadata getMetadata() {
     return metadata;
@@ -30,5 +36,14 @@ public class Provider {
 
   public void setMetadata(ProviderMetadata metadata) {
     this.metadata = metadata;
+  }
+
+  @Nullable
+  public Modules getModules() {
+    return modules;
+  }
+
+  public void setModules(@Nullable Modules modules) {
+    this.modules = modules;
   }
 }

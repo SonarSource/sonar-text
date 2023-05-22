@@ -17,17 +17,24 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package org.sonar.plugins.secrets.configuration.model.matching;
 
-package org.sonar.plugins.secrets.configuration.model;
+public enum MatchingType {
+  MATCH_EITHER("match-either"),
+  MATCH_EACH("match-each");
 
-public class RuleMetadata extends Metadata {
-  private String charset;
+  private final String label;
 
-  public String getCharset() {
-    return charset;
+  MatchingType(String label) {
+    this.label = label;
   }
 
-  public void setCharset(String charset) {
-    this.charset = charset;
+  public static MatchingType valueOfLabel(String label) {
+    for (MatchingType type : values()) {
+      if (type.label.equals(label)) {
+        return type;
+      }
+    }
+    return null;
   }
 }

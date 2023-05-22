@@ -17,28 +17,33 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets.configuration.model;
 
-import java.util.List;
+package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
-public class Specification {
+import javax.annotation.Nullable;
 
-  private Provider provider;
-  private List<Rule> rules;
+public class PreModule {
 
-  public Provider getProvider() {
-    return provider;
+  @Nullable
+  private IncludedFilter include;
+  @Nullable
+  private RejectFilter reject;
+
+  @Nullable
+  private IncludedFilter getInclude() {
+    return include;
   }
 
-  public void setProvider(Provider provider) {
-    this.provider = provider;
+  public void setInclude(@Nullable IncludedFilter include) {
+    this.include = include;
   }
 
-  public List<Rule> getRules() {
-    return rules;
+  @Nullable
+  public RejectFilter getReject() {
+    return reject;
   }
 
-  public void setRules(List<Rule> rules) {
-    this.rules = rules;
+  public void setReject(@Nullable RejectFilter reject) {
+    this.reject = reject;
   }
 }

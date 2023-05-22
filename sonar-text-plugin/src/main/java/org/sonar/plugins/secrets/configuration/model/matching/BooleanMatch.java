@@ -18,48 +18,30 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.sonar.plugins.secrets.configuration.model;
+package org.sonar.plugins.secrets.configuration.model.matching;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.util.List;
-import org.sonar.plugins.secrets.configuration.model.matching.Modules;
-import org.sonar.plugins.secrets.configuration.model.metadata.RuleMetadata;
+import org.sonar.plugins.secrets.configuration.deserialization.BooleanMatchDeserializer;
 
-public class Rule {
+@JsonDeserialize(using = BooleanMatchDeserializer.class)
+public class BooleanMatch implements Match {
+  private MatchingType type;
+  private List<Match> modules;
 
-  private String id;
-  private RuleMetadata metadata;
-  private Modules modules;
-  private List<RuleExample> examples;
-
-  public String getId() {
-    return id;
+  public MatchingType getType() {
+    return type;
   }
 
-  public void setId(String id) {
-    this.id = id;
+  public void setType(MatchingType type) {
+    this.type = type;
   }
 
-  public RuleMetadata getMetadata() {
-    return metadata;
-  }
-
-  public void setMetadata(RuleMetadata metadata) {
-    this.metadata = metadata;
-  }
-
-  public Modules getModules() {
+  public List<Match> getModules() {
     return modules;
   }
 
-  public void setModules(Modules modules) {
+  public void setModules(List<Match> modules) {
     this.modules = modules;
-  }
-
-  public List<RuleExample> getExamples() {
-    return examples;
-  }
-
-  public void setExamples(List<RuleExample> examples) {
-    this.examples = examples;
   }
 }

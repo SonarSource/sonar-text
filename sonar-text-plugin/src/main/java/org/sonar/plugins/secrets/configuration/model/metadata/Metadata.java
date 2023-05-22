@@ -17,31 +17,42 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package org.sonar.plugins.secrets.configuration.model.metadata;
 
-package org.sonar.plugins.secrets.configuration.model.modules;
+import java.util.List;
+import javax.annotation.Nullable;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import org.sonar.plugins.secrets.configuration.deserialization.PatternMatchDeserializer;
+public abstract class Metadata {
 
-@JsonDeserialize(using = PatternMatchDeserializer.class)
-public class PatternMatch implements Match {
+  private String name;
+  @Nullable
+  public List<Reference> references;
+  @Nullable
+  public String impact;
 
-  private PatternType type;
-  private String pattern;
-
-  public PatternType getType() {
-    return type;
+  public String getName() {
+    return name;
   }
 
-  public void setType(PatternType type) {
-    this.type = type;
+  public void setName(String name) {
+    this.name = name;
   }
 
-  public String getPattern() {
-    return pattern;
+  @Nullable
+  public List<Reference> getReferences() {
+    return references;
   }
 
-  public void setPattern(String pattern) {
-    this.pattern = pattern;
+  public void setReferences(@Nullable List<Reference> references) {
+    this.references = references;
+  }
+
+  @Nullable
+  public String getImpact() {
+    return impact;
+  }
+
+  public void setImpact(@Nullable String impact) {
+    this.impact = impact;
   }
 }

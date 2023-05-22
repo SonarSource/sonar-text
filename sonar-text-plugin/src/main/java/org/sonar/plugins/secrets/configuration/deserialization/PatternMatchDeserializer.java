@@ -28,8 +28,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
-import org.sonar.plugins.secrets.configuration.model.modules.PatternMatch;
-import org.sonar.plugins.secrets.configuration.model.modules.PatternType;
+import org.sonar.plugins.secrets.configuration.model.matching.PatternMatch;
+import org.sonar.plugins.secrets.configuration.model.matching.PatternType;
 
 public class PatternMatchDeserializer extends JsonDeserializer<PatternMatch> {
 

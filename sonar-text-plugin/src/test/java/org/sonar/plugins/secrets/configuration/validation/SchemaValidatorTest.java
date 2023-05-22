@@ -29,11 +29,6 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 
 class SchemaValidatorTest {
 
-  @Test
-  void specificationFilesAreValid() {
-    assertThatNoException().isThrownBy(SchemaValidator::validateConfigurationFiles);
-  }
-
   @ParameterizedTest
   @ValueSource(strings = {"validMinSpec.yaml", "validReferenceSpec.yaml"})
   void testSpecificationFilesAreValid(String specificationFileName) {

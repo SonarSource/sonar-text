@@ -17,32 +17,18 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
-package org.sonar.plugins.secrets.configuration.model.modules;
-
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.util.List;
-import org.sonar.plugins.secrets.configuration.deserialization.BooleanMatchDeserializer;
 
-@JsonDeserialize(using = BooleanMatchDeserializer.class)
-public class BooleanMatch implements Match {
-  private MatchingType type;
+public class RejectFilter {
+  private List<String> paths;
 
-  private List<Match> modules;
-
-  public MatchingType getType() {
-    return type;
+  public List<String> getPaths() {
+    return paths;
   }
 
-  public void setType(MatchingType type) {
-    this.type = type;
-  }
-
-  public List<Match> getModules() {
-    return modules;
-  }
-
-  public void setModules(List<Match> modules) {
-    this.modules = modules;
+  public void setPaths(List<String> paths) {
+    this.paths = paths;
   }
 }
