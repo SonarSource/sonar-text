@@ -26,11 +26,10 @@ import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
 public class Modules {
   private BooleanMatch matching;
-
   @Nullable
-  public PreModule pre;
+  private PreModule pre;
   @Nullable
-  public PostModule post;
+  private PostModule post;
 
   public BooleanMatch getMatching() {
     return matching;

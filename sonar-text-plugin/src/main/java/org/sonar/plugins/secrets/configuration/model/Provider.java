@@ -28,7 +28,7 @@ public class Provider {
 
   private ProviderMetadata metadata;
   @Nullable
-  public Modules modules;
+  private Modules modules;
 
   public ProviderMetadata getMetadata() {
     return metadata;

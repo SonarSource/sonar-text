@@ -24,10 +24,9 @@ import javax.annotation.Nullable;
 
 public class RuleMetadata extends Metadata {
   private String charset;
+  private boolean disabled = false;
   @Nullable
-  public boolean disabled;
-  @Nullable
-  public String message;
+  private String message;
 
   public String getCharset() {
     return charset;

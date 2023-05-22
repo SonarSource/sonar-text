@@ -29,7 +29,7 @@ public class RuleExample {
   @JsonAlias("contains_secret")
   private boolean containsSecret;
   @Nullable
-  public String match;
+  private String match;
 
   public String getText() {
     return text;

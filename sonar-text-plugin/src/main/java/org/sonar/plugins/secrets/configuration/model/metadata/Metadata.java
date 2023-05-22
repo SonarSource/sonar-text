@@ -26,9 +26,9 @@ public abstract class Metadata {
 
   private String name;
   @Nullable
-  public List<Reference> references;
+  private List<Reference> references;
   @Nullable
-  public String impact;
+  private String impact;
 
   public String getName() {
     return name;

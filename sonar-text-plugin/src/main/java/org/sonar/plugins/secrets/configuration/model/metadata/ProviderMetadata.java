@@ -27,7 +27,7 @@ public class ProviderMetadata extends Metadata {
   private String category;
   private String message;
   @Nullable
-  public String fix;
+  private String fix;
 
   public String getCategory() {
     return category;

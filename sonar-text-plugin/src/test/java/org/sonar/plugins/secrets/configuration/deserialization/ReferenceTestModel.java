@@ -217,7 +217,7 @@ public class ReferenceTestModel {
 
 
   private static void fillRuleMetadata(RuleMetadata ruleMetadata) {
-    ruleMetadata.setDisabled(false);
+    ruleMetadata.setDisabled(true);
     ruleMetadata.setCharset("[0-9a-z\\/+]");
     ruleMetadata.setMessage("Make sure disclosing this AWS access key is safe here.");
     ruleMetadata.setImpact("Impact String");

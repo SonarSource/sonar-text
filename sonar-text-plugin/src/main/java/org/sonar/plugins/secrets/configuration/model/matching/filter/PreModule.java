@@ -30,7 +30,7 @@ public class PreModule {
   private RejectFilter reject;
 
   @Nullable
-  private IncludedFilter getInclude() {
+  public IncludedFilter getInclude() {
     return include;
   }
 
