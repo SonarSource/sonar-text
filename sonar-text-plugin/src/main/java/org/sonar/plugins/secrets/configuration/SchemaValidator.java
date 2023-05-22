@@ -28,7 +28,6 @@ import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InvalidObjectException;
 import java.net.URL;
 import java.util.Set;
 
@@ -69,10 +68,10 @@ public class SchemaValidator {
         String filePath = configurationLocation.getPath();
         String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
         String errorMessage = String.format("Specification file \"%s\" failed the schema validation", fileName);
-        throw new InvalidObjectException(errorMessage);
+        throw new SchemaValidationException(errorMessage);
       }
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new SchemaValidationException(e);
     }
   }
 }

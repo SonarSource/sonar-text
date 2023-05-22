@@ -48,13 +48,16 @@ class SchemaValidatorTest {
   void testSpecificationFilesAreInValid(String specificationFileName) {
     URL specificationUrl = Thread.currentThread().getContextClassLoader().getResource("secretsConfiguration/" + specificationFileName);
 
-    assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> SchemaValidator.validate(specificationUrl));
+    assertThatExceptionOfType(SchemaValidationException.class)
+      .isThrownBy(() -> SchemaValidator.validate(specificationUrl))
+      .withMessage(String.format("Specification file \"%s\" failed the schema validation", specificationFileName));
   }
 
   @Test
   void testSpecificationFilesAreInValid() {
     URL specificationUrl = Thread.currentThread().getContextClassLoader().getResource("doesNotExist.yaml");
 
-    assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> SchemaValidator.validate(specificationUrl));
+    assertThatExceptionOfType(IllegalArgumentException.class)
+      .isThrownBy(() -> SchemaValidator.validate(specificationUrl));
   }
 }
