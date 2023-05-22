@@ -30,7 +30,9 @@ class SpecificationDeserializerTest {
 
   @Test
   void deserializeMinSpecification() {
-    Specification result = SpecificationDeserializer.deserializeProvidedSpecifications().get(0);
+    URL specificationUrl = Thread.currentThread().getContextClassLoader().getResource("secretsConfiguration/validMinSpec.yaml");
+
+    Specification result = SpecificationDeserializer.deserialize(specificationUrl);
     Specification expected = ReferenceTestModel.construct();
 
     assertThat(result).usingRecursiveComparison().isEqualTo(expected);
@@ -40,7 +42,7 @@ class SpecificationDeserializerTest {
   void throwExceptionOnInvalidFile() {
     URL specificationUrl = Thread.currentThread().getContextClassLoader().getResource("secretsConfiguration/invalidEmptySpec.yaml");
 
-    assertThatExceptionOfType(SpecificationDeserializationException.class)
+    assertThatExceptionOfType(DeserializationException.class)
       .isThrownBy(() -> SpecificationDeserializer.deserialize(specificationUrl))
       .withMessage(String.format("Deserialization of specification failed for file: %s", "invalidEmptySpec.yaml"));
   }

@@ -19,26 +19,8 @@
  */
 package org.sonar.plugins.secrets.configuration.deserialization;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import java.io.IOException;
-import java.net.URL;
-import org.sonar.plugins.secrets.configuration.model.Specification;
-
-public class SpecificationDeserializer {
-
-  private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
-
-  private SpecificationDeserializer() {
-  }
-
-  static Specification deserialize(URL specification) {
-    try {
-      return MAPPER.readValue(specification, Specification.class);
-    } catch (IOException e) {
-      String filePath = specification.getPath();
-      String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
-      throw new DeserializationException(String.format("Deserialization of specification failed for file: %s", fileName), e);
-    }
+public class DeserializationException extends RuntimeException {
+  public DeserializationException(String message, Throwable cause) {
+    super(message, cause);
   }
 }
