@@ -40,6 +40,8 @@ class SpecificationDeserializerTest {
   void throwExceptionOnInvalidFile() {
     URL specificationUrl = Thread.currentThread().getContextClassLoader().getResource("secretsConfiguration/invalidEmptySpec.yaml");
 
-    assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> SpecificationDeserializer.deserialize(specificationUrl));
+    assertThatExceptionOfType(SpecificationDeserializationException.class)
+      .isThrownBy(() -> SpecificationDeserializer.deserialize(specificationUrl))
+      .withMessage(String.format("Deserialization of specification failed for file: %s", "invalidEmptySpec.yaml"));
   }
 }

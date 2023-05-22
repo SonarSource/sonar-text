@@ -26,13 +26,10 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
 import org.sonar.plugins.secrets.configuration.model.Specification;
 
 public class SpecificationDeserializer {
 
-  private static final Logger LOG = Loggers.get(SpecificationDeserializer.class);
   private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
 
   private static final Set<String> SPECIFICATIONS = Set.of("minSpec.yaml");
@@ -55,8 +52,7 @@ public class SpecificationDeserializer {
     } catch (IOException e) {
       String filePath = specification.getPath();
       String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
-      LOG.error(String.format("Deserialization of specification failed for file: %s", fileName));
-      throw new RuntimeException(e);
+      throw new SpecificationDeserializationException(String.format("Deserialization of specification failed for file: %s", fileName), e);
     }
   }
 }
