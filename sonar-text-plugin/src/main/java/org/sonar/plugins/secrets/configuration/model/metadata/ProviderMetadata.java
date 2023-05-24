@@ -26,7 +26,6 @@ import org.sonar.plugins.secrets.configuration.model.Provider;
 public class ProviderMetadata extends Metadata {
 
   private String category;
-  private String message;
   @JsonIgnore
   private Provider provider;
 
@@ -36,14 +35,6 @@ public class ProviderMetadata extends Metadata {
 
   public void setCategory(String category) {
     this.category = category;
-  }
-
-  public String getMessage() {
-    return message;
-  }
-
-  public void setMessage(String message) {
-    this.message = message;
   }
 
   public void setProvider(Provider provider) {

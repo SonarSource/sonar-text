@@ -26,6 +26,8 @@ public abstract class Metadata {
 
   private String name;
   @Nullable
+  private String message;
+  @Nullable
   private List<Reference> references;
   @Nullable
   private String impact;
@@ -38,6 +40,15 @@ public abstract class Metadata {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  @Nullable
+  public String getMessage() {
+    return message;
+  }
+
+  public void setMessage(@Nullable String message) {
+    this.message = message;
   }
 
   @Nullable

@@ -29,8 +29,6 @@ public class RuleMetadata extends Metadata {
 
   private String charset;
   private boolean disabled = false;
-  @Nullable
-  private String message;
 
   @JsonIgnore
   private Rule rule;
@@ -51,24 +49,21 @@ public class RuleMetadata extends Metadata {
     this.disabled = disabled;
   }
 
-  @Nullable
-  public String getMessage() {
-    if (message != null) {
-      return message;
-    }
-    return rule.getProvider().getMetadata().getMessage();
-  }
-
-  public void setMessage(@Nullable String message) {
-    this.message = message;
-  }
-
   public Rule getRule() {
     return rule;
   }
 
   public void setRule(Rule rule) {
     this.rule = rule;
+  }
+
+  @Nullable
+  @Override
+  public String getMessage() {
+    if (super.getMessage() != null) {
+      return super.getMessage();
+    }
+    return rule.getProvider().getMetadata().getMessage();
   }
 
   @Nullable
