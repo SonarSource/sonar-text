@@ -20,13 +20,20 @@
 
 package org.sonar.plugins.secrets.configuration.model.metadata;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.List;
 import javax.annotation.Nullable;
+import org.sonar.plugins.secrets.configuration.model.Rule;
 
 public class RuleMetadata extends Metadata {
+
   private String charset;
   private boolean disabled = false;
   @Nullable
   private String message;
+
+  @JsonIgnore
+  private Rule rule;
 
   public String getCharset() {
     return charset;
@@ -46,10 +53,49 @@ public class RuleMetadata extends Metadata {
 
   @Nullable
   public String getMessage() {
-    return message;
+    if (message != null) {
+      return message;
+    }
+    return rule.getProvider().getMetadata().getMessage();
   }
 
   public void setMessage(@Nullable String message) {
     this.message = message;
+  }
+
+  public Rule getRule() {
+    return rule;
+  }
+
+  public void setRule(Rule rule) {
+    this.rule = rule;
+  }
+
+  @Nullable
+  @Override
+  public String getImpact() {
+    if (super.getImpact() != null) {
+      return super.getImpact();
+    }
+    return rule.getProvider().getMetadata().getImpact();
+  }
+
+  @Nullable
+  @Override
+  public List<Reference> getReferences() {
+    List<Reference> ruleReferences = super.getReferences();
+    if (!ruleReferences.isEmpty()) {
+      return ruleReferences;
+    }
+    return rule.getProvider().getMetadata().getReferences();
+  }
+
+  @Nullable
+  @Override
+  public String getFix() {
+    if (super.getFix() != null) {
+      return super.getFix();
+    }
+    return rule.getProvider().getMetadata().getFix();
   }
 }

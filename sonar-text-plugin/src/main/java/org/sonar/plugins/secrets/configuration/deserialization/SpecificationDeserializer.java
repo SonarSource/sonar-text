@@ -32,11 +32,13 @@ public class SpecificationDeserializer {
   private SpecificationDeserializer() {
   }
 
-  static Specification deserialize(URL specification) {
+  public static Specification deserialize(URL specificationLocation) {
     try {
-      return MAPPER.readValue(specification, Specification.class);
+      Specification specification = MAPPER.readValue(specificationLocation, Specification.class);
+      specification.getProvider().setRules(specification.getRules());
+      return specification;
     } catch (IOException e) {
-      String filePath = specification.getPath();
+      String filePath = specificationLocation.getPath();
       String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
       throw new DeserializationException(String.format("Deserialization of specification failed for file: %s", fileName), e);
     }

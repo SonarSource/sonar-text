@@ -20,6 +20,7 @@
 
 package org.sonar.plugins.secrets.configuration.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 import org.sonar.plugins.secrets.configuration.model.matching.Modules;
 import org.sonar.plugins.secrets.configuration.model.metadata.RuleMetadata;
@@ -30,6 +31,8 @@ public class Rule {
   private RuleMetadata metadata;
   private Modules modules;
   private List<RuleExample> examples;
+  @JsonIgnore
+  private Provider provider;
 
   public String getId() {
     return id;
@@ -45,6 +48,7 @@ public class Rule {
 
   public void setMetadata(RuleMetadata metadata) {
     this.metadata = metadata;
+    metadata.setRule(this);
   }
 
   public Modules getModules() {
@@ -61,5 +65,13 @@ public class Rule {
 
   public void setExamples(List<RuleExample> examples) {
     this.examples = examples;
+  }
+
+  public Provider getProvider() {
+    return provider;
+  }
+
+  public void setProvider(Provider provider) {
+    this.provider = provider;
   }
 }

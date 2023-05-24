@@ -20,14 +20,15 @@
 
 package org.sonar.plugins.secrets.configuration.model.metadata;
 
-import javax.annotation.Nullable;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.sonar.plugins.secrets.configuration.model.Provider;
 
 public class ProviderMetadata extends Metadata {
 
   private String category;
   private String message;
-  @Nullable
-  private String fix;
+  @JsonIgnore
+  private Provider provider;
 
   public String getCategory() {
     return category;
@@ -45,12 +46,11 @@ public class ProviderMetadata extends Metadata {
     this.message = message;
   }
 
-  @Nullable
-  public String getFix() {
-    return fix;
+  public void setProvider(Provider provider) {
+    this.provider = provider;
   }
 
-  public void setFix(@Nullable String fix) {
-    this.fix = fix;
+  public Provider getProvider() {
+    return provider;
   }
 }

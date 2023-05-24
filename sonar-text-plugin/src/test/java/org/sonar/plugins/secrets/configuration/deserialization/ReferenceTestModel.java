@@ -52,6 +52,7 @@ public class ReferenceTestModel {
     Specification specification = new Specification();
     specification.setProvider(constructProvider());
     specification.setRules(List.of(constructRule()));
+    specification.getProvider().setRules(specification.getRules());
     return specification;
   }
 
