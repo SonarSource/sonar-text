@@ -21,7 +21,8 @@
 package org.sonar.plugins.secrets.configuration.model;
 
 import java.util.List;
-import org.sonar.plugins.secrets.configuration.model.modules.Modules;
+import org.sonar.plugins.secrets.configuration.model.matching.Modules;
+import org.sonar.plugins.secrets.configuration.model.metadata.RuleMetadata;
 
 public class Rule {
 

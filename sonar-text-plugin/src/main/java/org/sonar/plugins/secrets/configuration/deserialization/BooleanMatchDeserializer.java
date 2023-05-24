@@ -30,9 +30,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.sonar.plugins.secrets.configuration.model.modules.BooleanMatch;
-import org.sonar.plugins.secrets.configuration.model.modules.Match;
-import org.sonar.plugins.secrets.configuration.model.modules.MatchingType;
+import org.sonar.plugins.secrets.configuration.model.matching.BooleanMatch;
+import org.sonar.plugins.secrets.configuration.model.matching.Match;
+import org.sonar.plugins.secrets.configuration.model.matching.MatchingType;
 
 public class BooleanMatchDeserializer extends JsonDeserializer<BooleanMatch> {
 

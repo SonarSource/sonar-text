@@ -29,11 +29,21 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 class SpecificationDeserializerTest {
 
   @Test
-  void deserializeMinSpecification() {
+  void deserializeMinSpecifications() {
     URL specificationUrl = Thread.currentThread().getContextClassLoader().getResource("secretsConfiguration/validMinSpec.yaml");
 
     Specification result = SpecificationDeserializer.deserialize(specificationUrl);
-    Specification expected = ReferenceTestModel.construct();
+    Specification expected = ReferenceTestModel.constructMinimumSpecification();
+
+    assertThat(result).usingRecursiveComparison().isEqualTo(expected);
+  }
+
+  @Test
+  void deserializeReferenceSpecifications() {
+    URL specificationUrl = Thread.currentThread().getContextClassLoader().getResource("secretsConfiguration/validReferenceSpec.yaml");
+
+    Specification result = SpecificationDeserializer.deserialize(specificationUrl);
+    Specification expected = ReferenceTestModel.constructReferenceSpecification();
 
     assertThat(result).usingRecursiveComparison().isEqualTo(expected);
   }

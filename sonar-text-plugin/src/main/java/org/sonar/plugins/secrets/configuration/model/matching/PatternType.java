@@ -17,20 +17,23 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets.configuration.model.modules;
+package org.sonar.plugins.secrets.configuration.model.matching;
 
-public enum MatchingType {
-  MATCH_EITHER("match-either"),
-  MATCH_EACH("match-each");
+public enum PatternType {
+  PATTERN("pattern"),
+  PATTERN_BEFORE("pattern-before"),
+  PATTERN_AFTER("pattern-after"),
+  PATTERN_AROUND("pattern-around"),
+  PATTERN_NOT("pattern-not");
 
   private final String label;
 
-  MatchingType(String label) {
+  PatternType(String label) {
     this.label = label;
   }
 
-  public static MatchingType valueOfLabel(String label) {
-    for (MatchingType type : values()) {
+  public static PatternType valueOfLabel(String label) {
+    for (PatternType type : values()) {
       if (type.label.equals(label)) {
         return type;
       }

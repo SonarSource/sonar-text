@@ -17,17 +17,18 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
-package org.sonar.plugins.secrets.configuration.model.modules;
+import java.util.List;
 
-public class Modules {
-  private BooleanMatch matching;
+public class RejectFilter {
+  private List<String> paths;
 
-  public BooleanMatch getMatching() {
-    return matching;
+  public List<String> getPaths() {
+    return paths;
   }
 
-  public void setMatching(BooleanMatch matching) {
-    this.matching = matching;
+  public void setPaths(List<String> paths) {
+    this.paths = paths;
   }
 }

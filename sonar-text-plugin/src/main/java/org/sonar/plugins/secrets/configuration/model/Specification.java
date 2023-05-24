@@ -24,7 +24,6 @@ import java.util.List;
 public class Specification {
 
   private Provider provider;
-
   private List<Rule> rules;
 
   public Provider getProvider() {

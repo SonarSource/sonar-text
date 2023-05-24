@@ -17,28 +17,24 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package org.sonar.plugins.secrets.configuration.model.matching;
 
-package org.sonar.plugins.secrets.configuration.model;
+public enum MatchingType {
+  MATCH_EITHER("match-either"),
+  MATCH_EACH("match-each");
 
-public class ProviderMetadata extends Metadata {
+  private final String label;
 
-  private String category;
-
-  private String message;
-
-  public String getCategory() {
-    return category;
+  MatchingType(String label) {
+    this.label = label;
   }
 
-  public void setCategory(String category) {
-    this.category = category;
-  }
-
-  public String getMessage() {
-    return message;
-  }
-
-  public void setMessage(String message) {
-    this.message = message;
+  public static MatchingType valueOfLabel(String label) {
+    for (MatchingType type : values()) {
+      if (type.label.equals(label)) {
+        return type;
+      }
+    }
+    return null;
   }
 }

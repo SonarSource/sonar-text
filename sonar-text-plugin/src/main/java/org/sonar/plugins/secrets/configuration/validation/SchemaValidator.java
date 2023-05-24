@@ -35,14 +35,10 @@ public class SchemaValidator {
 
   private static final String FILE_LOCATION = "/org/sonar/plugins/secrets/configuration/";
   private static final String VALIDATION_SCHEMA_FILE = "specification-json-schema.json";
-  private static final Set<String> SPECIFICATION_FILES = Set.of("minSpec.yaml");
-
   private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
-
   private static final JsonSchema VALIDATION_SCHEMA = initializeValidationSchema();
 
   private SchemaValidator() {
-
   }
 
   private static JsonSchema initializeValidationSchema() {
@@ -52,13 +48,6 @@ public class SchemaValidator {
       .build();
     InputStream validationSchema = SchemaValidator.class.getResourceAsStream(FILE_LOCATION + VALIDATION_SCHEMA_FILE);
     return schemaFactory.getSchema(validationSchema);
-  }
-
-  public static void validateConfigurationFiles() {
-    for (String configurationFile : SPECIFICATION_FILES) {
-      URL configuration = SchemaValidator.class.getResource(FILE_LOCATION + configurationFile);
-      validate(configuration);
-    }
   }
 
   public static void validate(URL configurationLocation) {

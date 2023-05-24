@@ -18,31 +18,38 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.sonar.plugins.secrets.configuration.model.modules;
+package org.sonar.plugins.secrets.configuration.model.metadata;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import java.util.List;
-import org.sonar.plugins.secrets.configuration.deserialization.BooleanMatchDeserializer;
+import javax.annotation.Nullable;
 
-@JsonDeserialize(using = BooleanMatchDeserializer.class)
-public class BooleanMatch implements Match {
-  private MatchingType type;
+public class RuleMetadata extends Metadata {
+  private String charset;
+  private boolean disabled = false;
+  @Nullable
+  private String message;
 
-  private List<Match> modules;
-
-  public MatchingType getType() {
-    return type;
+  public String getCharset() {
+    return charset;
   }
 
-  public void setType(MatchingType type) {
-    this.type = type;
+  public void setCharset(String charset) {
+    this.charset = charset;
   }
 
-  public List<Match> getModules() {
-    return modules;
+  public boolean isDisabled() {
+    return disabled;
   }
 
-  public void setModules(List<Match> modules) {
-    this.modules = modules;
+  public void setDisabled(boolean disabled) {
+    this.disabled = disabled;
+  }
+
+  @Nullable
+  public String getMessage() {
+    return message;
+  }
+
+  public void setMessage(@Nullable String message) {
+    this.message = message;
   }
 }

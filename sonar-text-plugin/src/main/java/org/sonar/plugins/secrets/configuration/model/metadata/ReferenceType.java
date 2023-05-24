@@ -17,33 +17,17 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package org.sonar.plugins.secrets.configuration.model.metadata;
 
-package org.sonar.plugins.secrets.configuration.model;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
-import javax.annotation.Nullable;
-import org.sonar.plugins.secrets.configuration.model.matching.Modules;
-import org.sonar.plugins.secrets.configuration.model.metadata.ProviderMetadata;
-
-public class Provider {
-
-  private ProviderMetadata metadata;
-  @Nullable
-  private Modules modules;
-
-  public ProviderMetadata getMetadata() {
-    return metadata;
-  }
-
-  public void setMetadata(ProviderMetadata metadata) {
-    this.metadata = metadata;
-  }
-
-  @Nullable
-  public Modules getModules() {
-    return modules;
-  }
-
-  public void setModules(@Nullable Modules modules) {
-    this.modules = modules;
-  }
+public enum ReferenceType {
+  @JsonAlias("Standards")
+  STANDARDS,
+  @JsonAlias("Conference Presentations")
+  CONFERENCE_PRESENTATIONS,
+  @JsonAlias("Articles & blog posts")
+  ARTICLES_AND_BLOG_POSTS,
+  @JsonAlias("Documentation")
+  DOCUMENTATION;
 }

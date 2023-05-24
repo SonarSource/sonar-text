@@ -17,33 +17,32 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
-package org.sonar.plugins.secrets.configuration.model;
-
+import com.fasterxml.jackson.annotation.JsonAlias;
 import javax.annotation.Nullable;
-import org.sonar.plugins.secrets.configuration.model.matching.Modules;
-import org.sonar.plugins.secrets.configuration.model.metadata.ProviderMetadata;
 
-public class Provider {
+public class StatisticalFilter {
 
-  private ProviderMetadata metadata;
+  private int threshold;
   @Nullable
-  private Modules modules;
+  @JsonAlias("input-string")
+  private String inputString;
 
-  public ProviderMetadata getMetadata() {
-    return metadata;
+  public int getThreshold() {
+    return threshold;
   }
 
-  public void setMetadata(ProviderMetadata metadata) {
-    this.metadata = metadata;
+  public void setThreshold(int threshold) {
+    this.threshold = threshold;
   }
 
   @Nullable
-  public Modules getModules() {
-    return modules;
+  public String getInputString() {
+    return inputString;
   }
 
-  public void setModules(@Nullable Modules modules) {
-    this.modules = modules;
+  public void setInputString(@Nullable String inputString) {
+    this.inputString = inputString;
   }
 }

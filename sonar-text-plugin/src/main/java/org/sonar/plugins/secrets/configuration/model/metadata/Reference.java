@@ -18,32 +18,35 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.sonar.plugins.secrets.configuration.model;
+package org.sonar.plugins.secrets.configuration.model.metadata;
 
-import javax.annotation.Nullable;
-import org.sonar.plugins.secrets.configuration.model.matching.Modules;
-import org.sonar.plugins.secrets.configuration.model.metadata.ProviderMetadata;
+public class Reference {
 
-public class Provider {
+  private String description;
+  private String link;
+  private ReferenceType type;
 
-  private ProviderMetadata metadata;
-  @Nullable
-  private Modules modules;
-
-  public ProviderMetadata getMetadata() {
-    return metadata;
+  public String getDescription() {
+    return description;
   }
 
-  public void setMetadata(ProviderMetadata metadata) {
-    this.metadata = metadata;
+  public void setDescription(String description) {
+    this.description = description;
   }
 
-  @Nullable
-  public Modules getModules() {
-    return modules;
+  public String getLink() {
+    return link;
   }
 
-  public void setModules(@Nullable Modules modules) {
-    this.modules = modules;
+  public void setLink(String link) {
+    this.link = link;
+  }
+
+  public ReferenceType getType() {
+    return type;
+  }
+
+  public void setType(ReferenceType type) {
+    this.type = type;
   }
 }

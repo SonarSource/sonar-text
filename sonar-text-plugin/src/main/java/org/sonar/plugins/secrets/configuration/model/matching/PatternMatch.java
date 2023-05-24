@@ -18,11 +18,30 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.sonar.plugins.secrets.configuration.model.modules;
+package org.sonar.plugins.secrets.configuration.model.matching;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import org.sonar.plugins.secrets.configuration.deserialization.MatchDeserializer;
+import org.sonar.plugins.secrets.configuration.deserialization.PatternMatchDeserializer;
 
-@JsonDeserialize(using = MatchDeserializer.class)
-public interface Match {
+@JsonDeserialize(using = PatternMatchDeserializer.class)
+public class PatternMatch implements Match {
+
+  private PatternType type;
+  private String pattern;
+
+  public PatternType getType() {
+    return type;
+  }
+
+  public void setType(PatternType type) {
+    this.type = type;
+  }
+
+  public String getPattern() {
+    return pattern;
+  }
+
+  public void setPattern(String pattern) {
+    this.pattern = pattern;
+  }
 }

@@ -18,41 +18,47 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.sonar.plugins.secrets.configuration.model;
+package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import javax.annotation.Nullable;
 
-public class RuleExample {
+public class PostModule {
 
-  private String text;
-  @JsonAlias("contains_secret")
-  private boolean containsSecret;
   @Nullable
-  private String match;
+  @JsonAlias("heuristic-filter")
+  private HeuristicsFilter heuristicFilter;
+  @Nullable
+  @JsonAlias("pattern-not")
+  private String patternNot;
+  @Nullable
+  @JsonAlias("statistical-filter")
+  private StatisticalFilter statisticalFilter;
 
-  public String getText() {
-    return text;
+  @Nullable
+  public HeuristicsFilter getHeuristicFilter() {
+    return heuristicFilter;
   }
 
-  public void setText(String text) {
-    this.text = text;
-  }
-
-  public boolean isContainsSecret() {
-    return containsSecret;
-  }
-
-  public void setContainsSecret(boolean containsSecret) {
-    this.containsSecret = containsSecret;
+  public void setHeuristicFilter(@Nullable HeuristicsFilter heuristicFilter) {
+    this.heuristicFilter = heuristicFilter;
   }
 
   @Nullable
-  public String getMatch() {
-    return match;
+  public String getPatternNot() {
+    return patternNot;
   }
 
-  public void setMatch(@Nullable String match) {
-    this.match = match;
+  public void setPatternNot(@Nullable String patternNot) {
+    this.patternNot = patternNot;
+  }
+
+  @Nullable
+  public StatisticalFilter getStatisticalFilter() {
+    return statisticalFilter;
+  }
+
+  public void setStatisticalFilter(@Nullable StatisticalFilter statisticalFilter) {
+    this.statisticalFilter = statisticalFilter;
   }
 }

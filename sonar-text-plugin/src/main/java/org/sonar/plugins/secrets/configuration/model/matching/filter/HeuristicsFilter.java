@@ -17,27 +17,33 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets.configuration.model.modules;
+package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
-public enum PatternType {
-  PATTERN("pattern"),
-  PATTERN_BEFORE("pattern-before"),
-  PATTERN_AFTER("pattern-after"),
-  PATTERN_AROUND("pattern-around"),
-  PATTERN_NOT("pattern-not");
+import com.fasterxml.jackson.annotation.JsonAlias;
+import java.util.List;
+import javax.annotation.Nullable;
 
-  private final String label;
+public class HeuristicsFilter {
 
-  PatternType(String label) {
-    this.label = label;
+  private List<String> heuristics;
+  @Nullable
+  @JsonAlias("input-string")
+  private String inputString;
+
+  public List<String> getHeuristics() {
+    return heuristics;
   }
 
-  public static PatternType valueOfLabel(String label) {
-    for (PatternType type : values()) {
-      if (type.label.equals(label)) {
-        return type;
-      }
-    }
-    return null;
+  public void setHeuristics(List<String> heuristics) {
+    this.heuristics = heuristics;
+  }
+
+  @Nullable
+  public String getInputString() {
+    return inputString;
+  }
+
+  public void setInputString(@Nullable String inputString) {
+    this.inputString = inputString;
   }
 }

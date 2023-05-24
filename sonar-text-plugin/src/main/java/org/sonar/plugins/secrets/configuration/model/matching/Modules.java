@@ -18,32 +18,42 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.sonar.plugins.secrets.configuration.model;
+package org.sonar.plugins.secrets.configuration.model.matching;
 
 import javax.annotation.Nullable;
-import org.sonar.plugins.secrets.configuration.model.matching.Modules;
-import org.sonar.plugins.secrets.configuration.model.metadata.ProviderMetadata;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
-public class Provider {
-
-  private ProviderMetadata metadata;
+public class Modules {
+  private BooleanMatch matching;
   @Nullable
-  private Modules modules;
+  private PreModule pre;
+  @Nullable
+  private PostModule post;
 
-  public ProviderMetadata getMetadata() {
-    return metadata;
+  public BooleanMatch getMatching() {
+    return matching;
   }
 
-  public void setMetadata(ProviderMetadata metadata) {
-    this.metadata = metadata;
+  public void setMatching(BooleanMatch matching) {
+    this.matching = matching;
   }
 
   @Nullable
-  public Modules getModules() {
-    return modules;
+  public PreModule getPre() {
+    return pre;
   }
 
-  public void setModules(@Nullable Modules modules) {
-    this.modules = modules;
+  public void setPre(@Nullable PreModule pre) {
+    this.pre = pre;
+  }
+
+  @Nullable
+  public PostModule getPost() {
+    return post;
+  }
+
+  public void setPost(@Nullable PostModule post) {
+    this.post = post;
   }
 }

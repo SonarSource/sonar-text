@@ -18,16 +18,39 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.sonar.plugins.secrets.configuration.model;
+package org.sonar.plugins.secrets.configuration.model.metadata;
 
-public class RuleMetadata extends Metadata {
-  private String charset;
+import javax.annotation.Nullable;
 
-  public String getCharset() {
-    return charset;
+public class ProviderMetadata extends Metadata {
+
+  private String category;
+  private String message;
+  @Nullable
+  private String fix;
+
+  public String getCategory() {
+    return category;
   }
 
-  public void setCharset(String charset) {
-    this.charset = charset;
+  public void setCategory(String category) {
+    this.category = category;
+  }
+
+  public String getMessage() {
+    return message;
+  }
+
+  public void setMessage(String message) {
+    this.message = message;
+  }
+
+  @Nullable
+  public String getFix() {
+    return fix;
+  }
+
+  public void setFix(@Nullable String fix) {
+    this.fix = fix;
   }
 }

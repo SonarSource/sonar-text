@@ -17,11 +17,18 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets.configuration.model;
+package org.sonar.plugins.secrets.configuration.model.metadata;
+
+import java.util.List;
+import javax.annotation.Nullable;
 
 public abstract class Metadata {
 
   private String name;
+  @Nullable
+  private List<Reference> references;
+  @Nullable
+  private String impact;
 
   public String getName() {
     return name;
@@ -29,5 +36,23 @@ public abstract class Metadata {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  @Nullable
+  public List<Reference> getReferences() {
+    return references;
+  }
+
+  public void setReferences(@Nullable List<Reference> references) {
+    this.references = references;
+  }
+
+  @Nullable
+  public String getImpact() {
+    return impact;
+  }
+
+  public void setImpact(@Nullable String impact) {
+    this.impact = impact;
   }
 }

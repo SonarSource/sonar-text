@@ -18,32 +18,30 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.sonar.plugins.secrets.configuration.model;
+package org.sonar.plugins.secrets.configuration.model.matching;
 
-import javax.annotation.Nullable;
-import org.sonar.plugins.secrets.configuration.model.matching.Modules;
-import org.sonar.plugins.secrets.configuration.model.metadata.ProviderMetadata;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import java.util.List;
+import org.sonar.plugins.secrets.configuration.deserialization.BooleanMatchDeserializer;
 
-public class Provider {
+@JsonDeserialize(using = BooleanMatchDeserializer.class)
+public class BooleanMatch implements Match {
+  private MatchingType type;
+  private List<Match> modules;
 
-  private ProviderMetadata metadata;
-  @Nullable
-  private Modules modules;
-
-  public ProviderMetadata getMetadata() {
-    return metadata;
+  public MatchingType getType() {
+    return type;
   }
 
-  public void setMetadata(ProviderMetadata metadata) {
-    this.metadata = metadata;
+  public void setType(MatchingType type) {
+    this.type = type;
   }
 
-  @Nullable
-  public Modules getModules() {
+  public List<Match> getModules() {
     return modules;
   }
 
-  public void setModules(@Nullable Modules modules) {
+  public void setModules(List<Match> modules) {
     this.modules = modules;
   }
 }
