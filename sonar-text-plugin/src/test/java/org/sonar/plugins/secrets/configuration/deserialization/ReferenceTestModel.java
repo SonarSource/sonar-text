@@ -73,7 +73,7 @@ public class ReferenceTestModel {
     Rule rule = new Rule();
     rule.setId("aws-access-key");
     rule.setMetadata(constructRuleMetadata());
-    rule.setDetection(constructModulesForRule());
+    rule.setDetection(constructDetection());
     rule.setExamples(List.of(constructRuleExample()));
     return rule;
   }
@@ -85,7 +85,7 @@ public class ReferenceTestModel {
     return ruleMetadata;
   }
 
-  private static Detection constructModulesForRule() {
+  private static Detection constructDetection() {
     Detection detection = new Detection();
 
     BooleanMatch matchEach = new BooleanMatch();
@@ -128,19 +128,23 @@ public class ReferenceTestModel {
   public static Specification constructReferenceSpecification() {
     Specification specification = constructMinimumSpecification();
 
-    fillMetadata(specification.getProvider().getMetadata());
-    fillRule(specification.getProvider().getRules().get(0));
+    enrichMetadata(specification.getProvider().getMetadata());
+    enrichRule(specification.getProvider().getRules().get(0));
+
+    Detection providerDetection = constructDetection();
+    enrichDetection(providerDetection);
+    specification.getProvider().setDetection(providerDetection);
 
     return specification;
   }
 
-  private static void fillRule(Rule rule) {
-    fillRuleMetadata(rule.getMetadata());
-    fillRuleExample(rule.getExamples().get(0));
-    fillModules(rule.getDetection());
+  private static void enrichRule(Rule rule) {
+    enrichRuleMetadata(rule.getMetadata());
+    enrichRuleExample(rule.getExamples().get(0));
+    enrichDetection(rule.getDetection());
   }
 
-  private static void fillMetadata(ProviderMetadata providerMetadata) {
+  private static void enrichMetadata(ProviderMetadata providerMetadata) {
     providerMetadata.setReferences(constructReferenceList());
     providerMetadata.setFix("provider fix");
     providerMetadata.setImpact("provider impact");
@@ -163,7 +167,7 @@ public class ReferenceTestModel {
     return reference;
   }
 
-  private static void fillModules(Detection detection) {
+  private static void enrichDetection(Detection detection) {
     detection.setPre(constructPreModule());
     detection.setPost(constructPostModule());
 
@@ -213,7 +217,7 @@ public class ReferenceTestModel {
   }
 
 
-  private static void fillRuleMetadata(RuleMetadata ruleMetadata) {
+  private static void enrichRuleMetadata(RuleMetadata ruleMetadata) {
     ruleMetadata.setDefaultProfile(false);
     ruleMetadata.setCharset("[0-9a-z\\/+]");
     ruleMetadata.setMessage("rule message");
@@ -223,7 +227,7 @@ public class ReferenceTestModel {
       List.of(constructReference("rule reference", ReferenceType.STANDARDS)));
   }
 
-  private static void fillRuleExample(RuleExample example) {
+  private static void enrichRuleExample(RuleExample example) {
     example.setMatch("LGYIh8rDziCXCgDCUbJq1h7CKwNqnpA1il4MXL+y");
   }
 
