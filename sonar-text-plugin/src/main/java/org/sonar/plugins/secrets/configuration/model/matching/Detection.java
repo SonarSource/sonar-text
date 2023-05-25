@@ -24,7 +24,7 @@ import javax.annotation.Nullable;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
-public class Modules {
+public class Detection {
   private BooleanMatch matching;
   @Nullable
   private PreModule pre;

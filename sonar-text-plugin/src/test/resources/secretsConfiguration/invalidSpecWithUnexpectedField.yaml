@@ -4,20 +4,20 @@ provider:
       category: Cloud provider
       message: Make sure that disclosing this AWS secret is safe here.
   unexpectedField: "Unexpected"
-rules:
-  - id: aws-access-key
-    metadata:
-      name: AWS access key
-      charset: "[0-9a-z\\/+]"
-    modules:
-      matching:
-        match-either:
-        - pattern-before: "AKIA[A-Z0-9]{16}"
-        - pattern: "[0-9a-z\\/+]{40}"
-    examples:
-      - text: >
-          AWS_KEY_ID=AKIAAZERTYUIOP123456
-          AWS_SECRET_KEY=LGYIh8rDziCXCgDCUbJq1h7CKwNqnpA1il4MXL+y
-        contains_secret: true
+  rules:
+    - id: aws-access-key
+      metadata:
+        name: AWS access key
+        charset: "[0-9a-z\\/+]"
+      detection:
+        matching:
+          matchEither:
+          - patternBefore: "AKIA[A-Z0-9]{16}"
+          - pattern: "[0-9a-z\\/+]{40}"
+      examples:
+        - text: >
+            AWS_KEY_ID=AKIAAZERTYUIOP123456
+            AWS_SECRET_KEY=LGYIh8rDziCXCgDCUbJq1h7CKwNqnpA1il4MXL+y
+          containsSecret: true
 
 

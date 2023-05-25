@@ -20,13 +20,11 @@
 
 package org.sonar.plugins.secrets.configuration.model;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import javax.annotation.Nullable;
 
 public class RuleExample {
 
   private String text;
-  @JsonAlias("contains_secret")
   private boolean containsSecret;
   @Nullable
   private String match;

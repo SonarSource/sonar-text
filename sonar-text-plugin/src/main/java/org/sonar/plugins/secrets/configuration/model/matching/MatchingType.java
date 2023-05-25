@@ -20,8 +20,8 @@
 package org.sonar.plugins.secrets.configuration.model.matching;
 
 public enum MatchingType {
-  MATCH_EITHER("match-either"),
-  MATCH_EACH("match-each");
+  MATCH_EITHER("matchEither"),
+  MATCH_EACH("matchEach");
 
   private final String label;
 

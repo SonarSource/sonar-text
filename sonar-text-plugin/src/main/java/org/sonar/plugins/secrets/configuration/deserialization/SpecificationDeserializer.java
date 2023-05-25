@@ -34,9 +34,7 @@ public class SpecificationDeserializer {
 
   public static Specification deserialize(URL specificationLocation) {
     try {
-      Specification specification = MAPPER.readValue(specificationLocation, Specification.class);
-      specification.getProvider().setRules(specification.getRules());
-      return specification;
+      return MAPPER.readValue(specificationLocation, Specification.class);
     } catch (IOException e) {
       String filePath = specificationLocation.getPath();
       String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);

@@ -28,7 +28,7 @@ import org.sonar.plugins.secrets.configuration.model.Rule;
 public class RuleMetadata extends Metadata {
 
   private String charset;
-  private boolean disabled = false;
+  private boolean defaultProfile = true;
 
   @JsonIgnore
   private Rule rule;
@@ -41,12 +41,12 @@ public class RuleMetadata extends Metadata {
     this.charset = charset;
   }
 
-  public boolean isDisabled() {
-    return disabled;
+  public boolean isDefaultProfile() {
+    return defaultProfile;
   }
 
-  public void setDisabled(boolean disabled) {
-    this.disabled = disabled;
+  public void setDefaultProfile(boolean defaultProfile) {
+    this.defaultProfile = defaultProfile;
   }
 
   public Rule getRule() {
