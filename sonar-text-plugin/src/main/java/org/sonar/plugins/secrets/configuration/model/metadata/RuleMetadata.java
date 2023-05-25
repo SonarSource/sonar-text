@@ -79,7 +79,7 @@ public class RuleMetadata extends Metadata {
   @Override
   public List<Reference> getReferences() {
     List<Reference> ruleReferences = super.getReferences();
-    if (!ruleReferences.isEmpty()) {
+    if (ruleReferences != null) {
       return ruleReferences;
     }
     return rule.getProvider().getMetadata().getReferences();

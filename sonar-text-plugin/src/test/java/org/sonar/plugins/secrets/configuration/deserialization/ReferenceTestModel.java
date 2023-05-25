@@ -65,8 +65,8 @@ public class ReferenceTestModel {
   private static ProviderMetadata constructProviderMetadata() {
     ProviderMetadata providerMetadata = new ProviderMetadata();
     providerMetadata.setCategory("Cloud provider");
-    providerMetadata.setMessage("Make sure that disclosing this AWS secret is safe here.");
-    providerMetadata.setName("AWS");
+    providerMetadata.setMessage("provider message");
+    providerMetadata.setName("provider name");
     return providerMetadata;
   }
 
@@ -81,7 +81,7 @@ public class ReferenceTestModel {
 
   private static RuleMetadata constructRuleMetadata() {
     RuleMetadata ruleMetadata = new RuleMetadata();
-    ruleMetadata.setName("AWS access key");
+    ruleMetadata.setName("rule name");
     ruleMetadata.setCharset("[0-9a-z\\/+]");
     return ruleMetadata;
   }
@@ -143,11 +143,8 @@ public class ReferenceTestModel {
 
   private static void fillMetadata(ProviderMetadata providerMetadata) {
     providerMetadata.setReferences(constructReferenceList());
-    providerMetadata.setFix("The affected secret should be revoked. A new one should be generated" +
-      " following the official AWS documentation. Moreover, recent accesses to" +
-      " the AWS API should be reviewed to make sure no malicious use was" +
-      " performed.\n");
-    providerMetadata.setImpact("Impact String");
+    providerMetadata.setFix("provider fix");
+    providerMetadata.setImpact("provider impact");
   }
 
   private static List<Reference> constructReferenceList() {
@@ -220,11 +217,24 @@ public class ReferenceTestModel {
   private static void fillRuleMetadata(RuleMetadata ruleMetadata) {
     ruleMetadata.setDisabled(true);
     ruleMetadata.setCharset("[0-9a-z\\/+]");
-    ruleMetadata.setMessage("Make sure disclosing this AWS access key is safe here.");
-    ruleMetadata.setImpact("Impact String");
+    ruleMetadata.setMessage("rule message");
+    ruleMetadata.setImpact("rule impact");
+    ruleMetadata.setFix("rule fix");
+    ruleMetadata.setReferences(
+      List.of(constructReference("rule reference", ReferenceType.STANDARDS)));
   }
 
   private static void fillRuleExample(RuleExample example) {
     example.setMatch("LGYIh8rDziCXCgDCUbJq1h7CKwNqnpA1il4MXL+y");
+  }
+
+  // --------------------------------------------------------------------------------------
+  // Methods to transform specific model elements
+  // --------------------------------------------------------------------------------------
+  public static void setSpecificRuleMetadataFieldsNull(RuleMetadata ruleMetadata) {
+    ruleMetadata.setImpact(null);
+    ruleMetadata.setFix(null);
+    ruleMetadata.setMessage(null);
+    ruleMetadata.setReferences(null);
   }
 }
