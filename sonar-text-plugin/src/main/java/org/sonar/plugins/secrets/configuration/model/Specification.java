@@ -19,12 +19,9 @@
  */
 package org.sonar.plugins.secrets.configuration.model;
 
-import java.util.List;
-
 public class Specification {
 
   private Provider provider;
-  private List<Rule> rules;
 
   public Provider getProvider() {
     return provider;
@@ -32,13 +29,5 @@ public class Specification {
 
   public void setProvider(Provider provider) {
     this.provider = provider;
-  }
-
-  public List<Rule> getRules() {
-    return rules;
-  }
-
-  public void setRules(List<Rule> rules) {
-    this.rules = rules;
   }
 }

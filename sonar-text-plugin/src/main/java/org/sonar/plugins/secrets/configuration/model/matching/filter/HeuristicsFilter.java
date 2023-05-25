@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -27,7 +26,6 @@ public class HeuristicsFilter {
 
   private List<String> heuristics;
   @Nullable
-  @JsonAlias("input-string")
   private String inputString;
 
   public List<String> getHeuristics() {

@@ -21,10 +21,10 @@ package org.sonar.plugins.secrets.configuration.model.matching;
 
 public enum PatternType {
   PATTERN("pattern"),
-  PATTERN_BEFORE("pattern-before"),
-  PATTERN_AFTER("pattern-after"),
-  PATTERN_AROUND("pattern-around"),
-  PATTERN_NOT("pattern-not");
+  PATTERN_BEFORE("patternBefore"),
+  PATTERN_AFTER("patternAfter"),
+  PATTERN_AROUND("patternAround"),
+  PATTERN_NOT("patternNot");
 
   private final String label;
 

@@ -31,7 +31,7 @@ class SpecificationTest {
   @Test
   void providerMetadataShouldBeRetrievedWhenRuleMetadataFieldsAreNull() {
     Specification specification = ReferenceTestModel.constructReferenceSpecification();
-    RuleMetadata ruleMetadata = specification.getRules().get(0).getMetadata();
+    RuleMetadata ruleMetadata = specification.getProvider().getRules().get(0).getMetadata();
     ReferenceTestModel.setSpecificRuleMetadataFieldsNull(ruleMetadata);
 
     ProviderMetadata providerMetadata = specification.getProvider().getMetadata();

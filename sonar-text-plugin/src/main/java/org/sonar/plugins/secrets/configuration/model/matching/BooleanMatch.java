@@ -27,7 +27,7 @@ import org.sonar.plugins.secrets.configuration.deserialization.BooleanMatchDeser
 @JsonDeserialize(using = BooleanMatchDeserializer.class)
 public class BooleanMatch implements Match {
   private MatchingType type;
-  private List<Match> modules;
+  private List<Match> matches;
 
   public MatchingType getType() {
     return type;
@@ -37,11 +37,11 @@ public class BooleanMatch implements Match {
     this.type = type;
   }
 
-  public List<Match> getModules() {
-    return modules;
+  public List<Match> getMatches() {
+    return matches;
   }
 
-  public void setModules(List<Match> modules) {
-    this.modules = modules;
+  public void setMatches(List<Match> matches) {
+    this.matches = matches;
   }
 }

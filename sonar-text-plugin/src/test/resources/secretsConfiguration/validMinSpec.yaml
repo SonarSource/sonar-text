@@ -3,21 +3,21 @@ provider:
     name: provider name
     category: Cloud provider
     message: provider message
-rules:
-  - id: aws-access-key
-    metadata:
-      name: rule name
-      charset: "[0-9a-z\\/+]"
-    modules:
-      matching:
-        match-either:
-          - pattern-before: "AKIA[A-Z0-9]{16}"
-          - pattern: "[0-9a-z\\/+]{40}"
-          - match-each:
-              - pattern-after: "pattern-after"
-              - pattern-around: "pattern-around"
-    examples:
-      - text: >
-          example
-          text
-        contains_secret: true
+  rules:
+    - id: aws-access-key
+      metadata:
+        name: rule name
+        charset: "[0-9a-z\\/+]"
+      detection:
+        matching:
+          matchEither:
+            - patternBefore: "AKIA[A-Z0-9]{16}"
+            - pattern: "[0-9a-z\\/+]{40}"
+            - matchEach:
+                - patternAfter: "pattern-after"
+                - patternAround: "pattern-around"
+      examples:
+        - text: >
+            example
+            text
+          containsSecret: true

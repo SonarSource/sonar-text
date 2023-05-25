@@ -22,14 +22,14 @@ package org.sonar.plugins.secrets.configuration.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
-import org.sonar.plugins.secrets.configuration.model.matching.Modules;
+import org.sonar.plugins.secrets.configuration.model.matching.Detection;
 import org.sonar.plugins.secrets.configuration.model.metadata.RuleMetadata;
 
 public class Rule {
 
   private String id;
   private RuleMetadata metadata;
-  private Modules modules;
+  private Detection detection;
   private List<RuleExample> examples;
   @JsonIgnore
   private Provider provider;
@@ -51,12 +51,12 @@ public class Rule {
     metadata.setRule(this);
   }
 
-  public Modules getModules() {
-    return modules;
+  public Detection getDetection() {
+    return detection;
   }
 
-  public void setModules(Modules modules) {
-    this.modules = modules;
+  public void setDetection(Detection detection) {
+    this.detection = detection;
   }
 
   public List<RuleExample> getExamples() {

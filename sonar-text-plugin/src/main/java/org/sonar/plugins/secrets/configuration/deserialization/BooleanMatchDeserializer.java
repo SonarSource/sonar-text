@@ -54,7 +54,7 @@ public class BooleanMatchDeserializer extends JsonDeserializer<BooleanMatch> {
 
     BooleanMatch booleanMatch = new BooleanMatch();
     booleanMatch.setType(MatchingType.valueOfLabel(node.getKey()));
-    booleanMatch.setModules(modules);
+    booleanMatch.setMatches(modules);
     return booleanMatch;
   }
 }

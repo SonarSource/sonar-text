@@ -18,56 +18,59 @@ provider:
       message: provider message
       fix: provider fix
       impact: provider impact
-rules:
-  - id: aws-access-key
-    metadata:
-      name: rule name
-      disabled: true
-      charset: "[0-9a-z\\/+]"
-      message: rule message
-      impact: rule impact
-      fix: rule fix
-      references:
-        - description: rule reference
-          link: https://docs.aws.amazon.com/IAM/...
-          type: Standards
-    modules:
-      pre:
-        include:
-          paths:
-            - "*.aws/config"
-            - ".env"
-          ext:
-            - ".config"
-          content:
-            - "amazonaws.com"
-            - "aws"
-        reject:
-          paths:
-            - "amazonaws.com"
-            - "aws"
-      matching:
-        match-either:
-          - pattern-before: "AKIA[A-Z0-9]{16}"
-          - pattern: "[0-9a-z\\/+]{40}"
-          - match-each:
-              - pattern-after: "pattern-after"
-              - pattern-around: "pattern-around"
-          - match-either:
-              - pattern-not: "pattern-not"
-              - pattern-around: "pattern-around"
-      post:
-        statistical-filter:
-          threshold: 5
-          input-string: "Test String"
-        pattern-not: EXAMPLEKEY
-        heuristic-filter:
-          heuristics:
-            - "exampleHeuristics"
-          input-string: "Test String"
-    examples:
-      - text: >
-          example
-          text
-        contains_secret: true
-        match: LGYIh8rDziCXCgDCUbJq1h7CKwNqnpA1il4MXL+y
+  detection:
+    matching:
+      pattern: "provider matching pattern"
+  rules:
+    - id: aws-access-key
+      metadata:
+        name: rule name
+        defaultProfile: false
+        charset: "[0-9a-z\\/+]"
+        message: rule message
+        impact: rule impact
+        fix: rule fix
+        references:
+          - description: rule reference
+            link: https://docs.aws.amazon.com/IAM/...
+            type: Standards
+      detection:
+        pre:
+          include:
+            paths:
+              - "*.aws/config"
+              - ".env"
+            ext:
+              - ".config"
+            content:
+              - "amazonaws.com"
+              - "aws"
+          reject:
+            paths:
+              - "amazonaws.com"
+              - "aws"
+        matching:
+          matchEither:
+            - patternBefore: "AKIA[A-Z0-9]{16}"
+            - pattern: "[0-9a-z\\/+]{40}"
+            - matchEach:
+                - patternAfter: "pattern-after"
+                - patternAround: "pattern-around"
+            - matchEither:
+                - patternNot: "pattern-not"
+                - patternAround: "pattern-around"
+        post:
+          statisticalFilter:
+            threshold: 5
+            inputString: "Test String"
+          patternNot: EXAMPLEKEY
+          heuristicFilter:
+            heuristics:
+              - "exampleHeuristics"
+            inputString: "Test String"
+      examples:
+        - text: >
+            example
+            text
+          containsSecret: true
+          match: LGYIh8rDziCXCgDCUbJq1h7CKwNqnpA1il4MXL+y

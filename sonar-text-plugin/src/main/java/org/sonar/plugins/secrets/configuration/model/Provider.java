@@ -20,20 +20,17 @@
 
 package org.sonar.plugins.secrets.configuration.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
-import org.sonar.plugins.secrets.configuration.model.matching.Modules;
+import org.sonar.plugins.secrets.configuration.model.matching.Detection;
 import org.sonar.plugins.secrets.configuration.model.metadata.ProviderMetadata;
 
 public class Provider {
 
   private ProviderMetadata metadata;
   @Nullable
-  private Modules modules;
-  @JsonIgnore
-  private List<Rule> rules = new ArrayList<>();
+  private Detection detection;
+  private List<Rule> rules;
 
   public ProviderMetadata getMetadata() {
     return metadata;
@@ -45,12 +42,12 @@ public class Provider {
   }
 
   @Nullable
-  public Modules getModules() {
-    return modules;
+  public Detection getDetection() {
+    return detection;
   }
 
-  public void setModules(@Nullable Modules modules) {
-    this.modules = modules;
+  public void setDetection(@Nullable Detection detection) {
+    this.detection = detection;
   }
 
   public List<Rule> getRules() {

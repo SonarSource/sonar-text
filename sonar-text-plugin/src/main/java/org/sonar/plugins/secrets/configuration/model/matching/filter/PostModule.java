@@ -20,19 +20,15 @@
 
 package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import javax.annotation.Nullable;
 
 public class PostModule {
 
   @Nullable
-  @JsonAlias("heuristic-filter")
   private HeuristicsFilter heuristicFilter;
   @Nullable
-  @JsonAlias("pattern-not")
   private String patternNot;
   @Nullable
-  @JsonAlias("statistical-filter")
   private StatisticalFilter statisticalFilter;
 
   @Nullable

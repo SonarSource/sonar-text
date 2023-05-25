@@ -19,14 +19,12 @@
  */
 package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import javax.annotation.Nullable;
 
 public class StatisticalFilter {
 
   private int threshold;
   @Nullable
-  @JsonAlias("input-string")
   private String inputString;
 
   public int getThreshold() {
