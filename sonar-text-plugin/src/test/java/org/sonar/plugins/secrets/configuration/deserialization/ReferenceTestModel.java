@@ -73,7 +73,7 @@ public class ReferenceTestModel {
     Rule rule = new Rule();
     rule.setId("aws-access-key");
     rule.setMetadata(constructRuleMetadata());
-    rule.setDetection(constructDetection());
+    rule.setDetection(constructRuleDetection());
     rule.setExamples(List.of(constructRuleExample()));
     return rule;
   }
@@ -85,12 +85,12 @@ public class ReferenceTestModel {
     return ruleMetadata;
   }
 
-  private static Detection constructDetection() {
+  private static Detection constructRuleDetection() {
     Detection detection = new Detection();
 
     BooleanMatch matchEach = new BooleanMatch();
     matchEach.setType(MatchingType.MATCH_EACH);
-    matchEach.setModules(List.of(
+    matchEach.setMatches(List.of(
       constructPatternMatch(PatternType.PATTERN_AFTER, "pattern-after"),
       constructPatternMatch(PatternType.PATTERN_AROUND, "pattern-around")
     ));
@@ -102,7 +102,7 @@ public class ReferenceTestModel {
 
     BooleanMatch matchEither = new BooleanMatch();
     matchEither.setType(MatchingType.MATCH_EITHER);
-    matchEither.setModules(matches);
+    matchEither.setMatches(matches);
     detection.setMatching(matchEither);
     return detection;
   }
@@ -130,10 +130,7 @@ public class ReferenceTestModel {
 
     enrichMetadata(specification.getProvider().getMetadata());
     enrichRule(specification.getProvider().getRules().get(0));
-
-    Detection providerDetection = constructDetection();
-    enrichDetection(providerDetection);
-    specification.getProvider().setDetection(providerDetection);
+    specification.getProvider().setDetection(constructProviderDetection());
 
     return specification;
   }
@@ -141,7 +138,14 @@ public class ReferenceTestModel {
   private static void enrichRule(Rule rule) {
     enrichRuleMetadata(rule.getMetadata());
     enrichRuleExample(rule.getExamples().get(0));
-    enrichDetection(rule.getDetection());
+    enrichRuleDetection(rule.getDetection());
+  }
+
+  private static Detection constructProviderDetection() {
+    Detection detection = new Detection();
+    detection.setMatching(constructPatternMatch(PatternType.PATTERN, "provider matching pattern"));
+
+    return detection;
   }
 
   private static void enrichMetadata(ProviderMetadata providerMetadata) {
@@ -167,18 +171,18 @@ public class ReferenceTestModel {
     return reference;
   }
 
-  private static void enrichDetection(Detection detection) {
+  private static void enrichRuleDetection(Detection detection) {
     detection.setPre(constructPreModule());
     detection.setPost(constructPostModule());
 
     BooleanMatch matchEither = new BooleanMatch();
     matchEither.setType(MatchingType.MATCH_EITHER);
-    matchEither.setModules(List.of(
+    matchEither.setMatches(List.of(
       constructPatternMatch(PatternType.PATTERN_NOT, "pattern-not"),
       constructPatternMatch(PatternType.PATTERN_AROUND, "pattern-around")
     ));
 
-    detection.getMatching().getModules().add(matchEither);
+    ((BooleanMatch) detection.getMatching()).getMatches().add(matchEither);
   }
 
   private static PreModule constructPreModule() {

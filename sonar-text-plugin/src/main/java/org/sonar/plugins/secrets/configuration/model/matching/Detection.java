@@ -25,17 +25,17 @@ import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
 public class Detection {
-  private BooleanMatch matching;
+  private Match matching;
   @Nullable
   private PreModule pre;
   @Nullable
   private PostModule post;
 
-  public BooleanMatch getMatching() {
+  public Match getMatching() {
     return matching;
   }
 
-  public void setMatching(BooleanMatch matching) {
+  public void setMatching(Match matching) {
     this.matching = matching;
   }
 

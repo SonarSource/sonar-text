@@ -19,39 +19,8 @@ provider:
       fix: provider fix
       impact: provider impact
   detection:
-    pre:
-      include:
-        paths:
-          - "*.aws/config"
-          - ".env"
-        ext:
-          - ".config"
-        content:
-          - "amazonaws.com"
-          - "aws"
-      reject:
-        paths:
-          - "amazonaws.com"
-          - "aws"
     matching:
-      matchEither:
-        - patternBefore: "AKIA[A-Z0-9]{16}"
-        - pattern: "[0-9a-z\\/+]{40}"
-        - matchEach:
-            - patternAfter: "pattern-after"
-            - patternAround: "pattern-around"
-        - matchEither:
-            - patternNot: "pattern-not"
-            - patternAround: "pattern-around"
-    post:
-      statisticalFilter:
-        threshold: 5
-        inputString: "Test String"
-      patternNot: EXAMPLEKEY
-      heuristicFilter:
-        heuristics:
-          - "exampleHeuristics"
-        inputString: "Test String"
+      pattern: "provider matching pattern"
   rules:
     - id: aws-access-key
       metadata:
