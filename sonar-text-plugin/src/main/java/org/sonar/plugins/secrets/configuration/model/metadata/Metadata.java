@@ -26,9 +26,13 @@ public abstract class Metadata {
 
   private String name;
   @Nullable
+  private String message;
+  @Nullable
   private List<Reference> references;
   @Nullable
   private String impact;
+  @Nullable
+  private String fix;
 
   public String getName() {
     return name;
@@ -36,6 +40,15 @@ public abstract class Metadata {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  @Nullable
+  public String getMessage() {
+    return message;
+  }
+
+  public void setMessage(@Nullable String message) {
+    this.message = message;
   }
 
   @Nullable
@@ -54,5 +67,14 @@ public abstract class Metadata {
 
   public void setImpact(@Nullable String impact) {
     this.impact = impact;
+  }
+
+  @Nullable
+  public String getFix() {
+    return fix;
+  }
+
+  public void setFix(@Nullable String fix) {
+    this.fix = fix;
   }
 }

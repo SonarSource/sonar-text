@@ -1,6 +1,6 @@
 provider:  
   metadata:
-      name: AWS
+      name: provider name
       category: Cloud provider
       references:
         - description: Reference 1
@@ -15,21 +15,22 @@ provider:
         - description: Reference 4
           link: https://docs.aws.amazon.com/IAM/...
           type: Articles & blog posts
-      message: Make sure that disclosing this AWS secret is safe here.
-      fix: >
-          The affected secret should be revoked. A new one should be generated
-          following the official AWS documentation. Moreover, recent accesses to
-          the AWS API should be reviewed to make sure no malicious use was
-          performed.
-      impact: Impact String
+      message: provider message
+      fix: provider fix
+      impact: provider impact
 rules:
   - id: aws-access-key
     metadata:
-      name: AWS access key
+      name: rule name
       disabled: true
       charset: "[0-9a-z\\/+]"
-      message: Make sure disclosing this AWS access key is safe here.
-      impact: Impact String
+      message: rule message
+      impact: rule impact
+      fix: rule fix
+      references:
+        - description: rule reference
+          link: https://docs.aws.amazon.com/IAM/...
+          type: Standards
     modules:
       pre:
         include:

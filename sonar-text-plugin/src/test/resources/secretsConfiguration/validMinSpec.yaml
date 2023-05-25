@@ -1,12 +1,12 @@
 provider:
   metadata:
-    name: AWS
+    name: provider name
     category: Cloud provider
-    message: Make sure that disclosing this AWS secret is safe here.
+    message: provider message
 rules:
   - id: aws-access-key
     metadata:
-      name: AWS access key
+      name: rule name
       charset: "[0-9a-z\\/+]"
     modules:
       matching:
