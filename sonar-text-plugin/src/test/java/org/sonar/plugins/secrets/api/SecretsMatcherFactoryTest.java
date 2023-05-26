@@ -19,33 +19,34 @@
  */
 package org.sonar.plugins.secrets.api;
 
-import java.util.Collections;
 import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.matching.PatternMatch;
 import org.sonar.plugins.secrets.configuration.model.matching.PatternType;
 
-public class SecretsMatcherFactory {
+import static org.assertj.core.api.Assertions.assertThat;
 
-  static final SecretsMatcher NO_DETECTION_MATCHER = s -> Collections.emptyList();
 
-  private SecretsMatcherFactory() {
+class SecretsMatcherFactoryTest {
+
+  @Test
+  void detectionWithBooleanMatchProducesNoDetectionMatcher() {
+    Rule rule = ReferenceTestModel.constructRule();
+    ReferenceTestModel.enrichRuleDetection(rule.getDetection());
+
+    List<SecretsMatcher> secretsMatchers = SecretsMatcherFactory.constructSecretMatchers(rule);
+
+    assertThat(secretsMatchers).containsExactly(SecretsMatcherFactory.NO_DETECTION_MATCHER);
   }
 
-  public static List<SecretsMatcher> constructSecretMatchers(Rule rule) {
-    if (rule.getDetection().getMatching() instanceof PatternMatch) {
-      return List.of(constructSecretMatchers((PatternMatch) rule.getDetection().getMatching()));
-    } else {
-      return List.of(NO_DETECTION_MATCHER);
-    }
-  }
+  @Test
+  void detectionWithAuxiliaryPatternMatchProducesNoDetectionMatcher() {
+    PatternMatch auxiliaryPattern = ReferenceTestModel.constructPatternMatch(PatternType.PATTERN_AFTER, "pattern");
 
-  static SecretsMatcher constructSecretMatchers(PatternMatch match) {
-    if (PatternType.PATTERN == match.getType()) {
-      return new RegexMatcher(match.getPattern());
-    } else {
-      return NO_DETECTION_MATCHER;
-    }
-  }
+    SecretsMatcher secretsMatcher = SecretsMatcherFactory.constructSecretMatchers(auxiliaryPattern);
 
+    assertThat(secretsMatcher).isEqualTo(SecretsMatcherFactory.NO_DETECTION_MATCHER);
+  }
 }

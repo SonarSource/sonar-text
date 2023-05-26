@@ -1,0 +1,30 @@
+provider:
+  metadata:
+    name: provider name
+    category: Cloud provider
+    message: provider message
+  rules:
+    - id: exampleKey
+      metadata:
+        name: rule name
+        charset: "[0-9a-z\\/+]"
+      detection:
+        matching:
+          pattern: "\\b(test pattern)\\b"
+      examples:
+        - text: >
+            example
+            text
+          containsSecret: true
+    - id: exampleKey
+      metadata:
+        name: rule name
+        charset: "[0-9a-z\\/+]"
+      detection:
+        matching:
+          pattern: "\\b(test pattern)\\b"
+      examples:
+        - text: >
+            example
+            text
+          containsSecret: true

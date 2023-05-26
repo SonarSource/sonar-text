@@ -69,7 +69,7 @@ public class ReferenceTestModel {
     return providerMetadata;
   }
 
-  private static Rule constructRule() {
+  public static Rule constructRule() {
     Rule rule = new Rule();
     rule.setId("exampleKey");
     rule.setMetadata(constructRuleMetadata());
@@ -94,7 +94,7 @@ public class ReferenceTestModel {
     return detection;
   }
 
-  private static PatternMatch constructPatternMatch(PatternType type, String pattern) {
+  public static PatternMatch constructPatternMatch(PatternType type, String pattern) {
     PatternMatch patternMatch = new PatternMatch();
     patternMatch.setType(type);
     patternMatch.setPattern(pattern);
@@ -158,7 +158,7 @@ public class ReferenceTestModel {
     return reference;
   }
 
-  private static void enrichRuleDetection(Detection detection) {
+  public static void enrichRuleDetection(Detection detection) {
     detection.setPre(constructPreModule());
     detection.setPost(constructPostModule());
 

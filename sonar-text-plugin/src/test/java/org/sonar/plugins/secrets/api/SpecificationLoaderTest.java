@@ -19,8 +19,11 @@
  */
 package org.sonar.plugins.secrets.api;
 
+import java.util.Set;
 import org.junit.jupiter.api.Test;
+import org.sonar.plugins.secrets.configuration.validation.SchemaValidationException;
 
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
 class SpecificationLoaderTest {
@@ -28,5 +31,14 @@ class SpecificationLoaderTest {
   @Test
   void initializingShouldNotThrowAnException() {
     assertThatNoException().isThrownBy(() -> SpecificationLoader.getRuleForKey("example"));
+  }
+
+  @Test
+  void duplicateKeyInRulesShouldThrowError() {
+    String specificationLocation = "secretsConfiguration/";
+    Set<String> specifications = Set.of("invalidSpecWithDuplicateRuleKey.yaml");
+    assertThatExceptionOfType(SchemaValidationException.class).isThrownBy(() -> {
+      SpecificationLoader.reinitialize(specificationLocation, specifications);
+    }).withMessage("RuleKey exampleKey was used multiple times, when it should be unique across all specification files.");
   }
 }
