@@ -19,7 +19,7 @@
  */
 package org.sonar.plugins.secrets.configuration.deserialization;
 
-import java.net.URL;
+import java.io.InputStream;
 import org.junit.jupiter.api.Test;
 import org.sonar.plugins.secrets.configuration.model.Specification;
 
@@ -30,9 +30,11 @@ class SpecificationDeserializerTest {
 
   @Test
   void deserializeMinSpecifications() {
-    URL specificationUrl = Thread.currentThread().getContextClassLoader().getResource("secretsConfiguration/validMinSpec.yaml");
+    String fileName = "validMinSpec.yaml";
+    InputStream specificationStream =
+      Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + fileName);
 
-    Specification result = SpecificationDeserializer.deserialize(specificationUrl);
+    Specification result = SpecificationDeserializer.deserialize(specificationStream, fileName);
     Specification expected = ReferenceTestModel.constructMinimumSpecification();
 
     assertThat(result).usingRecursiveComparison().isEqualTo(expected);
@@ -40,9 +42,11 @@ class SpecificationDeserializerTest {
 
   @Test
   void deserializeReferenceSpecifications() {
-    URL specificationUrl = Thread.currentThread().getContextClassLoader().getResource("secretsConfiguration/validReferenceSpec.yaml");
+    String fileName = "validReferenceSpec.yaml";
+    InputStream specificationStream =
+      Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + fileName);
 
-    Specification result = SpecificationDeserializer.deserialize(specificationUrl);
+    Specification result = SpecificationDeserializer.deserialize(specificationStream, fileName);
     Specification expected = ReferenceTestModel.constructReferenceSpecification();
 
     assertThat(result).usingRecursiveComparison().isEqualTo(expected);
@@ -50,10 +54,22 @@ class SpecificationDeserializerTest {
 
   @Test
   void throwExceptionOnInvalidFile() {
-    URL specificationUrl = Thread.currentThread().getContextClassLoader().getResource("secretsConfiguration/invalidEmptySpec.yaml");
+    String fileName = "invalidSpecWithUnexpectedFieldFailsDuringDeserialization.yaml";
+    InputStream specificationStream =
+      Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + fileName);
 
     assertThatExceptionOfType(DeserializationException.class)
-      .isThrownBy(() -> SpecificationDeserializer.deserialize(specificationUrl))
-      .withMessage(String.format("Deserialization of specification failed for file: %s", "invalidEmptySpec.yaml"));
+      .isThrownBy(() -> SpecificationDeserializer.deserialize(specificationStream, fileName))
+      .withMessage(String.format("Deserialization of specification failed for file: %s", fileName));
+  }
+
+  @Test
+  void throwExceptionOnMissingFile() {
+    String specificationFileName = "doesNotExist.yaml";
+    InputStream specificationStream =
+      Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + specificationFileName);
+
+    assertThatExceptionOfType(IllegalArgumentException.class)
+      .isThrownBy(() -> SpecificationDeserializer.deserialize(specificationStream, specificationFileName));
   }
 }

@@ -4,18 +4,13 @@ provider:
     category: Cloud provider
     message: provider message
   rules:
-    - id: aws-access-key
+    - id: exampleKey
       metadata:
         name: rule name
         charset: "[0-9a-z\\/+]"
       detection:
         matching:
-          matchEither:
-            - patternBefore: "AKIA[A-Z0-9]{16}"
-            - pattern: "[0-9a-z\\/+]{40}"
-            - matchEach:
-                - patternAfter: "pattern-after"
-                - patternAround: "pattern-around"
+          pattern: "\\b(AIza[0-9A-Za-z\\-_]{35})\\b"
       examples:
         - text: >
             example
