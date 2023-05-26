@@ -88,7 +88,7 @@ public class ReferenceTestModel {
   private static Detection constructRuleDetection() {
     Detection detection = new Detection();
 
-    PatternMatch pattern = constructPatternMatch(PatternType.PATTERN, "\\b(AIza[0-9A-Za-z\\-_]{35})\\b");
+    PatternMatch pattern = constructPatternMatch(PatternType.PATTERN, "\\b(test pattern)\\b");
     detection.setMatching(pattern);
 
     return detection;

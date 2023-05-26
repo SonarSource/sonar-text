@@ -10,7 +10,7 @@ provider:
         charset: "[0-9a-z\\/+]"
       detection:
         matching:
-          pattern: "\\b(AIza[0-9A-Za-z\\-_]{35})\\b"
+          pattern: "\\b(test pattern)\\b"
       examples:
         - text: >
             example
