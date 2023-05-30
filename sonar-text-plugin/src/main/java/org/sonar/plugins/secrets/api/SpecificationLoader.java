@@ -44,7 +44,7 @@ public class SpecificationLoader {
     rulesMappedToKey = initialize(specificationLocation, specifications);
   }
 
-  private Map<String, Rule> initialize(String specificationLocation, Set<String> specifications) {
+  private static Map<String, Rule> initialize(String specificationLocation, Set<String> specifications) {
     Map<String, Rule> keyToRule = new HashMap<>();
 
     for (String specificationFileName : specifications) {
