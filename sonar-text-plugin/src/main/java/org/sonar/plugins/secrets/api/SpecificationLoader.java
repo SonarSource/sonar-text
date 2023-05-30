@@ -67,7 +67,7 @@ public class SpecificationLoader {
     return keyToRule;
   }
 
-  private Specification loadSpecification(String specificationLocation, String fileName) {
+  private static Specification loadSpecification(String specificationLocation, String fileName) {
     InputStream specificationStream = SpecificationLoader.class.getClassLoader()
       .getResourceAsStream(specificationLocation + fileName);
     return SpecificationDeserializer.deserialize(specificationStream, fileName);

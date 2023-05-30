@@ -22,6 +22,8 @@ package org.sonar.plugins.secrets.api;
 import java.util.ArrayList;
 import java.util.List;
 import org.sonar.api.batch.fs.TextRange;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
@@ -29,6 +31,7 @@ import org.sonar.plugins.secrets.configuration.model.Rule;
 
 public abstract class SpecificationBasedCheck extends Check {
 
+  private static final Logger LOG = Loggers.get(SpecificationBasedCheck.class);
   private Rule rule;
   private SecretsMatcher matcher;
 
@@ -43,7 +46,11 @@ public abstract class SpecificationBasedCheck extends Check {
 
   public void initialize(SpecificationLoader loader) {
     this.rule = loader.getRuleForKey(ruleKey.rule());
-    this.matcher = SecretsMatcherFactory.constructSecretsMatcher(rule);
+    if (this.rule != null) {
+      this.matcher = SecretsMatcherFactory.constructSecretsMatcher(rule);
+    } else {
+      LOG.error(String.format("Found no rule specification for rule with key: %s", ruleKey.rule()));
+    }
   }
 
   @Override

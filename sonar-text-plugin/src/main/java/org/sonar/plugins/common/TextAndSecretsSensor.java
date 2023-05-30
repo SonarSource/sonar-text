@@ -71,6 +71,7 @@ public class TextAndSecretsSensor implements Sensor {
   @Override
   public void execute(SensorContext sensorContext) {
     List<Check> activeChecks = getActiveChecks();
+    initializeSpecificationBasedChecks(activeChecks);
     if (activeChecks.isEmpty()) {
       return;
     }
@@ -169,14 +170,16 @@ public class TextAndSecretsSensor implements Sensor {
       .addAnnotatedChecks(TextRuleDefinition.checks()).all());
     checks.addAll(checkFactory.<Check>create(SecretsRulesDefinition.REPOSITORY_KEY)
       .addAnnotatedChecks(SecretsRulesDefinition.checks()).all());
+    return checks;
+  }
 
+  protected void initializeSpecificationBasedChecks(List<Check> checks) {
     SpecificationLoader specificationLoader = new SpecificationLoader();
     for (Check activeCheck : checks) {
       if (activeCheck instanceof SpecificationBasedCheck) {
         ((SpecificationBasedCheck) activeCheck).initialize(specificationLoader);
       }
     }
-    return checks;
   }
 
   private static void logAnalysisError(SensorContext sensorContext, InputFile inputFile, Exception e) {
