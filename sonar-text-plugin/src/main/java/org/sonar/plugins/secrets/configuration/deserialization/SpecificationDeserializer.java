@@ -41,6 +41,9 @@ public class SpecificationDeserializer {
       return MAPPER.treeToValue(specification, Specification.class);
     } catch (IOException e) {
       throw new DeserializationException(String.format("Deserialization of specification failed for file: %s", fileName), e);
+    } catch (IllegalArgumentException e) {
+      throw new DeserializationException(
+        String.format("Deserialization of specification failed for file because it was not found: %s", fileName), e);
     }
   }
 }

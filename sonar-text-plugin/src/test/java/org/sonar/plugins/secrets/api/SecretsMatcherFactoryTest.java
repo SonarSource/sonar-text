@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.secrets.api;
 
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel;
 import org.sonar.plugins.secrets.configuration.model.Rule;
@@ -36,16 +35,16 @@ class SecretsMatcherFactoryTest {
     Rule rule = ReferenceTestModel.constructRule();
     ReferenceTestModel.enrichRuleDetection(rule.getDetection());
 
-    List<SecretsMatcher> secretsMatchers = SecretsMatcherFactory.constructSecretMatchers(rule);
+    SecretsMatcher secretsMatcher = SecretsMatcherFactory.constructSecretsMatcher(rule);
 
-    assertThat(secretsMatchers).containsExactly(SecretsMatcherFactory.NO_DETECTION_MATCHER);
+    assertThat(secretsMatcher).isEqualTo(SecretsMatcherFactory.NO_DETECTION_MATCHER);
   }
 
   @Test
   void detectionWithAuxiliaryPatternMatchProducesNoDetectionMatcher() {
     PatternMatch auxiliaryPattern = ReferenceTestModel.constructPatternMatch(PatternType.PATTERN_AFTER, "pattern");
 
-    SecretsMatcher secretsMatcher = SecretsMatcherFactory.constructSecretMatchers(auxiliaryPattern);
+    SecretsMatcher secretsMatcher = SecretsMatcherFactory.constructSecretsMatcher(auxiliaryPattern);
 
     assertThat(secretsMatcher).isEqualTo(SecretsMatcherFactory.NO_DETECTION_MATCHER);
   }

@@ -29,8 +29,8 @@ import org.sonar.plugins.secrets.configuration.model.Rule;
 
 public abstract class SpecificationBasedCheck extends Check {
 
-  private final Rule rule;
-  private final List<SecretsMatcher> matchers;
+  private Rule rule;
+  private SecretsMatcher matcher;
 
   @Override
   protected String repositoryKey() {
@@ -39,15 +39,17 @@ public abstract class SpecificationBasedCheck extends Check {
 
   protected SpecificationBasedCheck() {
     super();
-    this.rule = SpecificationLoader.getRuleForKey(ruleKey.rule());
-    this.matchers = SecretsMatcherFactory.constructSecretMatchers(rule);
+  }
+
+  public void initialize(SpecificationLoader loader) {
+    this.rule = loader.getRuleForKey(ruleKey.rule());
+    this.matcher = SecretsMatcherFactory.constructSecretsMatcher(rule);
   }
 
   @Override
   public void analyze(InputFileContext ctx) {
     List<TextRange> foundSecrets = new ArrayList<>();
-    matchers.stream()
-      .flatMap(matcher -> matcher.findIn(ctx.content()).stream())
+    matcher.findIn(ctx.content()).stream()
       .map(match -> ctx.newTextRangeFromFileOffsets(match.getFileStartOffset(), match.getFileEndOffset()))
       .forEach(textRange -> {
         boolean notOverlapsExisting = foundSecrets.stream().noneMatch(foundSecret -> foundSecret.overlap(textRange));

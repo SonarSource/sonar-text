@@ -24,31 +24,38 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
+import org.sonar.plugins.secrets.configuration.deserialization.DeserializationException;
 import org.sonar.plugins.secrets.configuration.deserialization.SpecificationDeserializer;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.Specification;
 import org.sonar.plugins.secrets.configuration.validation.SchemaValidationException;
 
 public class SpecificationLoader {
+  private static final Logger LOG = Loggers.get(SpecificationLoader.class);
+  private final Map<String, Rule> rulesMappedToKey;
 
-  private static String specificationLocation = "org/sonar/plugins/secrets/configuration/";
-  private static Set<String> specifications = Collections.emptySet();
-  private static Map<String, Rule> rulesMappedToKey = initialize();
-
-  private SpecificationLoader() {
+  public SpecificationLoader() {
+    this("org/sonar/plugins/secrets/configuration/", Collections.emptySet());
   }
 
-  protected static void reinitialize(String specificationLocation, Set<String> specifications) {
-    SpecificationLoader.specificationLocation = specificationLocation;
-    SpecificationLoader.specifications = specifications;
-    SpecificationLoader.rulesMappedToKey = initialize();
+  public SpecificationLoader(String specificationLocation, Set<String> specifications) {
+    rulesMappedToKey = initialize(specificationLocation, specifications);
   }
 
-  private static Map<String, Rule> initialize() {
+  private Map<String, Rule> initialize(String specificationLocation, Set<String> specifications) {
     Map<String, Rule> keyToRule = new HashMap<>();
 
     for (String specificationFileName : specifications) {
-      Specification specification = loadSpecification(specificationFileName);
+      Specification specification;
+      try {
+        specification = loadSpecification(specificationLocation, specificationFileName);
+      } catch (DeserializationException | SchemaValidationException e) {
+        LOG.error(String.format("Could not load specification from file: %s", specificationFileName), e);
+        continue;
+      }
+
       for (Rule rule : specification.getProvider().getRules()) {
         if (keyToRule.put(rule.getId(), rule) != null) {
           String errorMessage = String.format(
@@ -60,13 +67,13 @@ public class SpecificationLoader {
     return keyToRule;
   }
 
-  private static Specification loadSpecification(String fileName) {
+  private Specification loadSpecification(String specificationLocation, String fileName) {
     InputStream specificationStream = SpecificationLoader.class.getClassLoader()
       .getResourceAsStream(specificationLocation + fileName);
     return SpecificationDeserializer.deserialize(specificationStream, fileName);
   }
 
-  public static Rule getRuleForKey(String key) {
+  public Rule getRuleForKey(String key) {
     return rulesMappedToKey.get(key);
   }
 

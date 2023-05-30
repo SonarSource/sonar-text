@@ -34,10 +34,12 @@ class SpecificationBasedCheckTest {
   void testShouldAnalyzeTest() throws IOException {
     String specificationLocation = "secretsConfiguration/";
     Set<String> specifications = Set.of("validMinSpec.yaml");
-    SpecificationLoader.reinitialize(specificationLocation, specifications);
+    SpecificationLoader specificationLoader = new SpecificationLoader(specificationLocation, specifications);
 
     String fileContent = "The content contains the test pattern and various other characters.";
     ExampleCheck exampleCheck = new ExampleCheck();
+    exampleCheck.initialize(specificationLoader);
+
     assertThat(analyze(exampleCheck, fileContent)).containsExactly(
       "secrets:exampleKey [1:25-1:37] provider message"
     );

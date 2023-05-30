@@ -27,7 +27,7 @@ public class GeneratedCheckList {
   private GeneratedCheckList() {
   }
 
-  //TODO: This could be automatically retrieved if wished
+  // For now empty, will be populated at a later point
   public static List<Class<?>> generatedChecks() {
     return Collections.emptyList();
   }

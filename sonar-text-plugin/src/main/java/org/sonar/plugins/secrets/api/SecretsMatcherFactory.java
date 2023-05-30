@@ -20,7 +20,6 @@
 package org.sonar.plugins.secrets.api;
 
 import java.util.Collections;
-import java.util.List;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.matching.PatternMatch;
 import org.sonar.plugins.secrets.configuration.model.matching.PatternType;
@@ -32,15 +31,15 @@ public class SecretsMatcherFactory {
   private SecretsMatcherFactory() {
   }
 
-  public static List<SecretsMatcher> constructSecretMatchers(Rule rule) {
+  public static SecretsMatcher constructSecretsMatcher(Rule rule) {
     if (rule.getDetection().getMatching() instanceof PatternMatch) {
-      return List.of(constructSecretMatchers((PatternMatch) rule.getDetection().getMatching()));
+      return constructSecretsMatcher((PatternMatch) rule.getDetection().getMatching());
     } else {
-      return List.of(NO_DETECTION_MATCHER);
+      return NO_DETECTION_MATCHER;
     }
   }
 
-  static SecretsMatcher constructSecretMatchers(PatternMatch match) {
+  static SecretsMatcher constructSecretsMatcher(PatternMatch match) {
     if (PatternType.PATTERN == match.getType()) {
       return new RegexMatcher(match.getPattern());
     } else {

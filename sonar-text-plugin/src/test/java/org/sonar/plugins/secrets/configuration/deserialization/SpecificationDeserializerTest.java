@@ -69,7 +69,9 @@ class SpecificationDeserializerTest {
     InputStream specificationStream =
       Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + specificationFileName);
 
-    assertThatExceptionOfType(IllegalArgumentException.class)
-      .isThrownBy(() -> SpecificationDeserializer.deserialize(specificationStream, specificationFileName));
+    assertThatExceptionOfType(DeserializationException.class)
+      .isThrownBy(() -> SpecificationDeserializer.deserialize(specificationStream, specificationFileName))
+      .withMessage(String.format(
+        "Deserialization of specification failed for file because it was not found: %s", specificationFileName));
   }
 }
