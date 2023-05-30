@@ -57,7 +57,6 @@ public class RuleMetadata extends Metadata {
     this.rule = rule;
   }
 
-  @Nullable
   @Override
   public String getMessage() {
     if (super.getMessage() != null) {

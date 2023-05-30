@@ -69,9 +69,9 @@ public class ReferenceTestModel {
     return providerMetadata;
   }
 
-  private static Rule constructRule() {
+  public static Rule constructRule() {
     Rule rule = new Rule();
-    rule.setId("aws-access-key");
+    rule.setId("exampleKey");
     rule.setMetadata(constructRuleMetadata());
     rule.setDetection(constructRuleDetection());
     rule.setExamples(List.of(constructRuleExample()));
@@ -88,26 +88,13 @@ public class ReferenceTestModel {
   private static Detection constructRuleDetection() {
     Detection detection = new Detection();
 
-    BooleanMatch matchEach = new BooleanMatch();
-    matchEach.setType(MatchingType.MATCH_EACH);
-    matchEach.setMatches(List.of(
-      constructPatternMatch(PatternType.PATTERN_AFTER, "pattern-after"),
-      constructPatternMatch(PatternType.PATTERN_AROUND, "pattern-around")
-    ));
+    PatternMatch pattern = constructPatternMatch(PatternType.PATTERN, "\\b(test pattern)\\b");
+    detection.setMatching(pattern);
 
-    List<Match> matches = new ArrayList<>();
-    matches.add(constructPatternMatch(PatternType.PATTERN_BEFORE, "AKIA[A-Z0-9]{16}"));
-    matches.add(constructPatternMatch(PatternType.PATTERN, "[0-9a-z\\/+]{40}"));
-    matches.add(matchEach);
-
-    BooleanMatch matchEither = new BooleanMatch();
-    matchEither.setType(MatchingType.MATCH_EITHER);
-    matchEither.setMatches(matches);
-    detection.setMatching(matchEither);
     return detection;
   }
 
-  private static PatternMatch constructPatternMatch(PatternType type, String pattern) {
+  public static PatternMatch constructPatternMatch(PatternType type, String pattern) {
     PatternMatch patternMatch = new PatternMatch();
     patternMatch.setType(type);
     patternMatch.setPattern(pattern);
@@ -171,18 +158,34 @@ public class ReferenceTestModel {
     return reference;
   }
 
-  private static void enrichRuleDetection(Detection detection) {
+  public static void enrichRuleDetection(Detection detection) {
     detection.setPre(constructPreModule());
     detection.setPost(constructPostModule());
 
-    BooleanMatch matchEither = new BooleanMatch();
-    matchEither.setType(MatchingType.MATCH_EITHER);
-    matchEither.setMatches(List.of(
+    BooleanMatch matchEach = new BooleanMatch();
+    matchEach.setType(MatchingType.MATCH_EACH);
+    matchEach.setMatches(List.of(
+      constructPatternMatch(PatternType.PATTERN_AFTER, "pattern-after"),
+      constructPatternMatch(PatternType.PATTERN_AROUND, "pattern-around")
+    ));
+
+    BooleanMatch matchEitherLevelTwo = new BooleanMatch();
+    matchEitherLevelTwo.setType(MatchingType.MATCH_EITHER);
+    matchEitherLevelTwo.setMatches(List.of(
       constructPatternMatch(PatternType.PATTERN_NOT, "pattern-not"),
       constructPatternMatch(PatternType.PATTERN_AROUND, "pattern-around")
     ));
 
-    ((BooleanMatch) detection.getMatching()).getMatches().add(matchEither);
+    List<Match> matches = new ArrayList<>();
+    matches.add(constructPatternMatch(PatternType.PATTERN_BEFORE, "AKIA[A-Z0-9]{16}"));
+    matches.add(constructPatternMatch(PatternType.PATTERN, "[0-9a-z\\/+]{40}"));
+    matches.add(matchEach);
+    matches.add(matchEitherLevelTwo);
+
+    BooleanMatch matchEither = new BooleanMatch();
+    matchEither.setType(MatchingType.MATCH_EITHER);
+    matchEither.setMatches(matches);
+    detection.setMatching(matchEither);
   }
 
   private static PreModule constructPreModule() {

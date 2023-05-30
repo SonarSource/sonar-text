@@ -38,11 +38,14 @@ import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.utils.log.LogTesterJUnit5;
 import org.sonar.check.Rule;
+import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.text.api.TextCheck;
 import org.sonar.plugins.text.checks.BIDICharacterCheck;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonar.plugins.common.TestUtils.activeRules;
 import static org.sonar.plugins.common.TestUtils.asString;
@@ -70,9 +73,10 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void should_raise_an_issue_when_a_secret_is_detected() {
+  void shouldRaiseAnIssueWhenASecretIsDetected() {
     SensorContextTester context = defaultSensorContext();
-    context.fileSystem().add(inputFile(Path.of("src", "test", "resources", "checks", "GoogleCloudAccountKeyCheck", "GoogleCloudAccountPositive.json")));
+    context.fileSystem().add(inputFile(Path.of("src", "test", "resources", "checks", "GoogleCloudAccountKeyCheck",
+      "GoogleCloudAccountPositive.json")));
     sensor(context).execute(context);
 
     assertThat(asString(context.allIssues())).containsExactly(
@@ -83,10 +87,11 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void should_not_start_analysis_when_no_rule_is_active() {
+  void shouldNotStartAnalysisWhenNoRuleIsActive() {
     String[] emptyActiveRuleList = {};
     SensorContextTester context = sensorContext(emptyActiveRuleList);
-    context.fileSystem().add(inputFile(Path.of("src", "test", "resources", "checks", "GoogleCloudAccountKeyCheck", "GoogleCloudAccountPositive.json")));
+    context.fileSystem().add(inputFile(Path.of("src", "test", "resources", "checks", "GoogleCloudAccountKeyCheck",
+      "GoogleCloudAccountPositive.json")));
     sensor(context).execute(context);
 
     assertThat(context.allIssues()).isEmpty();
@@ -94,7 +99,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void should_not_start_analysis_when_no_file_to_analyze() {
+  void shouldNotStartAnalysisWhenNoFileToAnalyze() {
     SensorContextTester context = defaultSensorContext();
     sensor(context).execute(context);
 
@@ -103,7 +108,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void should_not_raise_an_issue_or_error_when_the_input_file_does_not_exist() {
+  void shouldNotRaiseAnIssueOrErrorWhenTheInputFileDoesNotExist() {
     SensorContextTester context = defaultSensorContext();
     context.fileSystem().add(inputFile(Path.of("invalid-path.txt")));
 
@@ -114,7 +119,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void empty_file_should_raise_no_issue() {
+  void emptyFileShouldRaiseNoIssue() {
     SensorContextTester context = defaultSensorContext();
     analyse(sensor(context), context, inputFile(""));
     assertThat(context.allIssues()).isEmpty();
@@ -131,7 +136,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void valid_check_on_valid_file_should_raise_issue() {
+  void validCheckOnValidFileShouldRaiseIssue() {
     Check check = new ReportIssueAtLineOneCheck();
     InputFile inputFile = inputFile("foo");
     SensorContextTester context = defaultSensorContext();
@@ -145,7 +150,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void stop_on_cancellation() {
+  void stopOnCancellation() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     context.setCancelled(true);
@@ -177,7 +182,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void analysis_error_should_be_raised_on_failure_in_check() {
+  void analysisErrorShouldBeRaisedOnFailureInCheck() {
     @Rule(key = "Crash")
     class CrashCheck extends TextCheck {
       public void analyze(InputFileContext ctx) {
@@ -195,6 +200,20 @@ class TextAndSecretsSensorTest {
     assertThat(analysisError.inputFile()).isEqualTo(inputFile);
     assertThat(analysisError.message()).startsWith("Unable to analyze");
     assertThat(logTester.logs()).anyMatch(log -> log.startsWith("Unable to analyze"));
+  }
+
+  @Test
+  void specificationBasedCheckShouldBeInitializedAndReportErrorLog() {
+    @Rule(key = "SecretKey")
+    class SpecificationLoadingCheck extends SpecificationBasedCheck {
+    }
+    SpecificationLoadingCheck check = spy(new SpecificationLoadingCheck());
+    SensorContextTester context = sensorContext(check);
+    InputFile inputFile = inputFile("foo");
+    analyse(sensor(check), context, inputFile);
+
+    verify(check).initialize(any());
+    assertThat(logTester.logs()).contains("Found no rule specification for rule with key: SecretKey");
   }
 
   @Rule(key = "Boom")
@@ -235,7 +254,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void should_not_execute_checks_on_binary_file_names() {
+  void shouldNotExecuteChecksOnBinaryFileNames() {
     Check check = new BoomCheck();
     SensorContextTester context = sensorContext(check);
     analyse(sensor(check), context, inputFile(Path.of("Foo.class"), "abc", null));
@@ -245,7 +264,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void should_not_exclude_binary_file_content_if_language_is_not_null() throws IOException {
+  void shouldNotExcludeBinaryFileContentIfLanguageIsNotNull() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = defaultSensorContext();
     analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, "java"));
@@ -258,7 +277,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void should_exclude_binary_file_content_if_language_is_null_and_exclude_the_extension() throws IOException {
+  void shouldExcludeBinaryFileContentIfLanguageIsNullAndExcludeTheExtension() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = defaultSensorContext();
     analyse(sensor(check), context,
@@ -274,7 +293,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void should_exclude_binary_file_extension_dynamically() throws IOException {
+  void shouldExcludeBinaryFileExtensionDynamically() throws IOException {
     Check check = new BoomCheck();
     SensorContextTester context = sensorContext(check);
     analyseDirectory(sensor(check), context, Path.of("src", "test", "resources", "binary-files"));
@@ -290,7 +309,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void analysis_error_should_be_raised_on_corrupted_file() throws IOException {
+  void analysisErrorShouldBeRaisedOnCorruptedFile() throws IOException {
     Check check = new BIDICharacterCheck();
     SensorContextTester context = sensorContext(check);
     InputFile inputFile = spy(inputFile("{}"));
