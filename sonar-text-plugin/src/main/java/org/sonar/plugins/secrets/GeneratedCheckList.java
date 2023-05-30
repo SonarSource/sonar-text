@@ -27,7 +27,7 @@ public class GeneratedCheckList {
   private GeneratedCheckList() {
   }
 
-  // For now empty, will be populated at a later point
+  // For now empty, will be populated after the migration of the existing rules: SONARTEXT-15
   public static List<Class<?>> generatedChecks() {
     return Collections.emptyList();
   }
