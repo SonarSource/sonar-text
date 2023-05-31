@@ -31,8 +31,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombination;
-import org.sonar.plugins.secrets.configuration.model.matching.Match;
 import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombinationType;
+import org.sonar.plugins.secrets.configuration.model.matching.Match;
 
 public class BooleanCombinationDeserializer extends JsonDeserializer<BooleanCombination> {
 

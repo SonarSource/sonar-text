@@ -20,7 +20,7 @@ provider:
       impact: provider impact
   detection:
     matching:
-      pattern: "provider matching pattern"
+      pattern: "\\b(provider matching pattern)\\b"
   rules:
     - id: exampleKey
       metadata:
@@ -50,18 +50,19 @@ provider:
               - "amazonaws.com"
               - "aws"
         matching:
-          matchEither:
-            - patternBefore: "AKIA[A-Z0-9]{16}"
-            - pattern: "[0-9a-z\\/+]{40}"
-            - matchEach:
-                - patternAfter: "pattern-after"
-                - patternAround: "pattern-around"
-            - matchEither:
-                - patternNot: "pattern-not"
-                - patternAround: "pattern-around"
+          pattern: "\\b(rule matching pattern)\\b"
+          context:
+            matchEither:
+              - patternBefore: "pattern-before"
+              - matchEach:
+                  - patternAfter: "pattern-after"
+                  - patternAround: "pattern-around"
+              - matchEither:
+                  - patternNot: "pattern-not"
+                  - patternAround: "pattern-around"
         post:
           statisticalFilter:
-            threshold: 5
+            threshold: 4.2
             inputString: "Test String"
           patternNot: EXAMPLEKEY
           heuristicFilter:

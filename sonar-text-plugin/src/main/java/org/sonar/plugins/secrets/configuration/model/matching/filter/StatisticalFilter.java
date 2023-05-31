@@ -23,15 +23,15 @@ import javax.annotation.Nullable;
 
 public class StatisticalFilter {
 
-  private int threshold;
+  private float threshold;
   @Nullable
   private String inputString;
 
-  public int getThreshold() {
+  public float getThreshold() {
     return threshold;
   }
 
-  public void setThreshold(int threshold) {
+  public void setThreshold(float threshold) {
     this.threshold = threshold;
   }
 

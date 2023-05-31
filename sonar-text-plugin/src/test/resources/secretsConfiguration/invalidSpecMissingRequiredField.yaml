@@ -2,16 +2,11 @@ provider:
   metadata:
       name: AWS
       category: Cloud provider
-      message: Make sure that disclosing this AWS secret is safe here.
   rules:
     - id: aws-access-key
       metadata:
         name: AWS access key
-        charset: "[0-9a-z\\/+]"
       detection:
         matching:
-          matchEither:
-          - patternBefore: "AKIA[A-Z0-9]{16}"
-          - pattern: "[0-9a-z\\/+]{40}"
-
+          pattern: "\\b(test pattern)\\b"
 

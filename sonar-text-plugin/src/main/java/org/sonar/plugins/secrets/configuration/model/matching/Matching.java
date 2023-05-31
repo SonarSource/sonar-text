@@ -19,24 +19,28 @@
  */
 package org.sonar.plugins.secrets.configuration.model.matching;
 
-public enum AuxiliaryPatternType {
-  PATTERN_BEFORE("patternBefore"),
-  PATTERN_AFTER("patternAfter"),
-  PATTERN_AROUND("patternAround"),
-  PATTERN_NOT("patternNot");
+import javax.annotation.Nullable;
 
-  private final String label;
+public class Matching {
 
-  AuxiliaryPatternType(String label) {
-    this.label = label;
+  private String pattern;
+  @Nullable
+  private Match context;
+
+  public String getPattern() {
+    return pattern;
   }
 
-  public static AuxiliaryPatternType valueOfLabel(String label) {
-    for (AuxiliaryPatternType type : values()) {
-      if (type.label.equals(label)) {
-        return type;
-      }
-    }
-    return null;
+  public void setPattern(String pattern) {
+    this.pattern = pattern;
+  }
+
+  @Nullable
+  public Match getContext() {
+    return context;
+  }
+
+  public void setContext(@Nullable Match context) {
+    this.context = context;
   }
 }

@@ -7,10 +7,9 @@ provider:
     - id: exampleKey
       metadata:
         name: rule name
-        charset: "[0-9a-z\\/+]"
       detection:
         matching:
-          pattern: "\\b(test pattern)\\b"
+          pattern: "\\b(rule matching pattern)\\b"
       examples:
         - text: >
             example
