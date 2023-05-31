@@ -119,7 +119,7 @@ public class ReferenceTestModel {
 
     enrichMetadata(specification.getProvider().getMetadata());
     enrichRule(specification.getProvider().getRules().get(0));
-    specification.getProvider().setDetection(constructProviderDetection());
+    specification.getProvider().setDetection(constructBasicDetection("\\b(provider matching pattern)\\b"));
 
     return specification;
   }
@@ -128,16 +128,6 @@ public class ReferenceTestModel {
     enrichRuleMetadata(rule.getMetadata());
     enrichRuleExample(rule.getExamples().get(0));
     enrichDetection(rule.getDetection());
-  }
-
-  private static Detection constructProviderDetection() {
-    Detection detection = new Detection();
-    Matching matching = new Matching();
-
-    matching.setPattern("\\b(provider matching pattern)\\b");
-    detection.setMatching(matching);
-
-    return detection;
   }
 
   private static void enrichMetadata(ProviderMetadata providerMetadata) {
