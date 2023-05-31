@@ -20,27 +20,45 @@
 
 package org.sonar.plugins.secrets.configuration.model.matching;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import javax.annotation.Nullable;
+import org.sonar.plugins.secrets.configuration.model.Provider;
+import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
 public class Detection {
-  private Match matching;
+
+  @Nullable
+  private Matching matching;
   @Nullable
   private PreModule pre;
   @Nullable
   private PostModule post;
 
-  public Match getMatching() {
+  // only one of them should be non null
+  @JsonIgnore
+  private Rule possibleParentRule;
+  @JsonIgnore
+  private Provider possibleParentProvider;
+
+  @Nullable
+  public Matching getMatching() {
+    if (matching == null && possibleParentProvider != null && possibleParentProvider.getDetection() != null) {
+      return possibleParentProvider.getDetection().getMatching();
+    }
     return matching;
   }
 
-  public void setMatching(Match matching) {
+  public void setMatching(@Nullable Matching matching) {
     this.matching = matching;
   }
 
   @Nullable
   public PreModule getPre() {
+    if (pre == null && possibleParentProvider != null && possibleParentProvider.getDetection() != null) {
+      return possibleParentProvider.getDetection().getPre();
+    }
     return pre;
   }
 
@@ -50,10 +68,29 @@ public class Detection {
 
   @Nullable
   public PostModule getPost() {
+    if (post == null && possibleParentProvider != null && possibleParentProvider.getDetection() != null) {
+      return possibleParentProvider.getDetection().getPost();
+    }
     return post;
   }
 
   public void setPost(@Nullable PostModule post) {
     this.post = post;
+  }
+
+  public Rule getPossibleParentRule() {
+    return possibleParentRule;
+  }
+
+  public void setPossibleParentRule(Rule possibleParentRule) {
+    this.possibleParentRule = possibleParentRule;
+  }
+
+  public Provider getPossibleParentProvider() {
+    return possibleParentProvider;
+  }
+
+  public void setPossibleParentProvider(Provider possibleParentProvider) {
+    this.possibleParentProvider = possibleParentProvider;
   }
 }

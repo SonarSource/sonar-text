@@ -19,18 +19,20 @@
  */
 package org.sonar.plugins.secrets.configuration.model.matching;
 
-public enum MatchingType {
-  MATCH_EITHER("matchEither"),
-  MATCH_EACH("matchEach");
+public enum AuxiliaryPatternType {
+  PATTERN_BEFORE("patternBefore"),
+  PATTERN_AFTER("patternAfter"),
+  PATTERN_AROUND("patternAround"),
+  PATTERN_NOT("patternNot");
 
   private final String label;
 
-  MatchingType(String label) {
+  AuxiliaryPatternType(String label) {
     this.label = label;
   }
 
-  public static MatchingType valueOfLabel(String label) {
-    for (MatchingType type : values()) {
+  public static AuxiliaryPatternType valueOfLabel(String label) {
+    for (AuxiliaryPatternType type : values()) {
       if (type.label.equals(label)) {
         return type;
       }

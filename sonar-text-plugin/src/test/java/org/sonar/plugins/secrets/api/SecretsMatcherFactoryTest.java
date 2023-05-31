@@ -19,11 +19,12 @@
  */
 package org.sonar.plugins.secrets.api;
 
+import java.util.Objects;
+import java.util.function.BiPredicate;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel;
 import org.sonar.plugins.secrets.configuration.model.Rule;
-import org.sonar.plugins.secrets.configuration.model.matching.PatternMatch;
-import org.sonar.plugins.secrets.configuration.model.matching.PatternType;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,20 +32,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SecretsMatcherFactoryTest {
 
   @Test
-  void detectionWithBooleanMatchProducesNoDetectionMatcher() {
+  void testDetectionWithSimplePattern() {
     Rule rule = ReferenceTestModel.constructRule();
-    ReferenceTestModel.enrichRuleDetection(rule.getDetection());
+    RegexMatcher expectedMatcher = new RegexMatcher("\\b(rule matching pattern)\\b");
 
     SecretsMatcher secretsMatcher = SecretsMatcherFactory.constructSecretsMatcher(rule);
 
-    assertThat(secretsMatcher).isEqualTo(SecretsMatcherFactory.NO_DETECTION_MATCHER);
+    BiPredicate<Pattern, Pattern> patternEquals = (p1, p2) -> Objects.equals(p1.pattern(), p2.pattern());
+    assertThat(secretsMatcher)
+      .usingRecursiveComparison()
+      .withEqualsForType(patternEquals, Pattern.class)
+      .isEqualTo(expectedMatcher);
   }
 
   @Test
-  void detectionWithAuxiliaryPatternMatchProducesNoDetectionMatcher() {
-    PatternMatch auxiliaryPattern = ReferenceTestModel.constructPatternMatch(PatternType.PATTERN_AFTER, "pattern");
+  void produceNoDetectionMatcherWhenMatchingIsNull() {
+    Rule rule = ReferenceTestModel.constructRule();
+    rule.getDetection().setMatching(null);
 
-    SecretsMatcher secretsMatcher = SecretsMatcherFactory.constructSecretsMatcher(auxiliaryPattern);
+    SecretsMatcher secretsMatcher = SecretsMatcherFactory.constructSecretsMatcher(rule);
 
     assertThat(secretsMatcher).isEqualTo(SecretsMatcherFactory.NO_DETECTION_MATCHER);
   }

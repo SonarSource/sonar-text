@@ -17,31 +17,30 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package org.sonar.plugins.secrets.configuration.model.matching;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import java.util.List;
-import org.sonar.plugins.secrets.configuration.deserialization.BooleanMatchDeserializer;
+import javax.annotation.Nullable;
 
-@JsonDeserialize(using = BooleanMatchDeserializer.class)
-public class BooleanMatch implements Match {
-  private MatchingType type;
-  private List<Match> matches;
+public class Matching {
 
-  public MatchingType getType() {
-    return type;
+  private String pattern;
+  @Nullable
+  private Match context;
+
+  public String getPattern() {
+    return pattern;
   }
 
-  public void setType(MatchingType type) {
-    this.type = type;
+  public void setPattern(String pattern) {
+    this.pattern = pattern;
   }
 
-  public List<Match> getMatches() {
-    return matches;
+  @Nullable
+  public Match getContext() {
+    return context;
   }
 
-  public void setMatches(List<Match> matches) {
-    this.matches = matches;
+  public void setContext(@Nullable Match context) {
+    this.context = context;
   }
 }

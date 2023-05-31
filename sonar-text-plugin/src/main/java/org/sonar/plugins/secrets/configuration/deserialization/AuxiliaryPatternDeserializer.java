@@ -26,35 +26,24 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import org.sonar.plugins.secrets.configuration.model.matching.BooleanMatch;
-import org.sonar.plugins.secrets.configuration.model.matching.Match;
-import org.sonar.plugins.secrets.configuration.model.matching.MatchingType;
+import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
+import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPatternType;
 
-public class BooleanMatchDeserializer extends JsonDeserializer<BooleanMatch> {
+public class AuxiliaryPatternDeserializer extends JsonDeserializer<AuxiliaryPattern> {
 
-  public BooleanMatch deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
+  @Override
+  public AuxiliaryPattern deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
     TreeNode treeNode = jsonParser.getCodec().readTree(jsonParser);
 
     Iterator<Map.Entry<String, JsonNode>> fields = ((ObjectNode) treeNode).fields();
-    // As the yaml is validated before, there is always one element!
+    // As the yaml is validated before, there is always one element
     Map.Entry<String, JsonNode> node = fields.next();
 
-    List<Match> modules = new ArrayList<>();
-
-    for (JsonNode matchNode : node.getValue()) {
-      JsonParser matchNodeParser = matchNode.traverse();
-      matchNodeParser.setCodec(jsonParser.getCodec());
-      Match match = matchNodeParser.readValueAs(Match.class);
-      modules.add(match);
-    }
-
-    BooleanMatch booleanMatch = new BooleanMatch();
-    booleanMatch.setType(MatchingType.valueOfLabel(node.getKey()));
-    booleanMatch.setMatches(modules);
-    return booleanMatch;
+    AuxiliaryPattern auxiliaryPattern = new AuxiliaryPattern();
+    auxiliaryPattern.setType(AuxiliaryPatternType.valueOfLabel(node.getKey()));
+    auxiliaryPattern.setPattern(node.getValue().asText());
+    return auxiliaryPattern;
   }
 }

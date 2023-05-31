@@ -26,24 +26,35 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import org.sonar.plugins.secrets.configuration.model.matching.PatternMatch;
-import org.sonar.plugins.secrets.configuration.model.matching.PatternType;
+import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombination;
+import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombinationType;
+import org.sonar.plugins.secrets.configuration.model.matching.Match;
 
-public class PatternMatchDeserializer extends JsonDeserializer<PatternMatch> {
+public class BooleanCombinationDeserializer extends JsonDeserializer<BooleanCombination> {
 
-  @Override
-  public PatternMatch deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
+  public BooleanCombination deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
     TreeNode treeNode = jsonParser.getCodec().readTree(jsonParser);
 
     Iterator<Map.Entry<String, JsonNode>> fields = ((ObjectNode) treeNode).fields();
-    // As the yaml is validated before, there is always one element
+    // As the yaml is validated before, there is always one element!
     Map.Entry<String, JsonNode> node = fields.next();
 
-    PatternMatch patternMatch = new PatternMatch();
-    patternMatch.setType(PatternType.valueOfLabel(node.getKey()));
-    patternMatch.setPattern(node.getValue().asText());
-    return patternMatch;
+    List<Match> modules = new ArrayList<>();
+
+    for (JsonNode matchNode : node.getValue()) {
+      JsonParser matchNodeParser = matchNode.traverse();
+      matchNodeParser.setCodec(jsonParser.getCodec());
+      Match match = matchNodeParser.readValueAs(Match.class);
+      modules.add(match);
+    }
+
+    BooleanCombination booleanCombination = new BooleanCombination();
+    booleanCombination.setType(BooleanCombinationType.valueOfLabel(node.getKey()));
+    booleanCombination.setMatches(modules);
+    return booleanCombination;
   }
 }

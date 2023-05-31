@@ -17,30 +17,31 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
-import javax.annotation.Nullable;
+package org.sonar.plugins.secrets.configuration.model.matching;
 
-public class StatisticalFilter {
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import java.util.List;
+import org.sonar.plugins.secrets.configuration.deserialization.BooleanCombinationDeserializer;
 
-  private float threshold;
-  @Nullable
-  private String inputString;
+@JsonDeserialize(using = BooleanCombinationDeserializer.class)
+public class BooleanCombination implements Match {
+  private BooleanCombinationType type;
+  private List<Match> matches;
 
-  public float getThreshold() {
-    return threshold;
+  public BooleanCombinationType getType() {
+    return type;
   }
 
-  public void setThreshold(float threshold) {
-    this.threshold = threshold;
+  public void setType(BooleanCombinationType type) {
+    this.type = type;
   }
 
-  @Nullable
-  public String getInputString() {
-    return inputString;
+  public List<Match> getMatches() {
+    return matches;
   }
 
-  public void setInputString(@Nullable String inputString) {
-    this.inputString = inputString;
+  public void setMatches(List<Match> matches) {
+    this.matches = matches;
   }
 }

@@ -25,12 +25,13 @@ import org.sonar.plugins.secrets.configuration.model.Provider;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.RuleExample;
 import org.sonar.plugins.secrets.configuration.model.Specification;
-import org.sonar.plugins.secrets.configuration.model.matching.BooleanMatch;
+import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
+import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPatternType;
+import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombination;
+import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombinationType;
 import org.sonar.plugins.secrets.configuration.model.matching.Detection;
 import org.sonar.plugins.secrets.configuration.model.matching.Match;
-import org.sonar.plugins.secrets.configuration.model.matching.MatchingType;
-import org.sonar.plugins.secrets.configuration.model.matching.PatternMatch;
-import org.sonar.plugins.secrets.configuration.model.matching.PatternType;
+import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.HeuristicsFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.IncludedFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
@@ -63,8 +64,8 @@ public class ReferenceTestModel {
 
   private static ProviderMetadata constructProviderMetadata() {
     ProviderMetadata providerMetadata = new ProviderMetadata();
-    providerMetadata.setCategory("Cloud provider");
     providerMetadata.setMessage("provider message");
+    providerMetadata.setCategory("Cloud provider");
     providerMetadata.setName("provider name");
     return providerMetadata;
   }
@@ -81,24 +82,24 @@ public class ReferenceTestModel {
   private static RuleMetadata constructRuleMetadata() {
     RuleMetadata ruleMetadata = new RuleMetadata();
     ruleMetadata.setName("rule name");
-    ruleMetadata.setCharset("[0-9a-z\\/+]");
     return ruleMetadata;
   }
 
   private static Detection constructRuleDetection() {
     Detection detection = new Detection();
+    Matching matching = new Matching();
 
-    PatternMatch pattern = constructPatternMatch(PatternType.PATTERN, "\\b(test pattern)\\b");
-    detection.setMatching(pattern);
+    matching.setPattern("\\b(rule matching pattern)\\b");
+    detection.setMatching(matching);
 
     return detection;
   }
 
-  public static PatternMatch constructPatternMatch(PatternType type, String pattern) {
-    PatternMatch patternMatch = new PatternMatch();
-    patternMatch.setType(type);
-    patternMatch.setPattern(pattern);
-    return patternMatch;
+  public static AuxiliaryPattern constructAuxiliaryPattern(AuxiliaryPatternType type, String pattern) {
+    AuxiliaryPattern auxiliaryPattern = new AuxiliaryPattern();
+    auxiliaryPattern.setType(type);
+    auxiliaryPattern.setPattern(pattern);
+    return auxiliaryPattern;
   }
 
   private static RuleExample constructRuleExample() {
@@ -130,7 +131,10 @@ public class ReferenceTestModel {
 
   private static Detection constructProviderDetection() {
     Detection detection = new Detection();
-    detection.setMatching(constructPatternMatch(PatternType.PATTERN, "provider matching pattern"));
+    Matching matching = new Matching();
+
+    matching.setPattern("\\b(provider matching pattern)\\b");
+    detection.setMatching(matching);
 
     return detection;
   }
@@ -162,30 +166,30 @@ public class ReferenceTestModel {
     detection.setPre(constructPreModule());
     detection.setPost(constructPostModule());
 
-    BooleanMatch matchEach = new BooleanMatch();
-    matchEach.setType(MatchingType.MATCH_EACH);
+    BooleanCombination matchEach = new BooleanCombination();
+    matchEach.setType(BooleanCombinationType.MATCH_EACH);
     matchEach.setMatches(List.of(
-      constructPatternMatch(PatternType.PATTERN_AFTER, "pattern-after"),
-      constructPatternMatch(PatternType.PATTERN_AROUND, "pattern-around")
+      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AFTER, "pattern-after"),
+      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AROUND, "pattern-around")
     ));
 
-    BooleanMatch matchEitherLevelTwo = new BooleanMatch();
-    matchEitherLevelTwo.setType(MatchingType.MATCH_EITHER);
+    BooleanCombination matchEitherLevelTwo = new BooleanCombination();
+    matchEitherLevelTwo.setType(BooleanCombinationType.MATCH_EITHER);
     matchEitherLevelTwo.setMatches(List.of(
-      constructPatternMatch(PatternType.PATTERN_NOT, "pattern-not"),
-      constructPatternMatch(PatternType.PATTERN_AROUND, "pattern-around")
+      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_NOT, "pattern-not"),
+      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AROUND, "pattern-around")
     ));
 
     List<Match> matches = new ArrayList<>();
-    matches.add(constructPatternMatch(PatternType.PATTERN_BEFORE, "AKIA[A-Z0-9]{16}"));
-    matches.add(constructPatternMatch(PatternType.PATTERN, "[0-9a-z\\/+]{40}"));
+    matches.add(constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_BEFORE, "pattern-before"));
     matches.add(matchEach);
     matches.add(matchEitherLevelTwo);
 
-    BooleanMatch matchEither = new BooleanMatch();
-    matchEither.setType(MatchingType.MATCH_EITHER);
+    BooleanCombination matchEither = new BooleanCombination();
+    matchEither.setType(BooleanCombinationType.MATCH_EITHER);
     matchEither.setMatches(matches);
-    detection.setMatching(matchEither);
+
+    detection.getMatching().setContext(matchEither);
   }
 
   private static PreModule constructPreModule() {
@@ -210,7 +214,7 @@ public class ReferenceTestModel {
 
     StatisticalFilter statisticalFilter = new StatisticalFilter();
     statisticalFilter.setInputString("Test String");
-    statisticalFilter.setThreshold(5);
+    statisticalFilter.setThreshold(4.2f);
 
     HeuristicsFilter heuristicsFilter = new HeuristicsFilter();
     heuristicsFilter.setHeuristics(List.of("exampleHeuristics"));
