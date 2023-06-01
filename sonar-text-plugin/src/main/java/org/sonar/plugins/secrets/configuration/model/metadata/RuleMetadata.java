@@ -62,37 +62,37 @@ public class RuleMetadata extends Metadata {
 
   @Override
   public String getMessage() {
-    if (super.getMessage() == null && rule.getProvider() != null) {
-      return rule.getProvider().getMetadata().getMessage();
+    if (super.getMessage() != null) {
+      return super.getMessage();
     }
-    return super.getMessage();
+    return rule.getProvider().getMetadata().getMessage();
   }
 
   @CheckForNull
   @Override
   public String getImpact() {
-    if (super.getImpact() == null && rule.getProvider() != null) {
-      return rule.getProvider().getMetadata().getImpact();
+    if (super.getImpact() != null) {
+      return super.getImpact();
     }
-    return super.getImpact();
+    return rule.getProvider().getMetadata().getImpact();
   }
 
   @CheckForNull
   @Override
   public List<Reference> getReferences() {
     List<Reference> ruleReferences = super.getReferences();
-    if (ruleReferences == null && rule.getProvider() != null) {
-      return rule.getProvider().getMetadata().getReferences();
+    if (ruleReferences != null) {
+      return ruleReferences;
     }
-    return ruleReferences;
+    return rule.getProvider().getMetadata().getReferences();
   }
 
   @CheckForNull
   @Override
   public String getFix() {
-    if (super.getFix() == null && rule.getProvider() != null) {
-      return rule.getProvider().getMetadata().getFix();
+    if (super.getFix() != null) {
+      return super.getFix();
     }
-    return super.getFix();
+    return rule.getProvider().getMetadata().getFix();
   }
 }
