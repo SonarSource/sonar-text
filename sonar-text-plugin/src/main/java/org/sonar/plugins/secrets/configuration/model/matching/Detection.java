@@ -22,7 +22,6 @@ package org.sonar.plugins.secrets.configuration.model.matching;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import javax.annotation.Nullable;
-import org.sonar.plugins.secrets.configuration.model.Provider;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
@@ -35,16 +34,12 @@ public class Detection {
   private PreModule pre;
   @Nullable
   private PostModule post;
-
-  // only one of them should be non null
   @JsonIgnore
-  private Rule possibleParentRule;
-  @JsonIgnore
-  private Provider possibleParentProvider;
+  private Rule rule;
 
   private boolean associatedProviderDetectionExists() {
-    if (possibleParentRule != null && possibleParentRule.getProvider() != null) {
-      return possibleParentRule.getProvider().getDetection() != null;
+    if (rule != null && rule.getProvider() != null) {
+      return rule.getProvider().getDetection() != null;
     }
     return false;
   }
@@ -52,7 +47,7 @@ public class Detection {
   @Nullable
   public Match getMatching() {
     if (matching == null && associatedProviderDetectionExists()) {
-      return possibleParentRule.getProvider().getDetection().getMatching();
+      return rule.getProvider().getDetection().getMatching();
     }
     return matching;
   }
@@ -64,7 +59,7 @@ public class Detection {
   @Nullable
   public PreModule getPre() {
     if (pre == null && associatedProviderDetectionExists()) {
-      return possibleParentRule.getProvider().getDetection().getPre();
+      return rule.getProvider().getDetection().getPre();
     }
     return pre;
   }
@@ -76,7 +71,7 @@ public class Detection {
   @Nullable
   public PostModule getPost() {
     if (post == null && associatedProviderDetectionExists()) {
-      return possibleParentRule.getProvider().getDetection().getPost();
+      return rule.getProvider().getDetection().getPost();
     }
     return post;
   }
@@ -85,19 +80,7 @@ public class Detection {
     this.post = post;
   }
 
-  public Rule getPossibleParentRule() {
-    return possibleParentRule;
-  }
-
-  public void setPossibleParentRule(Rule possibleParentRule) {
-    this.possibleParentRule = possibleParentRule;
-  }
-
-  public Provider getPossibleParentProvider() {
-    return possibleParentProvider;
-  }
-
-  public void setPossibleParentProvider(Provider possibleParentProvider) {
-    this.possibleParentProvider = possibleParentProvider;
+  public void setRule(Rule rule) {
+    this.rule = rule;
   }
 }

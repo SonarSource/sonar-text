@@ -48,7 +48,6 @@ public class Provider {
 
   public void setDetection(Detection detection) {
     this.detection = detection;
-    detection.setPossibleParentProvider(this);
   }
 
   public List<Rule> getRules() {
