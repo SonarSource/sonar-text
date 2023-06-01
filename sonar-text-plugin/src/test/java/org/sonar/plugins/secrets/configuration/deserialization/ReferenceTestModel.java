@@ -189,21 +189,6 @@ public class ReferenceTestModel {
     detection.setMatching(matchEither);
   }
 
-
-/*  public static void enrichDetection(Detection detection) {
-    detection.setPre(constructPreModule());
-    detection.setPost(constructPostModule());
-
-    BooleanCombination matchEither = new BooleanCombination();
-    matchEither.setType(BooleanCombinationType.MATCH_EITHER);
-    matchEither.setMatches(List.of(
-      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_NOT, "pattern-not"),
-      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AROUND, "pattern-around")
-    ));
-
-    ((BooleanCombination) detection.getMatching()).getMatches().add(matchEither);
-  }*/
-
   private static PreModule constructPreModule() {
     PreModule preModule = new PreModule();
 
