@@ -21,6 +21,7 @@ package org.sonar.plugins.secrets.configuration.model;
 
 import org.junit.jupiter.api.Test;
 import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel;
+import org.sonar.plugins.secrets.configuration.model.matching.Detection;
 import org.sonar.plugins.secrets.configuration.model.metadata.ProviderMetadata;
 import org.sonar.plugins.secrets.configuration.model.metadata.RuleMetadata;
 
@@ -32,7 +33,7 @@ class SpecificationTest {
   void providerMetadataShouldBeRetrievedWhenRuleMetadataFieldsAreNull() {
     Specification specification = ReferenceTestModel.constructReferenceSpecification();
     RuleMetadata ruleMetadata = specification.getProvider().getRules().get(0).getMetadata();
-    ReferenceTestModel.setSpecificRuleMetadataFieldsNull(ruleMetadata);
+    ReferenceTestModel.setSpecificMetadataFieldsNull(ruleMetadata);
 
     ProviderMetadata providerMetadata = specification.getProvider().getMetadata();
 
@@ -42,4 +43,43 @@ class SpecificationTest {
     assertThat(ruleMetadata.getReferences()).isEqualTo(providerMetadata.getReferences());
   }
 
+  @Test
+  void metadataFieldsShouldBeNullAndNotThrowException() {
+    Specification specification = ReferenceTestModel.constructReferenceSpecification();
+    RuleMetadata ruleMetadata = specification.getProvider().getRules().get(0).getMetadata();
+    ReferenceTestModel.setSpecificMetadataFieldsNull(ruleMetadata);
+    ReferenceTestModel.setSpecificMetadataFieldsNull(specification.getProvider().getMetadata());
+
+    assertThat(ruleMetadata.getFix()).isNull();
+    assertThat(ruleMetadata.getMessage()).isNull();
+    assertThat(ruleMetadata.getImpact()).isNull();
+    assertThat(ruleMetadata.getReferences()).isNull();
+  }
+
+  @Test
+  void providerDetectionShouldBeRetrievedWhenRuleDetectionFieldsAreNull() {
+    Specification specification = ReferenceTestModel.constructReferenceSpecification();
+    Detection ruleDetection = specification.getProvider().getRules().get(0).getDetection();
+    ReferenceTestModel.setDetectionFieldsNull(ruleDetection);
+
+    Detection providerDetection = ReferenceTestModel.constructDetection();
+    ReferenceTestModel.enrichDetection(providerDetection);
+    specification.getProvider().setDetection(providerDetection);
+
+    assertThat(ruleDetection.getMatching()).isEqualTo(providerDetection.getMatching());
+    assertThat(ruleDetection.getPre()).isEqualTo(providerDetection.getPre());
+    assertThat(ruleDetection.getPost()).isEqualTo(providerDetection.getPost());
+  }
+
+  @Test
+  void detectionFieldsShouldBeNullAndNotThrowException() {
+    Specification specification = ReferenceTestModel.constructReferenceSpecification();
+    Detection ruleDetection = specification.getProvider().getRules().get(0).getDetection();
+    ReferenceTestModel.setDetectionFieldsNull(ruleDetection);
+    ReferenceTestModel.setDetectionFieldsNull(specification.getProvider().getDetection());
+
+    assertThat(ruleDetection.getMatching()).isNull();
+    assertThat(ruleDetection.getPre()).isNull();
+    assertThat(ruleDetection.getPost()).isNull();
+  }
 }

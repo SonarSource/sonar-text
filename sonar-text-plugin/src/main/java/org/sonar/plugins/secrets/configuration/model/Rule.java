@@ -57,6 +57,7 @@ public class Rule {
 
   public void setDetection(Detection detection) {
     this.detection = detection;
+    detection.setPossibleParentRule(this);
   }
 
   public List<RuleExample> getExamples() {

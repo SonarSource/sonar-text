@@ -19,25 +19,15 @@
  */
 package org.sonar.plugins.secrets.configuration.model.matching;
 
-public enum PatternType {
-  PATTERN("pattern"),
-  PATTERN_BEFORE("patternBefore"),
-  PATTERN_AFTER("patternAfter"),
-  PATTERN_AROUND("patternAround"),
-  PATTERN_NOT("patternNot");
+import org.junit.jupiter.api.Test;
 
-  private final String label;
+import static org.assertj.core.api.Assertions.assertThat;
 
-  PatternType(String label) {
-    this.label = label;
-  }
+class BooleanCombinationTypeTest {
 
-  public static PatternType valueOfLabel(String label) {
-    for (PatternType type : values()) {
-      if (type.label.equals(label)) {
-        return type;
-      }
-    }
-    return null;
+  @Test
+  void testIsNullWhenTryingToConstructWithUnknownEnumValue() {
+    BooleanCombinationType unknown = BooleanCombinationType.valueOfLabel("unknown");
+    assertThat(unknown).isNull();
   }
 }

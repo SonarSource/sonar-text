@@ -22,18 +22,17 @@ package org.sonar.plugins.secrets.api;
 import org.junit.jupiter.api.Test;
 import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel;
 import org.sonar.plugins.secrets.configuration.model.Rule;
-import org.sonar.plugins.secrets.configuration.model.matching.PatternMatch;
-import org.sonar.plugins.secrets.configuration.model.matching.PatternType;
+import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
+import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPatternType;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
 
 class SecretsMatcherFactoryTest {
 
   @Test
   void detectionWithBooleanMatchProducesNoDetectionMatcher() {
     Rule rule = ReferenceTestModel.constructRule();
-    ReferenceTestModel.enrichRuleDetection(rule.getDetection());
+    ReferenceTestModel.enrichDetection(rule.getDetection());
 
     SecretsMatcher secretsMatcher = SecretsMatcherFactory.constructSecretsMatcher(rule);
 
@@ -42,7 +41,7 @@ class SecretsMatcherFactoryTest {
 
   @Test
   void detectionWithAuxiliaryPatternMatchProducesNoDetectionMatcher() {
-    PatternMatch auxiliaryPattern = ReferenceTestModel.constructPatternMatch(PatternType.PATTERN_AFTER, "pattern");
+    AuxiliaryPattern auxiliaryPattern = ReferenceTestModel.constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AFTER, "pattern");
 
     SecretsMatcher secretsMatcher = SecretsMatcherFactory.constructSecretsMatcher(auxiliaryPattern);
 

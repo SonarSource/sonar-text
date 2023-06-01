@@ -46,8 +46,9 @@ public class Provider {
     return detection;
   }
 
-  public void setDetection(@Nullable Detection detection) {
+  public void setDetection(Detection detection) {
     this.detection = detection;
+    detection.setPossibleParentProvider(this);
   }
 
   public List<Rule> getRules() {
