@@ -70,8 +70,8 @@ class SecretsRulesDefinitionTest {
 
   @Test
   void each_check_should_be_declared_in_the_check_list() throws IOException {
-    Path checksPackage = Path.of("src","main","java","org","sonar","plugins","secrets","checks");
-    try (Stream<Path> list = Files.list(checksPackage)) {
+    Path checksPackage = Path.of("src", "main", "java", "org", "sonar", "plugins", "secrets", "checks");
+    try (Stream<Path> list = Files.walk(checksPackage)) {
       int expectedCount = (int) list.filter(file -> file.toString().endsWith("Check.java")).count();
       assertThat(SecretsRulesDefinition.checks()).hasSize(expectedCount);
     }

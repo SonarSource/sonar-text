@@ -22,7 +22,7 @@ package org.sonar.plugins.secrets.configuration.model.metadata;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
-import javax.annotation.Nullable;
+import javax.annotation.CheckForNull;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 
 public class RuleMetadata extends Metadata {
@@ -57,7 +57,6 @@ public class RuleMetadata extends Metadata {
     this.rule = rule;
   }
 
-  @Nullable
   @Override
   public String getMessage() {
     if (super.getMessage() != null) {
@@ -66,7 +65,7 @@ public class RuleMetadata extends Metadata {
     return rule.getProvider().getMetadata().getMessage();
   }
 
-  @Nullable
+  @CheckForNull
   @Override
   public String getImpact() {
     if (super.getImpact() != null) {
@@ -75,7 +74,7 @@ public class RuleMetadata extends Metadata {
     return rule.getProvider().getMetadata().getImpact();
   }
 
-  @Nullable
+  @CheckForNull
   @Override
   public List<Reference> getReferences() {
     List<Reference> ruleReferences = super.getReferences();
@@ -85,7 +84,7 @@ public class RuleMetadata extends Metadata {
     return rule.getProvider().getMetadata().getReferences();
   }
 
-  @Nullable
+  @CheckForNull
   @Override
   public String getFix() {
     if (super.getFix() != null) {

@@ -17,31 +17,16 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package org.sonar.plugins.secrets.configuration.model.matching;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import java.util.List;
-import org.sonar.plugins.secrets.configuration.deserialization.BooleanMatchDeserializer;
+import org.junit.jupiter.api.Test;
 
-@JsonDeserialize(using = BooleanMatchDeserializer.class)
-public class BooleanMatch implements Match {
-  private MatchingType type;
-  private List<Match> matches;
+import static org.assertj.core.api.Assertions.assertThat;
 
-  public MatchingType getType() {
-    return type;
-  }
-
-  public void setType(MatchingType type) {
-    this.type = type;
-  }
-
-  public List<Match> getMatches() {
-    return matches;
-  }
-
-  public void setMatches(List<Match> matches) {
-    this.matches = matches;
+class AuxiliaryPatternTypeTest {
+  @Test
+  void testIsNullWhenTryingToConstructWithUnknownEnumValue() {
+    AuxiliaryPatternType unknown = AuxiliaryPatternType.valueOfLabel("unknown");
+    assertThat(unknown).isNull();
   }
 }
