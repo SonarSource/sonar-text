@@ -18,47 +18,30 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-package org.sonar.plugins.secrets.configuration.model;
+package org.sonar.plugins.secrets.configuration.model.matching;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.util.List;
-import javax.annotation.Nullable;
-import org.sonar.plugins.secrets.configuration.model.matching.Detection;
-import org.sonar.plugins.secrets.configuration.model.metadata.ProviderMetadata;
+import org.sonar.plugins.secrets.configuration.deserialization.BooleanCombinationDeserializer;
 
-public class Provider {
+@JsonDeserialize(using = BooleanCombinationDeserializer.class)
+public class BooleanCombination implements Match {
+  private BooleanCombinationType type;
+  private List<Match> matches;
 
-  private ProviderMetadata metadata;
-  @Nullable
-  private Detection detection;
-  private List<Rule> rules;
-
-  public ProviderMetadata getMetadata() {
-    return metadata;
+  public BooleanCombinationType getType() {
+    return type;
   }
 
-  public void setMetadata(ProviderMetadata metadata) {
-    this.metadata = metadata;
-    metadata.setProvider(this);
+  public void setType(BooleanCombinationType type) {
+    this.type = type;
   }
 
-  @Nullable
-  public Detection getDetection() {
-    return detection;
+  public List<Match> getMatches() {
+    return matches;
   }
 
-  public void setDetection(Detection detection) {
-    this.detection = detection;
+  public void setMatches(List<Match> matches) {
+    this.matches = matches;
   }
-
-  public List<Rule> getRules() {
-    return rules;
-  }
-
-  public void setRules(List<Rule> rules) {
-    this.rules = rules;
-    for (Rule rule : rules) {
-      rule.setProvider(this);
-    }
-  }
-
 }

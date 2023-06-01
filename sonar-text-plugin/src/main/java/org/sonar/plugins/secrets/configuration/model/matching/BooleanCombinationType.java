@@ -17,31 +17,24 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package org.sonar.plugins.secrets.configuration.model.matching;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import org.sonar.plugins.secrets.configuration.deserialization.PatternMatchDeserializer;
+public enum BooleanCombinationType {
+  MATCH_EITHER("matchEither"),
+  MATCH_EACH("matchEach");
 
-@JsonDeserialize(using = PatternMatchDeserializer.class)
-public class PatternMatch implements Match {
+  private final String label;
 
-  private PatternType type;
-  private String pattern;
-
-  public PatternType getType() {
-    return type;
+  BooleanCombinationType(String label) {
+    this.label = label;
   }
 
-  public void setType(PatternType type) {
-    this.type = type;
-  }
-
-  public String getPattern() {
-    return pattern;
-  }
-
-  public void setPattern(String pattern) {
-    this.pattern = pattern;
+  public static BooleanCombinationType valueOfLabel(String label) {
+    for (BooleanCombinationType type : values()) {
+      if (type.label.equals(label)) {
+        return type;
+      }
+    }
+    return null;
   }
 }
