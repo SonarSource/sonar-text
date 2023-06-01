@@ -78,6 +78,7 @@ public class TextRulingTest {
     build.setEnvironmentVariable("SONAR_RUNNER_OPTS", "-Xmx1000m");
     ORCHESTRATOR.executeBuild(build);
 
-    assertThat(new String(Files.readAllBytes(LITS_DIFFERENCES_FILE.toPath()))).isEmpty();
+    String litsDifference = new String(Files.readAllBytes(LITS_DIFFERENCES_FILE.toPath()));
+    assertThat(litsDifference).isEmpty();
   }
 }

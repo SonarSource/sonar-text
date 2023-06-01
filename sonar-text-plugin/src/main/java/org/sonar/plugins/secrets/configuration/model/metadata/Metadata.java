@@ -42,7 +42,6 @@ public abstract class Metadata {
     this.name = name;
   }
 
-  @Nullable
   public String getMessage() {
     return message;
   }

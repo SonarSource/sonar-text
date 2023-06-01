@@ -20,15 +20,14 @@
 package org.sonar.plugins.secrets.configuration.validation;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.Set;
 
 public class SchemaValidator {
@@ -50,17 +49,11 @@ public class SchemaValidator {
     return schemaFactory.getSchema(validationSchema);
   }
 
-  public static void validate(URL configurationLocation) {
-    try {
-      Set<ValidationMessage> validate = VALIDATION_SCHEMA.validate(MAPPER.readTree(configurationLocation));
-      if (!validate.isEmpty()) {
-        String filePath = configurationLocation.getPath();
-        String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
-        String errorMessage = String.format("Specification file \"%s\" failed the schema validation", fileName);
-        throw new SchemaValidationException(errorMessage);
-      }
-    } catch (IOException e) {
-      throw new SchemaValidationException(e);
+  public static void validate(JsonNode specification, String fileName) {
+    Set<ValidationMessage> validate = VALIDATION_SCHEMA.validate(specification);
+    if (!validate.isEmpty()) {
+      String errorMessage = String.format("Specification file \"%s\" failed the schema validation", fileName);
+      throw new SchemaValidationException(errorMessage);
     }
   }
 }

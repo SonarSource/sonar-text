@@ -22,7 +22,7 @@ provider:
     matching:
       pattern: "provider matching pattern"
   rules:
-    - id: aws-access-key
+    - id: exampleKey
       metadata:
         name: rule name
         defaultProfile: false
