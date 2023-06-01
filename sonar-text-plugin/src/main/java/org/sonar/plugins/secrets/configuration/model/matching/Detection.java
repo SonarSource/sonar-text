@@ -20,27 +20,45 @@
 
 package org.sonar.plugins.secrets.configuration.model.matching;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
+import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
 public class Detection {
+
+  @Nullable
   private Match matching;
   @Nullable
   private PreModule pre;
   @Nullable
   private PostModule post;
+  @JsonIgnore
+  private Rule rule;
 
+  private boolean associatedProviderDetectionExists() {
+    return rule != null && rule.getProvider().getDetection() != null;
+  }
+
+  @CheckForNull
   public Match getMatching() {
+    if (matching == null && associatedProviderDetectionExists()) {
+      return rule.getProvider().getDetection().getMatching();
+    }
     return matching;
   }
 
-  public void setMatching(Match matching) {
+  public void setMatching(@Nullable Match matching) {
     this.matching = matching;
   }
 
-  @Nullable
+  @CheckForNull
   public PreModule getPre() {
+    if (pre == null && associatedProviderDetectionExists()) {
+      return rule.getProvider().getDetection().getPre();
+    }
     return pre;
   }
 
@@ -48,12 +66,19 @@ public class Detection {
     this.pre = pre;
   }
 
-  @Nullable
+  @CheckForNull
   public PostModule getPost() {
+    if (post == null && associatedProviderDetectionExists()) {
+      return rule.getProvider().getDetection().getPost();
+    }
     return post;
   }
 
   public void setPost(@Nullable PostModule post) {
     this.post = post;
+  }
+
+  public void setRule(Rule rule) {
+    this.rule = rule;
   }
 }

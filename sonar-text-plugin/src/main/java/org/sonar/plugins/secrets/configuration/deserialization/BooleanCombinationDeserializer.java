@@ -30,13 +30,13 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.sonar.plugins.secrets.configuration.model.matching.BooleanMatch;
+import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombination;
 import org.sonar.plugins.secrets.configuration.model.matching.Match;
-import org.sonar.plugins.secrets.configuration.model.matching.MatchingType;
+import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombinationType;
 
-public class BooleanMatchDeserializer extends JsonDeserializer<BooleanMatch> {
+public class BooleanCombinationDeserializer extends JsonDeserializer<BooleanCombination> {
 
-  public BooleanMatch deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
+  public BooleanCombination deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
     TreeNode treeNode = jsonParser.getCodec().readTree(jsonParser);
 
     Iterator<Map.Entry<String, JsonNode>> fields = ((ObjectNode) treeNode).fields();
@@ -52,9 +52,9 @@ public class BooleanMatchDeserializer extends JsonDeserializer<BooleanMatch> {
       modules.add(match);
     }
 
-    BooleanMatch booleanMatch = new BooleanMatch();
-    booleanMatch.setType(MatchingType.valueOfLabel(node.getKey()));
-    booleanMatch.setMatches(modules);
-    return booleanMatch;
+    BooleanCombination booleanCombination = new BooleanCombination();
+    booleanCombination.setType(BooleanCombinationType.valueOfLabel(node.getKey()));
+    booleanCombination.setMatches(modules);
+    return booleanCombination;
   }
 }

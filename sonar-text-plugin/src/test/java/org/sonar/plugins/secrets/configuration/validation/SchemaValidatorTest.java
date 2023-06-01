@@ -19,8 +19,11 @@
  */
 package org.sonar.plugins.secrets.configuration.validation;
 
-import java.net.URL;
-import org.junit.jupiter.api.Test;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import java.io.IOException;
+import java.io.InputStream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -29,30 +32,29 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 
 class SchemaValidatorTest {
 
+  private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
+
   @ParameterizedTest
   @ValueSource(strings = {"validMinSpec.yaml", "validReferenceSpec.yaml"})
-  void testSpecificationFilesAreValid(String specificationFileName) {
-    URL specificationUrl = Thread.currentThread().getContextClassLoader().getResource("secretsConfiguration/" + specificationFileName);
+  void testSpecificationFilesAreValid(String specificationFileName) throws IOException {
+    InputStream specificationStream =
+      Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + specificationFileName);
+    JsonNode specification = MAPPER.readTree(specificationStream);
 
-    assertThatNoException().isThrownBy(() -> SchemaValidator.validate(specificationUrl));
+    assertThatNoException().isThrownBy(() -> SchemaValidator.validate(specification, specificationFileName));
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"invalidEmptySpec.yaml", "invalidSpecMissingRequiredField.yaml", "invalidSpecWithUnexpectedField.yaml",
+  @ValueSource(strings = {"invalidEmptySpec.yaml", "invalidSpecMissingRequiredField.yaml",
+    "invalidSpecWithUnexpectedFieldFailsDuringValidation.yaml",
     "invalidSpecWithWrongType.yaml"})
-  void testSpecificationFilesAreInValid(String specificationFileName) {
-    URL specificationUrl = Thread.currentThread().getContextClassLoader().getResource("secretsConfiguration/" + specificationFileName);
+  void testSpecificationFilesAreInValid(String specificationFileName) throws IOException {
+    InputStream specificationStream =
+      Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + specificationFileName);
+    JsonNode specification = MAPPER.readTree(specificationStream);
 
     assertThatExceptionOfType(SchemaValidationException.class)
-      .isThrownBy(() -> SchemaValidator.validate(specificationUrl))
+      .isThrownBy(() -> SchemaValidator.validate(specification, specificationFileName))
       .withMessage(String.format("Specification file \"%s\" failed the schema validation", specificationFileName));
-  }
-
-  @Test
-  void testSpecificationFilesAreInValid() {
-    URL specificationUrl = Thread.currentThread().getContextClassLoader().getResource("doesNotExist.yaml");
-
-    assertThatExceptionOfType(IllegalArgumentException.class)
-      .isThrownBy(() -> SchemaValidator.validate(specificationUrl));
   }
 }

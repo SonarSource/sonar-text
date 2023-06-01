@@ -19,11 +19,13 @@
  */
 package org.sonar.plugins.secrets.configuration.deserialization;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 import org.sonar.plugins.secrets.configuration.model.Specification;
+import org.sonar.plugins.secrets.configuration.validation.SchemaValidator;
 
 public class SpecificationDeserializer {
 
@@ -32,13 +34,16 @@ public class SpecificationDeserializer {
   private SpecificationDeserializer() {
   }
 
-  public static Specification deserialize(URL specificationLocation) {
+  public static Specification deserialize(InputStream specificationStream, String fileName) {
     try {
-      return MAPPER.readValue(specificationLocation, Specification.class);
+      JsonNode specification = MAPPER.readTree(specificationStream);
+      SchemaValidator.validate(specification, fileName);
+      return MAPPER.treeToValue(specification, Specification.class);
     } catch (IOException e) {
-      String filePath = specificationLocation.getPath();
-      String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
       throw new DeserializationException(String.format("Deserialization of specification failed for file: %s", fileName), e);
+    } catch (IllegalArgumentException e) {
+      throw new DeserializationException(
+        String.format("Deserialization of specification failed for file because it was not found: %s", fileName), e);
     }
   }
 }

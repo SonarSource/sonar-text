@@ -25,9 +25,9 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import java.io.IOException;
 import java.util.Iterator;
-import org.sonar.plugins.secrets.configuration.model.matching.BooleanMatch;
+import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombination;
 import org.sonar.plugins.secrets.configuration.model.matching.Match;
-import org.sonar.plugins.secrets.configuration.model.matching.PatternMatch;
+import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
 
 public class MatchDeserializer extends JsonDeserializer<Match> {
 
@@ -43,9 +43,9 @@ public class MatchDeserializer extends JsonDeserializer<Match> {
     String name = nodeIterator.next();
 
     if (name.startsWith("pattern")) {
-      return matchNodeParser.readValueAs(PatternMatch.class);
+      return matchNodeParser.readValueAs(AuxiliaryPattern.class);
     } else {
-      return matchNodeParser.readValueAs(BooleanMatch.class);
+      return matchNodeParser.readValueAs(BooleanCombination.class);
     }
   }
 }
