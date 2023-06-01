@@ -46,7 +46,7 @@ class SecretsMatcherFactoryTest {
 
   @Test
   void produceNoDetectionMatcherWhenMatchingIsNull() {
-    Rule rule = ReferenceTestModel.constructRule();
+    Rule rule = ReferenceTestModel.constructMinimumSpecification().getProvider().getRules().get(0);
     rule.getDetection().setMatching(null);
 
     SecretsMatcher secretsMatcher = SecretsMatcherFactory.constructSecretsMatcher(rule);
