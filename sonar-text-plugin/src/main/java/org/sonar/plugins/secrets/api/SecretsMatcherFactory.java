@@ -21,6 +21,7 @@ package org.sonar.plugins.secrets.api;
 
 import java.util.Collections;
 import org.sonar.plugins.secrets.configuration.model.Rule;
+import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 
 public class SecretsMatcherFactory {
 
@@ -30,11 +31,12 @@ public class SecretsMatcherFactory {
   }
 
   public static SecretsMatcher constructSecretsMatcher(Rule rule) {
-    if (rule.getDetection().getMatching() != null) {
-      return new RegexMatcher(rule.getDetection().getMatching().getPattern());
+    Matching matching = rule.getDetection().getMatching();
+    if (matching != null) {
+      return new RegexMatcher(matching.getPattern());
     } else {
       return NO_DETECTION_MATCHER;
     }
   }
-
 }
+
