@@ -22,7 +22,7 @@ package org.sonar.plugins.secrets.configuration.model.metadata;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
-import javax.annotation.Nullable;
+import javax.annotation.CheckForNull;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 
 public class RuleMetadata extends Metadata {
@@ -59,37 +59,37 @@ public class RuleMetadata extends Metadata {
 
   @Override
   public String getMessage() {
-    if (super.getMessage() == null && rule.getProvider() != null) {
-      return rule.getProvider().getMetadata().getMessage();
+    if (super.getMessage() != null) {
+      return super.getMessage();
     }
-    return super.getMessage();
+    return rule.getProvider().getMetadata().getMessage();
   }
 
-  @Nullable
+  @CheckForNull
   @Override
   public String getImpact() {
-    if (super.getImpact() == null && rule.getProvider() != null) {
-      return rule.getProvider().getMetadata().getImpact();
+    if (super.getImpact() != null) {
+      return super.getImpact();
     }
-    return super.getImpact();
+    return rule.getProvider().getMetadata().getImpact();
   }
 
-  @Nullable
+  @CheckForNull
   @Override
   public List<Reference> getReferences() {
     List<Reference> ruleReferences = super.getReferences();
-    if (ruleReferences == null && rule.getProvider() != null) {
-      return rule.getProvider().getMetadata().getReferences();
+    if (ruleReferences != null) {
+      return ruleReferences;
     }
-    return ruleReferences;
+    return rule.getProvider().getMetadata().getReferences();
   }
 
-  @Nullable
+  @CheckForNull
   @Override
   public String getFix() {
-    if (super.getFix() == null && rule.getProvider() != null) {
-      return rule.getProvider().getMetadata().getFix();
+    if (super.getFix() != null) {
+      return super.getFix();
     }
-    return super.getFix();
+    return rule.getProvider().getMetadata().getFix();
   }
 }

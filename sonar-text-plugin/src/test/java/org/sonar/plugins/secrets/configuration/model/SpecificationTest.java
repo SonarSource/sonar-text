@@ -57,17 +57,6 @@ class SpecificationTest {
   }
 
   @Test
-  void metadataFieldsShouldBeNullAndNotThrowExceptionWhenProviderIsNull() {
-    RuleMetadata ruleMetadata = ReferenceTestModel.constructRule().getMetadata();
-    ReferenceTestModel.setSpecificMetadataFieldsNull(ruleMetadata);
-
-    assertThat(ruleMetadata.getFix()).isNull();
-    assertThat(ruleMetadata.getMessage()).isNull();
-    assertThat(ruleMetadata.getImpact()).isNull();
-    assertThat(ruleMetadata.getReferences()).isNull();
-  }
-
-  @Test
   void providerDetectionShouldBeRetrievedWhenRuleDetectionFieldsAreNull() {
     Specification specification = ReferenceTestModel.constructReferenceSpecification();
     Detection ruleDetection = specification.getProvider().getRules().get(0).getDetection();
@@ -88,16 +77,6 @@ class SpecificationTest {
     Detection ruleDetection = specification.getProvider().getRules().get(0).getDetection();
     ReferenceTestModel.setDetectionFieldsNull(ruleDetection);
     ReferenceTestModel.setDetectionFieldsNull(specification.getProvider().getDetection());
-
-    assertThat(ruleDetection.getMatching()).isNull();
-    assertThat(ruleDetection.getPre()).isNull();
-    assertThat(ruleDetection.getPost()).isNull();
-  }
-
-  @Test
-  void detectionFieldsShouldBeNullAndNotThrowExceptionWhenProviderIsNull() {
-    Detection ruleDetection = ReferenceTestModel.constructRule().getDetection();
-    ReferenceTestModel.setDetectionFieldsNull(ruleDetection);
 
     assertThat(ruleDetection.getMatching()).isNull();
     assertThat(ruleDetection.getPre()).isNull();

@@ -21,6 +21,7 @@
 package org.sonar.plugins.secrets.configuration.model.matching;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
@@ -38,13 +39,10 @@ public class Detection {
   private Rule rule;
 
   private boolean associatedProviderDetectionExists() {
-    if (rule != null && rule.getProvider() != null) {
-      return rule.getProvider().getDetection() != null;
-    }
-    return false;
+    return rule != null && rule.getProvider().getDetection() != null;
   }
 
-  @Nullable
+  @CheckForNull
   public Match getMatching() {
     if (matching == null && associatedProviderDetectionExists()) {
       return rule.getProvider().getDetection().getMatching();
@@ -56,7 +54,7 @@ public class Detection {
     this.matching = matching;
   }
 
-  @Nullable
+  @CheckForNull
   public PreModule getPre() {
     if (pre == null && associatedProviderDetectionExists()) {
       return rule.getProvider().getDetection().getPre();
@@ -68,7 +66,7 @@ public class Detection {
     this.pre = pre;
   }
 
-  @Nullable
+  @CheckForNull
   public PostModule getPost() {
     if (post == null && associatedProviderDetectionExists()) {
       return rule.getProvider().getDetection().getPost();
