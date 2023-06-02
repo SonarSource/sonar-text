@@ -40,19 +40,31 @@ class EntropyCheckerTest {
   }
 
   @Test
-  void entropyCheckPositive() {
+  void entropyCheckPositiveDefaultThreshold() {
     assertThat(EntropyChecker.hasLowEntropy("06c6d5715a1ede6c51fc39ff67fd647f740b656d")).isTrue();
   }
 
   @Test
-  void entropyCheckNegative() {
+  void entropyCheckNegativeLowThreshold() {
+    assertThat(EntropyChecker.hasLowEntropy("06c6d5715a1ede6c51fc39ff67fd647f740b656d", 3f)).isFalse();
+  }
+
+  @Test
+  void entropyCheckNegativeDefaultThreshold() {
     assertThat(EntropyChecker.hasLowEntropy("qAhEMdXy/MPwEuDlhh7O0AFBuzGvNy7AxpL3sX3q")).isFalse();
   }
 
   @Test
+  void entropyCheckPositiveHighThreshold() {
+    assertThat(EntropyChecker.hasLowEntropy("qAhEMdXy/MPwEuDlhh7O0AFBuzGvNy7AxpL3sX3q", 10f)).isTrue();
+  }
+
+  @Test
   void thresholdSplitsFalsePositiveGoodEnough() throws IOException {
-    double falsePositivesAboveThreshold = processFile("src/test/resources/EntropyChecker/false-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
-    double truePositivesAboveThreshold = processFile("src/test/resources/EntropyChecker/true-positives.txt", EntropyChecker.ENTROPY_THRESHOLD);
+    double falsePositivesAboveThreshold = processFile("src/test/resources/EntropyChecker/false-positives.txt",
+      EntropyChecker.DEFAULT_ENTROPY_THRESHOLD);
+    double truePositivesAboveThreshold = processFile("src/test/resources/EntropyChecker/true-positives.txt",
+      EntropyChecker.DEFAULT_ENTROPY_THRESHOLD);
 
     // this assertions can be changed if we will get more data that, for example, will show more false positives
     // the goal of the test to fail if threshold value will be changed, since current value is the sweet spot on data we have so far

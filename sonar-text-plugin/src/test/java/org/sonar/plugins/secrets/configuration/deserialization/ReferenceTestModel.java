@@ -200,7 +200,7 @@ public class ReferenceTestModel {
     return preModule;
   }
 
-  private static PostModule constructPostModule() {
+  public static PostModule constructPostModule() {
     PostModule postModule = new PostModule();
 
     StatisticalFilter statisticalFilter = new StatisticalFilter();

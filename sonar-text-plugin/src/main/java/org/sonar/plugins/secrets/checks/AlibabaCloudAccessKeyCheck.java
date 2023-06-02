@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.secrets.checks;
 
+import java.util.function.Predicate;
 import org.sonar.check.Rule;
 import org.sonar.plugins.secrets.api.EntropyChecker;
 import org.sonar.plugins.secrets.api.RegexMatcher;
@@ -36,7 +37,7 @@ public class AlibabaCloudAccessKeyCheck extends SecretCheck {
       // Alibaba Cloud Access Key Secret
       new SecretRule(
         "Make sure this Alibaba Cloud Access Key Secret is not disclosed.",
-        EntropyChecker::hasLowEntropy,
+        ((Predicate<String>) EntropyChecker::hasLowEntropy),
         new RegexMatcher("(?i)(?<![A-Z])ali(?:yun|baba|cloud).{0,50}['\"`]([0-9a-z]{30})['\"`]"),
         new RegexMatcher("(?i)(?:SECRET_?(?:ACCESS)?_?KEY|(?:ACCESS)?_?KEY_?SECRET)\\b[^0-9a-z]{0,10}([0-9a-z]{30})(?![a-z0-9\\/+=$\\-_])")));
   }
