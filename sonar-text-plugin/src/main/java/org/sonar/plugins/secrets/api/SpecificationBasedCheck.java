@@ -21,6 +21,7 @@ package org.sonar.plugins.secrets.api;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
@@ -35,6 +36,8 @@ public abstract class SpecificationBasedCheck extends Check {
   private Rule rule;
   private SecretsMatcher matcher;
 
+  private Predicate<String> postFilter;
+
   @Override
   protected String repositoryKey() {
     return SecretsRulesDefinition.REPOSITORY_KEY;
@@ -48,6 +51,7 @@ public abstract class SpecificationBasedCheck extends Check {
     this.rule = loader.getRuleForKey(ruleKey.rule());
     if (this.rule != null) {
       this.matcher = SecretsMatcherFactory.constructSecretsMatcher(rule);
+      this.postFilter = PostFilterFactory.createPredicate(rule.getDetection().getPost());
     } else {
       LOG.error(String.format("Found no rule specification for rule with key: %s", ruleKey.rule()));
     }
@@ -57,6 +61,7 @@ public abstract class SpecificationBasedCheck extends Check {
   public void analyze(InputFileContext ctx) {
     List<TextRange> foundSecrets = new ArrayList<>();
     matcher.findIn(ctx.content()).stream()
+      .filter(match -> postFilter.test(match.getText()))
       .map(match -> ctx.newTextRangeFromFileOffsets(match.getFileStartOffset(), match.getFileEndOffset()))
       .forEach(textRange -> {
         boolean notOverlapsExisting = foundSecrets.stream().noneMatch(foundSecret -> foundSecret.overlap(textRange));

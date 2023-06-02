@@ -34,7 +34,7 @@ public class AwsCheck extends SecretCheck {
       // Aws Access Key
       new SecretRule(
         "Make sure this AWS Secret Access Key is not disclosed.",
-        EntropyChecker::hasLowEntropy,
+        EntropyChecker::hasLowEntropyWithDefaultThreshold,
         new RegexMatcher("(?i)aws.{0,50}['\"`]([0-9a-z\\/+]{40})['\"`]"),
         new RegexMatcher("(?i)\\b(?:AWS)?_?SECRET_?(?:ACCESS)?_?KEY\\b.{0,10}\\b([0-9a-z\\/+]{40})\\b")),
       // Aws Access Key ID

@@ -30,7 +30,7 @@ public class IbmApiKeyCheck extends SecretCheck {
   public IbmApiKeyCheck() {
     super(new SecretRule(
       "Make sure this IBM API key is not disclosed.",
-      EntropyChecker::hasLowEntropy,
+      EntropyChecker::hasLowEntropyWithDefaultThreshold,
       new RegexMatcher("(?is)(?:ibm|apikey).{0,50}['\"`]([a-z0-9_\\-]{44})['\"`]")));
   }
 }

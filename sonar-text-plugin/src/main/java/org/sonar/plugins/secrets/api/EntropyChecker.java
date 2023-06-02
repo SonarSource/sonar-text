@@ -24,14 +24,18 @@ import java.util.Map;
 
 public final class EntropyChecker {
 
-  public static final double ENTROPY_THRESHOLD = 4.2;
+  public static final double DEFAULT_ENTROPY_THRESHOLD = 4.2;
 
   private EntropyChecker() {
     // utility class
   }
 
-  public static boolean hasLowEntropy(String str) {
-    return calculateShannonEntropy(str) < ENTROPY_THRESHOLD;
+  public static boolean hasLowEntropyWithDefaultThreshold(String str) {
+    return hasLowEntropy(str, DEFAULT_ENTROPY_THRESHOLD);
+  }
+
+  public static boolean hasLowEntropy(String str, double threshold) {
+    return calculateShannonEntropy(str) < threshold;
   }
 
   public static double calculateShannonEntropy(String str) {

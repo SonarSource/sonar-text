@@ -31,7 +31,7 @@ class SpecificationBasedCheckTest {
 
 
   @Test
-  void testShouldAnalyzeTest() throws IOException {
+  void checkShouldRaiseIssueOnBasicDetection() throws IOException {
     String specificationLocation = "secretsConfiguration/";
     Set<String> specifications = Set.of("validMinSpec.yaml");
     SpecificationLoader specificationLoader = new SpecificationLoader(specificationLocation, specifications);
@@ -43,6 +43,50 @@ class SpecificationBasedCheckTest {
     assertThat(analyze(exampleCheck, fileContent)).containsExactly(
       "secrets:exampleKey [1:25-1:46] provider message"
     );
+  }
+
+  @Test
+  void checkShouldNotRaiseIssueWithPostFilterBecauseOfLowEntropy() throws IOException {
+    String specificationLocation = "secretsConfiguration/";
+    Set<String> specifications = Set.of("validReferenceSpec.yaml");
+    SpecificationLoader specificationLoader = new SpecificationLoader(specificationLocation, specifications);
+
+    String fileContent = "rule matching pattern with low entropy";
+    ExampleCheck exampleCheck = new ExampleCheck();
+    exampleCheck.initialize(specificationLoader);
+
+    assertThat(analyze(exampleCheck, fileContent)).isEmpty();
+  }
+
+  @Test
+  void checkShouldRaiseIssueWhenFilterHasLowEntropyThreshold() throws IOException {
+    String specificationLocation = "secretsConfiguration/";
+    Set<String> specifications = Set.of("validReferenceSpec.yaml");
+    SpecificationLoader specificationLoader = new SpecificationLoader(specificationLocation, specifications);
+    specificationLoader.getRuleForKey("exampleKey").getDetection().getPost().getStatisticalFilter().setThreshold(3f);
+
+    String fileContent = "rule matching pattern and post filter has low entropy";
+    ExampleCheck exampleCheck = new ExampleCheck();
+    exampleCheck.initialize(specificationLoader);
+
+    assertThat(analyze(exampleCheck, fileContent)).containsExactly(
+      "secrets:exampleKey [1:0-1:21] rule message"
+    );
+  }
+
+  @Test
+  void checkShouldNotRaiseIssueWithPostFilterBecauseOfPatternNot() throws IOException {
+    String specificationLocation = "secretsConfiguration/";
+    Set<String> specifications = Set.of("validReferenceSpec.yaml");
+    SpecificationLoader specificationLoader = new SpecificationLoader(specificationLocation, specifications);
+    specificationLoader.getRuleForKey("exampleKey").getDetection().getPost().setPatternNot("matching");
+    specificationLoader.getRuleForKey("exampleKey").getDetection().getPost().getStatisticalFilter().setThreshold(3f);
+
+    String fileContent = "rule matching pattern and patternNot matching inside and post filter has low entropy";
+    ExampleCheck exampleCheck = new ExampleCheck();
+    exampleCheck.initialize(specificationLoader);
+
+    assertThat(analyze(exampleCheck, fileContent)).isEmpty();
   }
 
   @Rule(key = "exampleKey")
