@@ -20,16 +20,8 @@
 package org.sonar.plugins.secrets.checks;
 
 import org.sonar.check.Rule;
-import org.sonar.plugins.secrets.api.RegexMatcher;
-import org.sonar.plugins.secrets.api.SecretCheck;
-import org.sonar.plugins.secrets.api.SecretRule;
+import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 
 @Rule(key = "S6335")
-public class GoogleCloudAccountKeyCheck extends SecretCheck {
-  public GoogleCloudAccountKeyCheck() {
-    super(new SecretRule(
-      "Make sure this Google Cloud service account key is not disclosed.",
-      new RegexMatcher("\"private_key\"\\s*:\\s*\"(-----BEGIN PRIVATE KEY-----\\\\n[a-z-A-Z0-9+/=]{64}\\\\n" +
-        "[a-z-A-Z0-9+/=\\\\]+-----END PRIVATE KEY-----(:?\\\\n)?)\"")));
-  }
+public class GoogleCloudAccountKeyCheck extends SpecificationBasedCheck {
 }

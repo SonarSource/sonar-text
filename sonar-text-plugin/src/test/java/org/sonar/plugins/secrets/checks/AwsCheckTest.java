@@ -20,17 +20,27 @@
 package org.sonar.plugins.secrets.checks;
 
 import java.io.IOException;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.sonar.plugins.common.Check;
+import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
+import org.sonar.plugins.secrets.api.SpecificationLoader;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.analyze;
 
 class AwsCheckTest {
 
-  Check check = new AwsCheck();
+  static Check check;
+
+  @BeforeAll
+  public static void init() {
+    check = new AwsCheck();
+    SpecificationLoader specificationLoader = new SpecificationLoader();
+    ((SpecificationBasedCheck) check).initialize(specificationLoader);
+  }
 
   @Test
   void key_id_positive() throws IOException {
@@ -39,7 +49,7 @@ class AwsCheckTest {
       "  public static final String KEY = \"AKIAIGKECZXA7AEIJLMQ\"\n" +
       "}";
     assertThat(analyze(check, fileContent)).containsExactly(
-      "secrets:S6290 [2:36-2:56] Make sure this AWS Access Key ID is not disclosed.");
+      "secrets:S6290 [2:36-2:56] Make sure this AWS Access Key ID gets revoked, changed, and removed from the code.");
   }
 
   @Test
@@ -49,7 +59,7 @@ class AwsCheckTest {
       "  public static final String KEY = \"AKIAIGKECZXA7EXAMPLF\"\n" +
       "}";
     assertThat(analyze(check, fileContent)).containsExactly(
-      "secrets:S6290 [2:36-2:56] Make sure this AWS Access Key ID is not disclosed.");
+      "secrets:S6290 [2:36-2:56] Make sure this AWS Access Key ID gets revoked, changed, and removed from the code.");
   }
 
   @Test
@@ -59,14 +69,14 @@ class AwsCheckTest {
       "     secretAccessKey: 'kHeUAwnSUizTWpSbyGAz4f+As5LshPIjvtpswqGb' " +
       "});";
     assertThat(analyze(check, fileContent)).containsExactly(
-      "secrets:S6290 [1:57-1:97] Make sure this AWS Secret Access Key is not disclosed.");
+      "secrets:S6290 [1:57-1:97] Make sure this AWS Secret Access Key gets revoked, changed, and removed from the code.");
   }
 
   @Test
   void access_key_positive2() throws IOException {
     String fileContent = "aws_secret_access_key=kHeUAwnSUizTWpSbyGAz4f+As5LshPIjvtpswqGb";
     assertThat(analyze(check, fileContent)).containsExactly(
-      "secrets:S6290 [1:22-1:62] Make sure this AWS Secret Access Key is not disclosed.");
+      "secrets:S6290 [1:22-1:62] Make sure this AWS Secret Access Key gets revoked, changed, and removed from the code.");
   }
 
   @Test
@@ -84,7 +94,7 @@ class AwsCheckTest {
       "GpK0AlCEKrAjzpr6SzPSwLnFtAJpztHbgb9Z7D2jdsjugQYdFwi6/9GKOI/slKqt5/vb7dLnSyeAY+jTaoveUZf6D5yM8PCKrvw5/k+" +
       "A1XJw==";
     assertThat(analyze(check, fileContent)).containsExactly(
-      "secrets:S6290 [1:17-1:1086] Make sure this AWS Session Token is not disclosed.");
+      "secrets:S6290 [1:17-1:1086] Make sure this AWS Session token gets revoked, changed, and removed from the code.");
   }
 
   @ParameterizedTest

@@ -29,7 +29,6 @@ import static org.sonar.plugins.common.TestUtils.analyze;
 
 class SpecificationBasedCheckTest {
 
-
   @Test
   void checkShouldRaiseIssueOnBasicDetection() throws IOException {
     String specificationLocation = "secretsConfiguration/";
@@ -63,7 +62,7 @@ class SpecificationBasedCheckTest {
     String specificationLocation = "secretsConfiguration/";
     Set<String> specifications = Set.of("validReferenceSpec.yaml");
     SpecificationLoader specificationLoader = new SpecificationLoader(specificationLocation, specifications);
-    specificationLoader.getRuleForKey("exampleKey").getDetection().getPost().getStatisticalFilter().setThreshold(3f);
+    specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().getStatisticalFilter().setThreshold(3f);
 
     String fileContent = "rule matching pattern and post filter has low entropy";
     ExampleCheck exampleCheck = new ExampleCheck();
@@ -79,8 +78,8 @@ class SpecificationBasedCheckTest {
     String specificationLocation = "secretsConfiguration/";
     Set<String> specifications = Set.of("validReferenceSpec.yaml");
     SpecificationLoader specificationLoader = new SpecificationLoader(specificationLocation, specifications);
-    specificationLoader.getRuleForKey("exampleKey").getDetection().getPost().setPatternNot("matching");
-    specificationLoader.getRuleForKey("exampleKey").getDetection().getPost().getStatisticalFilter().setThreshold(3f);
+    specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().setPatternNot("matching");
+    specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().getStatisticalFilter().setThreshold(3f);
 
     String fileContent = "rule matching pattern and patternNot matching inside and post filter has low entropy";
     ExampleCheck exampleCheck = new ExampleCheck();

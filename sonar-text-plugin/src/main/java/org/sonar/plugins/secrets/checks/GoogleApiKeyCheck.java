@@ -20,15 +20,8 @@
 package org.sonar.plugins.secrets.checks;
 
 import org.sonar.check.Rule;
-import org.sonar.plugins.secrets.api.RegexMatcher;
-import org.sonar.plugins.secrets.api.SecretCheck;
-import org.sonar.plugins.secrets.api.SecretRule;
+import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 
 @Rule(key = "S6334")
-public class GoogleApiKeyCheck extends SecretCheck {
-  public GoogleApiKeyCheck() {
-    super(new SecretRule(
-      "Make sure this Google API Key is not disclosed.",
-      new RegexMatcher("\\b(AIza[0-9A-Za-z\\-_]{35})\\b")));
-  }
+public class GoogleApiKeyCheck extends SpecificationBasedCheck {
 }

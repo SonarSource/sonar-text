@@ -20,20 +20,36 @@
 package org.sonar.plugins.secrets.api;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
+import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 
-public class RegexMatcher implements SecretsMatcher {
+public class PatternMatcher {
   private final Pattern pattern;
 
-  public RegexMatcher(String stringPattern) {
-    this.pattern = Pattern.compile(stringPattern);
+  PatternMatcher(@Nullable String stringPattern) {
+    if (stringPattern != null) {
+      this.pattern = Pattern.compile(stringPattern);
+    } else {
+      this.pattern = null;
+    }
   }
 
-  @Override
+  public static PatternMatcher build(@Nullable Matching matching) {
+    if (matching != null) {
+      return new PatternMatcher(matching.getPattern());
+    }
+    return new PatternMatcher(null);
+  }
+
   public List<Match> findIn(String content) {
+    if (pattern == null) {
+      return Collections.emptyList();
+    }
     List<Match> matches = new ArrayList<>();
     Matcher matcher = pattern.matcher(content);
     while (matcher.find()) {

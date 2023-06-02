@@ -20,22 +20,33 @@
 package org.sonar.plugins.secrets.checks;
 
 import java.io.IOException;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.sonar.plugins.common.Check;
+import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
+import org.sonar.plugins.secrets.api.SpecificationLoader;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.analyze;
 
 class GoogleApiKeyCheckTest {
-  Check check = new GoogleApiKeyCheck();
+
+  static Check check;
+
+  @BeforeAll
+  public static void init() {
+    check = new GoogleApiKeyCheck();
+    SpecificationLoader specificationLoader = new SpecificationLoader();
+    ((SpecificationBasedCheck) check).initialize(specificationLoader);
+  }
 
   @Test
   void positive() throws IOException {
     String fileContent = "android:value=\"AIzaSyCis4NzxMw1aJyvUIrjGILjPkSdxrRfof4\"";
     assertThat(analyze(check, fileContent)).containsExactly(
-      "secrets:S6334 [1:15-1:54] Make sure this Google API Key is not disclosed.");
+      "secrets:S6334 [1:15-1:54] Make sure this Google API Key gets revoked, changed, and removed from the code.");
   }
 
   @ParameterizedTest
