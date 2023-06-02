@@ -41,7 +41,7 @@ class EntropyCheckerTest {
 
   @Test
   void entropyCheckPositiveDefaultThreshold() {
-    assertThat(EntropyChecker.hasLowEntropyWithDefaultThreshold("06c6d5715a1ede6c51fc39ff67fd647f740b656d")).isTrue();
+    assertThat(EntropyChecker.hasLowEntropy("06c6d5715a1ede6c51fc39ff67fd647f740b656d")).isTrue();
   }
 
   @Test
@@ -51,7 +51,7 @@ class EntropyCheckerTest {
 
   @Test
   void entropyCheckNegativeDefaultThreshold() {
-    assertThat(EntropyChecker.hasLowEntropyWithDefaultThreshold("qAhEMdXy/MPwEuDlhh7O0AFBuzGvNy7AxpL3sX3q")).isFalse();
+    assertThat(EntropyChecker.hasLowEntropy("qAhEMdXy/MPwEuDlhh7O0AFBuzGvNy7AxpL3sX3q")).isFalse();
   }
 
   @Test

@@ -30,7 +30,7 @@ public final class EntropyChecker {
     // utility class
   }
 
-  public static boolean hasLowEntropyWithDefaultThreshold(String str) {
+  public static boolean hasLowEntropy(String str) {
     return hasLowEntropy(str, DEFAULT_ENTROPY_THRESHOLD);
   }
 

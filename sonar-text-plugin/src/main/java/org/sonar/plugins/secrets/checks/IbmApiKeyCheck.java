@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.secrets.checks;
 
+import java.util.function.Predicate;
 import org.sonar.check.Rule;
 import org.sonar.plugins.secrets.api.EntropyChecker;
 import org.sonar.plugins.secrets.api.RegexMatcher;
@@ -30,7 +31,7 @@ public class IbmApiKeyCheck extends SecretCheck {
   public IbmApiKeyCheck() {
     super(new SecretRule(
       "Make sure this IBM API key is not disclosed.",
-      EntropyChecker::hasLowEntropyWithDefaultThreshold,
+      ((Predicate<String>) EntropyChecker::hasLowEntropy),
       new RegexMatcher("(?is)(?:ibm|apikey).{0,50}['\"`]([a-z0-9_\\-]{44})['\"`]")));
   }
 }
