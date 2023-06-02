@@ -54,8 +54,8 @@
   </scm>
 
   <issueManagement>
-    <system>GitHub</system>
-    <url>https://github.com/SonarSource/sonar-text/issues</url>
+    <system>JIRA</system>
+    <url>https://sonarsource.atlassian.net/browse/SONARTEXT</url>
   </issueManagement>
 
   <ciManagement>
