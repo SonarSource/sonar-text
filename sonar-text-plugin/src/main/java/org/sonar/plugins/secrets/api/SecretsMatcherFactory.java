@@ -32,11 +32,7 @@ public class SecretsMatcherFactory {
 
   public static SecretsMatcher constructSecretsMatcher(Rule rule) {
     Matching matching = rule.getDetection().getMatching();
-    if (matching != null) {
-      return new RegexMatcher(matching.getPattern());
-    } else {
-      return NO_DETECTION_MATCHER;
-    }
+    return matching != null ? new RegexMatcher(matching.getPattern()) : NO_DETECTION_MATCHER;
   }
 }
 
