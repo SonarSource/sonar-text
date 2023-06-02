@@ -26,6 +26,8 @@ import org.junit.jupiter.api.Test;
 import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 
+import static org.sonar.plugins.secrets.api.SecretMatcherAssert.assertThat;
+
 class SecretMatcherTest {
 
   @Test
@@ -37,7 +39,7 @@ class SecretMatcherTest {
 
     SecretMatcher actualMatcher = SecretMatcher.build(rule);
 
-    SecretMatcherAssert.assertThat(actualMatcher).behavesLike(expectedMatcher);
+    assertThat(actualMatcher).behavesLike(expectedMatcher);
   }
 
   @Test
@@ -57,7 +59,7 @@ class SecretMatcherTest {
 
     SecretMatcher actualMatcher = SecretMatcher.build(rule);
 
-    SecretMatcherAssert.assertThat(actualMatcher).behavesLike(expectedMatcher);
+    assertThat(actualMatcher).behavesLike(expectedMatcher);
   }
 
   @Test
@@ -69,6 +71,6 @@ class SecretMatcherTest {
 
     SecretMatcher actualMatcher = SecretMatcher.build(rule);
 
-    SecretMatcherAssert.assertThat(actualMatcher).behavesLike(expectedMatcher);
+    assertThat(actualMatcher).behavesLike(expectedMatcher);
   }
 }

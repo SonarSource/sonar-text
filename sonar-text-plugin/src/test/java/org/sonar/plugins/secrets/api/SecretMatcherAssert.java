@@ -27,7 +27,7 @@ import org.assertj.core.api.AbstractAssert;
 
 public class SecretMatcherAssert extends AbstractAssert<SecretMatcherAssert, SecretMatcher> {
 
-  static Set<String> strings = Set.of(
+  static Set<String> testStringsForPostFilter = Set.of(
     "candidate secret with low entropy",
     "candidate secret with low entropy and patternNot:EXAMPLEKEY",
     "candidate secret with high entropy: lasdij2338f,.q29cm2acasd has patternNot:EXAMPLEKEY",
@@ -54,7 +54,7 @@ public class SecretMatcherAssert extends AbstractAssert<SecretMatcherAssert, Sec
   }
 
   public SecretMatcherAssert postFilterBehavesLike(SecretMatcher expectedMatcher) {
-    for (String string : strings) {
+    for (String string : testStringsForPostFilter) {
       if (actual.getPostFilter().test(string) != expectedMatcher.getPostFilter().test(string)) {
         failWithMessage("Expected post filter to behave identical, but found different behavior on \"%s\"", string);
       }
