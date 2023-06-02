@@ -20,7 +20,6 @@
 package org.sonar.plugins.secrets.configuration.model.matching;
 
 public enum AuxiliaryPatternType {
-  PATTERN("pattern"),
   PATTERN_BEFORE("patternBefore"),
   PATTERN_AFTER("patternAfter"),
   PATTERN_AROUND("patternAround"),
