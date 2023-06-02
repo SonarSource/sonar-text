@@ -31,6 +31,7 @@ import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombination
 import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombinationType;
 import org.sonar.plugins.secrets.configuration.model.matching.Detection;
 import org.sonar.plugins.secrets.configuration.model.matching.Match;
+import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.HeuristicsFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.IncludedFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
@@ -64,8 +65,8 @@ public class ReferenceTestModel {
 
   private static ProviderMetadata constructProviderMetadata() {
     ProviderMetadata providerMetadata = new ProviderMetadata();
-    providerMetadata.setCategory("Cloud provider");
     providerMetadata.setMessage("provider message");
+    providerMetadata.setCategory("Cloud provider");
     providerMetadata.setName("provider name");
     return providerMetadata;
   }
@@ -74,7 +75,7 @@ public class ReferenceTestModel {
     Rule rule = new Rule();
     rule.setId("exampleKey");
     rule.setMetadata(constructRuleMetadata());
-    rule.setDetection(constructDetection());
+    rule.setDetection(constructBasicDetection("\\b(rule matching pattern)\\b"));
     rule.setExamples(List.of(constructRuleExample()));
     return rule;
   }
@@ -82,15 +83,15 @@ public class ReferenceTestModel {
   private static RuleMetadata constructRuleMetadata() {
     RuleMetadata ruleMetadata = new RuleMetadata();
     ruleMetadata.setName("rule name");
-    ruleMetadata.setCharset("[0-9a-z\\/+]");
     return ruleMetadata;
   }
 
-  public static Detection constructDetection() {
+  public static Detection constructBasicDetection(String pattern) {
     Detection detection = new Detection();
+    Matching matching = new Matching();
 
-    AuxiliaryPattern pattern = constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN, "\\b(test pattern)\\b");
-    detection.setMatching(pattern);
+    matching.setPattern(pattern);
+    detection.setMatching(matching);
 
     return detection;
   }
@@ -118,7 +119,7 @@ public class ReferenceTestModel {
 
     enrichMetadata(specification.getProvider().getMetadata());
     enrichRule(specification.getProvider().getRules().get(0));
-    specification.getProvider().setDetection(constructProviderDetection());
+    specification.getProvider().setDetection(constructBasicDetection("\\b(provider matching pattern)\\b"));
 
     return specification;
   }
@@ -127,13 +128,6 @@ public class ReferenceTestModel {
     enrichRuleMetadata(rule.getMetadata());
     enrichRuleExample(rule.getExamples().get(0));
     enrichDetection(rule.getDetection());
-  }
-
-  private static Detection constructProviderDetection() {
-    Detection detection = new Detection();
-    detection.setMatching(constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN, "provider matching pattern"));
-
-    return detection;
   }
 
   private static void enrichMetadata(ProviderMetadata providerMetadata) {
@@ -178,15 +172,15 @@ public class ReferenceTestModel {
     ));
 
     List<Match> matches = new ArrayList<>();
-    matches.add(constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_BEFORE, "AKIA[A-Z0-9]{16}"));
-    matches.add(constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN, "[0-9a-z\\/+]{40}"));
+    matches.add(constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_BEFORE, "pattern-before"));
     matches.add(matchEach);
     matches.add(matchEitherLevelTwo);
 
     BooleanCombination matchEither = new BooleanCombination();
     matchEither.setType(BooleanCombinationType.MATCH_EITHER);
     matchEither.setMatches(matches);
-    detection.setMatching(matchEither);
+
+    detection.getMatching().setContext(matchEither);
   }
 
   private static PreModule constructPreModule() {
@@ -211,7 +205,7 @@ public class ReferenceTestModel {
 
     StatisticalFilter statisticalFilter = new StatisticalFilter();
     statisticalFilter.setInputString("Test String");
-    statisticalFilter.setThreshold(5);
+    statisticalFilter.setThreshold(4.2f);
 
     HeuristicsFilter heuristicsFilter = new HeuristicsFilter();
     heuristicsFilter.setHeuristics(List.of("exampleHeuristics"));

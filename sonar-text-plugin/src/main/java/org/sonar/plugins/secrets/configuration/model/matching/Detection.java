@@ -30,7 +30,7 @@ import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 public class Detection {
 
   @Nullable
-  private Match matching;
+  private Matching matching;
   @Nullable
   private PreModule pre;
   @Nullable
@@ -43,14 +43,14 @@ public class Detection {
   }
 
   @CheckForNull
-  public Match getMatching() {
+  public Matching getMatching() {
     if (matching == null && associatedProviderDetectionExists()) {
       return rule.getProvider().getDetection().getMatching();
     }
     return matching;
   }
 
-  public void setMatching(@Nullable Match matching) {
+  public void setMatching(@Nullable Matching matching) {
     this.matching = matching;
   }
 
@@ -77,6 +77,7 @@ public class Detection {
   public void setPost(@Nullable PostModule post) {
     this.post = post;
   }
+
 
   public void setRule(Rule rule) {
     this.rule = rule;

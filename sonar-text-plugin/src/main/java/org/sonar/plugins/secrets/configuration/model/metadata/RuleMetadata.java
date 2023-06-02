@@ -23,21 +23,24 @@ package org.sonar.plugins.secrets.configuration.model.metadata;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 
 public class RuleMetadata extends Metadata {
 
+  @Nullable
   private String charset;
   private boolean defaultProfile = true;
 
   @JsonIgnore
   private Rule rule;
 
+  @Nullable
   public String getCharset() {
     return charset;
   }
 
-  public void setCharset(String charset) {
+  public void setCharset(@Nullable String charset) {
     this.charset = charset;
   }
 

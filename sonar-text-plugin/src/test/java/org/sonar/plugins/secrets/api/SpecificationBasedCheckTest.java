@@ -36,12 +36,12 @@ class SpecificationBasedCheckTest {
     Set<String> specifications = Set.of("validMinSpec.yaml");
     SpecificationLoader specificationLoader = new SpecificationLoader(specificationLocation, specifications);
 
-    String fileContent = "The content contains the test pattern and various other characters.";
+    String fileContent = "The content contains the rule matching pattern and various other characters.";
     ExampleCheck exampleCheck = new ExampleCheck();
     exampleCheck.initialize(specificationLoader);
 
     assertThat(analyze(exampleCheck, fileContent)).containsExactly(
-      "secrets:exampleKey [1:25-1:37] provider message"
+      "secrets:exampleKey [1:25-1:46] provider message"
     );
   }
 

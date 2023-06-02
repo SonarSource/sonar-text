@@ -2,7 +2,6 @@ provider:
   metadata:
     name: provider name
     category: Cloud provider
-    message: provider message
   rules:
     - id: exampleKey
       metadata:

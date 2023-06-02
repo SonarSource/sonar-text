@@ -62,7 +62,7 @@ class SpecificationTest {
     Detection ruleDetection = specification.getProvider().getRules().get(0).getDetection();
     ReferenceTestModel.setDetectionFieldsNull(ruleDetection);
 
-    Detection providerDetection = ReferenceTestModel.constructDetection();
+    Detection providerDetection = ReferenceTestModel.constructBasicDetection("\\b(provider matching pattern)\\b");
     ReferenceTestModel.enrichDetection(providerDetection);
     specification.getProvider().setDetection(providerDetection);
 
