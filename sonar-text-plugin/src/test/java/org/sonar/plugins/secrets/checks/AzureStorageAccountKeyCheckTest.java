@@ -29,6 +29,7 @@ import org.sonar.plugins.secrets.api.SpecificationLoader;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.analyze;
 
+@java.lang.SuppressWarnings("squid:S6338")
 class AzureStorageAccountKeyCheckTest {
 
   static Check check;
