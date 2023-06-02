@@ -51,6 +51,41 @@ class PostFilterFactoryTest {
     assertThat(postFilter.test(input)).isFalse();
   }
 
+  @Test
+  void postFilterShouldReturnFalseOnLowEntropyWhenPatternNotIsNull() {
+    PostModule postModule = ReferenceTestModel.constructPostModule();
+    postModule.setPatternNot(null);
+    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule);
+
+    assertThat(postFilter.test("string with low entropy")).isFalse();
+  }
+
+  @Test
+  void postFilterShouldReturnTrueOnHighEntropyWhenPatternNotIsNull() {
+    PostModule postModule = ReferenceTestModel.constructPostModule();
+    postModule.setPatternNot(null);
+    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule);
+
+    assertThat(postFilter.test("rule matching EXAMPLEKEY pattern with high entropy: lasdij2338f,.q29cm2acasd")).isTrue();
+  }
+
+  @Test
+  void postFilterShouldReturnFalseOnLowEntropyWhenStatisticalFilterIsNull() {
+    PostModule postModule = ReferenceTestModel.constructPostModule();
+    postModule.setStatisticalFilter(null);
+    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule);
+
+    assertThat(postFilter.test("rule matching EXAMPLEKEY pattern")).isFalse();
+  }
+
+  @Test
+  void postFilterShouldReturnTrueOnHighEntropyWhenStatisticalFilterIsNull() {
+    PostModule postModule = ReferenceTestModel.constructPostModule();
+    postModule.setStatisticalFilter(null);
+    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule);
+
+    assertThat(postFilter.test("string with high entropy: lasdij2338f,.q29cm2acasd")).isTrue();
+  }
 
   @Test
   void statisticalFilterShouldReturnFalseOnLowEntropy() {
@@ -82,6 +117,7 @@ class PostFilterFactoryTest {
     assertThat(predicate.test("candidate secret with patternNot")).isFalse();
   }
 
+
   @ParameterizedTest
   @ValueSource(strings = {
     "candidate secret with low entropy",
@@ -89,8 +125,23 @@ class PostFilterFactoryTest {
     "candidate secret with high entropy: lasdij2338f,.q29cm2acasd has patternNot:EXAMPLEKEY",
     "candidate secret with high entropy: lasdij2338f,.q29cm2acasd"
   })
-  void postFilterIsAlwaysTrueRegardlessOfInput(String input) {
+  void postFilterIsAlwaysTrueRegardlessOfInputWhenInputIsNull(String input) {
     Predicate<String> postFilter = PostFilterFactory.createPredicate(null);
+    assertThat(postFilter.test(input)).isTrue();
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+    "candidate secret with low entropy",
+    "candidate secret with low entropy and patternNot:EXAMPLEKEY",
+    "candidate secret with high entropy: lasdij2338f,.q29cm2acasd has patternNot:EXAMPLEKEY",
+    "candidate secret with high entropy: lasdij2338f,.q29cm2acasd"
+  })
+  void postFilterIsAlwaysTrueRegardlessOfInputWhenStatFilterAndPatternNotIsNull(String input) {
+    PostModule postModule = ReferenceTestModel.constructPostModule();
+    postModule.setStatisticalFilter(null);
+    postModule.setPatternNot(null);
+    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule);
     assertThat(postFilter.test(input)).isTrue();
   }
 }
