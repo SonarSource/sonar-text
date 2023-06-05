@@ -17,23 +17,5 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets.api;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Predicate;
-
-public class ConditionalMatcher implements SecretsMatcher {
-  private final Predicate<String> predicate;
-  private final SecretsMatcher ifTrue;
-
-  public ConditionalMatcher(Predicate<String> predicate, SecretsMatcher ifTrue) {
-    this.predicate = predicate;
-    this.ifTrue = ifTrue;
-  }
-
-  @Override
-  public List<Match> findIn(String content) {
-    return predicate.test(content) ? ifTrue.findIn(content) : Collections.emptyList();
-  }
-}
+@javax.annotation.ParametersAreNonnullByDefault
+package org.sonar.plugins.secrets.configuration.deserialization;

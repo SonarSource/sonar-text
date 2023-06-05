@@ -20,18 +20,8 @@
 package org.sonar.plugins.secrets.checks;
 
 import org.sonar.check.Rule;
-import org.sonar.plugins.secrets.api.ConditionalMatcher;
-import org.sonar.plugins.secrets.api.RegexMatcher;
-import org.sonar.plugins.secrets.api.SecretCheck;
-import org.sonar.plugins.secrets.api.SecretRule;
+import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 
 @Rule(key = "S6338")
-public class AzureStorageAccountKeyCheck extends SecretCheck {
-  public AzureStorageAccountKeyCheck() {
-    super(new SecretRule(
-      "Make sure this Azure Storage Account Key is not disclosed.",
-      new ConditionalMatcher(content -> content.contains("core.windows.net"),
-        new RegexMatcher("['\"`]([a-zA-Z0-9/\\+]{86}==)['\"`]")),
-      new RegexMatcher("AccountKey=([a-zA-Z0-9/\\+]{86}==)")));
-  }
+public class AzureStorageAccountKeyCheck extends SpecificationBasedCheck {
 }

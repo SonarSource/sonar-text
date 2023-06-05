@@ -20,22 +20,34 @@
 package org.sonar.plugins.secrets.checks;
 
 import java.io.IOException;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.sonar.plugins.common.Check;
+import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
+import org.sonar.plugins.secrets.api.SpecificationLoader;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.analyze;
 
+@java.lang.SuppressWarnings("squid:S6338")
 class AzureStorageAccountKeyCheckTest {
 
-  Check check = new AzureStorageAccountKeyCheck();
+  static Check check;
+
+  @BeforeAll
+  public static void init() {
+    check = new AzureStorageAccountKeyCheck();
+    SpecificationLoader specificationLoader = new SpecificationLoader();
+    ((SpecificationBasedCheck) check).initialize(specificationLoader);
+  }
 
   @Test
   void account_key_positive1() throws IOException {
     String fileContent = "" +
       "async function main() {\n" +
       "  const account = process.env.ACCOUNT_NAME || \"accountname\";\n" +
-      "  const accountKey = process.env.ACCOUNT_KEY || \"4dVw+l0W8My+FwuZ08dWXn+gHxcmBtS7esLAQSrm6/Om3jeyUKKGMkfAh38kWZlItThQYsg31v23A0w/uVP4pg==\";\n" +
+      "  const accountKey = process.env.ACCOUNT_KEY || \"4dVw+l0W8My+FwuZ08dWXn+gHxcmBtS7esLAQSrm6/Om3jeyUKKGMkfAh38kWZlItThQYsg31v23A0w" +
+      "/uVP4pg==\";\n" +
       "  const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);\n" +
       "  const blobServiceClient = new BlobServiceClient(\n" +
       "    `https://${account}.blob.core.windows.net`,\n" +
@@ -43,21 +55,24 @@ class AzureStorageAccountKeyCheckTest {
       "  );\n" +
       "}";
     assertThat(analyze(check, fileContent)).containsExactly(
-      "secrets:S6338 [3:49-3:137] Make sure this Azure Storage Account Key is not disclosed.");
+      "secrets:S6338 [3:49-3:137] Make sure this Azure Storage Account Key gets revoked, changed, and removed from the code.");
   }
 
   @Test
   void account_key_positive2() throws IOException {
-    String fileContent = "const connStr = \"DefaultEndpointsProtocol=https;AccountName=testaccountname;AccountKey=4dVw+l0W8My+FwuZ08dWXn+gHxcmBtS7esLAQSrm6/Om3jeyUKKGMkfAh38kWZlItThQYsg31v23A0w/uVP4pg==\";";
+    String fileContent = "const connStr = \"DefaultEndpointsProtocol=https;AccountName=testaccountname;" +
+      "AccountKey=4dVw+l0W8My+FwuZ08dWXn+gHxcmBtS7esLAQSrm6/Om3jeyUKKGMkfAh38kWZlItThQYsg31v23A0w/uVP4pg==\";";
     assertThat(analyze(check, fileContent)).containsExactly(
-      "secrets:S6338 [1:87-1:175] Make sure this Azure Storage Account Key is not disclosed.");
+      "secrets:S6338 [1:87-1:175] Make sure this Azure Storage Account Key gets revoked, changed, and removed from the code.");
   }
 
   @Test
   void account_key_positive_even_when_core_windows_net_is_present() throws IOException {
-    String fileContent = "const connStr = \"DefaultEndpointsProtocol=https;AccountName=testaccountname;AccountKey=4dVw+l0W8My+FwuZ08dWXn+gHxcmBtS7esLAQSrm6/Om3jeyUKKGMkfAh38kWZlItThQYsg31v23A0w/uVP4pg==;EndpointSuffix=core.windows.net\";";
+    String fileContent = "const connStr = \"DefaultEndpointsProtocol=https;AccountName=testaccountname;" +
+      "AccountKey=4dVw+l0W8My+FwuZ08dWXn+gHxcmBtS7esLAQSrm6/Om3jeyUKKGMkfAh38kWZlItThQYsg31v23A0w/uVP4pg==;EndpointSuffix=core.windows" +
+      ".net\";";
     assertThat(analyze(check, fileContent)).containsExactly(
-      "secrets:S6338 [1:87-1:175] Make sure this Azure Storage Account Key is not disclosed.");
+      "secrets:S6338 [1:87-1:175] Make sure this Azure Storage Account Key gets revoked, changed, and removed from the code.");
   }
 
   @Test

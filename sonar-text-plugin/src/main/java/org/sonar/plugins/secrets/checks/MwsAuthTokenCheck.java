@@ -20,15 +20,8 @@
 package org.sonar.plugins.secrets.checks;
 
 import org.sonar.check.Rule;
-import org.sonar.plugins.secrets.api.RegexMatcher;
-import org.sonar.plugins.secrets.api.SecretCheck;
-import org.sonar.plugins.secrets.api.SecretRule;
+import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 
 @Rule(key = "S6292")
-public class MwsAuthTokenCheck extends SecretCheck {
-  public MwsAuthTokenCheck() {
-    super(new SecretRule(
-      "Make sure this Amazon MWS Auth Token is not disclosed.",
-      new RegexMatcher("\\b(amzn\\.mws\\.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\\b")));
-  }
+public class MwsAuthTokenCheck extends SpecificationBasedCheck {
 }

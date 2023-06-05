@@ -19,30 +19,17 @@
  */
 package org.sonar.plugins.secrets.api;
 
-import java.util.Arrays;
 import java.util.List;
-import org.sonar.plugins.common.Check;
-import org.sonar.plugins.common.InputFileContext;
-import org.sonar.plugins.secrets.SecretsRulesDefinition;
+import org.junit.jupiter.api.Test;
 
-public abstract class SecretCheck extends Check {
+import static org.assertj.core.api.Assertions.assertThat;
 
-  private final List<SecretRule> rules;
+class PatternMatcherTest {
 
-  protected SecretCheck(SecretRule... rules) {
-    this.rules = Arrays.asList(rules);
+  @Test
+  void testWithNoSuppliedPattern() {
+    PatternMatcher noDetectionMatcher = PatternMatcher.build(null);
+    List<Match> matches = noDetectionMatcher.findIn("test");
+    assertThat(matches).isEmpty();
   }
-
-  @Override
-  protected String repositoryKey() {
-    return SecretsRulesDefinition.REPOSITORY_KEY;
-  }
-
-  @Override
-  public void analyze(InputFileContext ctx) {
-    for (SecretRule rule : rules) {
-      rule.analyze(this, ctx);
-    }
-  }
-
 }

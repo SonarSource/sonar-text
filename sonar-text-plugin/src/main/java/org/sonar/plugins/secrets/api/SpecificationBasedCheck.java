@@ -21,7 +21,7 @@ package org.sonar.plugins.secrets.api;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
@@ -33,10 +33,7 @@ import org.sonar.plugins.secrets.configuration.model.Rule;
 public abstract class SpecificationBasedCheck extends Check {
 
   private static final Logger LOG = Loggers.get(SpecificationBasedCheck.class);
-  private Rule rule;
-  private SecretsMatcher matcher;
-
-  private Predicate<String> postFilter;
+  private List<SecretMatcher> matcher;
 
   @Override
   protected String repositoryKey() {
@@ -48,28 +45,30 @@ public abstract class SpecificationBasedCheck extends Check {
   }
 
   public void initialize(SpecificationLoader loader) {
-    this.rule = loader.getRuleForKey(ruleKey.rule());
-    if (this.rule != null) {
-      this.matcher = SecretsMatcherFactory.constructSecretsMatcher(rule);
-      this.postFilter = PostFilterFactory.createPredicate(rule.getDetection().getPost());
-    } else {
+    List<Rule> rulesForKey = loader.getRulesForKey(ruleKey.rule());
+    if (rulesForKey.isEmpty()) {
       LOG.error(String.format("Found no rule specification for rule with key: %s", ruleKey.rule()));
     }
+    this.matcher = rulesForKey.stream()
+      .map(SecretMatcher::build)
+      .collect(Collectors.toList());
   }
 
   @Override
   public void analyze(InputFileContext ctx) {
     List<TextRange> foundSecrets = new ArrayList<>();
-    matcher.findIn(ctx.content()).stream()
-      .filter(match -> postFilter.test(match.getText()))
-      .map(match -> ctx.newTextRangeFromFileOffsets(match.getFileStartOffset(), match.getFileEndOffset()))
-      .forEach(textRange -> {
-        boolean notOverlapsExisting = foundSecrets.stream().noneMatch(foundSecret -> foundSecret.overlap(textRange));
-        if (notOverlapsExisting) {
-          foundSecrets.add(textRange);
-          ctx.reportIssue(ruleKey, textRange, rule.getMetadata().getMessage());
-        }
-      });
+
+    for (SecretMatcher secretMatcher : matcher) {
+      secretMatcher.findIn(ctx.content()).stream()
+        .map(match -> ctx.newTextRangeFromFileOffsets(match.getFileStartOffset(), match.getFileEndOffset()))
+        .forEach(textRange -> {
+          boolean notOverlapsExisting = foundSecrets.stream().noneMatch(foundSecret -> foundSecret.overlap(textRange));
+          if (notOverlapsExisting) {
+            foundSecrets.add(textRange);
+            ctx.reportIssue(ruleKey, textRange, secretMatcher.getMessageFromRule());
+          }
+        });
+    }
   }
 
 }

@@ -20,8 +20,9 @@
 package org.sonar.plugins.secrets.api;
 
 import java.io.InputStream;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.sonar.api.utils.log.Logger;
@@ -34,18 +35,28 @@ import org.sonar.plugins.secrets.configuration.validation.SchemaValidationExcept
 
 public class SpecificationLoader {
   private static final Logger LOG = Loggers.get(SpecificationLoader.class);
-  private final Map<String, Rule> rulesMappedToKey;
+
+  private static final Set<String> DEFAULT_SPECIFICATIONS = Set.of(
+    "alibaba.yaml",
+    "aws.yaml",
+    "azure.yaml",
+    "gcp.yaml",
+    "google-api.yaml",
+    "ibm.yaml",
+    "mws.yaml"
+  );
+  private final Map<String, List<Rule>> rulesMappedToKey;
 
   public SpecificationLoader() {
-    this("org/sonar/plugins/secrets/configuration/", Collections.emptySet());
+    this("org/sonar/plugins/secrets/configuration/", DEFAULT_SPECIFICATIONS);
   }
 
   public SpecificationLoader(String specificationLocation, Set<String> specifications) {
     rulesMappedToKey = initialize(specificationLocation, specifications);
   }
 
-  private static Map<String, Rule> initialize(String specificationLocation, Set<String> specifications) {
-    Map<String, Rule> keyToRule = new HashMap<>();
+  private static Map<String, List<Rule>> initialize(String specificationLocation, Set<String> specifications) {
+    Map<String, List<Rule>> keyToRule = new HashMap<>();
 
     for (String specificationFileName : specifications) {
       Specification specification;
@@ -57,11 +68,7 @@ public class SpecificationLoader {
       }
 
       for (Rule rule : specification.getProvider().getRules()) {
-        if (keyToRule.put(rule.getId(), rule) != null) {
-          String errorMessage = String.format(
-            "RuleKey %s was used multiple times, when it should be unique across all specification files.", rule.getId());
-          throw new SchemaValidationException(errorMessage);
-        }
+        keyToRule.computeIfAbsent(rule.getId(), k -> new ArrayList<>()).add(rule);
       }
     }
     return keyToRule;
@@ -73,8 +80,8 @@ public class SpecificationLoader {
     return SpecificationDeserializer.deserialize(specificationStream, fileName);
   }
 
-  public Rule getRuleForKey(String key) {
-    return rulesMappedToKey.get(key);
+  public List<Rule> getRulesForKey(String key) {
+    return rulesMappedToKey.getOrDefault(key, new ArrayList<>());
   }
 
 }
