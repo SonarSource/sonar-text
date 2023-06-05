@@ -27,6 +27,7 @@ import org.assertj.core.api.AbstractAssert;
 
 public class SecretMatcherAssert extends AbstractAssert<SecretMatcherAssert, SecretMatcher> {
 
+  // these strings are chosen, so that the post filter predicate has different return values based on the configuration of the filter
   static Set<String> testStringsForPostFilter = Set.of(
     "candidate secret with low entropy",
     "candidate secret with low entropy and patternNot:EXAMPLEKEY",
