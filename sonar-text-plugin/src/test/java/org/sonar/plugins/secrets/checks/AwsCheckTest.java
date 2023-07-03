@@ -95,7 +95,7 @@ class AwsCheckTest {
       "GpK0AlCEKrAjzpr6SzPSwLnFtAJpztHbgb9Z7D2jdsjugQYdFwi6/9GKOI/slKqt5/vb7dLnSyeAY+jTaoveUZf6D5yM8PCKrvw5/k+" +
       "A1XJw==";
     assertThat(analyze(check, fileContent)).containsExactly(
-      "secrets:S6290 [1:17-1:1086] Make sure this AWS Session token gets revoked, changed, and removed from the code.");
+      "secrets:S6290 [1:18-1:1086] Make sure this AWS Session token gets revoked, changed, and removed from the code.");
   }
 
   @ParameterizedTest
