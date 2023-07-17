@@ -71,7 +71,7 @@ public class SpecificationLoader {
       }
 
       for (Rule rule : specification.getProvider().getRules()) {
-        keyToRule.computeIfAbsent(rule.getId(), k -> new ArrayList<>()).add(rule);
+        keyToRule.computeIfAbsent(rule.getRspecKey(), k -> new ArrayList<>()).add(rule);
       }
     }
     return keyToRule;

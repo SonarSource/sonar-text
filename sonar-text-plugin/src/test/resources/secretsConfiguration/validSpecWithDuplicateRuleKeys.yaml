@@ -3,7 +3,8 @@ provider:
     name: provider name
     category: Cloud provider
   rules:
-    - id: exampleKey
+    - id: exampleId-1
+      rspecKey: exampleKey
       metadata:
         name: rule name
         charset: "[0-9a-z\\/+]"
@@ -15,7 +16,8 @@ provider:
             example
             text
           containsSecret: true
-    - id: exampleKey
+    - id: exampleId-2
+      rspecKey: exampleKey
       metadata:
         name: rule name
         charset: "[0-9a-z\\/+]"

@@ -25,25 +25,25 @@ import javax.annotation.Nullable;
 public class PreModule {
 
   @Nullable
-  private IncludedFilter include;
+  private FileFilter include;
   @Nullable
-  private RejectFilter reject;
+  private FileFilter reject;
 
   @Nullable
-  public IncludedFilter getInclude() {
+  public FileFilter getInclude() {
     return include;
   }
 
-  public void setInclude(@Nullable IncludedFilter include) {
+  public void setInclude(@Nullable FileFilter include) {
     this.include = include;
   }
 
   @Nullable
-  public RejectFilter getReject() {
+  public FileFilter getReject() {
     return reject;
   }
 
-  public void setReject(@Nullable RejectFilter reject) {
+  public void setReject(@Nullable FileFilter reject) {
     this.reject = reject;
   }
 }
