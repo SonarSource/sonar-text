@@ -64,7 +64,8 @@ public abstract class AbstractRuleExampleTest {
     Stream<DynamicTest> loadExamples() {
         Stream<MapEntry<Rule, RuleExample>> input = specificationLoader.getAllRules().stream()
                 .flatMap(rule -> rule.getExamples().stream().map(e -> MapEntry.entry(rule, e)));
-        Function<MapEntry<Rule, RuleExample>, String> displayNameGenerator = (pair) -> pair.getKey().getId() + " " + pair.getKey().getMetadata().getName();
+        Function<MapEntry<Rule, RuleExample>, String> displayNameGenerator = (pair) ->
+                pair.getKey().getId() + " " + pair.getKey().getMetadata().getName() + " (" + (pair.getValue().isContainsSecret() ? "positive" : "negative") + ")";
         ThrowingConsumer<MapEntry<Rule, RuleExample>> testExecutor = ruleToExample -> checkExample(ruleToExample.getKey(), ruleToExample.getValue());
 
         return DynamicTest.stream(input, displayNameGenerator, testExecutor);

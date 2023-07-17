@@ -26,14 +26,19 @@ import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.api.SpecificationLoader;
+import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.analyze;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 
-class GoogleCloudAccountKeyCheckTest {
+class GoogleCloudAccountKeyCheckTest extends AbstractRuleExampleTest {
 
   static Check check;
+
+  GoogleCloudAccountKeyCheckTest() {
+    super(new GoogleCloudAccountKeyCheck(), "gcp.yaml");
+  }
 
   @BeforeAll
   public static void init() {

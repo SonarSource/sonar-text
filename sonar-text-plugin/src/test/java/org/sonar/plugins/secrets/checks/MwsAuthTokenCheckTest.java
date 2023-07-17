@@ -19,48 +19,11 @@
  */
 package org.sonar.plugins.secrets.checks;
 
-import java.io.IOException;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.sonar.plugins.common.Check;
-import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
-import org.sonar.plugins.secrets.api.SpecificationLoader;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.sonar.plugins.common.TestUtils.analyze;
+import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
 
 @java.lang.SuppressWarnings("squid:S6292")
-class MwsAuthTokenCheckTest {
-
-  static Check check;
-
-  @BeforeAll
-  public static void init() {
-    check = new MwsAuthTokenCheck();
-    SpecificationLoader specificationLoader = new SpecificationLoader();
-    ((SpecificationBasedCheck) check).initialize(specificationLoader);
+class MwsAuthTokenCheckTest extends AbstractRuleExampleTest {
+  MwsAuthTokenCheckTest() {
+    super(new MwsAuthTokenCheck(), "mws.yaml");
   }
-
-  @Test
-  void positive() throws IOException {
-    String fileContent = "export MWS_TOKEN=amzn.mws.4ea38b7b-f563-7709-4bae-12ba540c0ac5";
-    assertThat(analyze(check, fileContent)).containsExactly(
-      "secrets:S6292 [1:17-1:62] Make sure this Amazon MWS token gets revoked, changed, and removed from the code.");
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {
-    "export MWS_TOKEN=amz.mws.4ea38b7b-f563-7709-4bae-12ba540c0ac5",
-    // extra characters before
-    "export MWS_TOKEN=blamzn.mws.4ea38b7b-f563-7709-4bae-12ba540c0ac5",
-    // extra characters after
-    "export MWS_TOKEN=amzn.mws.4ea38b7b-f563-7709-4bae-12ba540c0ac52222222222222"
-  })
-  void negative() throws IOException {
-    String fileContent = "export MWS_TOKEN=amz.mws.4ea38b7b-f563-7709-4bae-12ba540c0ac5";
-    assertThat(analyze(check, fileContent)).isEmpty();
-  }
-
 }
