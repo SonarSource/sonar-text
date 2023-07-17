@@ -3,7 +3,8 @@ provider:
       name: AWS
       category: Cloud provider
   rules:
-    - id: aws-access-key
+    - id: exampleId
+      rspecKey: aws-access-key
       metadata:
         name: AWS access key
       detection:

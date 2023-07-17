@@ -3,7 +3,8 @@ provider:
     name: provider name
     category: Cloud provider
   rules:
-    - id: exampleKey
+    - id: exampleId
+      rspecKey: exampleKey
       metadata:
         name: rule name
       detection:

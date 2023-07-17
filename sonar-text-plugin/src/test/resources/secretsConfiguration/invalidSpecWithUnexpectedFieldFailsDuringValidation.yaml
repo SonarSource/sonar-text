@@ -4,7 +4,8 @@ provider:
     category: Cloud provider
   unexpectedField: "Unexpected"
   rules:
-    - id: exampleKey
+    - id: exampleId
+      rspecKey: exampleKey
       metadata:
         name: rule name
       detection:

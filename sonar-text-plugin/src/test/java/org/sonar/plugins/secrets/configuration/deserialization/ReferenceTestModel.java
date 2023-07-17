@@ -73,7 +73,8 @@ public class ReferenceTestModel {
 
   public static Rule constructRule() {
     Rule rule = new Rule();
-    rule.setId("exampleKey");
+    rule.setId("exampleId");
+    rule.setRspecKey("exampleKey");
     rule.setMetadata(constructRuleMetadata());
     rule.setDetection(constructBasicDetection("\\b(rule matching pattern)\\b"));
     rule.setExamples(List.of(constructRuleExample()));
