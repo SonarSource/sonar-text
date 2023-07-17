@@ -22,7 +22,7 @@ package org.sonar.plugins.secrets.configuration.model.matching.filter;
 import java.util.List;
 import javax.annotation.Nullable;
 
-public class IncludedFilter {
+public class FileFilter {
 
   @Nullable
   private List<String> paths;
