@@ -20,6 +20,8 @@
 package org.sonar.plugins.secrets.utils;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -48,14 +50,22 @@ import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
+import static org.sonar.plugins.secrets.api.SpecificationLoader.DEFAULT_SPECIFICATION_LOCATION;
 
 public abstract class AbstractRuleExampleTest {
     private final Check check;
+    private final URI configurationFile;
     private final SpecificationLoader specificationLoader;
 
     protected AbstractRuleExampleTest(Check check, String configurationFile) {
-        specificationLoader = new SpecificationLoader(SpecificationLoader.DEFAULT_SPECIFICATION_LOCATION, Set.of(configurationFile));
+        specificationLoader = new SpecificationLoader(DEFAULT_SPECIFICATION_LOCATION, Set.of(configurationFile));
         this.check = check;
+        try {
+            this.configurationFile = SpecificationLoader.class.getClassLoader()
+                    .getResource(DEFAULT_SPECIFICATION_LOCATION + "/" + configurationFile).toURI();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
         ((SpecificationBasedCheck) check).initialize(specificationLoader);
     }
 
@@ -68,7 +78,9 @@ public abstract class AbstractRuleExampleTest {
                 pair.getKey().getId() + " " + pair.getKey().getMetadata().getName() + " (" + (pair.getValue().isContainsSecret() ? "positive" : "negative") + ")";
         ThrowingConsumer<MapEntry<Rule, RuleExample>> testExecutor = ruleToExample -> checkExample(ruleToExample.getKey(), ruleToExample.getValue());
 
-        return DynamicTest.stream(input, displayNameGenerator, testExecutor);
+        return input.map(e ->
+                DynamicTest.dynamicTest(displayNameGenerator.apply(e), configurationFile, () -> testExecutor.accept(e))
+        );
     }
 
     private void checkExample(Rule rule, RuleExample ruleExample) throws IOException {
@@ -82,7 +94,7 @@ public abstract class AbstractRuleExampleTest {
             Matching matching = new Matching();
             matching.setPattern(".*(" + Pattern.quote(ruleExample.getMatch().stripTrailing()) + ").*");
             PatternMatcher matcher = PatternMatcher.build(matching);
-            List<Match> matches = matcher.findIn(ruleExample.getText().stripTrailing());
+            List<Match> matches = matcher.findIn(ruleExample.getText());
             TextRange expectedRange = inputFileContext.newTextRangeFromFileOffsets(matches.get(0).getFileStartOffset(), matches.get(0).getFileEndOffset());
 
             Assertions.assertThat(issues).isNotEmpty();
