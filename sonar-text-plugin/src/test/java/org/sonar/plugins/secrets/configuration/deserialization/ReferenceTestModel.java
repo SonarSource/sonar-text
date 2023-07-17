@@ -32,11 +32,10 @@ import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombination
 import org.sonar.plugins.secrets.configuration.model.matching.Detection;
 import org.sonar.plugins.secrets.configuration.model.matching.Match;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.FileFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.HeuristicsFilter;
-import org.sonar.plugins.secrets.configuration.model.matching.filter.IncludedFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
-import org.sonar.plugins.secrets.configuration.model.matching.filter.RejectFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.StatisticalFilter;
 import org.sonar.plugins.secrets.configuration.model.metadata.Metadata;
 import org.sonar.plugins.secrets.configuration.model.metadata.ProviderMetadata;
@@ -186,13 +185,15 @@ public class ReferenceTestModel {
   private static PreModule constructPreModule() {
     PreModule preModule = new PreModule();
 
-    IncludedFilter includedFilter = new IncludedFilter();
+    FileFilter includedFilter = new FileFilter();
     includedFilter.setPaths(List.of("*.aws/config", ".env"));
     includedFilter.setExt(List.of(".config"));
     includedFilter.setContent(List.of("amazonaws.com", "aws"));
 
-    RejectFilter rejectFilter = new RejectFilter();
-    rejectFilter.setPaths(List.of("amazonaws.com", "aws"));
+    FileFilter rejectFilter = new FileFilter();
+    rejectFilter.setPaths(List.of(".json", "*.idea/config"));
+    rejectFilter.setExt(List.of(".docker"));
+    rejectFilter.setContent(List.of("someContent.com"));
 
     preModule.setInclude(includedFilter);
     preModule.setReject(rejectFilter);

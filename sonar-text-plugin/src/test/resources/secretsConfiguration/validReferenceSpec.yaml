@@ -47,8 +47,12 @@ provider:
               - "aws"
           reject:
             paths:
-              - "amazonaws.com"
-              - "aws"
+              - ".json"
+              - "*.idea/config"
+            ext:
+              - ".docker"
+            content:
+              - "someContent.com"
         matching:
           pattern: "\\b(rule matching pattern)\\b"
           context:
