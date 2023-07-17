@@ -21,10 +21,12 @@ package org.sonar.plugins.secrets.api;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.plugins.secrets.configuration.deserialization.DeserializationException;
@@ -45,10 +47,11 @@ public class SpecificationLoader {
     "ibm.yaml",
     "mws.yaml"
   );
+  public static final String DEFAULT_SPECIFICATION_LOCATION = "org/sonar/plugins/secrets/configuration/";
   private final Map<String, List<Rule>> rulesMappedToKey;
 
   public SpecificationLoader() {
-    this("org/sonar/plugins/secrets/configuration/", DEFAULT_SPECIFICATIONS);
+    this(DEFAULT_SPECIFICATION_LOCATION, DEFAULT_SPECIFICATIONS);
   }
 
   public SpecificationLoader(String specificationLocation, Set<String> specifications) {
@@ -84,4 +87,7 @@ public class SpecificationLoader {
     return rulesMappedToKey.getOrDefault(key, new ArrayList<>());
   }
 
+  public List<Rule> getAllRules() {
+    return rulesMappedToKey.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+  }
 }
