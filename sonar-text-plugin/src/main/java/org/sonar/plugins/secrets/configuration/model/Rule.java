@@ -28,6 +28,7 @@ import org.sonar.plugins.secrets.configuration.model.metadata.RuleMetadata;
 public class Rule {
 
   private String id;
+  private String rspecKey;
   private RuleMetadata metadata;
   private Detection detection;
   private List<RuleExample> examples;
@@ -40,6 +41,14 @@ public class Rule {
 
   public void setId(String id) {
     this.id = id;
+  }
+
+  public String getRspecKey() {
+    return rspecKey;
+  }
+
+  public void setRspecKey(String rspecKey) {
+    this.rspecKey = rspecKey;
   }
 
   public RuleMetadata getMetadata() {

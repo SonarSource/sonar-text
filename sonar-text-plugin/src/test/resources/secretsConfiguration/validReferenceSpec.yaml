@@ -22,7 +22,8 @@ provider:
     matching:
       pattern: "\\b(provider matching pattern)\\b"
   rules:
-    - id: exampleKey
+    - id: exampleId
+      rspecKey: exampleKey
       metadata:
         name: rule name
         defaultProfile: false
