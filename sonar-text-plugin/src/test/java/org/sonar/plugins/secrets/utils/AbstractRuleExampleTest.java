@@ -99,7 +99,7 @@ public abstract class AbstractRuleExampleTest {
 
             Assertions.assertThat(issues).isNotEmpty();
             Assertions.assertThat(issues).anyMatch(s -> asString(s).contains(rule.getMetadata().getMessage()));
-            Assertions.assertThat(issues).anyMatch(s -> asString(s).contains(rule.getId()));
+            Assertions.assertThat(issues).anyMatch(s -> asString(s).contains(rule.getRspecKey()));
             Assertions.assertThat(issues).map(i -> i.primaryLocation().textRange()).contains(expectedRange);
         } else {
             Assertions.assertThat(issues).isEmpty();
