@@ -61,7 +61,7 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
     }
   }
 
-  private List<Match> filterForAfter(List<Match> candidateMatches, List<Match> auxiliaryMatches) {
+  private static List<Match> filterForAfter(List<Match> candidateMatches, List<Match> auxiliaryMatches) {
     List<Match> filteredCandidates = new ArrayList<>();
 
     for (Match regexMatch : candidateMatches) {
@@ -74,7 +74,7 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
     return filteredCandidates;
   }
 
-  private List<Match> filterForAround(List<Match> candidateMatches, List<Match> auxiliaryMatches) {
+  private static List<Match> filterForAround(List<Match> candidateMatches, List<Match> auxiliaryMatches) {
     List<Match> filteredCandidates = new ArrayList<>();
 
     for (Match candidate : candidateMatches) {
@@ -87,7 +87,7 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
     return filteredCandidates;
   }
 
-  private List<Match> filterForBefore(List<Match> candidateMatches, List<Match> auxiliaryMatches) {
+  private static List<Match> filterForBefore(List<Match> candidateMatches, List<Match> auxiliaryMatches) {
     List<Match> filteredCandidates = new ArrayList<>();
 
     for (Match candidate : candidateMatches) {
