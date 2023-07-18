@@ -70,10 +70,9 @@ public class SpecificationLoader {
   }
 
   //TODO: SONARTEXT-44 Add the missing detection logic to the Specification based Check
-  private static boolean ruleFunctionalityIsNotImplementedFor(Rule rule) {
+  static boolean ruleFunctionalityIsNotImplementedFor(Rule rule) {
     // TODO: SONARTEXT-31: Add Context to detection logic
-    Matching matching = rule.getDetection().getMatching();
-    boolean contextIsSet = matching != null && matching.getContext() != null;
+    boolean contextIsSet = rule.getDetection().getMatching().getContext() != null;
 
     // TODO: SONARTEXT-48: Extend Post-Filter to include heuristic Filter
     PostModule post = rule.getDetection().getPost();

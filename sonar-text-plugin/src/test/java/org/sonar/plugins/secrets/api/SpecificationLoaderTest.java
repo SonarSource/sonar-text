@@ -48,6 +48,14 @@ class SpecificationLoaderTest {
   }
 
   @Test
+  void shouldSupportFunctionalityWhenNoContextAndNoPostFilterIsSet() {
+    Rule rule = ReferenceTestModel.constructRule();
+
+    rule.getDetection().setPost(ReferenceTestModel.constructPostModule());
+    assertThat(SpecificationLoader.ruleFunctionalityIsNotImplementedFor(rule)).isTrue();
+  }
+
+  @Test
   void shouldLoadExpectedRule() {
     String specificationLocation = "secretsConfiguration/";
     Set<String> specifications = Set.of("validMinSpec.yaml");
