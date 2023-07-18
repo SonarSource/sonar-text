@@ -75,18 +75,11 @@ public class SpecificationLoader {
     Matching matching = rule.getDetection().getMatching();
     boolean contextIsSet = matching != null && matching.getContext() != null;
 
-    // TODO: SONARTEXT-32: Add Pre-Filter to detection logic
-    boolean preFilterIsSet = rule.getDetection().getPre() != null;
-
     // TODO: SONARTEXT-48: Extend Post-Filter to include heuristic Filter
     PostModule post = rule.getDetection().getPost();
     boolean heuristicFilterIsSet = post != null && post.getHeuristicFilter() != null;
 
-    //TODO: SONARTEXT-52: Support inputString in statisticalFilter
-    boolean statisticalFilterInputStringIsSet =
-      post != null && post.getStatisticalFilter() != null && post.getStatisticalFilter().getInputString() != null;
-
-    return contextIsSet || preFilterIsSet || heuristicFilterIsSet || statisticalFilterInputStringIsSet;
+    return contextIsSet || heuristicFilterIsSet;
   }
 
   private static Specification loadSpecification(String specificationLocation, String fileName) {

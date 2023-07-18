@@ -21,7 +21,6 @@ package org.sonar.plugins.secrets.checks;
 
 import java.nio.file.Path;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.common.Check;
@@ -43,8 +42,6 @@ class GoogleCloudAccountKeyCheckTest {
     ((SpecificationBasedCheck) check).initialize(specificationLoader);
   }
 
-  //TODO: SONARTEXT-44: Add missing detection logic to the Specification based check
-  @Disabled
   @Test
   void positive() throws Exception {
     InputFile file = inputFile(Path.of("src", "test", "resources", "checks", "GoogleCloudAccountKeyCheck", "GoogleCloudAccountPositive" +

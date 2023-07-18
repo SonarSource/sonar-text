@@ -42,7 +42,7 @@ class CommonKeyCheckTest {
   @Test
   void shouldHaveRightAmountOfMatchers() {
     assertThat(check.ruleKey.rule()).isEqualTo("S6652");
-    assertThat(((SpecificationBasedCheck) check).getMatcher()).hasSize(8);
+    assertThat(((SpecificationBasedCheck) check).getMatcher()).hasSize(38);
   }
 
 }

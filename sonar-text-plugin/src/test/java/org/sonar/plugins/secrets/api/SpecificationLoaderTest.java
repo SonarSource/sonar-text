@@ -42,8 +42,8 @@ class SpecificationLoaderTest {
     SpecificationLoader specificationLoader = new SpecificationLoader();
     Map<String, List<Rule>> rulesMappedToKey = specificationLoader.getRulesMappedToKey();
 
-    assertThat(rulesMappedToKey.values()).hasSize(6);
-    assertThat(rulesMappedToKey.values().stream().flatMap(Collection::stream)).hasSize(15);
+    assertThat(rulesMappedToKey.values()).hasSize(8);
+    assertThat(rulesMappedToKey.values().stream().flatMap(Collection::stream)).hasSize(51);
     assertThat(logTester.getLogs()).isEmpty();
   }
 
