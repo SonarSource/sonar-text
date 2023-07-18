@@ -59,6 +59,10 @@ public abstract class SpecificationBasedCheck extends Check {
     List<TextRange> foundSecrets = new ArrayList<>();
 
     for (SecretMatcher secretMatcher : matcher) {
+      if (!secretMatcher.getPreFilter().test(ctx)) {
+        continue;
+      }
+
       secretMatcher.findIn(ctx.content()).stream()
         .map(match -> ctx.newTextRangeFromFileOffsets(match.getFileStartOffset(), match.getFileEndOffset()))
         .forEach(textRange -> {

@@ -42,13 +42,14 @@ public class InputFileContext {
   private static final char LINE_FEED = '\n';
 
   private final SensorContext sensorContext;
+
   private final InputFile inputFile;
 
   private final boolean hasNonTextCharacters;
 
   private final List<String> lines;
-  private final String normalizedContent;
 
+  private final String normalizedContent;
   private final Set<String> raisedIssues = new HashSet<>();
 
   public InputFileContext(SensorContext sensorContext, InputFile inputFile) throws IOException {
@@ -144,4 +145,7 @@ public class InputFileContext {
     throw new IllegalStateException("Invalid offsets: startOffset=" + startOffset + ", endOffset=" + endOffset);
   }
 
+  public InputFile getInputFile() {
+    return inputFile;
+  }
 }

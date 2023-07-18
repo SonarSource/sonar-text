@@ -22,24 +22,29 @@ package org.sonar.plugins.secrets.api;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 
 public class SecretMatcher {
 
   private final Rule rule;
   private final PatternMatcher patternMatcher;
-  private final Predicate<String> postFilter;
 
-  SecretMatcher(Rule rule, PatternMatcher patternMatcher, Predicate<String> postFilter) {
+  private final Predicate<InputFileContext> preFilter;
+
+  private final Predicate<String> postFilter;
+  SecretMatcher(Rule rule, PatternMatcher patternMatcher, Predicate<InputFileContext> preFilter, Predicate<String> postFilter) {
     this.rule = rule;
     this.patternMatcher = patternMatcher;
+    this.preFilter = preFilter;
     this.postFilter = postFilter;
   }
 
   public static SecretMatcher build(Rule rule) {
     PatternMatcher matcher = PatternMatcher.build(rule.getDetection().getMatching());
-    Predicate<String> filter = PostFilterFactory.createPredicate(rule.getDetection().getPost());
-    return new SecretMatcher(rule, matcher, filter);
+    Predicate<InputFileContext> preFilter = PreFilterFactory.createPredicate(rule.getDetection().getPre());
+    Predicate<String> postFilter = PostFilterFactory.createPredicate(rule.getDetection().getPost());
+    return new SecretMatcher(rule, matcher, preFilter, postFilter);
   }
 
   public List<Match> findIn(String content) {
@@ -49,6 +54,10 @@ public class SecretMatcher {
 
   public String getMessageFromRule() {
     return rule.getMetadata().getMessage();
+  }
+
+  public Predicate<InputFileContext> getPreFilter() {
+    return preFilter;
   }
 
   public Predicate<String> getPostFilter() {

@@ -47,6 +47,7 @@ public class SecretMatcherAssert extends AbstractAssert<SecretMatcherAssert, Sec
   public SecretMatcherAssert behavesLike(SecretMatcher expectedMatcher) {
     isNotNull();
     usingRecursiveComparison()
+      .ignoringFields("preFilter")
       .ignoringFields("postFilter")
       .withEqualsForType(patternEquals, Pattern.class)
       .isEqualTo(expectedMatcher);
