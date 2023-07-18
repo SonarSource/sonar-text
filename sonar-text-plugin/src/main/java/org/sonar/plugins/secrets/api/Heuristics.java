@@ -21,18 +21,24 @@ package org.sonar.plugins.secrets.api;
 
 import java.util.List;
 import java.util.regex.Pattern;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 
 public class Heuristics {
     private Heuristics() {}
 
     private static final Pattern uriPattern = Pattern.compile("^(https?|ftps?|file|smtp|imap)://.*$");
 
+    private static final Logger LOG = Loggers.get(Heuristics.class);
+
     public static boolean matchesHeuristics(String candidateSecret, List<String> heuristics) {
         return heuristics.stream().anyMatch(h -> {
             switch (h) {
                 case "path": return isPath(candidateSecret);
                 case "uri": return isUri(candidateSecret);
-                default: return false;
+                default:
+                    LOG.warn("Heuristic with the name `{}` is not supported", h);
+                    return false;
             }
         });
     }
