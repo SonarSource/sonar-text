@@ -83,7 +83,8 @@ public class PreFilterFactory {
     if (content.isBlank()) {
       return false;
     }
-    return ctx.lines().stream().anyMatch(line -> line.contains(content));
+    String contentLowerCase = content.toLowerCase();
+    return ctx.lines().stream().anyMatch(line -> line.toLowerCase().contains(contentLowerCase));
   }
 
   static boolean matchesExt(String ext, InputFileContext ctx) {
