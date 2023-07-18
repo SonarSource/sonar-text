@@ -19,45 +19,30 @@
  */
 package org.sonar.plugins.secrets.checks;
 
-import java.nio.file.Path;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.api.SpecificationLoader;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.sonar.plugins.common.TestUtils.analyze;
-import static org.sonar.plugins.common.TestUtils.inputFile;
 
-class GoogleCloudAccountKeyCheckTest {
+//TODO SONARTEXT-51 Validate functionality of detection logic for specified secrets
+class CommonKeyCheckTest {
 
   static Check check;
 
   @BeforeAll
   public static void init() {
-    check = new GoogleCloudAccountKeyCheck();
+    check = new CommonKeyCheck();
     SpecificationLoader specificationLoader = new SpecificationLoader();
     ((SpecificationBasedCheck) check).initialize(specificationLoader);
   }
 
-  //TODO: SONARTEXT-44: Add missing detection logic to the Specification based check
-  @Disabled
   @Test
-  void positive() throws Exception {
-    InputFile file = inputFile(Path.of("src", "test", "resources", "checks", "GoogleCloudAccountKeyCheck", "GoogleCloudAccountPositive" +
-      ".json"));
-    assertThat(analyze(check, file)).containsExactly(
-      "secrets:S6335 [5:18-5:1750] Make sure this GCP secret gets revoked, changed, and removed from the code.");
-  }
-
-  @Test
-  void negative() throws Exception {
-    InputFile file = inputFile(Path.of("src", "test", "resources", "checks", "GoogleCloudAccountKeyCheck", "GoogleCloudAccountNegative" +
-      ".json"));
-    assertThat(analyze(check, file)).isEmpty();
+  void shouldHaveRightAmountOfMatchers() {
+    assertThat(check.ruleKey.rule()).isEqualTo("S6652");
+    assertThat(((SpecificationBasedCheck) check).getMatcher()).hasSize(8);
   }
 
 }

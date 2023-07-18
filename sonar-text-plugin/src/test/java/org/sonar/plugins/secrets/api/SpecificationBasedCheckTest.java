@@ -59,8 +59,8 @@ class SpecificationBasedCheckTest {
 
   @Test
   void checkShouldRaiseIssueWhenFilterHasLowEntropyThreshold() throws IOException {
-    String specificationLocation = "secretsConfiguration/";
-    Set<String> specifications = Set.of("validReferenceSpec.yaml");
+    String specificationLocation = "secretsConfiguration/postFilter/";
+    Set<String> specifications = Set.of("postFilterSpec.yaml");
     SpecificationLoader specificationLoader = new SpecificationLoader(specificationLocation, specifications);
     specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().getStatisticalFilter().setThreshold(3f);
 
@@ -75,8 +75,8 @@ class SpecificationBasedCheckTest {
 
   @Test
   void checkShouldNotRaiseIssueWithPostFilterBecauseOfPatternNot() throws IOException {
-    String specificationLocation = "secretsConfiguration/";
-    Set<String> specifications = Set.of("validReferenceSpec.yaml");
+    String specificationLocation = "secretsConfiguration/postFilter/";
+    Set<String> specifications = Set.of("postFilterSpec.yaml");
     SpecificationLoader specificationLoader = new SpecificationLoader(specificationLocation, specifications);
     specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().setPatternNot("matching");
     specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().getStatisticalFilter().setThreshold(3f);

@@ -19,7 +19,9 @@
  */
 package org.sonar.plugins.secrets.api;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -28,16 +30,21 @@ import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestMode
 import org.sonar.plugins.secrets.configuration.model.Rule;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNoException;
 
 class SpecificationLoaderTest {
+
 
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
   @Test
-  void initializingDefaultLoaderShouldNotThrowAnException() {
-    assertThatNoException().isThrownBy(() -> new SpecificationLoader().getRulesForKey("exampleKey"));
+  void shouldLoadRulesWithoutErrors() {
+    SpecificationLoader specificationLoader = new SpecificationLoader();
+    Map<String, List<Rule>> rulesMappedToKey = specificationLoader.getRulesMappedToKey();
+
+    assertThat(rulesMappedToKey.values()).hasSize(6);
+    assertThat(rulesMappedToKey.values().stream().flatMap(Collection::stream)).hasSize(15);
+    assertThat(logTester.getLogs()).isEmpty();
   }
 
   @Test
@@ -76,6 +83,6 @@ class SpecificationLoaderTest {
     Set<String> specifications = Set.of("unknownFile.yaml");
 
     new SpecificationLoader(specificationLocation, specifications);
-    assertThat(logTester.logs()).containsExactly("Could not load specification from file: unknownFile.yaml");
+    assertThat(logTester.logs()).containsExactly("DeserializationException: Could not load specification from file: unknownFile.yaml");
   }
 }

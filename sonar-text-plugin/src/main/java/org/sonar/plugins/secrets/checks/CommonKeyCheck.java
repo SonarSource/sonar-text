@@ -17,18 +17,11 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets;
+package org.sonar.plugins.secrets.checks;
 
-import java.util.Collections;
-import java.util.List;
+import org.sonar.check.Rule;
+import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 
-public class GeneratedCheckList {
-
-  private GeneratedCheckList() {
-  }
-
-  // For now empty, will be populated after the migration of the existing rules: SONARTEXT-15
-  public static List<Class<?>> generatedChecks() {
-    return Collections.emptyList();
-  }
+@Rule(key = "S6652")
+public class CommonKeyCheck extends SpecificationBasedCheck {
 }
