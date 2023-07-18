@@ -23,6 +23,7 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.HeuristicsFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.StatisticalFilter;
 
@@ -40,6 +41,9 @@ public class PostFilterFactory {
       if (post.getPatternNot() != null) {
         postFilter = postFilter.and(filterForPatternNot(post.getPatternNot()));
       }
+      if (post.getHeuristicFilter() != null) {
+        postFilter = postFilter.and(filterForHeuristicsFilter(post.getHeuristicFilter()));
+      }
     }
     return postFilter;
   }
@@ -55,4 +59,7 @@ public class PostFilterFactory {
     return candidateSecret -> !EntropyChecker.hasLowEntropy(candidateSecret, statisticalFilter.getThreshold());
   }
 
+  static Predicate<String> filterForHeuristicsFilter(HeuristicsFilter heuristicFilter) {
+    return candidateSecret -> !Heuristics.matchesHeuristics(candidateSecret, heuristicFilter.getHeuristics());
+  }
 }
