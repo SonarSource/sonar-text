@@ -56,7 +56,7 @@ public class SpecificationLoader {
       try {
         specification = loadSpecification(specificationLocation, specificationFileName);
       } catch (DeserializationException | SchemaValidationException e) {
-        LOG.error(String.format("%s: Could not load specification from file: %s", e.getClass().getSimpleName(), specificationFileName));
+        LOG.error("{}: Could not load specification from file: {}", e.getClass().getSimpleName(), specificationFileName);
         continue;
       }
 
@@ -70,6 +70,7 @@ public class SpecificationLoader {
   }
 
   //TODO: SONARTEXT-44 Add the missing detection logic to the Specification based Check
+  @SuppressWarnings("java:S2259")
   static boolean ruleFunctionalityIsNotImplementedFor(Rule rule) {
     // TODO: SONARTEXT-31: Add Context to detection logic
     boolean contextIsSet = rule.getDetection().getMatching().getContext() != null;

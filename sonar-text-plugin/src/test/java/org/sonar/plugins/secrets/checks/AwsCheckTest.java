@@ -31,7 +31,6 @@ import org.sonar.plugins.secrets.api.SpecificationLoader;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.analyze;
 
-
 @java.lang.SuppressWarnings("squid:S6290")
 class AwsCheckTest {
 
