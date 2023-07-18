@@ -25,30 +25,36 @@ import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
 public class Heuristics {
-    private Heuristics() {}
+  private Heuristics() {
+  }
 
-    private static final Pattern uriPattern = Pattern.compile("^(https?|ftps?|file|smtp|imap)://.*$");
+  private static final int MINIMAL_NUMBER_OF_SEPARATORS_IN_VALID_PATH = 2;
+  private static final double MINIMAL_RATIO_OF_SEPARATOR_SYMBOLS_IN_VALID_PATH = 0.15;
+  private static final Pattern uriPattern = Pattern.compile("^(https?|ftps?|file|smtp|imap)://.*$");
 
-    private static final Logger LOG = Loggers.get(Heuristics.class);
+  private static final Logger LOG = Loggers.get(Heuristics.class);
 
-    public static boolean matchesHeuristics(String candidateSecret, List<String> heuristics) {
-        return heuristics.stream().anyMatch(h -> {
-            switch (h) {
-                case "path": return isPath(candidateSecret);
-                case "uri": return isUri(candidateSecret);
-                default:
-                    LOG.warn("Heuristic with the name `{}` is not supported", h);
-                    return false;
-            }
-        });
-    }
+  public static boolean matchesHeuristics(String candidateSecret, List<String> heuristics) {
+    return heuristics.stream().anyMatch(heuristic -> {
+      switch (heuristic) {
+        case "path":
+          return isPath(candidateSecret);
+        case "uri":
+          return isUri(candidateSecret);
+        default:
+          LOG.warn("Heuristic with the name `{}` is not supported", heuristic);
+          return false;
+      }
+    });
+  }
 
-    public static boolean isPath(String input) {
-        long fileSeparatorCount = input.chars().filter(c -> c == '/' || c == '\\').count();
-        return fileSeparatorCount >= 2 && fileSeparatorCount * 1. / input.length() > 0.15;
-    }
+  public static boolean isPath(String input) {
+    long fileSeparatorCount = input.chars().filter(c -> c == '/' || c == '\\').count();
+    return fileSeparatorCount >= MINIMAL_NUMBER_OF_SEPARATORS_IN_VALID_PATH &&
+            (fileSeparatorCount * 1. / input.length()) >= MINIMAL_RATIO_OF_SEPARATOR_SYMBOLS_IN_VALID_PATH;
+  }
 
-    public static boolean isUri(String input) {
-        return uriPattern.matcher(input).matches();
-    }
+  public static boolean isUri(String input) {
+    return uriPattern.matcher(input).matches();
+  }
 }
