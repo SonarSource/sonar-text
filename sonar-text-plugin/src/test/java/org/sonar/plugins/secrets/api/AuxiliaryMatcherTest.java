@@ -67,7 +67,6 @@ class AuxiliaryMatcherTest {
     );
   }
 
-
   @ParameterizedTest
   @MethodSource
   void auxiliaryPatternShouldRemoveCandidateSecrets(AuxiliaryPatternType patternType, String content, String auxiliaryPattern) {
