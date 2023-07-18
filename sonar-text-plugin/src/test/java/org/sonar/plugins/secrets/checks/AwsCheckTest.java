@@ -21,7 +21,6 @@ package org.sonar.plugins.secrets.checks;
 
 import java.io.IOException;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -45,25 +44,23 @@ class AwsCheckTest {
   }
 
   @Test
-  @Disabled("Temporary until example is clarified")
   void key_id_positive() throws IOException {
     String fileContent = "" +
       "public class Foo {\n" +
       "  public static final String KEY = \"AKIAIGKECZXA7AEIJLMQ\"\n" +
       "}";
-    assertThat(analyze(check, fileContent)).containsExactly(
-      "secrets:S6290 [2:36-2:56] Make sure this AWS Access Key ID gets revoked, changed, and removed from the code.");
+    assertThat(analyze(check, fileContent)).isEmpty();
   }
 
   @Test
-  @Disabled("Temporary until example is clarified")
   void key_id_positive_not_example() throws IOException {
     String fileContent = "" +
       "public class Foo {\n" +
+      "  /* This is for aws */\n" +
       "  public static final String KEY = \"AKIAIGKECZXA7EXAMPLF\"\n" +
       "}";
     assertThat(analyze(check, fileContent)).containsExactly(
-      "secrets:S6290 [2:36-2:56] Make sure this AWS Access Key ID gets revoked, changed, and removed from the code.");
+      "secrets:S6290 [3:36-3:56] Make sure this AWS Access Key ID gets revoked, changed, and removed from the code.");
   }
 
   @Test
@@ -104,7 +101,7 @@ class AwsCheckTest {
   @ParameterizedTest
   @ValueSource(strings = {
     // extra characters before
-    "public static final String KEY = \"BACAKIAIGKECZXA7AEIJLMQ\";\n",
+    "public static final String KEY = \"BACAKIAIGKECZXA7AEIJLMQ\"; // Not really AWS\n",
     "\tsecretKey := stellar1.SecretKey(\"SDGCPMBQHYAIWM3PQOEKWICDMLVT7REJ24J26QEYJYGB6FJ\")",
     // extra characters after
     "public static final String KEY = \"AKIAIGKECZXA7AEIJLMQBAC\";\n",
