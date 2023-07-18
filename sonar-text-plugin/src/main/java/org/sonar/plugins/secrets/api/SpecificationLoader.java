@@ -31,24 +31,17 @@ import org.sonar.plugins.secrets.configuration.deserialization.DeserializationEx
 import org.sonar.plugins.secrets.configuration.deserialization.SpecificationDeserializer;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.Specification;
+import org.sonar.plugins.secrets.configuration.model.matching.Matching;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
 import org.sonar.plugins.secrets.configuration.validation.SchemaValidationException;
 
 public class SpecificationLoader {
   private static final Logger LOG = Loggers.get(SpecificationLoader.class);
 
-  private static final Set<String> DEFAULT_SPECIFICATIONS = Set.of(
-    "alibaba.yaml",
-    "aws.yaml",
-    "azure.yaml",
-    "gcp.yaml",
-    "google-api.yaml",
-    "ibm.yaml",
-    "mws.yaml"
-  );
   private final Map<String, List<Rule>> rulesMappedToKey;
 
   public SpecificationLoader() {
-    this("org/sonar/plugins/secrets/configuration/", DEFAULT_SPECIFICATIONS);
+    this("org/sonar/plugins/secrets/configuration/", defaultSpecifications());
   }
 
   public SpecificationLoader(String specificationLocation, Set<String> specifications) {
@@ -63,15 +56,30 @@ public class SpecificationLoader {
       try {
         specification = loadSpecification(specificationLocation, specificationFileName);
       } catch (DeserializationException | SchemaValidationException e) {
-        LOG.error(String.format("Could not load specification from file: %s", specificationFileName), e);
+        LOG.error("{}: Could not load specification from file: {}", e.getClass().getSimpleName(), specificationFileName);
         continue;
       }
 
       for (Rule rule : specification.getProvider().getRules()) {
-        keyToRule.computeIfAbsent(rule.getRspecKey(), k -> new ArrayList<>()).add(rule);
+        if (!ruleFunctionalityIsNotImplementedFor(rule)) {
+          keyToRule.computeIfAbsent(rule.getRspecKey(), k -> new ArrayList<>()).add(rule);
+        }
       }
     }
     return keyToRule;
+  }
+
+  //TODO: SONARTEXT-44 Add the missing detection logic to the Specification based Check
+  @SuppressWarnings("java:S2259")
+  static boolean ruleFunctionalityIsNotImplementedFor(Rule rule) {
+    // TODO: SONARTEXT-31: Add Context to detection logic
+    boolean contextIsSet = rule.getDetection().getMatching().getContext() != null;
+
+    // TODO: SONARTEXT-48: Extend Post-Filter to include heuristic Filter
+    PostModule post = rule.getDetection().getPost();
+    boolean heuristicFilterIsSet = post != null && post.getHeuristicFilter() != null;
+
+    return contextIsSet || heuristicFilterIsSet;
   }
 
   private static Specification loadSpecification(String specificationLocation, String fileName) {
@@ -84,4 +92,40 @@ public class SpecificationLoader {
     return rulesMappedToKey.getOrDefault(key, new ArrayList<>());
   }
 
+  Map<String, List<Rule>> getRulesMappedToKey() {
+    return rulesMappedToKey;
+  }
+
+  public static Set<String> defaultSpecifications() {
+    return Set.of(
+      "alibaba.yaml",
+      "aws.yaml",
+      "azure.yaml",
+      "clarifai.yaml",
+      "django.yaml",
+      "facebook.yaml",
+      "gcp.yaml",
+      "github.yaml",
+      "gitlab.yaml",
+      "google-api.yaml",
+      "google-oauth2.yaml",
+      "google-recaptcha.yaml",
+      "ibm.yaml",
+      "mongodb.yaml",
+      "mws.yaml",
+      "mysql.yaml",
+      "odbc.yaml",
+      "openweathermap.yaml",
+      "postgresql.yaml",
+      "pubkey-crypto.yaml",
+      "rapidapi.yaml",
+      "riot.yaml",
+      "sendgrid.yaml",
+      "sonarqube.yaml",
+      "spotify.yaml",
+      "ssh.yaml",
+      "telegram.yaml",
+      "wechat.yaml"
+    );
+  }
 }

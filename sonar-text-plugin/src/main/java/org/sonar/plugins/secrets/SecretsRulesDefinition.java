@@ -19,8 +19,6 @@
  */
 package org.sonar.plugins.secrets;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import org.sonar.api.SonarRuntime;
 import org.sonar.plugins.common.CommonRulesDefinition;
@@ -28,6 +26,7 @@ import org.sonar.plugins.common.DefaultQualityProfileDefinition;
 import org.sonar.plugins.secrets.checks.AlibabaCloudAccessKeyCheck;
 import org.sonar.plugins.secrets.checks.AwsCheck;
 import org.sonar.plugins.secrets.checks.AzureStorageAccountKeyCheck;
+import org.sonar.plugins.secrets.checks.CommonKeyCheck;
 import org.sonar.plugins.secrets.checks.GoogleApiKeyCheck;
 import org.sonar.plugins.secrets.checks.GoogleCloudAccountKeyCheck;
 import org.sonar.plugins.secrets.checks.IbmApiKeyCheck;
@@ -49,15 +48,14 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
   }
 
   public static List<Class<?>> checks() {
-    List<Class<?>> checkList = new ArrayList<>(GeneratedCheckList.generatedChecks());
-    Collections.addAll(checkList,
+    return List.of(
       AlibabaCloudAccessKeyCheck.class,
       AwsCheck.class,
+      CommonKeyCheck.class,
       AzureStorageAccountKeyCheck.class,
       GoogleApiKeyCheck.class,
       GoogleCloudAccountKeyCheck.class,
       IbmApiKeyCheck.class,
       MwsAuthTokenCheck.class);
-    return checkList;
   }
 }
