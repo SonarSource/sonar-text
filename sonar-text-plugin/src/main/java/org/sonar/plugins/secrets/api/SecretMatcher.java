@@ -28,22 +28,27 @@ public class SecretMatcher {
 
   private final Rule rule;
   private final PatternMatcher patternMatcher;
+  private final AuxiliaryPatternMatcher auxiliaryPatternMatcher;
   private final Predicate<String> postFilter;
 
-  SecretMatcher(Rule rule, PatternMatcher patternMatcher, Predicate<String> postFilter) {
+  SecretMatcher(Rule rule, PatternMatcher patternMatcher, AuxiliaryPatternMatcher auxiliaryPatternMatcher, Predicate<String> postFilter) {
     this.rule = rule;
     this.patternMatcher = patternMatcher;
+    this.auxiliaryPatternMatcher = auxiliaryPatternMatcher;
     this.postFilter = postFilter;
   }
 
   public static SecretMatcher build(Rule rule) {
-    PatternMatcher matcher = PatternMatcher.build(rule.getDetection().getMatching());
+    PatternMatcher patternMatcher = PatternMatcher.build(rule.getDetection().getMatching());
     Predicate<String> filter = PostFilterFactory.createPredicate(rule.getDetection().getPost());
-    return new SecretMatcher(rule, matcher, filter);
+    AuxiliaryPatternMatcher auxiliaryMatcher = AuxiliaryPatternMatcherFactory.build(rule.getDetection().getMatching());
+    return new SecretMatcher(rule, patternMatcher, auxiliaryMatcher, filter);
   }
 
   public List<Match> findIn(String content) {
-    return patternMatcher.findIn(content).stream()
+    List<Match> candidateSecrets = patternMatcher.findIn(content);
+    List<Match> secretsFilteredOnContext = auxiliaryPatternMatcher.filter(candidateSecrets, content);
+    return secretsFilteredOnContext.stream()
       .filter(match -> postFilter.test(match.getText())).collect(Collectors.toList());
   }
 
@@ -51,7 +56,11 @@ public class SecretMatcher {
     return rule.getMetadata().getMessage();
   }
 
-  public Predicate<String> getPostFilter() {
+  Predicate<String> getPostFilter() {
     return postFilter;
+  }
+
+  AuxiliaryPatternMatcher getAuxiliaryPatternMatcher() {
+    return auxiliaryPatternMatcher;
   }
 }

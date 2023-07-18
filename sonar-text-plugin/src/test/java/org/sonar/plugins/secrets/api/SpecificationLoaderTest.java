@@ -43,16 +43,8 @@ class SpecificationLoaderTest {
     Map<String, List<Rule>> rulesMappedToKey = specificationLoader.getRulesMappedToKey();
 
     assertThat(rulesMappedToKey.values()).hasSize(8);
-    assertThat(rulesMappedToKey.values().stream().flatMap(Collection::stream)).hasSize(51);
+    assertThat(rulesMappedToKey.values().stream().flatMap(Collection::stream)).hasSize(67);
     assertThat(logTester.getLogs()).isEmpty();
-  }
-
-  @Test
-  void shouldSupportFunctionalityWhenNoContextAndNoPostFilterIsSet() {
-    Rule rule = ReferenceTestModel.constructRule();
-
-    rule.getDetection().setPost(ReferenceTestModel.constructPostModule());
-    assertThat(SpecificationLoader.ruleFunctionalityIsNotImplementedFor(rule)).isTrue();
   }
 
   @Test

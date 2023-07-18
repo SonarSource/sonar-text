@@ -26,6 +26,7 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 
 public class PatternMatcher {
@@ -46,16 +47,26 @@ public class PatternMatcher {
     return new PatternMatcher(null);
   }
 
+  public static PatternMatcher build(AuxiliaryPattern auxiliaryPattern) {
+    return new PatternMatcher(auxiliaryPattern.getPattern());
+  }
+
   public List<Match> findIn(String content) {
     if (pattern == null) {
       return Collections.emptyList();
     }
     List<Match> matches = new ArrayList<>();
     Matcher matcher = pattern.matcher(content);
+
     while (matcher.find()) {
       MatchResult matchResult = matcher.toMatchResult();
-      matches.add(new Match(matchResult.group(1), matchResult.start(1), matchResult.end(1)));
+      if (matcher.groupCount() == 0) {
+        matches.add(new Match(matchResult.group(), matchResult.start(), matchResult.end()));
+      } else {
+        matches.add(new Match(matchResult.group(1), matchResult.start(1), matchResult.end(1)));
+      }
     }
     return matches;
   }
+
 }

@@ -41,4 +41,12 @@ public class Match {
   public int getFileEndOffset() {
     return fileEndOffset;
   }
+
+  public boolean isBefore(Match match) {
+    return fileEndOffset < match.getFileStartOffset();
+  }
+
+  public boolean isAfter(Match match) {
+    return fileStartOffset > match.getFileEndOffset();
+  }
 }

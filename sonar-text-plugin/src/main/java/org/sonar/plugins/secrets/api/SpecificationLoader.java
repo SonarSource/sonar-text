@@ -31,8 +31,6 @@ import org.sonar.plugins.secrets.configuration.deserialization.DeserializationEx
 import org.sonar.plugins.secrets.configuration.deserialization.SpecificationDeserializer;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.Specification;
-import org.sonar.plugins.secrets.configuration.model.matching.Matching;
-import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
 import org.sonar.plugins.secrets.configuration.validation.SchemaValidationException;
 
 public class SpecificationLoader {
@@ -61,25 +59,10 @@ public class SpecificationLoader {
       }
 
       for (Rule rule : specification.getProvider().getRules()) {
-        if (!ruleFunctionalityIsNotImplementedFor(rule)) {
-          keyToRule.computeIfAbsent(rule.getRspecKey(), k -> new ArrayList<>()).add(rule);
-        }
+        keyToRule.computeIfAbsent(rule.getRspecKey(), k -> new ArrayList<>()).add(rule);
       }
     }
     return keyToRule;
-  }
-
-  //TODO: SONARTEXT-44 Add the missing detection logic to the Specification based Check
-  @SuppressWarnings("java:S2259")
-  static boolean ruleFunctionalityIsNotImplementedFor(Rule rule) {
-    // TODO: SONARTEXT-31: Add Context to detection logic
-    boolean contextIsSet = rule.getDetection().getMatching().getContext() != null;
-
-    // TODO: SONARTEXT-48: Extend Post-Filter to include heuristic Filter
-    PostModule post = rule.getDetection().getPost();
-    boolean heuristicFilterIsSet = post != null && post.getHeuristicFilter() != null;
-
-    return contextIsSet || heuristicFilterIsSet;
   }
 
   private static Specification loadSpecification(String specificationLocation, String fileName) {
