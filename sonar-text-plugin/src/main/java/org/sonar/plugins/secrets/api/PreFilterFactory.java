@@ -23,6 +23,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
@@ -83,8 +84,8 @@ public class PreFilterFactory {
     if (content.isBlank()) {
       return false;
     }
-    String contentLowerCase = content.toLowerCase();
-    return ctx.lines().stream().anyMatch(line -> line.toLowerCase().contains(contentLowerCase));
+    String contentLowerCase = content.toLowerCase(Locale.getDefault());
+    return ctx.lines().stream().anyMatch(line -> line.toLowerCase(Locale.getDefault()).contains(contentLowerCase));
   }
 
   static boolean matchesExt(String ext, InputFileContext ctx) {
