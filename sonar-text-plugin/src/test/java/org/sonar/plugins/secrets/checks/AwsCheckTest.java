@@ -21,7 +21,6 @@ package org.sonar.plugins.secrets.checks;
 
 import java.io.IOException;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.sonar.plugins.common.Check;
@@ -48,55 +47,8 @@ class AwsCheckTest extends AbstractRuleExampleTest {
     ((SpecificationBasedCheck) check).initialize(specificationLoader);
   }
 
-  @Test
-  void key_id_positive() throws IOException {
-    String fileContent = "" +
-      "public class Foo {\n" +
-      "  public static final String KEY = \"AKIAIGKECZXA7AEIJLMQ\"\n" +
-      "}";
-    assertThat(analyze(check, fileContent)).isEmpty();
-  }
-
-  @Test
-  void key_id_positive_not_example() throws IOException {
-    String fileContent = "" +
-      "public class Foo {\n" +
-      "  /* This is for aws */\n" +
-      "  public static final String KEY = \"AKIAIGKECZXA7EXAMPLF\"\n" +
-      "}";
-    assertThat(analyze(check, fileContent)).containsExactly(
-      "secrets:S6290 [3:36-3:56] Make sure this AWS Access Key ID gets revoked, changed, and removed from the code.");
-  }
-
-  @Test
-  void access_key_positive1() throws IOException {
-    String fileContent = "" +
-      "var creds = new AWS.Credentials({ " +
-      "     secretAccessKey: 'kHeUAwnSUizTWpSbyGAz4f+As5LshPIjvtpswqGb' " +
-      "});";
-    assertThat(analyze(check, fileContent)).containsExactly(
-      "secrets:S6290 [1:57-1:97] Make sure this AWS Secret Access Key gets revoked, changed, and removed from the code.");
-  }
-
-  @Test
-  void access_key_positive2() throws IOException {
-    String fileContent = "aws_secret_access_key=kHeUAwnSUizTWpSbyGAz4f+As5LshPIjvtpswqGb";
-    assertThat(analyze(check, fileContent)).containsExactly(
-      "secrets:S6290 [1:22-1:62] Make sure this AWS Secret Access Key gets revoked, changed, and removed from the code.");
-  }
-
   @ParameterizedTest
   @ValueSource(strings = {
-    // extra characters before
-    "public static final String KEY = \"BACAKIAIGKECZXA7AEIJLMQ\"; // Not really AWS\n",
-    "\tsecretKey := stellar1.SecretKey(\"SDGCPMBQHYAIWM3PQOEKWICDMLVT7REJ24J26QEYJYGB6FJ\")",
-    // extra characters after
-    "public static final String KEY = \"AKIAIGKECZXA7AEIJLMQBAC\";\n",
-    "\tsecretKey := stellar1.SecretKey(\"QHYAIWM3PQOEKWICDMLVT7REJ24J26QEYJYGB6FJRPTKDULQX\")",
-    // not a key id
-    "public class Foo {\n" +
-      "  public static final String KEY = \"AKIGIGKECZXA7AEIJLMQ\"\n" +
-      "}",
     // key id with EXAMPLE
     "public class Foo {\n" +
       "  public static final String KEY = \"AKIAIGKECZXA7EXAMPLE\"\n" +
@@ -109,5 +61,4 @@ class AwsCheckTest extends AbstractRuleExampleTest {
   void negative(String fileContent) throws IOException {
     assertThat(analyze(check, fileContent)).isEmpty();
   }
-
 }
