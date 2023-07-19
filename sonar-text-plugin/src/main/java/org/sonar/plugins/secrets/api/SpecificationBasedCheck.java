@@ -59,7 +59,7 @@ public abstract class SpecificationBasedCheck extends Check {
     List<TextRange> foundSecrets = new ArrayList<>();
 
     for (SecretMatcher secretMatcher : matcher) {
-      secretMatcher.findIn(ctx.content()).stream()
+      secretMatcher.findIn(ctx).stream()
         .map(match -> ctx.newTextRangeFromFileOffsets(match.getFileStartOffset(), match.getFileEndOffset()))
         .forEach(textRange -> {
           boolean notOverlapsExisting = foundSecrets.stream().noneMatch(foundSecret -> foundSecret.overlap(textRange));
