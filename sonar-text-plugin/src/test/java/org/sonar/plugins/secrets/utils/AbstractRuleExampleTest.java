@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import org.assertj.core.api.Assertions;
 import org.assertj.core.data.MapEntry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DynamicTest;
@@ -44,6 +43,7 @@ import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.RuleExample;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
@@ -82,18 +82,22 @@ public abstract class AbstractRuleExampleTest {
 
         Collection<Issue> issues = context.allIssues();
         if (ruleExample.isContainsSecret()) {
-            Matching matching = new Matching();
-            matching.setPattern(".*(" + Pattern.quote(ruleExample.getMatch().stripTrailing()) + ").*");
-            PatternMatcher matcher = PatternMatcher.build(matching);
-            List<Match> matches = matcher.findIn(ruleExample.getText());
-            TextRange expectedRange = inputFileContext.newTextRangeFromFileOffsets(matches.get(0).getFileStartOffset(), matches.get(0).getFileEndOffset());
+            TextRange expectedRange = calculateRange(ruleExample, inputFileContext);
 
-            Assertions.assertThat(issues).isNotEmpty();
-            Assertions.assertThat(issues).anyMatch(s -> asString(s).contains(rule.getMetadata().getMessage()));
-            Assertions.assertThat(issues).anyMatch(s -> asString(s).contains(rule.getRspecKey()));
-            Assertions.assertThat(issues).map(i -> i.primaryLocation().textRange()).contains(expectedRange);
+            assertThat(issues).isNotEmpty();
+            assertThat(issues).anyMatch(s -> asString(s).contains(rule.getMetadata().getMessage()));
+            assertThat(issues).anyMatch(s -> asString(s).contains(rule.getRspecKey()));
+            assertThat(issues).map(i -> i.primaryLocation().textRange()).contains(expectedRange);
         } else {
-            Assertions.assertThat(issues).isEmpty();
+            assertThat(issues).isEmpty();
         }
+    }
+
+    private TextRange calculateRange(RuleExample ruleExample, InputFileContext ctx) {
+        Matching matching = new Matching();
+        matching.setPattern(".*(" + Pattern.quote(ruleExample.getMatch().stripTrailing()) + ").*");
+        PatternMatcher matcher = PatternMatcher.build(matching);
+        List<Match> matches = matcher.findIn(ruleExample.getText());
+        return ctx.newTextRangeFromFileOffsets(matches.get(0).getFileStartOffset(), matches.get(0).getFileEndOffset());
     }
 }
