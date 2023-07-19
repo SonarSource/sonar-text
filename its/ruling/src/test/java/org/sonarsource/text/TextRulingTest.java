@@ -37,7 +37,7 @@ public class TextRulingTest {
 
   private static final String SQ_VERSION_PROPERTY = "sonar.runtimeVersion";
   private static final String DEFAULT_SQ_VERSION = "LATEST_RELEASE";
-  private static final String LITS_PLUGIN_VERSION = "0.8.0.1209";
+  private static final String LITS_PLUGIN_VERSION = "0.11.0.2659";
   private static final File LITS_DIFFERENCES_FILE = FileLocation.of("target/differences").getFile();
 
   @ClassRule
@@ -70,11 +70,11 @@ public class TextRulingTest {
       .setProjectVersion("1")
       .setSourceDirs(".")
       .setSourceEncoding("UTF-8")
-      .setProperty("dump.old", FileLocation.of("src/test/resources/expected").getFile().getAbsolutePath())
-      .setProperty("dump.new", FileLocation.of("target/actual").getFile().getAbsolutePath())
+      .setProperty("sonar.lits.dump.old", FileLocation.of("src/test/resources/expected").getFile().getAbsolutePath())
+      .setProperty("sonar.lits.dump.new", FileLocation.of("target/actual").getFile().getAbsolutePath())
       .setProperty("sonar.text.analyzeAllFiles", "true")
       .setProperty("sonar.cpd.exclusions", "**/*")
-      .setProperty("lits.differences", LITS_DIFFERENCES_FILE.getAbsolutePath());
+      .setProperty("sonar.lits.differences", LITS_DIFFERENCES_FILE.getAbsolutePath());
     build.setEnvironmentVariable("SONAR_RUNNER_OPTS", "-Xmx1000m");
     ORCHESTRATOR.executeBuild(build);
 
