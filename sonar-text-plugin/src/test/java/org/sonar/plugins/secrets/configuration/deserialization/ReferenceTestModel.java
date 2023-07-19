@@ -210,7 +210,7 @@ public class ReferenceTestModel {
     statisticalFilter.setThreshold(4.2f);
 
     HeuristicsFilter heuristicsFilter = new HeuristicsFilter();
-    heuristicsFilter.setHeuristics(List.of("exampleHeuristics"));
+    heuristicsFilter.setHeuristics(List.of("uri"));
     heuristicsFilter.setInputString("groupName");
 
     postModule.setStatisticalFilter(statisticalFilter);

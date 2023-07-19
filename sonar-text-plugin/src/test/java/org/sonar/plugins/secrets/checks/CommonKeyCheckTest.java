@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.analyze;
 
 //TODO SONARTEXT-51 Validate functionality of detection logic for specified secrets
+@java.lang.SuppressWarnings("squid:S6652")
 class CommonKeyCheckTest {
 
   static Check check;

@@ -133,7 +133,7 @@ class PostFilterFactoryTest {
   }
 
   @Test
-  void statisticalFilterShouldReturnTrueOnNamedGroup() {
+  void statisticalFilterShouldReturnFalseOnNamedGroup() {
     PostModule postModule = ReferenceTestModel.constructPostModule();
 
     Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter(), matching);
@@ -142,11 +142,21 @@ class PostFilterFactoryTest {
   }
 
   @Test
-  void statisticalFilterShouldReturnFalseOnNamedGroup() {
+  void statisticalFilterShouldReturnTrueOnNamedGroup() {
     PostModule postModule = ReferenceTestModel.constructPostModule();
     postModule.getStatisticalFilter().setThreshold(1f);
 
     Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter(), matching);
+
+    assertThat(predicate.test("candidate secret")).isTrue();
+  }
+
+  @Test
+  void statisticalFilterShouldReturnTrueBecauseMatchingIsNull() {
+    PostModule postModule = ReferenceTestModel.constructPostModule();
+    postModule.getStatisticalFilter().setThreshold(1f);
+
+    Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter(), null);
 
     assertThat(predicate.test("candidate secret")).isTrue();
   }
@@ -164,6 +174,24 @@ class PostFilterFactoryTest {
     Predicate<String> predicate = PostFilterFactory.filterForPatternNot("patternNot");
 
     assertThat(predicate.test("candidate secret with patternNot")).isFalse();
+  }
+
+  @Test
+  void heuristicFilterShouldReturnTrue() {
+    PostModule postModule = ReferenceTestModel.constructPostModule();
+
+    Predicate<String> predicate = PostFilterFactory.filterForHeuristicsFilter(postModule.getHeuristicFilter());
+
+    assertThat(predicate.test("not a valid uri")).isTrue();
+  }
+
+  @Test
+  void heuristicFilterShouldReturnFalse() {
+    PostModule postModule = ReferenceTestModel.constructPostModule();
+
+    Predicate<String> predicate = PostFilterFactory.filterForHeuristicsFilter(postModule.getHeuristicFilter());
+
+    assertThat(predicate.test("https://sonarsource.com")).isFalse();
   }
 
   @ParameterizedTest

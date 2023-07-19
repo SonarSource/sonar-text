@@ -72,7 +72,7 @@ provider:
           patternNot: EXAMPLEKEY
           heuristicFilter:
             heuristics:
-              - "exampleHeuristics"
+              - "uri"
             inputString: "groupName"
       examples:
         - text: >
