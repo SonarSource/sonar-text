@@ -58,13 +58,13 @@ provider:
           pattern: "\\b(rule matching pattern)\\b"
           context:
             matchEither:
-              - patternBefore: "pattern-before"
+              - patternBefore: "\\b(pattern-before)\\b"
               - matchEach:
-                  - patternAfter: "pattern-after"
-                  - patternAround: "pattern-around"
+                  - patternAfter: "\\b(pattern-after)\\b"
+                  - patternAround: "\\b(pattern-around)\\b"
               - matchEither:
-                  - patternNot: "pattern-not"
-                  - patternAround: "pattern-around"
+                  - patternNot: "\\b(pattern-not)\\b"
+                  - patternAround: "\\b(pattern-around)\\b"
         post:
           statisticalFilter:
             threshold: 4.2

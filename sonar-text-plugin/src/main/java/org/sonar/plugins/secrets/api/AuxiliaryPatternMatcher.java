@@ -20,31 +20,26 @@
 package org.sonar.plugins.secrets.api;
 
 import java.util.List;
-import org.junit.jupiter.api.Test;
-import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 
-import static org.assertj.core.api.Assertions.assertThat;
+public interface AuxiliaryPatternMatcher {
 
-class PatternMatcherTest {
+  DefaultAuxiliaryMatcher NO_FILTERING_AUXILIARY_MATCHER = new DefaultAuxiliaryMatcher();
 
-  @Test
-  void testWithNoSuppliedPattern() {
-    PatternMatcher noDetectionMatcher = PatternMatcher.build((Matching) null);
-    List<Match> matches = noDetectionMatcher.findIn("test");
-    assertThat(matches).isEmpty();
+  List<Match> filter(List<Match> candidateMatches, String content);
+
+  default AuxiliaryPatternMatcher and(AuxiliaryPatternMatcher secondMatcher) {
+    return new ConjunctionMatcher(this, secondMatcher);
   }
 
-  @Test
-  void patternMatcherShouldNotRelyOnRegexDelimiters() {
-    PatternMatcher patternMatcher = new PatternMatcher("pattern");
-    List<Match> matches = patternMatcher.findIn("pattern pattern");
-    assertThat(matches).hasSize(2);
+  default AuxiliaryPatternMatcher or(AuxiliaryPatternMatcher secondMatcher) {
+    return new DisjunctionMatcher(this, secondMatcher);
   }
 
-  @Test
-  void patternMatcherShouldProduceTwoMatchesWithDelimiters() {
-    PatternMatcher patternMatcher = new PatternMatcher("\\b(pattern)\\b");
-    List<Match> matches = patternMatcher.findIn("pattern pattern");
-    assertThat(matches).hasSize(2);
+  class DefaultAuxiliaryMatcher implements AuxiliaryPatternMatcher {
+
+    @Override
+    public List<Match> filter(List<Match> candidateMatches, String content) {
+      return candidateMatches;
+    }
   }
 }
