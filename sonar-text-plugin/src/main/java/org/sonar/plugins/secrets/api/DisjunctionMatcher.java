@@ -20,31 +20,21 @@
 package org.sonar.plugins.secrets.api;
 
 import java.util.List;
-import org.junit.jupiter.api.Test;
-import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 
-import static org.assertj.core.api.Assertions.assertThat;
+public class DisjunctionMatcher implements AuxiliaryPatternMatcher {
 
-class PatternMatcherTest {
+  private final AuxiliaryPatternMatcher matcherLeft;
+  private final AuxiliaryPatternMatcher matcherRight;
 
-  @Test
-  void testWithNoSuppliedPattern() {
-    PatternMatcher noDetectionMatcher = PatternMatcher.build((Matching) null);
-    List<Match> matches = noDetectionMatcher.findIn("test");
-    assertThat(matches).isEmpty();
+  public DisjunctionMatcher(AuxiliaryPatternMatcher matcherLeft, AuxiliaryPatternMatcher matcherRight) {
+    this.matcherLeft = matcherLeft;
+    this.matcherRight = matcherRight;
   }
 
-  @Test
-  void patternMatcherShouldNotRelyOnRegexDelimiters() {
-    PatternMatcher patternMatcher = new PatternMatcher("pattern");
-    List<Match> matches = patternMatcher.findIn("pattern pattern");
-    assertThat(matches).hasSize(2);
-  }
-
-  @Test
-  void patternMatcherShouldProduceTwoMatchesWithDelimiters() {
-    PatternMatcher patternMatcher = new PatternMatcher("\\b(pattern)\\b");
-    List<Match> matches = patternMatcher.findIn("pattern pattern");
-    assertThat(matches).hasSize(2);
+  @Override
+  public List<Match> filter(List<Match> regexMatch, String content) {
+    List<Match> matchesLeft = matcherLeft.filter(regexMatch, content);
+    matchesLeft.addAll(matcherRight.filter(regexMatch, content));
+    return matchesLeft;
   }
 }

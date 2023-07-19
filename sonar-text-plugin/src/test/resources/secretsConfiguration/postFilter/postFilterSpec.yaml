@@ -36,44 +36,12 @@ provider:
             link: https://docs.aws.amazon.com/IAM/...
             type: Standards
       detection:
-        pre:
-          include:
-            paths:
-              - "*.aws/config"
-              - ".env"
-            ext:
-              - ".config"
-            content:
-              - "amazonaws.com"
-              - "aws"
-          reject:
-            paths:
-              - ".json"
-              - "*.idea/config"
-            ext:
-              - ".docker"
-            content:
-              - "someContent.com"
         matching:
           pattern: "\\b(rule matching pattern)\\b"
-          context:
-            matchEither:
-              - patternBefore: "\\b(pattern-before)\\b"
-              - matchEach:
-                  - patternAfter: "\\b(pattern-after)\\b"
-                  - patternAround: "\\b(pattern-around)\\b"
-              - matchEither:
-                  - patternNot: "\\b(pattern-not)\\b"
-                  - patternAround: "\\b(pattern-around)\\b"
         post:
           statisticalFilter:
             threshold: 4.2
-            inputString: "Test String"
           patternNot: EXAMPLEKEY
-          heuristicFilter:
-            heuristics:
-              - "exampleHeuristics"
-            inputString: "Test String"
       examples:
         - text: >
             example

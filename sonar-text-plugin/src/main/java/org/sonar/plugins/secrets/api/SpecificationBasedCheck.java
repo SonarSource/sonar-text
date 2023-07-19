@@ -71,4 +71,8 @@ public abstract class SpecificationBasedCheck extends Check {
     }
   }
 
+  public List<SecretMatcher> getMatcher() {
+    return matcher;
+  }
+
 }

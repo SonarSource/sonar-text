@@ -46,7 +46,7 @@ class SecretsRulesDefinitionTest {
     assertThat(context.repositories()).hasSize(1);
     RulesDefinition.Repository repository = context.repository(REPOSITORY_KEY);
     assertThat(repository).isNotNull();
-    assertThat(repository.rules()).hasSize(7);
+    assertThat(repository.rules()).hasSize(8);
     assertThat(repository.name()).isEqualTo("Sonar Secrets Analyzer");
 
     RulesDefinition.Rule ruleS7529 = repository.rule("S6290");
@@ -65,7 +65,7 @@ class SecretsRulesDefinitionTest {
     BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile("secrets", "Sonar way");
     assertThat(profile.language()).isEqualTo("secrets");
     assertThat(profile.name()).isEqualTo("Sonar way");
-    assertThat(profile.rules()).hasSize(7);
+    assertThat(profile.rules()).hasSize(8);
   }
 
   @Test
