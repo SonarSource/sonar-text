@@ -19,13 +19,12 @@
  */
 package org.sonar.plugins.secrets.api;
 
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.FileFilter;
@@ -70,10 +69,10 @@ public class PreFilterFactory {
     if (path.isBlank()) {
       return false;
     } else if (path.contains("*")) {
-      PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:**/" + path);
-      return matcher.matches(Path.of(ctx.getInputFile().uri()));
+      Matcher matcher = Pattern.compile(path).matcher(ctx.getInputFile().absolutePath());
+      return matcher.find();
     } else {
-      return ctx.getInputFile().uri().toString().contains(path);
+      return ctx.getInputFile().absolutePath().contains(path);
     }
   }
 

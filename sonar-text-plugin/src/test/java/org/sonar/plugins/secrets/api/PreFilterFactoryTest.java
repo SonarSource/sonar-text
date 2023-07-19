@@ -22,8 +22,6 @@ package org.sonar.plugins.secrets.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -58,19 +56,19 @@ class PreFilterFactoryTest {
 
   @ParameterizedTest
   @CsvSource({
-      "src/*.cpp, /home/user/project/src/file.cpp, true",
-      "src/*.cpp, /home/user/project/src/file.java, false",
-      "src/*, /home/user/project/src/file.cpp, true",
-      "src/*, /home/user/project/resources/file.json, false",
-      "src/*, /home/user/project/src/main/file.cpp, true",
+      "src/.*\\.cpp, /home/user/project/src/file.cpp, true",
+      "src/.*\\.cpp, /home/user/project/src/file.java, false",
+      "src/.*, /home/user/project/src/file.cpp, true",
+      "src/.*, /home/user/project/resources/file.json, false",
+      "src/.*, /home/user/project/src/main/file.cpp, true",
       "file.cpp, /home/user/project/src/file.cpp, true",
-      "*/file.cpp, /home/user/project/src/file.cpp, true",
+      ".*/file.cpp, /home/user/project/src/file.cpp, true",
       "'', /home/user/project/src/file.cpp, false",
   })
-  void testMatchesPath(String pathPattern, String filePath, boolean shouldMatch) throws URISyntaxException {
+  void testMatchesPath(String pathPattern, String filePath, boolean shouldMatch) {
     InputFileContext ctx = mock(InputFileContext.class);
     when(ctx.getInputFile()).thenReturn(mock(InputFile.class));
-    when(ctx.getInputFile().uri()).thenReturn(new URI("file://" + filePath));
+    when(ctx.getInputFile().absolutePath()).thenReturn(filePath);
     assertThat(PreFilterFactory.matchesPath(pathPattern, ctx)).isEqualTo(shouldMatch);
   }
 
@@ -88,7 +86,7 @@ class PreFilterFactoryTest {
 
   @ParameterizedTest
   @MethodSource("inputs")
-  void test(String input, String filename, boolean shouldMatch) throws IOException, URISyntaxException {
+  void testFiltersFromYamlFragments(String input, String filename, boolean shouldMatch) throws IOException {
     Detection detection = MAPPER.readValue(input, Detection.class);
 
     Predicate<InputFileContext> predicate = PreFilterFactory.createPredicate(detection.getPre());
@@ -96,7 +94,7 @@ class PreFilterFactoryTest {
     InputFileContext ctx = mock(InputFileContext.class);
     when(ctx.getInputFile()).thenReturn(mock(InputFile.class));
     when(ctx.getInputFile().filename()).thenReturn(filename);
-    when(ctx.getInputFile().uri()).thenReturn(new URI("file://" + filename));
+    when(ctx.getInputFile().absolutePath()).thenReturn(filename);
     when(ctx.lines()).thenReturn(List.of());
 
     assertThat(predicate.test(ctx)).isEqualTo(shouldMatch);
@@ -109,7 +107,7 @@ class PreFilterFactoryTest {
             "pre:\n" +
                 "  include:\n" +
                 "    paths:\n" +
-                "      - \".env\"",
+                "      - \".*\\\\.env$\"",
             ".env",
             true
         ),
@@ -117,7 +115,7 @@ class PreFilterFactoryTest {
             "pre:\n" +
                 "  reject:\n" +
                 "    paths:\n" +
-                "      - \".env\"",
+                "      - \".*\\\\.env$\"",
             ".env",
             false
         ),
@@ -125,10 +123,10 @@ class PreFilterFactoryTest {
             "pre:\n" +
                 "  include:\n" +
                 "    paths:\n" +
-                "      - \".env\"\n" +
+                "      - \".*\\\\.env$\"\n" +
                 "  reject:\n" +
                 "    paths:\n" +
-                "      - \".env\"",
+                "      - \".*\\\\.env$\"",
             ".env",
             false
         ),
