@@ -19,9 +19,11 @@
  */
 package org.sonar.plugins.secrets.api;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 
 public class SecretMatcher {
@@ -29,23 +31,31 @@ public class SecretMatcher {
   private final Rule rule;
   private final PatternMatcher patternMatcher;
   private final AuxiliaryPatternMatcher auxiliaryPatternMatcher;
+  private final Predicate<InputFileContext> preFilter;
   private final Predicate<String> postFilter;
 
-  SecretMatcher(Rule rule, PatternMatcher patternMatcher, AuxiliaryPatternMatcher auxiliaryPatternMatcher, Predicate<String> postFilter) {
+  SecretMatcher(Rule rule, PatternMatcher patternMatcher, AuxiliaryPatternMatcher auxiliaryPatternMatcher, Predicate<InputFileContext> preFilter, Predicate<String> postFilter) {
     this.rule = rule;
     this.patternMatcher = patternMatcher;
     this.auxiliaryPatternMatcher = auxiliaryPatternMatcher;
+    this.preFilter = preFilter;
     this.postFilter = postFilter;
   }
 
   public static SecretMatcher build(Rule rule) {
     PatternMatcher patternMatcher = PatternMatcher.build(rule.getDetection().getMatching());
-    Predicate<String> filter = PostFilterFactory.createPredicate(rule.getDetection().getPost());
+    Predicate<InputFileContext> preFilter = PreFilterFactory.createPredicate(rule.getDetection().getPre());
+    Predicate<String> postFilter = PostFilterFactory.createPredicate(rule.getDetection().getPost());
     AuxiliaryPatternMatcher auxiliaryMatcher = AuxiliaryPatternMatcherFactory.build(rule.getDetection().getMatching());
-    return new SecretMatcher(rule, patternMatcher, auxiliaryMatcher, filter);
+    return new SecretMatcher(rule, patternMatcher, auxiliaryMatcher, preFilter, postFilter);
   }
 
-  public List<Match> findIn(String content) {
+  public List<Match> findIn(InputFileContext fileContext) {
+    if (!preFilter.test(fileContext)) {
+      return Collections.emptyList();
+    }
+
+    String content = fileContext.content();
     List<Match> candidateSecrets = patternMatcher.findIn(content);
     List<Match> secretsFilteredOnContext = auxiliaryPatternMatcher.filter(candidateSecrets, content);
     return secretsFilteredOnContext.stream()

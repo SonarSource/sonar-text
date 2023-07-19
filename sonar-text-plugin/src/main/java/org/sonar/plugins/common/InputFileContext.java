@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextPointer;
 import org.sonar.api.batch.fs.TextRange;
@@ -42,13 +43,14 @@ public class InputFileContext {
   private static final char LINE_FEED = '\n';
 
   private final SensorContext sensorContext;
+
   private final InputFile inputFile;
 
   private final boolean hasNonTextCharacters;
 
   private final List<String> lines;
-  private final String normalizedContent;
 
+  private final String normalizedContent;
   private final Set<String> raisedIssues = new HashSet<>();
 
   public InputFileContext(SensorContext sensorContext, InputFile inputFile) throws IOException {
@@ -144,4 +146,11 @@ public class InputFileContext {
     throw new IllegalStateException("Invalid offsets: startOffset=" + startOffset + ", endOffset=" + endOffset);
   }
 
+  public InputFile getInputFile() {
+    return inputFile;
+  }
+
+  public FileSystem getFileSystem() {
+    return sensorContext.fileSystem();
+  }
 }
