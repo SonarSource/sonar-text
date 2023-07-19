@@ -38,7 +38,7 @@ class AwsCheckTest extends AbstractRuleExampleTest {
   static Check check;
 
   protected AwsCheckTest() {
-    super(new AwsCheck(), "aws.yaml");
+    super(new AwsCheck(), "S6290");
   }
 
   @BeforeAll

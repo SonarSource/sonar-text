@@ -24,6 +24,6 @@ import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
 @java.lang.SuppressWarnings("squid:S6292")
 class MwsAuthTokenCheckTest extends AbstractRuleExampleTest {
   MwsAuthTokenCheckTest() {
-    super(new MwsAuthTokenCheck(), "mws.yaml");
+    super(new MwsAuthTokenCheck(), "S6292");
   }
 }

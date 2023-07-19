@@ -24,6 +24,6 @@ import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
 @java.lang.SuppressWarnings("squid:S6336")
 class AlibabaCloudAccessKeyCheckTest extends AbstractRuleExampleTest {
   protected AlibabaCloudAccessKeyCheckTest() {
-    super(new AlibabaCloudAccessKeyCheck(), "alibaba.yaml");
+    super(new AlibabaCloudAccessKeyCheck(), "S6336");
   }
 }

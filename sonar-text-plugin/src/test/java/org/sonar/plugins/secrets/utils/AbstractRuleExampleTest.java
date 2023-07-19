@@ -20,11 +20,8 @@
 package org.sonar.plugins.secrets.utils;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -50,22 +47,16 @@ import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
-import static org.sonar.plugins.secrets.api.SpecificationLoader.DEFAULT_SPECIFICATION_LOCATION;
 
 public abstract class AbstractRuleExampleTest {
     private final Check check;
-    private final URI configurationFile;
     private final SpecificationLoader specificationLoader;
+    private final String rspecKey;
 
-    protected AbstractRuleExampleTest(Check check, String configurationFile) {
-        specificationLoader = new SpecificationLoader(DEFAULT_SPECIFICATION_LOCATION, Set.of(configurationFile));
+    protected AbstractRuleExampleTest(Check check, String rspecKey) {
+        this.rspecKey = rspecKey;
+        specificationLoader = new SpecificationLoader();
         this.check = check;
-        try {
-            this.configurationFile = SpecificationLoader.class.getClassLoader()
-                    .getResource(DEFAULT_SPECIFICATION_LOCATION + "/" + configurationFile).toURI();
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
         ((SpecificationBasedCheck) check).initialize(specificationLoader);
     }
 
@@ -79,11 +70,8 @@ public abstract class AbstractRuleExampleTest {
         ThrowingConsumer<MapEntry<Rule, RuleExample>> testExecutor = ruleToExample -> checkExample(ruleToExample.getKey(), ruleToExample.getValue());
 
         return input
-                .filter(e ->
-                        // TODO: remove this line after tests are fixed
-                        !e.getKey().getId().startsWith("azure-subscription-keys")
-                )
-                .map(e -> DynamicTest.dynamicTest(displayNameGenerator.apply(e), configurationFile, () -> testExecutor.accept(e)));
+                .filter(e -> rspecKey.equals(e.getKey().getRspecKey()))
+                .map(e -> DynamicTest.dynamicTest(displayNameGenerator.apply(e), () -> testExecutor.accept(e)));
     }
 
     private void checkExample(Rule rule, RuleExample ruleExample) throws IOException {

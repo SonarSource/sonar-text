@@ -37,7 +37,7 @@ class GoogleCloudAccountKeyCheckTest extends AbstractRuleExampleTest {
   static Check check;
 
   GoogleCloudAccountKeyCheckTest() {
-    super(new GoogleCloudAccountKeyCheck(), "gcp.yaml");
+    super(new GoogleCloudAccountKeyCheck(), "S6335");
   }
 
   @BeforeAll
