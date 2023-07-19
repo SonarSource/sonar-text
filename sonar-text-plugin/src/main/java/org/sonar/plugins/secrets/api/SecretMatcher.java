@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.secrets.api;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -33,6 +34,7 @@ public class SecretMatcher {
   private final Predicate<InputFileContext> preFilter;
 
   private final Predicate<String> postFilter;
+
   SecretMatcher(Rule rule, PatternMatcher patternMatcher, Predicate<InputFileContext> preFilter, Predicate<String> postFilter) {
     this.rule = rule;
     this.patternMatcher = patternMatcher;
@@ -47,8 +49,12 @@ public class SecretMatcher {
     return new SecretMatcher(rule, matcher, preFilter, postFilter);
   }
 
-  public List<Match> findIn(String content) {
-    return patternMatcher.findIn(content).stream()
+  public List<Match> findIn(InputFileContext fileContext) {
+    if (!getPreFilter().test(fileContext)) {
+      return Collections.emptyList();
+    }
+
+    return patternMatcher.findIn(fileContext.content()).stream()
       .filter(match -> postFilter.test(match.getText())).collect(Collectors.toList());
   }
 

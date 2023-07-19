@@ -35,7 +35,6 @@ public class PreFilterFactory {
   private PreFilterFactory() {}
 
   private static final Predicate<InputFileContext> INCLUDE_ALL_FILES = ctx -> true;
-  private static final Predicate<InputFileContext> REJECT_ALL_FILES = ctx -> false;
 
   public static Predicate<InputFileContext> createPredicate(@Nullable PreModule pre) {
     if (pre == null) {
@@ -45,13 +44,11 @@ public class PreFilterFactory {
     Predicate<InputFileContext> predicate = INCLUDE_ALL_FILES;
     FileFilter include = pre.getInclude();
     FileFilter reject = pre.getReject();
-    if (reject != null && include == null) {
-      predicate = INCLUDE_ALL_FILES.and(Predicate.not(ctx -> matches(pre.getReject(), ctx)));
-    } else if (reject != null) {
-      predicate = INCLUDE_ALL_FILES.and(ctx -> matches(include, ctx))
-              .and(Predicate.not(ctx -> matches(pre.getReject(), ctx)));
-    } else if (include != null) {
-      predicate = REJECT_ALL_FILES.or(ctx -> matches(include, ctx));
+    if (reject != null) {
+      predicate = predicate.and(Predicate.not(ctx -> matches(reject, ctx)));
+    }
+    if (include != null) {
+      predicate = predicate.and(ctx -> matches(include, ctx));
     }
     return predicate;
   }
@@ -62,11 +59,11 @@ public class PreFilterFactory {
       anyMatch(filter.getContent(), PreFilterFactory::matchesContent, ctx);
   }
 
-  private static boolean anyMatch(@Nullable List<String> input, BiPredicate<String, InputFileContext> predicate, InputFileContext ctx) {
-    if (input == null) {
+  private static boolean anyMatch(@Nullable List<String> filterElements, BiPredicate<String, InputFileContext> filterFunction, InputFileContext ctx) {
+    if (filterElements == null) {
       return false;
     }
-    return input.stream().anyMatch(s -> predicate.test(s, ctx));
+    return filterElements.stream().anyMatch(filterElement -> filterFunction.test(filterElement, ctx));
   }
 
   static boolean matchesPath(String path, InputFileContext ctx) {

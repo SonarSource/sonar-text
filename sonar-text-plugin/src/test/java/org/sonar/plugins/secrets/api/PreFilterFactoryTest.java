@@ -31,53 +31,58 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.Mockito;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.configuration.model.matching.Detection;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class PreFilterFactoryTest {
   private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
 
   @ParameterizedTest
   @CsvSource({
-          ".doc, file.doc, true",
-          ".doc, file.cpp, false",
-          "pp, file.cpp, true",
-          "'', file.cpp, false",
+      ".doc, file.doc, true",
+      ".doc, file.cpp, false",
+      "pp, file.cpp, true",
+      "'', file.cpp, false",
   })
   void testMatchesExt(String ext, String filename, boolean shouldMatch) {
-    InputFileContext ctx = Mockito.mock(InputFileContext.class);
-    Mockito.when(ctx.getInputFile()).thenReturn(Mockito.mock(InputFile.class));
-    Mockito.when(ctx.getInputFile().filename()).thenReturn(filename);
+    InputFileContext ctx = mock(InputFileContext.class);
+    when(ctx.getInputFile()).thenReturn(mock(InputFile.class));
+    when(ctx.getInputFile().filename()).thenReturn(filename);
     assertThat(PreFilterFactory.matchesExt(ext, ctx)).isEqualTo(shouldMatch);
   }
 
   @ParameterizedTest
   @CsvSource({
-          "src/*.cpp, /home/user/project/src/file.cpp, true",
-          "file.cpp, /home/user/project/src/file.cpp, true",
-          "*/file.cpp, /home/user/project/src/file.cpp, true",
-          "'', /home/user/project/src/file.cpp, false",
+      "src/*.cpp, /home/user/project/src/file.cpp, true",
+      "src/*.cpp, /home/user/project/src/file.java, false",
+      "src/*, /home/user/project/src/file.cpp, true",
+      "src/*, /home/user/project/resources/file.json, false",
+      "src/*, /home/user/project/src/main/file.cpp, true",
+      "file.cpp, /home/user/project/src/file.cpp, true",
+      "*/file.cpp, /home/user/project/src/file.cpp, true",
+      "'', /home/user/project/src/file.cpp, false",
   })
   void testMatchesPath(String pathPattern, String filePath, boolean shouldMatch) throws URISyntaxException {
-    InputFileContext ctx = Mockito.mock(InputFileContext.class);
-    Mockito.when(ctx.getInputFile()).thenReturn(Mockito.mock(InputFile.class));
-    Mockito.when(ctx.getInputFile().uri()).thenReturn(new URI("file://" + filePath));
+    InputFileContext ctx = mock(InputFileContext.class);
+    when(ctx.getInputFile()).thenReturn(mock(InputFile.class));
+    when(ctx.getInputFile().uri()).thenReturn(new URI("file://" + filePath));
     assertThat(PreFilterFactory.matchesPath(pathPattern, ctx)).isEqualTo(shouldMatch);
   }
 
   @ParameterizedTest
   @CsvSource({
-          "secretstring, secretstring, true",
-          "secretstring, not-so-secret-string, false",
-          "'', secretstring, false",
+      "secretstring, secretstring, true",
+      "secretstring, not-so-secret-string, false",
+      "'', secretstring, false",
   })
   void testMatchesContent(String contentPattern, String fileContent, boolean shouldMatch) {
-    InputFileContext ctx = Mockito.mock(InputFileContext.class);
-    Mockito.when(ctx.lines()).thenReturn(List.of(fileContent));
+    InputFileContext ctx = mock(InputFileContext.class);
+    when(ctx.lines()).thenReturn(List.of(fileContent));
     assertThat(PreFilterFactory.matchesContent(contentPattern, ctx)).isEqualTo(shouldMatch);
   }
 
@@ -88,69 +93,69 @@ class PreFilterFactoryTest {
 
     Predicate<InputFileContext> predicate = PreFilterFactory.createPredicate(detection.getPre());
 
-    InputFileContext ctx = Mockito.mock(InputFileContext.class);
-    Mockito.when(ctx.getInputFile()).thenReturn(Mockito.mock(InputFile.class));
-    Mockito.when(ctx.getInputFile().filename()).thenReturn(filename);
-    Mockito.when(ctx.getInputFile().uri()).thenReturn(new URI("file://" + filename));
-    Mockito.when(ctx.lines()).thenReturn(List.of());
+    InputFileContext ctx = mock(InputFileContext.class);
+    when(ctx.getInputFile()).thenReturn(mock(InputFile.class));
+    when(ctx.getInputFile().filename()).thenReturn(filename);
+    when(ctx.getInputFile().uri()).thenReturn(new URI("file://" + filename));
+    when(ctx.lines()).thenReturn(List.of());
 
     assertThat(predicate.test(ctx)).isEqualTo(shouldMatch);
   }
 
   static Stream<Arguments> inputs() {
     return Stream.of(
-            Arguments.of("pre:", ".env", true),
-            Arguments.of(
-                    "pre:\n" +
-                    "  include:\n" +
-                    "    paths:\n" +
-                    "      - \".env\"",
-                    ".env",
-                    true
-            ),
-            Arguments.of(
-                    "pre:\n" +
-                    "  reject:\n" +
-                            "    paths:\n" +
-                            "      - \".env\"",
-                    ".env",
-                    false
-            ),
-            Arguments.of(
-                    "pre:\n" +
-                    "  include:\n" +
-                            "    paths:\n" +
-                            "      - \".env\"\n" +
-                            "  reject:\n" +
-                            "    paths:\n" +
-                            "      - \".env\"",
-                    ".env",
-                    false
-            ),
-            Arguments.of(
-                    "pre:\n" +
-                            "  include:\n" +
-                            "    ext:\n" +
-                            "      - \".java\"",
-                    "Foo.java",
-                    true
-            ),
-            Arguments.of(
-                    "pre:\n" +
-                            "  include:\n" +
-                            "    ext:\n" +
-                            "      - \".java\"",
-                    "Foo.cpp",
-                    false
-            ),
-            Arguments.of(
-                    "pre:\n" +
-                            "  reject:\n" +
-                            "    ext:\n" +
-                            "      - \".class\"",
-                    "Foo.class",
-                    false
-            )
+        Arguments.of("pre:", ".env", true),
+        Arguments.of(
+            "pre:\n" +
+                "  include:\n" +
+                "    paths:\n" +
+                "      - \".env\"",
+            ".env",
+            true
+        ),
+        Arguments.of(
+            "pre:\n" +
+                "  reject:\n" +
+                "    paths:\n" +
+                "      - \".env\"",
+            ".env",
+            false
+        ),
+        Arguments.of(
+            "pre:\n" +
+                "  include:\n" +
+                "    paths:\n" +
+                "      - \".env\"\n" +
+                "  reject:\n" +
+                "    paths:\n" +
+                "      - \".env\"",
+            ".env",
+            false
+        ),
+        Arguments.of(
+            "pre:\n" +
+                "  include:\n" +
+                "    ext:\n" +
+                "      - \".java\"",
+            "Foo.java",
+            true
+        ),
+        Arguments.of(
+            "pre:\n" +
+                "  include:\n" +
+                "    ext:\n" +
+                "      - \".java\"",
+            "Foo.cpp",
+            false
+        ),
+        Arguments.of(
+            "pre:\n" +
+                "  reject:\n" +
+                "    ext:\n" +
+                "      - \".class\"",
+            "Foo.class",
+            false
+        )
     );
   }
 }
