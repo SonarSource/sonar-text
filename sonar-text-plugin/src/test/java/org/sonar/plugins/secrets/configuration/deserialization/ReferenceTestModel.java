@@ -160,19 +160,19 @@ public class ReferenceTestModel {
     BooleanCombination matchEach = new BooleanCombination();
     matchEach.setType(BooleanCombinationType.MATCH_EACH);
     matchEach.setMatches(List.of(
-      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AFTER, "pattern-after"),
-      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AROUND, "pattern-around")
+      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AFTER, "\\b(pattern-after)\\b"),
+      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AROUND, "\\b(pattern-around)\\b")
     ));
 
     BooleanCombination matchEitherLevelTwo = new BooleanCombination();
     matchEitherLevelTwo.setType(BooleanCombinationType.MATCH_EITHER);
     matchEitherLevelTwo.setMatches(List.of(
-      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_NOT, "pattern-not"),
-      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AROUND, "pattern-around")
+      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_NOT, "\\b(pattern-not)\\b"),
+      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AROUND, "\\b(pattern-around)\\b")
     ));
 
     List<Match> matches = new ArrayList<>();
-    matches.add(constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_BEFORE, "pattern-before"));
+    matches.add(constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_BEFORE, "\\b(pattern-before)\\b"));
     matches.add(matchEach);
     matches.add(matchEitherLevelTwo);
 

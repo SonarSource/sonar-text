@@ -32,7 +32,11 @@ public class SecretMatcherAssert extends AbstractAssert<SecretMatcherAssert, Sec
     "candidate secret with low entropy",
     "candidate secret with low entropy and patternNot:EXAMPLEKEY",
     "candidate secret with high entropy: lasdij2338f,.q29cm2acasd has patternNot:EXAMPLEKEY",
-    "candidate secret with high entropy: lasdij2338f,.q29cm2acasd"
+    "candidate secret with high entropy: lasdij2338f,.q29cm2acasd",
+    "C:\\Users\\User",
+    "asecretstr/ng",
+    "https://sonarsource.com",
+    "nonsense://secretstring"
   );
   static BiPredicate<Pattern, Pattern> patternEquals = (p1, p2) -> Objects.equals(p1.pattern(), p2.pattern());
 
