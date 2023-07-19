@@ -26,6 +26,8 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import org.sonar.api.utils.log.Logger;
+import org.sonar.api.utils.log.Loggers;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.FileFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
@@ -33,6 +35,7 @@ import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 public class PreFilterFactory {
   private PreFilterFactory() {}
 
+  private static final Logger LOG = Loggers.get(PreFilterFactory.class);
   private static final Predicate<InputFileContext> INCLUDE_ALL_FILES = ctx -> true;
 
   public static Predicate<InputFileContext> createPredicate(@Nullable PreModule pre) {
@@ -67,6 +70,7 @@ public class PreFilterFactory {
 
   static boolean matchesPath(String path, InputFileContext ctx) {
     if (path.isBlank()) {
+      LOG.warn("Parameter <paths> is blank in pre filter, will skip filtering");
       return false;
     } else if (path.contains("*")) {
       Matcher matcher = Pattern.compile(path).matcher(ctx.getInputFile().absolutePath());
@@ -78,6 +82,7 @@ public class PreFilterFactory {
 
   static boolean matchesContent(String content, InputFileContext ctx) {
     if (content.isBlank()) {
+      LOG.warn("Parameter <content> is blank in pre filter, will skip filtering");
       return false;
     }
     String contentLowerCase = content.toLowerCase(Locale.getDefault());
@@ -86,6 +91,7 @@ public class PreFilterFactory {
 
   static boolean matchesExt(String ext, InputFileContext ctx) {
     if (ext.isBlank()) {
+      LOG.warn("Parameter <ext> is blank in pre filter, will skip filtering");
       return false;
     }
     return ctx.getInputFile().filename().endsWith(ext);
