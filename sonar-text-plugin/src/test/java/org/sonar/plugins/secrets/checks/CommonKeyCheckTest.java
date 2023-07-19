@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.analyze;
 
 //TODO SONARTEXT-51 Validate functionality of detection logic for specified secrets
+@java.lang.SuppressWarnings("squid:S6652")
 class CommonKeyCheckTest {
 
   static Check check;
@@ -70,5 +71,12 @@ class CommonKeyCheckTest {
       "            Alamofire.request(\n" +
       "                \"https://api.x.com/v2/models/c76825c96cbac79521a200cb54b7f09b/outputs\"";
     assertThat(analyze(check, fileContent)).isEmpty();
+  }
+
+  @Test
+  void shouldFindIssueAsGithubSecretWithStatFilterInputString() throws IOException {
+    String fileContent = "gh_token=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";
+    assertThat(analyze(check, fileContent)).containsExactly(
+      "secrets:S6652 [1:9-1:49] Make sure this Github token gets revoked, changed, and removed from the code.");
   }
 }

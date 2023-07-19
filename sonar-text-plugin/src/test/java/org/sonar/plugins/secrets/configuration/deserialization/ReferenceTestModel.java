@@ -206,12 +206,12 @@ public class ReferenceTestModel {
     PostModule postModule = new PostModule();
 
     StatisticalFilter statisticalFilter = new StatisticalFilter();
-    statisticalFilter.setInputString("Test String");
+    statisticalFilter.setInputString("groupName");
     statisticalFilter.setThreshold(4.2f);
 
     HeuristicsFilter heuristicsFilter = new HeuristicsFilter();
-    heuristicsFilter.setHeuristics(List.of("exampleHeuristics"));
-    heuristicsFilter.setInputString("Test String");
+    heuristicsFilter.setHeuristics(List.of("uri"));
+    heuristicsFilter.setInputString("groupName");
 
     postModule.setStatisticalFilter(statisticalFilter);
     postModule.setPatternNot("EXAMPLEKEY");

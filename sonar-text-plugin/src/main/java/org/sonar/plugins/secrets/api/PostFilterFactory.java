@@ -23,6 +23,7 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.HeuristicsFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.StatisticalFilter;
@@ -32,11 +33,11 @@ public class PostFilterFactory {
   private PostFilterFactory() {
   }
 
-  public static Predicate<String> createPredicate(@Nullable PostModule post) {
+  public static Predicate<String> createPredicate(@Nullable PostModule post, @Nullable Matching matching) {
     Predicate<String> postFilter = s -> true;
     if (post != null) {
       if (post.getStatisticalFilter() != null) {
-        postFilter = postFilter.and(filterForStatisticalFilter(post.getStatisticalFilter()));
+        postFilter = postFilter.and(filterForStatisticalFilter(post.getStatisticalFilter(), matching));
       }
       if (post.getPatternNot() != null) {
         postFilter = postFilter.and(filterForPatternNot(post.getPatternNot()));
@@ -55,8 +56,27 @@ public class PostFilterFactory {
     };
   }
 
-  static Predicate<String> filterForStatisticalFilter(StatisticalFilter statisticalFilter) {
-    return candidateSecret -> !EntropyChecker.hasLowEntropy(candidateSecret, statisticalFilter.getThreshold());
+  static Predicate<String> filterForStatisticalFilter(StatisticalFilter statisticalFilter, @Nullable Matching matching) {
+    return candidateSecret -> {
+      String entropyInputString = candidateSecret;
+      if (statisticalFilter.getInputString() != null && matching != null) {
+        entropyInputString = calculateEntropyInputBasedOnNamedGroup(statisticalFilter.getInputString(), candidateSecret, matching);
+      }
+      return !EntropyChecker.hasLowEntropy(entropyInputString, statisticalFilter.getThreshold());
+    };
+  }
+
+  static String calculateEntropyInputBasedOnNamedGroup(String groupName, String candidateSecret, Matching matching) {
+    Matcher matcher = Pattern.compile(matching.getPattern()).matcher(candidateSecret);
+    if (matcher.find()) {
+      try {
+        return matcher.group(groupName);
+      } catch (IllegalArgumentException e) {
+        // expected behavior to do nothing, as the fallback is candidate secret
+      }
+    }
+    // matched group for the name not found, fallback to candidate secret
+    return candidateSecret;
   }
 
   static Predicate<String> filterForHeuristicsFilter(HeuristicsFilter heuristicFilter) {
