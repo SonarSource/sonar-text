@@ -51,7 +51,7 @@ public class SecretMatcher {
   }
 
   public List<Match> findIn(InputFileContext fileContext) {
-    if (!getPreFilter().test(fileContext)) {
+    if (!preFilter.test(fileContext)) {
       return Collections.emptyList();
     }
 
@@ -64,10 +64,6 @@ public class SecretMatcher {
 
   public String getMessageFromRule() {
     return rule.getMetadata().getMessage();
-  }
-
-  Predicate<InputFileContext> getPreFilter() {
-    return preFilter;
   }
 
   Predicate<String> getPostFilter() {
