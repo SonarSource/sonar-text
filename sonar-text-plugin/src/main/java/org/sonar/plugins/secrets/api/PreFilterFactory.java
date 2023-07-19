@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
@@ -73,10 +71,9 @@ public class PreFilterFactory {
       LOG.warn("Parameter <paths> is blank in pre filter, will skip filtering");
       return false;
     } else if (path.contains("*")) {
-      Matcher matcher = Pattern.compile(path).matcher(ctx.getInputFile().absolutePath());
-      return matcher.find();
+      return ctx.getFileSystem().predicates().matchesPathPattern(path).apply(ctx.getInputFile());
     } else {
-      return ctx.getInputFile().absolutePath().contains(path);
+      return ctx.getFileSystem().predicates().hasRelativePath(path).apply(ctx.getInputFile());
     }
   }
 
@@ -94,6 +91,12 @@ public class PreFilterFactory {
       LOG.warn("Parameter <ext> is blank in pre filter, will skip filtering");
       return false;
     }
-    return ctx.getInputFile().filename().endsWith(ext);
+    String extWithoutDot;
+    if (ext.startsWith(".")) {
+      extWithoutDot = ext.substring(ext.lastIndexOf(".") + 1);
+    } else {
+      extWithoutDot = ext;
+    }
+    return ctx.getFileSystem().predicates().hasExtension(extWithoutDot).apply(ctx.getInputFile());
   }
 }

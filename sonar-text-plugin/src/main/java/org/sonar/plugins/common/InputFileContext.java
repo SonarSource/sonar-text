@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextPointer;
 import org.sonar.api.batch.fs.TextRange;
@@ -147,5 +148,9 @@ public class InputFileContext {
 
   public InputFile getInputFile() {
     return inputFile;
+  }
+
+  public FileSystem getFileSystem() {
+    return sensorContext.fileSystem();
   }
 }

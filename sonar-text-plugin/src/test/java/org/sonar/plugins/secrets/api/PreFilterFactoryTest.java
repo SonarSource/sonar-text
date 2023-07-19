@@ -22,6 +22,8 @@ package org.sonar.plugins.secrets.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -30,6 +32,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.fs.internal.DefaultFileSystem;
+import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.configuration.model.matching.Detection;
 
@@ -43,32 +47,37 @@ class PreFilterFactoryTest {
   @ParameterizedTest
   @CsvSource({
       ".doc, file.doc, true",
+      "doc, file.doc, true",
       ".doc, file.cpp, false",
-      "pp, file.cpp, true",
+      "pp, file.cpp, false",
       "'', file.cpp, false",
   })
   void testMatchesExt(String ext, String filename, boolean shouldMatch) {
     InputFileContext ctx = mock(InputFileContext.class);
     when(ctx.getInputFile()).thenReturn(mock(InputFile.class));
     when(ctx.getInputFile().filename()).thenReturn(filename);
+    when(ctx.getFileSystem()).thenReturn(new DefaultFileSystem(Path.of(".")));
     assertThat(PreFilterFactory.matchesExt(ext, ctx)).isEqualTo(shouldMatch);
   }
 
   @ParameterizedTest
   @CsvSource({
-      "src/.*\\.cpp, /home/user/project/src/file.cpp, true",
-      "src/.*\\.cpp, /home/user/project/src/file.java, false",
-      "src/.*, /home/user/project/src/file.cpp, true",
-      "src/.*, /home/user/project/resources/file.json, false",
-      "src/.*, /home/user/project/src/main/file.cpp, true",
-      "file.cpp, /home/user/project/src/file.cpp, true",
-      ".*/file.cpp, /home/user/project/src/file.cpp, true",
-      "'', /home/user/project/src/file.cpp, false",
+      "**/src/*.cpp, project/src/file.cpp, true",
+      "**/src/*.cpp, project/src/file.java, false",
+      "**/src/**/*.cpp, project/src/main/file.cpp, true",
+      "**/src/*, project/src/file.cpp, true",
+      "**/src/*, project/resources/file.json, false",
+      "**/src/**, project/src/main/file.cpp, true",
+      "**/file.cpp, project/src/file.cpp, true",
+      "**/file.cpp, project/src/file.cpp, true",
+      "'', project/src/file.cpp, false",
   })
-  void testMatchesPath(String pathPattern, String filePath, boolean shouldMatch) {
+  void testMatchesPath(String pathPattern, String filePath, boolean shouldMatch) throws URISyntaxException {
     InputFileContext ctx = mock(InputFileContext.class);
-    when(ctx.getInputFile()).thenReturn(mock(InputFile.class));
-    when(ctx.getInputFile().absolutePath()).thenReturn(filePath);
+    when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder(
+        "testProject", filePath
+    ).build());
+    when(ctx.getFileSystem()).thenReturn(new DefaultFileSystem(Path.of(".")));
     assertThat(PreFilterFactory.matchesPath(pathPattern, ctx)).isEqualTo(shouldMatch);
   }
 
@@ -92,9 +101,10 @@ class PreFilterFactoryTest {
     Predicate<InputFileContext> predicate = PreFilterFactory.createPredicate(detection.getPre());
 
     InputFileContext ctx = mock(InputFileContext.class);
-    when(ctx.getInputFile()).thenReturn(mock(InputFile.class));
-    when(ctx.getInputFile().filename()).thenReturn(filename);
-    when(ctx.getInputFile().absolutePath()).thenReturn(filename);
+    when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder(
+        "testProject", filename
+    ).build());
+    when(ctx.getFileSystem()).thenReturn(new DefaultFileSystem(Path.of(".")));
     when(ctx.lines()).thenReturn(List.of());
 
     assertThat(predicate.test(ctx)).isEqualTo(shouldMatch);
@@ -107,7 +117,7 @@ class PreFilterFactoryTest {
             "pre:\n" +
                 "  include:\n" +
                 "    paths:\n" +
-                "      - \".*\\\\.env$\"",
+                "      - \"**/.env\"",
             ".env",
             true
         ),
@@ -115,7 +125,7 @@ class PreFilterFactoryTest {
             "pre:\n" +
                 "  reject:\n" +
                 "    paths:\n" +
-                "      - \".*\\\\.env$\"",
+                "      - \"**/.env\"",
             ".env",
             false
         ),
@@ -123,10 +133,10 @@ class PreFilterFactoryTest {
             "pre:\n" +
                 "  include:\n" +
                 "    paths:\n" +
-                "      - \".*\\\\.env$\"\n" +
+                "      - \"**/.env\"\n" +
                 "  reject:\n" +
                 "    paths:\n" +
-                "      - \".*\\\\.env$\"",
+                "      - \"**/.env\"",
             ".env",
             false
         ),
