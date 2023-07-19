@@ -187,12 +187,12 @@ public class ReferenceTestModel {
     PreModule preModule = new PreModule();
 
     FileFilter includedFilter = new FileFilter();
-    includedFilter.setPaths(List.of("*.aws/config", ".env"));
+    includedFilter.setPaths(List.of(".*\\.aws/config", ".env"));
     includedFilter.setExt(List.of(".config"));
     includedFilter.setContent(List.of("amazonaws.com", "aws"));
 
     FileFilter rejectFilter = new FileFilter();
-    rejectFilter.setPaths(List.of(".json", "*.idea/config"));
+    rejectFilter.setPaths(List.of(".json", ".*\\.idea/config"));
     rejectFilter.setExt(List.of(".docker"));
     rejectFilter.setContent(List.of("someContent.com"));
 
