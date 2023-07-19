@@ -26,45 +26,48 @@ import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.sonar.plugins.secrets.api.EntropyChecker.DEFAULT_ENTROPY_THRESHOLD;
+import static org.sonar.plugins.secrets.api.EntropyChecker.calculateShannonEntropy;
+import static org.sonar.plugins.secrets.api.EntropyChecker.hasLowEntropy;
 
 class EntropyCheckerTest {
 
   @Test
   void computeSampleValue() {
-    assertThat(EntropyChecker.calculateShannonEntropy("0040878d3579659158d09ad09b6a9849d18e0e22")).isEqualTo(3.587326145256008);
+    assertThat(calculateShannonEntropy("0040878d3579659158d09ad09b6a9849d18e0e22")).isEqualTo(3.587326145256008);
   }
 
   @Test
   void emptyValue() {
-    assertThat(EntropyChecker.calculateShannonEntropy("")).isEqualTo(0.0);
+    assertThat(calculateShannonEntropy("")).isEqualTo(0.0);
   }
 
   @Test
   void entropyCheckPositiveDefaultThreshold() {
-    assertThat(EntropyChecker.hasLowEntropy("06c6d5715a1ede6c51fc39ff67fd647f740b656d")).isTrue();
+    assertThat(hasLowEntropy("06c6d5715a1ede6c51fc39ff67fd647f740b656d")).isTrue();
   }
 
   @Test
   void entropyCheckNegativeLowThreshold() {
-    assertThat(EntropyChecker.hasLowEntropy("06c6d5715a1ede6c51fc39ff67fd647f740b656d", 3f)).isFalse();
+    assertThat(hasLowEntropy("06c6d5715a1ede6c51fc39ff67fd647f740b656d", 3f)).isFalse();
   }
 
   @Test
   void entropyCheckNegativeDefaultThreshold() {
-    assertThat(EntropyChecker.hasLowEntropy("qAhEMdXy/MPwEuDlhh7O0AFBuzGvNy7AxpL3sX3q")).isFalse();
+    assertThat(hasLowEntropy("qAhEMdXy/MPwEuDlhh7O0AFBuzGvNy7AxpL3sX3q")).isFalse();
   }
 
   @Test
   void entropyCheckPositiveHighThreshold() {
-    assertThat(EntropyChecker.hasLowEntropy("qAhEMdXy/MPwEuDlhh7O0AFBuzGvNy7AxpL3sX3q", 10f)).isTrue();
+    assertThat(hasLowEntropy("qAhEMdXy/MPwEuDlhh7O0AFBuzGvNy7AxpL3sX3q", 10f)).isTrue();
   }
 
   @Test
   void thresholdSplitsFalsePositiveGoodEnough() throws IOException {
     double falsePositivesAboveThreshold = processFile("src/test/resources/EntropyChecker/false-positives.txt",
-      EntropyChecker.DEFAULT_ENTROPY_THRESHOLD);
+      DEFAULT_ENTROPY_THRESHOLD);
     double truePositivesAboveThreshold = processFile("src/test/resources/EntropyChecker/true-positives.txt",
-      EntropyChecker.DEFAULT_ENTROPY_THRESHOLD);
+      DEFAULT_ENTROPY_THRESHOLD);
 
     // this assertions can be changed if we will get more data that, for example, will show more false positives
     // the goal of the test to fail if threshold value will be changed, since current value is the sweet spot on data we have so far
@@ -81,7 +84,7 @@ class EntropyCheckerTest {
       String line;
       while ((line = bufferedReader.readLine()) != null) {
         total++;
-        double entropy = EntropyChecker.calculateShannonEntropy(line);
+        double entropy = calculateShannonEntropy(line);
         if (entropy > threshold) {
           aboveThreshold++;
         }

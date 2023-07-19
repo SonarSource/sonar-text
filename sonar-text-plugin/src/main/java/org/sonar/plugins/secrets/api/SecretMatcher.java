@@ -34,7 +34,8 @@ public class SecretMatcher {
   private final Predicate<InputFileContext> preFilter;
   private final Predicate<String> postFilter;
 
-  SecretMatcher(Rule rule, PatternMatcher patternMatcher, AuxiliaryPatternMatcher auxiliaryPatternMatcher, Predicate<InputFileContext> preFilter, Predicate<String> postFilter) {
+  SecretMatcher(Rule rule, PatternMatcher patternMatcher, AuxiliaryPatternMatcher auxiliaryPatternMatcher,
+    Predicate<InputFileContext> preFilter, Predicate<String> postFilter) {
     this.rule = rule;
     this.patternMatcher = patternMatcher;
     this.auxiliaryPatternMatcher = auxiliaryPatternMatcher;
@@ -45,7 +46,7 @@ public class SecretMatcher {
   public static SecretMatcher build(Rule rule) {
     PatternMatcher patternMatcher = PatternMatcher.build(rule.getDetection().getMatching());
     Predicate<InputFileContext> preFilter = PreFilterFactory.createPredicate(rule.getDetection().getPre());
-    Predicate<String> postFilter = PostFilterFactory.createPredicate(rule.getDetection().getPost());
+    Predicate<String> postFilter = PostFilterFactory.createPredicate(rule.getDetection().getPost(), rule.getDetection().getMatching());
     AuxiliaryPatternMatcher auxiliaryMatcher = AuxiliaryPatternMatcherFactory.build(rule.getDetection().getMatching());
     return new SecretMatcher(rule, patternMatcher, auxiliaryMatcher, preFilter, postFilter);
   }
