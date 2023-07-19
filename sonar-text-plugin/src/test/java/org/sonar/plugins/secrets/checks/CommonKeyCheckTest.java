@@ -71,4 +71,11 @@ class CommonKeyCheckTest {
       "                \"https://api.x.com/v2/models/c76825c96cbac79521a200cb54b7f09b/outputs\"";
     assertThat(analyze(check, fileContent)).isEmpty();
   }
+
+  @Test
+  void shouldFindIssueAsGithubSecretWithStatFilterInputString() throws IOException {
+    String fileContent = "gh_token=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";
+    assertThat(analyze(check, fileContent)).containsExactly(
+      "secrets:S6652 [1:9-1:49] Make sure this Github token gets revoked, changed, and removed from the code.");
+  }
 }

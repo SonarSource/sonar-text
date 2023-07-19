@@ -68,12 +68,12 @@ provider:
         post:
           statisticalFilter:
             threshold: 4.2
-            inputString: "Test String"
+            inputString: "groupName"
           patternNot: EXAMPLEKEY
           heuristicFilter:
             heuristics:
               - "exampleHeuristics"
-            inputString: "Test String"
+            inputString: "groupName"
       examples:
         - text: >
             example
