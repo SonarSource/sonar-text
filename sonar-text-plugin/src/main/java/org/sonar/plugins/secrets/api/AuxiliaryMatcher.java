@@ -79,8 +79,8 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
 
     for (Match candidate : candidateMatches) {
       Match lastAuxMatch = auxiliaryMatches.get(auxiliaryMatches.size() - 1);
-      Match firstAux = auxiliaryMatches.get(0);
-      if (lastAuxMatch.isAfter(candidate) || firstAux.isBefore(candidate)) {
+      Match firstAuxMatch = auxiliaryMatches.get(0);
+      if (lastAuxMatch.isAfter(candidate) || firstAuxMatch.isBefore(candidate)) {
         filteredCandidates.add(candidate);
       }
     }
@@ -92,8 +92,8 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
 
     for (Match candidate : candidateMatches) {
       // since we are searching for before, first one (position wise) is enough
-      Match firstAux = auxiliaryMatches.get(0);
-      if (firstAux.isBefore(candidate)) {
+      Match firstAuxMatch = auxiliaryMatches.get(0);
+      if (firstAuxMatch.isBefore(candidate)) {
         filteredCandidates.add(candidate);
       }
     }

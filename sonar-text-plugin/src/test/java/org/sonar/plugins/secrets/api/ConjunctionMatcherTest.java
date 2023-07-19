@@ -29,6 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ConjunctionMatcherTest {
 
+  private static final PatternMatcher candidateSecretMatcher = new PatternMatcher("\\b(candidate secret)\\b");
+
   @Test
   void conjunctionMatcherShouldNotRemoveCandidateSecret() {
     AuxiliaryMatcher auxiliaryMatcherBefore = new AuxiliaryMatcher(
@@ -39,8 +41,7 @@ class ConjunctionMatcherTest {
     AuxiliaryPatternMatcher conjunctionMatcher = auxiliaryMatcherAfter.and(auxiliaryMatcherBefore);
 
     String content = "before candidate secret after";
-    PatternMatcher patternMatcher = new PatternMatcher("\\b(candidate secret)\\b");
-    List<Match> candidateSecrets = patternMatcher.findIn(content);
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
 
     List<Match> result = conjunctionMatcher.filter(candidateSecrets, content);
 
@@ -58,8 +59,7 @@ class ConjunctionMatcherTest {
       AuxiliaryPatternType.PATTERN_AFTER, new PatternMatcher("\\b(after)\\b"));
     AuxiliaryPatternMatcher conjunctionMatcher = auxiliaryMatcherAfter.and(auxiliaryMatcherBefore);
 
-    PatternMatcher patternMatcher = new PatternMatcher("\\b(candidate secret)\\b");
-    List<Match> candidateSecrets = patternMatcher.findIn(content);
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
 
     List<Match> result = conjunctionMatcher.filter(candidateSecrets, content);
 

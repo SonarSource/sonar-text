@@ -30,6 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AuxiliaryMatcherTest {
 
+  private static final PatternMatcher candidateSecretMatcher = new PatternMatcher("\\b(candidate secret)\\b");
+
   @ParameterizedTest
   @MethodSource
   void auxiliaryPatternShouldBeDetectedAndCandidateSecretShouldNotBeRemoved(AuxiliaryPatternType patternType, String content,
@@ -37,8 +39,7 @@ class AuxiliaryMatcherTest {
     AuxiliaryMatcher auxiliaryMatcher = new AuxiliaryMatcher(
       patternType, new PatternMatcher("\\b(" + auxiliaryPattern + ")\\b"));
 
-    PatternMatcher patternMatcher = new PatternMatcher("\\b(candidate secret)\\b");
-    List<Match> candidateSecrets = patternMatcher.findIn(content);
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
 
     List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content);
 
@@ -73,8 +74,7 @@ class AuxiliaryMatcherTest {
     AuxiliaryMatcher auxiliaryMatcher = new AuxiliaryMatcher(
       patternType, new PatternMatcher("\\b(" + auxiliaryPattern + ")\\b"));
 
-    PatternMatcher patternMatcher = new PatternMatcher("\\b(candidate secret)\\b");
-    List<Match> candidateSecrets = patternMatcher.findIn(content);
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
 
     List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content);
 

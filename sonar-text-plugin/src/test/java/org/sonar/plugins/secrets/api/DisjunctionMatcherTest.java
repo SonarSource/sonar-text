@@ -29,6 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DisjunctionMatcherTest {
 
+  private static final PatternMatcher candidateSecretMatcher = new PatternMatcher("\\b(candidate secret)\\b");
+
   @ParameterizedTest
   //@ValueSource(strings = {"candidate secret after", "before candidate secret", "before candidate secret after"})
   @ValueSource(strings = {"candidate secret after"})
@@ -40,8 +42,7 @@ class DisjunctionMatcherTest {
       AuxiliaryPatternType.PATTERN_AFTER, new PatternMatcher("\\b(after)\\b"));
     AuxiliaryPatternMatcher disjunctionMatcher = auxiliaryMatcherAfter.or(auxiliaryMatcherBefore);
 
-    PatternMatcher patternMatcher = new PatternMatcher("\\b(candidate secret)\\b");
-    List<Match> candidateSecrets = patternMatcher.findIn(content);
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
 
     List<Match> result = disjunctionMatcher.filter(candidateSecrets, content);
 
@@ -58,9 +59,8 @@ class DisjunctionMatcherTest {
       AuxiliaryPatternType.PATTERN_AFTER, new PatternMatcher("\\b(after)\\b"));
     AuxiliaryPatternMatcher disjunctionMatcher = auxiliaryMatcherAfter.or(auxiliaryMatcherBefore);
 
-    PatternMatcher patternMatcher = new PatternMatcher("\\b(candidate secret)\\b");
     String content = "candidate secret";
-    List<Match> candidateSecrets = patternMatcher.findIn(content);
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn("candidate secret");
 
     List<Match> result = disjunctionMatcher.filter(candidateSecrets, content);
 
