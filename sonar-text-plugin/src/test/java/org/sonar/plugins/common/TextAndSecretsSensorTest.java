@@ -81,7 +81,7 @@ class TextAndSecretsSensorTest {
     sensor(context).execute(context);
 
     assertThat(asString(context.allIssues())).containsExactly(
-      "secrets:S6652 [5:18-5:45] Make sure this private key gets revoked, changed, and removed from the code.");
+      "secrets:S6335 [5:18-5:1750] Make sure this GCP secret gets revoked, changed, and removed from the code.");
     assertThat(logTester.logs()).containsExactly(
       "1 source file to be analyzed",
       "1/1 source file has been analyzed");
