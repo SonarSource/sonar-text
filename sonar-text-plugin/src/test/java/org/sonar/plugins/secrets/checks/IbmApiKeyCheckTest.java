@@ -19,43 +19,10 @@
  */
 package org.sonar.plugins.secrets.checks;
 
-import java.io.IOException;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.sonar.plugins.common.Check;
-import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
-import org.sonar.plugins.secrets.api.SpecificationLoader;
+import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.sonar.plugins.common.TestUtils.analyze;
-
-class IbmApiKeyCheckTest {
-  static Check check;
-
-  @BeforeAll
-  public static void init() {
-    check = new IbmApiKeyCheck();
-    SpecificationLoader specificationLoader = new SpecificationLoader();
-    ((SpecificationBasedCheck) check).initialize(specificationLoader);
+class IbmApiKeyCheckTest extends AbstractRuleExampleTest {
+  IbmApiKeyCheckTest() {
+    super(new IbmApiKeyCheck());
   }
-
-  @Test
-  void positive() throws IOException {
-    String fileContent = "\"apikey\": \"iT5wxMGq2-ZJlMAHYoODl5EuTeCPvNRkSp1h3m99HWrc\"";
-    assertThat(analyze(check, fileContent)).containsExactly(
-      "secrets:S6337 [1:11-1:55] Make sure this IBM API key gets revoked, changed, and removed from the code.");
-  }
-
-  @Test
-  void negative() throws IOException {
-    String fileContent = "\"apikey\": \"iT5wxMGq2-ZJlMAHYoODl5EuTeCPvWrc\"";
-    assertThat(analyze(check, fileContent)).isEmpty();
-  }
-
-  @Test
-  void negative_low_entropy() throws IOException {
-    String fileContent = "\"apikey\": \"01234567890123456789012345678901234567890123\"";
-    assertThat(analyze(check, fileContent)).isEmpty();
-  }
-
 }

@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.plugins.secrets.configuration.deserialization.DeserializationException;
@@ -36,10 +37,11 @@ import org.sonar.plugins.secrets.configuration.validation.SchemaValidationExcept
 public class SpecificationLoader {
   private static final Logger LOG = Loggers.get(SpecificationLoader.class);
 
+  public static final String DEFAULT_SPECIFICATION_LOCATION = "org/sonar/plugins/secrets/configuration/";
   private final Map<String, List<Rule>> rulesMappedToKey;
 
   public SpecificationLoader() {
-    this("org/sonar/plugins/secrets/configuration/", defaultSpecifications());
+    this(DEFAULT_SPECIFICATION_LOCATION, defaultSpecifications());
   }
 
   public SpecificationLoader(String specificationLocation, Set<String> specifications) {
@@ -108,7 +110,6 @@ public class SpecificationLoader {
       "spotify.yaml",
       "ssh.yaml",
       "telegram.yaml",
-      "wechat.yaml"
-    );
+      "wechat.yaml");
   }
 }
