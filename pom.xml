@@ -79,6 +79,7 @@
     <mockito.version>4.10.0</mockito.version>
     <jackson.version>2.15.1</jackson.version>
     <networknt.version>1.0.81</networknt.version>
+    <spotless.version>2.38.0</spotless.version>
 
     <!-- Release: enable publication to Bintray -->
     <artifactsToPublish>${project.groupId}:sonar-text-plugin:jar</artifactsToPublish>
@@ -199,6 +200,30 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <configuration>
             <showDeprecation>true</showDeprecation>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>com.diffplug.spotless</groupId>
+          <artifactId>spotless-maven-plugin</artifactId>
+          <version>${spotless.version}</version>
+          <executions>
+            <execution>
+              <id>spotless-check</id>
+              <!-- Runs in install phase to fail fast in case of formatting issues.-->
+              <phase>install</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <encoding>UTF-8</encoding>
+            <java>
+              <eclipse>
+                <version>4.21.0</version>
+                <file>https://raw.githubusercontent.com/SonarSource/sonar-developer-toolset/master/eclipse/sonar-formatter.xml</file>
+              </eclipse>
+            </java>
           </configuration>
         </plugin>
       </plugins>
