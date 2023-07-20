@@ -24,8 +24,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import org.assertj.core.data.MapEntry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -49,55 +49,58 @@ import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
 
 public abstract class AbstractRuleExampleTest {
-    private final Check check;
-    private final SpecificationLoader specificationLoader;
-    private final String rspecKey;
+  private final Check check;
+  private final SpecificationLoader specificationLoader;
+  private final String rspecKey;
 
-    protected AbstractRuleExampleTest(Check check, String rspecKey) {
-        this.rspecKey = rspecKey;
-        specificationLoader = new SpecificationLoader();
-        this.check = check;
-        ((SpecificationBasedCheck) check).initialize(specificationLoader);
+  protected AbstractRuleExampleTest(Check check, String rspecKey) {
+    this.rspecKey = rspecKey;
+    specificationLoader = new SpecificationLoader();
+    this.check = check;
+    ((SpecificationBasedCheck) check).initialize(specificationLoader);
+  }
+
+  @TestFactory
+  @DisplayName("Execute examples from the configuration file")
+  Stream<DynamicTest> loadExamples() {
+    Stream<TestInput> input = specificationLoader.getAllRules().stream()
+        .flatMap(rule -> {
+          List<RuleExample> examples = rule.getExamples();
+          return IntStream.range(0, examples.size()).mapToObj(i -> new TestInput(i, rule, examples.get(i)));
+        });
+    Function<TestInput, String> displayNameGenerator = g ->
+        g.rule.getId() + " #" + g.index + " - " + g.rule.getMetadata().getName() + " (" + (g.ruleExample.isContainsSecret() ? "positive" : "negative") + ")";
+    ThrowingConsumer<TestInput> testExecutor = g -> checkExample(g.rule, g.ruleExample);
+
+    return input
+        .filter(e -> rspecKey.equals(e.rule.getRspecKey()))
+        .map(e -> DynamicTest.dynamicTest(displayNameGenerator.apply(e), () -> testExecutor.accept(e)));
+  }
+
+  private void checkExample(Rule rule, RuleExample ruleExample) throws IOException {
+    SensorContextTester context = sensorContext(check);
+    InputFileContext inputFileContext = new InputFileContext(context, inputFile(ruleExample.getText()));
+
+    check.analyze(inputFileContext);
+
+    Collection<Issue> issues = context.allIssues();
+    if (ruleExample.isContainsSecret()) {
+      TextRange expectedRange = calculateRange(ruleExample, inputFileContext);
+
+      assertThat(issues).isNotEmpty();
+      assertThat(issues).anyMatch(s -> asString(s).contains(rule.getMetadata().getMessage()));
+      assertThat(issues).anyMatch(s -> asString(s).contains(rule.getRspecKey()));
+      assertThat(issues).map(i -> i.primaryLocation().textRange()).contains(expectedRange);
+    } else {
+      assertThat(issues).isEmpty();
     }
+  }
 
-    @TestFactory
-    @DisplayName("Execute examples from the configuration file")
-    Stream<DynamicTest> loadExamples() {
-        Stream<MapEntry<Rule, RuleExample>> input = specificationLoader.getAllRules().stream()
-                .flatMap(rule -> rule.getExamples().stream().map(e -> MapEntry.entry(rule, e)));
-        Function<MapEntry<Rule, RuleExample>, String> displayNameGenerator = (pair) ->
-                pair.getKey().getId() + " " + pair.getKey().getMetadata().getName() + " (" + (pair.getValue().isContainsSecret() ? "positive" : "negative") + ")";
-        ThrowingConsumer<MapEntry<Rule, RuleExample>> testExecutor = ruleToExample -> checkExample(ruleToExample.getKey(), ruleToExample.getValue());
-
-        return input
-                .filter(e -> rspecKey.equals(e.getKey().getRspecKey()))
-                .map(e -> DynamicTest.dynamicTest(displayNameGenerator.apply(e), () -> testExecutor.accept(e)));
-    }
-
-    private void checkExample(Rule rule, RuleExample ruleExample) throws IOException {
-        SensorContextTester context = sensorContext(check);
-        InputFileContext inputFileContext = new InputFileContext(context, inputFile(ruleExample.getText()));
-
-        check.analyze(inputFileContext);
-
-        Collection<Issue> issues = context.allIssues();
-        if (ruleExample.isContainsSecret()) {
-            TextRange expectedRange = calculateRange(ruleExample, inputFileContext);
-
-            assertThat(issues).isNotEmpty();
-            assertThat(issues).anyMatch(s -> asString(s).contains(rule.getMetadata().getMessage()));
-            assertThat(issues).anyMatch(s -> asString(s).contains(rule.getRspecKey()));
-            assertThat(issues).map(i -> i.primaryLocation().textRange()).contains(expectedRange);
-        } else {
-            assertThat(issues).isEmpty();
-        }
-    }
-
-    private TextRange calculateRange(RuleExample ruleExample, InputFileContext ctx) {
-        Matching matching = new Matching();
-        matching.setPattern(".*(" + Pattern.quote(ruleExample.getMatch().stripTrailing()) + ").*");
-        PatternMatcher matcher = PatternMatcher.build(matching);
-        List<Match> matches = matcher.findIn(ruleExample.getText());
-        return ctx.newTextRangeFromFileOffsets(matches.get(0).getFileStartOffset(), matches.get(0).getFileEndOffset());
-    }
+  private TextRange calculateRange(RuleExample ruleExample, InputFileContext ctx) {
+    Matching matching = new Matching();
+    matching.setPattern(".*(" + Pattern.quote(ruleExample.getMatch().stripTrailing()) + ").*");
+    PatternMatcher matcher = PatternMatcher.build(matching);
+    List<Match> matches = matcher.findIn(ruleExample.getText());
+    return ctx.newTextRangeFromFileOffsets(matches.get(0).getFileStartOffset(), matches.get(0).getFileEndOffset());
+  }
 }
