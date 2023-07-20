@@ -64,7 +64,9 @@ provider:
                   - patternAround: "\\b(pattern-around)\\b"
               - matchEither:
                   - patternNot: "\\b(pattern-not)\\b"
-                  - patternAround: "\\b(pattern-around)\\b"
+                  - patternAround:
+                      pattern: "\\b(pattern-around-with-maxDistance)\\b"
+                      maxDistance: 100
         post:
           statisticalFilter:
             threshold: 4.2

@@ -58,4 +58,30 @@ class MatchTest {
       Arguments.of("Enclosed Match", 15, 17),
       Arguments.of("Sharing one character", 20, 25));
   }
+
+  @ParameterizedTest(name = "{0}")
+  @MethodSource
+  void testInRangeIsCalculatedCorrect(String testName, int secondMatchStartOffset, int secondMatchEndOffset, boolean isInRange) {
+    Match first = new Match("text", 10, 20);
+    Match second = new Match("text", secondMatchStartOffset, secondMatchEndOffset);
+
+    int maxDistance = 3;
+    assertThat(first.inDistanceOf(second, maxDistance)).isEqualTo(isInRange);
+  }
+
+  private static Stream<Arguments> testInRangeIsCalculatedCorrect() {
+    return Stream.of(
+      Arguments.of("Second Match after first out of range", 23, 30, true),
+      Arguments.of("Second Match after first in range", 24, 30, false),
+      Arguments.of("Second Match before first out of range", 0, 6, false),
+      Arguments.of("Second Match before first in range", 0, 7, true),
+      Arguments.of("Second Match wrapping first", 0, 30, true),
+      Arguments.of("Second Match wrapping first", 9, 21, true),
+      Arguments.of("Second Match overlapping first", 5, 15, true),
+      Arguments.of("Second Match overlapping first", 9, 15, true),
+      Arguments.of("Second Match overlapping first", 15, 21, true),
+      Arguments.of("Second Match overlapping first", 15, 25, true),
+      Arguments.of("First Match wrapping second", 15, 15, true),
+      Arguments.of("First Match wrapping second", 11, 29, true));
+  }
 }

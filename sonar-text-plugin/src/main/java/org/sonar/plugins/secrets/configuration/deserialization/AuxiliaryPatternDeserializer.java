@@ -28,6 +28,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
+
+import com.fasterxml.jackson.databind.node.TextNode;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPatternType;
 
@@ -43,7 +45,12 @@ public class AuxiliaryPatternDeserializer extends JsonDeserializer<AuxiliaryPatt
 
     AuxiliaryPattern auxiliaryPattern = new AuxiliaryPattern();
     auxiliaryPattern.setType(AuxiliaryPatternType.valueOfLabel(node.getKey()));
-    auxiliaryPattern.setPattern(node.getValue().asText());
+    if (node.getValue() instanceof TextNode) {
+      auxiliaryPattern.setPattern(node.getValue().asText());
+    } else {
+      auxiliaryPattern.setPattern(node.getValue().get("pattern").asText());
+      auxiliaryPattern.setMaxCharacterDistance(node.getValue().get("maxDistance").asInt());
+    }
     return auxiliaryPattern;
   }
 }

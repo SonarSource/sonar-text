@@ -49,4 +49,17 @@ public class Match {
   public boolean isAfter(Match match) {
     return fileStartOffset > match.getFileEndOffset();
   }
+
+  public boolean inDistanceOf(Match match, int distance) {
+    int firstEndToSecondStartDistance = fileEndOffset - match.getFileStartOffset();
+    int firstStartToSecondEndDistance = fileStartOffset - match.getFileEndOffset();
+    boolean matchesOverlap = (firstEndToSecondStartDistance >= 0) && (firstStartToSecondEndDistance <= 0);
+
+    if (matchesOverlap) {
+      return true;
+    } else {
+      return Math.min(Math.abs(firstEndToSecondStartDistance), Math.abs(firstStartToSecondEndDistance)) <= distance;
+    }
+  }
+
 }

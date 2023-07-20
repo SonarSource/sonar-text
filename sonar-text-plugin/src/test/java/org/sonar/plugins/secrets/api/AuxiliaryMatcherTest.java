@@ -21,6 +21,8 @@ package org.sonar.plugins.secrets.api;
 
 import java.util.List;
 import java.util.stream.Stream;
+
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -37,7 +39,7 @@ class AuxiliaryMatcherTest {
   void auxiliaryPatternShouldBeDetectedAndCandidateSecretShouldNotBeRemoved(AuxiliaryPatternType patternType, String content,
     String auxiliaryPattern) {
     AuxiliaryMatcher auxiliaryMatcher = new AuxiliaryMatcher(
-      patternType, new PatternMatcher("\\b(" + auxiliaryPattern + ")\\b"));
+      patternType, new PatternMatcher("\\b(" + auxiliaryPattern + ")\\b"), Integer.MAX_VALUE);
 
     List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
 
@@ -71,7 +73,7 @@ class AuxiliaryMatcherTest {
   @MethodSource
   void auxiliaryPatternShouldRemoveCandidateSecrets(AuxiliaryPatternType patternType, String content, String auxiliaryPattern) {
     AuxiliaryMatcher auxiliaryMatcher = new AuxiliaryMatcher(
-      patternType, new PatternMatcher("\\b(" + auxiliaryPattern + ")\\b"));
+      patternType, new PatternMatcher("\\b(" + auxiliaryPattern + ")\\b"), Integer.MAX_VALUE);
 
     List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
 
@@ -90,5 +92,44 @@ class AuxiliaryMatcherTest {
       Arguments.of(AuxiliaryPatternType.PATTERN_AFTER, "auxiliaryPattern and candidate secret and other word", "auxiliaryPattern"),
       Arguments.of(AuxiliaryPatternType.PATTERN_AROUND, "something else and candidate secret and other word", "auxiliaryPattern"),
       Arguments.of(AuxiliaryPatternType.PATTERN_AROUND, "word and candidate secret", "didat"));
+  }
+
+  @Test
+  void auxiliaryPatternShouldNotRemoveCandidateSecretsBecauseAuxPatternIsInDistance() {
+    AuxiliaryMatcher auxiliaryMatcher = new AuxiliaryMatcher(
+      AuxiliaryPatternType.PATTERN_AFTER, new PatternMatcher("\\b(auxPattern)\\b"), 200);
+
+    String content = "candidate secret and candidate secret and auxPattern";
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
+
+    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content);
+
+    assertThat(result).containsExactlyElementsOf(candidateSecrets);
+  }
+
+  @Test
+  void auxiliaryPatternShouldRemoveCandidateSecretsBecauseAuxPatternIsOutOfDistance() {
+    AuxiliaryMatcher auxiliaryMatcher = new AuxiliaryMatcher(
+      AuxiliaryPatternType.PATTERN_AFTER, new PatternMatcher("\\b(auxPattern)\\b"), 2);
+
+    String content = "candidate secret and candidate secret and auxPattern";
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
+
+    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content);
+
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  void auxiliaryPatternShouldRemoveOneCandidateSecretsBecauseItIsOutOfDistance() {
+    AuxiliaryMatcher auxiliaryMatcher = new AuxiliaryMatcher(
+      AuxiliaryPatternType.PATTERN_AFTER, new PatternMatcher("\\b(auxPattern)\\b"), 10);
+
+    String content = "candidate secret and candidate secret and auxPattern";
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
+
+    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content);
+
+    assertThat(result).containsExactly(candidateSecrets.get(1));
   }
 }

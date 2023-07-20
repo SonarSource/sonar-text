@@ -34,10 +34,10 @@ class ConjunctionMatcherTest {
   @Test
   void conjunctionMatcherShouldNotRemoveCandidateSecret() {
     AuxiliaryMatcher auxiliaryMatcherBefore = new AuxiliaryMatcher(
-      AuxiliaryPatternType.PATTERN_BEFORE, new PatternMatcher("\\b(before)\\b"));
+      AuxiliaryPatternType.PATTERN_BEFORE, new PatternMatcher("\\b(before)\\b"), Integer.MAX_VALUE);
 
     AuxiliaryMatcher auxiliaryMatcherAfter = new AuxiliaryMatcher(
-      AuxiliaryPatternType.PATTERN_AFTER, new PatternMatcher("\\b(after)\\b"));
+      AuxiliaryPatternType.PATTERN_AFTER, new PatternMatcher("\\b(after)\\b"), Integer.MAX_VALUE);
     AuxiliaryPatternMatcher conjunctionMatcher = auxiliaryMatcherAfter.and(auxiliaryMatcherBefore);
 
     String content = "before candidate secret after";
@@ -53,10 +53,10 @@ class ConjunctionMatcherTest {
   @ValueSource(strings = {"candidate secret after", "before candidate secret", "candidate secret"})
   void conjunctionMatcherShouldRemoveCandidateSecret(String content) {
     AuxiliaryMatcher auxiliaryMatcherBefore = new AuxiliaryMatcher(
-      AuxiliaryPatternType.PATTERN_BEFORE, new PatternMatcher("\\b(before)\\b"));
+      AuxiliaryPatternType.PATTERN_BEFORE, new PatternMatcher("\\b(before)\\b"), Integer.MAX_VALUE);
 
     AuxiliaryMatcher auxiliaryMatcherAfter = new AuxiliaryMatcher(
-      AuxiliaryPatternType.PATTERN_AFTER, new PatternMatcher("\\b(after)\\b"));
+      AuxiliaryPatternType.PATTERN_AFTER, new PatternMatcher("\\b(after)\\b"), Integer.MAX_VALUE);
     AuxiliaryPatternMatcher conjunctionMatcher = auxiliaryMatcherAfter.and(auxiliaryMatcherBefore);
 
     List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
