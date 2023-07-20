@@ -25,13 +25,17 @@ import org.junit.jupiter.api.Test;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.api.SpecificationLoader;
+import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.analyze;
 
 //TODO SONARTEXT-51 Validate functionality of detection logic for specified secrets
 @java.lang.SuppressWarnings("squid:S6652")
-class CommonKeyCheckTest {
+class CommonKeyCheckTest extends AbstractRuleExampleTest {
+  public CommonKeyCheckTest() {
+    super(new CommonKeyCheck(), "S6652");
+  }
 
   static Check check;
 

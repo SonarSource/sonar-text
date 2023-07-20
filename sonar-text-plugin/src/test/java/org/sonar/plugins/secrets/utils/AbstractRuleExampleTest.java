@@ -20,10 +20,12 @@
 package org.sonar.plugins.secrets.utils;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
@@ -58,6 +60,12 @@ public abstract class AbstractRuleExampleTest {
     specificationLoader = new SpecificationLoader();
     this.check = check;
     ((SpecificationBasedCheck) check).initialize(specificationLoader);
+
+    // `LogTesterJUnit5` can't be used here as TestFactory doesn't support Junit lifecycle callbacks (BeforeAll / AfterAll)
+    // so we are checking whether add configuration files are loaded just in case.
+    assertThat(((SpecificationBasedCheck) check).getMatcher())
+        .withFailMessage("Some rule configuration were not loaded, see logs for more details.")
+        .hasSize(54);
   }
 
   @TestFactory
@@ -69,38 +77,46 @@ public abstract class AbstractRuleExampleTest {
           return IntStream.range(0, examples.size()).mapToObj(i -> new TestInput(i, rule, examples.get(i)));
         });
     Function<TestInput, String> displayNameGenerator = g ->
-        g.rule.getId() + " #" + g.index + " - " + g.rule.getMetadata().getName() + " (" + (g.ruleExample.isContainsSecret() ? "positive" : "negative") + ")";
+        g.rule.getId() + " #" + g.index + " - " + g.rule.getMetadata().getName() + " - " + (g.ruleExample.isContainsSecret() ? "positive" : "negative");
     ThrowingConsumer<TestInput> testExecutor = g -> checkExample(g.rule, g.ruleExample);
 
     return input
         .filter(e -> rspecKey.equals(e.rule.getRspecKey()))
+        // For debugging of individual tests
+//        .filter(e -> "settings.py-secret-key".equals(e.rule.getId()))
         .map(e -> DynamicTest.dynamicTest(displayNameGenerator.apply(e), () -> testExecutor.accept(e)));
   }
 
   private void checkExample(Rule rule, RuleExample ruleExample) throws IOException {
     SensorContextTester context = sensorContext(check);
-    InputFileContext inputFileContext = new InputFileContext(context, inputFile(ruleExample.getText()));
+    String exampleFileName = ruleExample.getFileName() != null ? ruleExample.getFileName() : "file.txt";
+    InputFileContext inputFileContext = new InputFileContext(context, inputFile(Path.of(exampleFileName), ruleExample.getText()));
 
     check.analyze(inputFileContext);
 
     Collection<Issue> issues = context.allIssues();
     if (ruleExample.isContainsSecret()) {
-      TextRange expectedRange = calculateRange(ruleExample, inputFileContext);
+      List<TextRange> expectedRanges = calculatePossibleRanges(ruleExample, inputFileContext);
 
       assertThat(issues).isNotEmpty();
       assertThat(issues).anyMatch(s -> asString(s).contains(rule.getMetadata().getMessage()));
       assertThat(issues).anyMatch(s -> asString(s).contains(rule.getRspecKey()));
-      assertThat(issues).map(i -> i.primaryLocation().textRange()).contains(expectedRange);
+      // Since there may be multiple occurrences of `ruleExample.match` in `ruleExample.text`, we check if
+      // any of them matches the actual range.
+      assertThat(issues).map(i -> i.primaryLocation().textRange()).containsAnyElementsOf(expectedRanges);
     } else {
       assertThat(issues).isEmpty();
     }
   }
 
-  private TextRange calculateRange(RuleExample ruleExample, InputFileContext ctx) {
+  private List<TextRange> calculatePossibleRanges(RuleExample ruleExample, InputFileContext ctx) {
     Matching matching = new Matching();
-    matching.setPattern(".*(" + Pattern.quote(ruleExample.getMatch().stripTrailing()) + ").*");
+    // `Matcher#findIn` uses `Matcher#find`, so the pattern doesn't need to match the entire string
+    matching.setPattern("(" + Pattern.quote(ruleExample.getMatch().stripTrailing()) + ")");
     PatternMatcher matcher = PatternMatcher.build(matching);
     List<Match> matches = matcher.findIn(ruleExample.getText());
-    return ctx.newTextRangeFromFileOffsets(matches.get(0).getFileStartOffset(), matches.get(0).getFileEndOffset());
+    return matches.stream().map(m ->
+     ctx.newTextRangeFromFileOffsets(m.getFileStartOffset(), m.getFileEndOffset())
+    ).collect(Collectors.toList());
   }
 }
