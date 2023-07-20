@@ -21,7 +21,6 @@ package org.sonar.plugins.secrets.checks;
 
 import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
 
-@SuppressWarnings("squid:S6334")
 class GoogleApiKeyCheckTest extends AbstractRuleExampleTest {
   GoogleApiKeyCheckTest() {
     super(new GoogleApiKeyCheck());

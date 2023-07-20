@@ -72,8 +72,8 @@ public abstract class SpecificationBasedCheck extends Check {
   public void reportIfNoOverlappingSecretAlreadyFound(InputFileContext ctx, TextRange foundSecret, SecretMatcher secretMatcher) {
     List<TextRange> reportedSecrets = reportedIssuesForCtx.compute(ctx, (k, v) -> (v == null) ? new ArrayList<>() : v);
 
-    boolean overlappingSecrets = reportedSecrets.stream().noneMatch(reportedSecret -> reportedSecret.overlap(foundSecret));
-    if (overlappingSecrets) {
+    boolean noOverlappingSecrets = reportedSecrets.stream().noneMatch(reportedSecret -> reportedSecret.overlap(foundSecret));
+    if (noOverlappingSecrets) {
       reportedSecrets.add(foundSecret);
       ctx.reportIssue(ruleKey, foundSecret, secretMatcher.getMessageFromRule());
     }
