@@ -62,10 +62,9 @@ class AuxiliaryMatcherTest {
       Arguments.of(AuxiliaryPatternType.PATTERN_AROUND, "candidate secret and auxiliaryPattern", "auxiliaryPattern"),
       Arguments.of(AuxiliaryPatternType.PATTERN_AROUND, "candidate secret and auxiliaryPattern, auxiliaryPattern", "auxiliaryPattern"),
 
-      //PATTERN_NOT is not supported so we don't expect differences
+      // PATTERN_NOT is not supported so we don't expect differences
       Arguments.of(AuxiliaryPatternType.PATTERN_NOT, "candidate secret and auxiliaryPattern", "auxiliaryPattern"),
-      Arguments.of(AuxiliaryPatternType.PATTERN_NOT, "candidate secret", "auxiliaryPattern")
-    );
+      Arguments.of(AuxiliaryPatternType.PATTERN_NOT, "candidate secret", "auxiliaryPattern"));
   }
 
   @ParameterizedTest
@@ -90,7 +89,6 @@ class AuxiliaryMatcherTest {
       Arguments.of(AuxiliaryPatternType.PATTERN_AFTER, "word and candidate secret", "didat"),
       Arguments.of(AuxiliaryPatternType.PATTERN_AFTER, "auxiliaryPattern and candidate secret and other word", "auxiliaryPattern"),
       Arguments.of(AuxiliaryPatternType.PATTERN_AROUND, "something else and candidate secret and other word", "auxiliaryPattern"),
-      Arguments.of(AuxiliaryPatternType.PATTERN_AROUND, "word and candidate secret", "didat")
-    );
+      Arguments.of(AuxiliaryPatternType.PATTERN_AROUND, "word and candidate secret", "didat"));
   }
 }

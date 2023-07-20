@@ -161,7 +161,6 @@ class PostFilterFactoryTest {
     assertThat(predicate.test("candidate secret")).isTrue();
   }
 
-
   @Test
   void patternNotFilterShouldReturnTrue() {
     Predicate<String> predicate = PostFilterFactory.filterForPatternNot("patternNot");
@@ -238,8 +237,7 @@ class PostFilterFactoryTest {
         "candidate secret"),
 
       // this should not happen in real detection cases
-      Arguments.of("candidate secret couldn't be found with pattern", "groupName", "something else", "something else")
-    );
+      Arguments.of("candidate secret couldn't be found with pattern", "groupName", "something else", "something else"));
   }
 
 }

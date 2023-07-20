@@ -28,10 +28,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HeuristicsTest {
   @ParameterizedTest
   @CsvSource({
-          "/home/user, true",
-          "/home/username, false",
-          "C:\\Users\\User, true",
-          "asecretstr/ng, false"
+    "/home/user, true",
+    "/home/username, false",
+    "C:\\Users\\User, true",
+    "asecretstr/ng, false"
   })
   void shouldDeterminePath(String input, boolean isPath) {
     assertThat(Heuristics.isPath(input)).isEqualTo(isPath);
@@ -39,8 +39,8 @@ class HeuristicsTest {
 
   @ParameterizedTest
   @CsvSource({
-          "https://sonarsource.com, true",
-          "nonsense://secretstring, false",
+    "https://sonarsource.com, true",
+    "nonsense://secretstring, false",
   })
   void shouldDetermineUri(String input, boolean isUri) {
     assertThat(Heuristics.isUri(input)).isEqualTo(isUri);
@@ -48,18 +48,17 @@ class HeuristicsTest {
 
   @ParameterizedTest
   @CsvSource({
-          "path, https://sonarsource.com, false",
-          "path;uri, https://sonarsource.com, true",
-          "uri, https://sonarsource.com, true",
-          "path, /home/user, true",
-          "path;uri, /home/user, true",
-          "uri, /home/user, false",
-          "unknown, /home/user, false",
-          "'', /home/user, false",
+    "path, https://sonarsource.com, false",
+    "path;uri, https://sonarsource.com, true",
+    "uri, https://sonarsource.com, true",
+    "path, /home/user, true",
+    "path;uri, /home/user, true",
+    "uri, /home/user, false",
+    "unknown, /home/user, false",
+    "'', /home/user, false",
   })
   void shouldPerformChecksFromList(String heuristics, String input, boolean shouldMatch) {
     assertThat(
-            Heuristics.matchesHeuristics(input, Arrays.asList(heuristics.split(";")))
-    ).isEqualTo(shouldMatch);
+      Heuristics.matchesHeuristics(input, Arrays.asList(heuristics.split(";")))).isEqualTo(shouldMatch);
   }
 }

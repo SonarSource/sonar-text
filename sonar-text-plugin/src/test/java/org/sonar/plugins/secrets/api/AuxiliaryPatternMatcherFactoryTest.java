@@ -50,8 +50,7 @@ class AuxiliaryPatternMatcherFactoryTest {
 
     BiPredicate<Pattern, Pattern> patternEquals = (p1, p2) -> Objects.equals(p1.pattern(), p2.pattern());
 
-    assertThat(matcher).usingRecursiveComparison().
-      withEqualsForType(patternEquals, Pattern.class).isEqualTo(expected);
+    assertThat(matcher).usingRecursiveComparison().withEqualsForType(patternEquals, Pattern.class).isEqualTo(expected);
   }
 
   public static AuxiliaryPatternMatcher constructReferenceAuxiliaryMatcher() {

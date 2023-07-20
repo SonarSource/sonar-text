@@ -46,11 +46,11 @@ class PreFilterFactoryTest {
 
   @ParameterizedTest
   @CsvSource({
-      ".doc, file.doc, true",
-      "doc, file.doc, true",
-      ".doc, file.cpp, false",
-      "pp, file.cpp, false",
-      "'', file.cpp, false",
+    ".doc, file.doc, true",
+    "doc, file.doc, true",
+    ".doc, file.cpp, false",
+    "pp, file.cpp, false",
+    "'', file.cpp, false",
   })
   void testMatchesExt(String ext, String filename, boolean shouldMatch) {
     InputFileContext ctx = mock(InputFileContext.class);
@@ -62,30 +62,29 @@ class PreFilterFactoryTest {
 
   @ParameterizedTest
   @CsvSource({
-      "**/src/*.cpp, project/src/file.cpp, true",
-      "**/src/*.cpp, project/src/file.java, false",
-      "**/src/**/*.cpp, project/src/main/file.cpp, true",
-      "**/src/*, project/src/file.cpp, true",
-      "**/src/*, project/resources/file.json, false",
-      "**/src/**, project/src/main/file.cpp, true",
-      "**/file.cpp, project/src/file.cpp, true",
-      "**/file.cpp, project/src/file.cpp, true",
-      "'', project/src/file.cpp, false",
+    "**/src/*.cpp, project/src/file.cpp, true",
+    "**/src/*.cpp, project/src/file.java, false",
+    "**/src/**/*.cpp, project/src/main/file.cpp, true",
+    "**/src/*, project/src/file.cpp, true",
+    "**/src/*, project/resources/file.json, false",
+    "**/src/**, project/src/main/file.cpp, true",
+    "**/file.cpp, project/src/file.cpp, true",
+    "**/file.cpp, project/src/file.cpp, true",
+    "'', project/src/file.cpp, false",
   })
   void testMatchesPath(String pathPattern, String filePath, boolean shouldMatch) throws URISyntaxException {
     InputFileContext ctx = mock(InputFileContext.class);
     when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder(
-        "testProject", filePath
-    ).build());
+      "testProject", filePath).build());
     when(ctx.getFileSystem()).thenReturn(new DefaultFileSystem(Path.of(".")));
     assertThat(PreFilterFactory.matchesPath(pathPattern, ctx)).isEqualTo(shouldMatch);
   }
 
   @ParameterizedTest
   @CsvSource({
-      "secretstring, secretstring, true",
-      "secretstring, not-so-secret-string, false",
-      "'', secretstring, false",
+    "secretstring, secretstring, true",
+    "secretstring, not-so-secret-string, false",
+    "'', secretstring, false",
   })
   void testMatchesContent(String contentPattern, String fileContent, boolean shouldMatch) {
     InputFileContext ctx = mock(InputFileContext.class);
@@ -102,8 +101,7 @@ class PreFilterFactoryTest {
 
     InputFileContext ctx = mock(InputFileContext.class);
     when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder(
-        "testProject", filename
-    ).build());
+      "testProject", filename).build());
     when(ctx.getFileSystem()).thenReturn(new DefaultFileSystem(Path.of(".")));
     when(ctx.lines()).thenReturn(List.of());
 
@@ -112,58 +110,51 @@ class PreFilterFactoryTest {
 
   static Stream<Arguments> inputs() {
     return Stream.of(
-        Arguments.of("pre:", ".env", true),
-        Arguments.of(
-            "pre:\n" +
-                "  include:\n" +
-                "    paths:\n" +
-                "      - \"**/.env\"",
-            ".env",
-            true
-        ),
-        Arguments.of(
-            "pre:\n" +
-                "  reject:\n" +
-                "    paths:\n" +
-                "      - \"**/.env\"",
-            ".env",
-            false
-        ),
-        Arguments.of(
-            "pre:\n" +
-                "  include:\n" +
-                "    paths:\n" +
-                "      - \"**/.env\"\n" +
-                "  reject:\n" +
-                "    paths:\n" +
-                "      - \"**/.env\"",
-            ".env",
-            false
-        ),
-        Arguments.of(
-            "pre:\n" +
-                "  include:\n" +
-                "    ext:\n" +
-                "      - \".java\"",
-            "Foo.java",
-            true
-        ),
-        Arguments.of(
-            "pre:\n" +
-                "  include:\n" +
-                "    ext:\n" +
-                "      - \".java\"",
-            "Foo.cpp",
-            false
-        ),
-        Arguments.of(
-            "pre:\n" +
-                "  reject:\n" +
-                "    ext:\n" +
-                "      - \".class\"",
-            "Foo.class",
-            false
-        )
-    );
+      Arguments.of("pre:", ".env", true),
+      Arguments.of(
+        "pre:\n" +
+          "  include:\n" +
+          "    paths:\n" +
+          "      - \"**/.env\"",
+        ".env",
+        true),
+      Arguments.of(
+        "pre:\n" +
+          "  reject:\n" +
+          "    paths:\n" +
+          "      - \"**/.env\"",
+        ".env",
+        false),
+      Arguments.of(
+        "pre:\n" +
+          "  include:\n" +
+          "    paths:\n" +
+          "      - \"**/.env\"\n" +
+          "  reject:\n" +
+          "    paths:\n" +
+          "      - \"**/.env\"",
+        ".env",
+        false),
+      Arguments.of(
+        "pre:\n" +
+          "  include:\n" +
+          "    ext:\n" +
+          "      - \".java\"",
+        "Foo.java",
+        true),
+      Arguments.of(
+        "pre:\n" +
+          "  include:\n" +
+          "    ext:\n" +
+          "      - \".java\"",
+        "Foo.cpp",
+        false),
+      Arguments.of(
+        "pre:\n" +
+          "  reject:\n" +
+          "    ext:\n" +
+          "      - \".class\"",
+        "Foo.class",
+        false));
   }
 }

@@ -32,7 +32,7 @@ class DisjunctionMatcherTest {
   private static final PatternMatcher candidateSecretMatcher = new PatternMatcher("\\b(candidate secret)\\b");
 
   @ParameterizedTest
-  //@ValueSource(strings = {"candidate secret after", "before candidate secret", "before candidate secret after"})
+  // @ValueSource(strings = {"candidate secret after", "before candidate secret", "before candidate secret after"})
   @ValueSource(strings = {"candidate secret after"})
   void conjunctionMatcherShouldNotRemoveCandidateSecret(String content) {
     AuxiliaryMatcher auxiliaryMatcherBefore = new AuxiliaryMatcher(

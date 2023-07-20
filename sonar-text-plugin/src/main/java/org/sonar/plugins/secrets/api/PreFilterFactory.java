@@ -31,7 +31,8 @@ import org.sonar.plugins.secrets.configuration.model.matching.filter.FileFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
 public class PreFilterFactory {
-  private PreFilterFactory() {}
+  private PreFilterFactory() {
+  }
 
   private static final Logger LOG = Loggers.get(PreFilterFactory.class);
   private static final Predicate<InputFileContext> INCLUDE_ALL_FILES = ctx -> true;
