@@ -21,6 +21,8 @@ package org.sonar.plugins.secrets.api;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiPredicate;
+
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPatternType;
 
@@ -28,14 +30,20 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
 
   private final AuxiliaryPatternType type;
   private final PatternMatcher auxiliaryPatternMatcher;
+  private final Integer maxDistance;
 
-  AuxiliaryMatcher(AuxiliaryPatternType type, PatternMatcher auxiliaryPatternMatcher) {
+  AuxiliaryMatcher(AuxiliaryPatternType type, PatternMatcher auxiliaryPatternMatcher, int maxDistance) {
     this.type = type;
     this.auxiliaryPatternMatcher = auxiliaryPatternMatcher;
+    this.maxDistance = maxDistance;
   }
 
   public static AuxiliaryMatcher build(AuxiliaryPattern auxiliaryPattern) {
-    return new AuxiliaryMatcher(auxiliaryPattern.getType(), PatternMatcher.build(auxiliaryPattern));
+    int maxDistance = Integer.MAX_VALUE;
+    if (auxiliaryPattern.getMaxCharacterDistance() != null) {
+      maxDistance = auxiliaryPattern.getMaxCharacterDistance();
+    }
+    return new AuxiliaryMatcher(auxiliaryPattern.getType(), PatternMatcher.build(auxiliaryPattern), maxDistance);
   }
 
   public List<Match> filter(List<Match> candidateMatches, String content) {
@@ -48,53 +56,35 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
     if (auxiliaryMatches.isEmpty()) {
       return new ArrayList<>();
     }
-    return filterBasedOnType(candidateMatches, auxiliaryMatches);
+    BiPredicate<Match, Match> comparisonFunction = createComparisonFunction();
+    return filterBasedOnFunction(candidateMatches, auxiliaryMatches, comparisonFunction);
   }
 
-  private List<Match> filterBasedOnType(List<Match> candidateMatches, List<Match> auxiliaryMatches) {
+  private BiPredicate<Match, Match> createComparisonFunction() {
+    BiPredicate<Match, Match> result;
     if (AuxiliaryPatternType.PATTERN_BEFORE == type) {
-      return filterForBefore(candidateMatches, auxiliaryMatches);
+      result = Match::isBefore;
     } else if (AuxiliaryPatternType.PATTERN_AFTER == type) {
-      return filterForAfter(candidateMatches, auxiliaryMatches);
+      result = Match::isAfter;
     } else {
-      return filterForAround(candidateMatches, auxiliaryMatches);
+      result = (auxMatch, candidateMatch) -> auxMatch.isBefore(candidateMatch) || auxMatch.isAfter(candidateMatch);
     }
+
+    if (maxDistance != Integer.MAX_VALUE) {
+      result = result.and((auxMatch, candidateMatch) -> auxMatch.inDistanceOf(candidateMatch, maxDistance));
+    }
+    return result;
   }
 
-  private static List<Match> filterForAfter(List<Match> candidateMatches, List<Match> auxiliaryMatches) {
+  private List<Match> filterBasedOnFunction(List<Match> candidateMatches, List<Match> auxiliaryMatches, BiPredicate<Match, Match> comparisonFunction) {
     List<Match> filteredCandidates = new ArrayList<>();
 
     for (Match regexMatch : candidateMatches) {
-      // since we are searching for after, the last one (position wise) is enough
-      Match lastAuxMatch = auxiliaryMatches.get(auxiliaryMatches.size() - 1);
-      if (lastAuxMatch.isAfter(regexMatch)) {
-        filteredCandidates.add(regexMatch);
-      }
-    }
-    return filteredCandidates;
-  }
-
-  private static List<Match> filterForAround(List<Match> candidateMatches, List<Match> auxiliaryMatches) {
-    List<Match> filteredCandidates = new ArrayList<>();
-
-    for (Match candidate : candidateMatches) {
-      Match lastAuxMatch = auxiliaryMatches.get(auxiliaryMatches.size() - 1);
-      Match firstAuxMatch = auxiliaryMatches.get(0);
-      if (lastAuxMatch.isAfter(candidate) || firstAuxMatch.isBefore(candidate)) {
-        filteredCandidates.add(candidate);
-      }
-    }
-    return filteredCandidates;
-  }
-
-  private static List<Match> filterForBefore(List<Match> candidateMatches, List<Match> auxiliaryMatches) {
-    List<Match> filteredCandidates = new ArrayList<>();
-
-    for (Match candidate : candidateMatches) {
-      // since we are searching for before, first one (position wise) is enough
-      Match firstAuxMatch = auxiliaryMatches.get(0);
-      if (firstAuxMatch.isBefore(candidate)) {
-        filteredCandidates.add(candidate);
+      for (Match auxiliaryMatch : auxiliaryMatches) {
+        if (comparisonFunction.test(auxiliaryMatch, regexMatch)) {
+          filteredCandidates.add(regexMatch);
+          break;
+        }
       }
     }
     return filteredCandidates;

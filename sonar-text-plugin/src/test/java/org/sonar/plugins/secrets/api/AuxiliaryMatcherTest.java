@@ -37,7 +37,7 @@ class AuxiliaryMatcherTest {
   void auxiliaryPatternShouldBeDetectedAndCandidateSecretShouldNotBeRemoved(AuxiliaryPatternType patternType, String content,
     String auxiliaryPattern) {
     AuxiliaryMatcher auxiliaryMatcher = new AuxiliaryMatcher(
-      patternType, new PatternMatcher("\\b(" + auxiliaryPattern + ")\\b"));
+      patternType, new PatternMatcher("\\b(" + auxiliaryPattern + ")\\b"), Integer.MAX_VALUE);
 
     List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
 
@@ -71,7 +71,7 @@ class AuxiliaryMatcherTest {
   @MethodSource
   void auxiliaryPatternShouldRemoveCandidateSecrets(AuxiliaryPatternType patternType, String content, String auxiliaryPattern) {
     AuxiliaryMatcher auxiliaryMatcher = new AuxiliaryMatcher(
-      patternType, new PatternMatcher("\\b(" + auxiliaryPattern + ")\\b"));
+      patternType, new PatternMatcher("\\b(" + auxiliaryPattern + ")\\b"), Integer.MAX_VALUE);
 
     List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
 

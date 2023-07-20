@@ -21,6 +21,9 @@
 package org.sonar.plugins.secrets.configuration.model.matching;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import javax.annotation.Nullable;
+
 import org.sonar.plugins.secrets.configuration.deserialization.AuxiliaryPatternDeserializer;
 
 @JsonDeserialize(using = AuxiliaryPatternDeserializer.class)
@@ -28,6 +31,8 @@ public class AuxiliaryPattern implements Match {
 
   private AuxiliaryPatternType type;
   private String pattern;
+  @Nullable
+  private Integer maxCharacterDistance;
 
   public AuxiliaryPatternType getType() {
     return type;
@@ -43,5 +48,14 @@ public class AuxiliaryPattern implements Match {
 
   public void setPattern(String pattern) {
     this.pattern = pattern;
+  }
+
+  @Nullable
+  public Integer getMaxCharacterDistance() {
+    return maxCharacterDistance;
+  }
+
+  public void setMaxCharacterDistance(@Nullable Integer maxCharacterDistance) {
+    this.maxCharacterDistance = maxCharacterDistance;
   }
 }

@@ -165,9 +165,12 @@ public class ReferenceTestModel {
 
     BooleanCombination matchEitherLevelTwo = new BooleanCombination();
     matchEitherLevelTwo.setType(BooleanCombinationType.MATCH_EITHER);
+    AuxiliaryPattern auxiliaryPatternWithMaxDistance = constructAuxiliaryPattern(
+      AuxiliaryPatternType.PATTERN_AROUND, "\\b(pattern-around-with-maxDistance)\\b");
+    auxiliaryPatternWithMaxDistance.setMaxCharacterDistance(100);
     matchEitherLevelTwo.setMatches(List.of(
       constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_NOT, "\\b(pattern-not)\\b"),
-      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AROUND, "\\b(pattern-around)\\b")));
+      auxiliaryPatternWithMaxDistance));
 
     List<Match> matches = new ArrayList<>();
     matches.add(constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_BEFORE, "\\b(pattern-before)\\b"));
