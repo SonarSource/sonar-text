@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.sonar.api.batch.fs.InputFile;
@@ -80,7 +81,7 @@ class TextAndSecretsSensorTest {
     sensor(context).execute(context);
 
     assertThat(asString(context.allIssues())).containsExactly(
-      "secrets:S6335 [5:18-5:1750] Make sure this GCP secret gets revoked, changed, and removed from the code.");
+      "secrets:S6652 [5:18-5:45] Make sure this private key gets revoked, changed, and removed from the code.");
     assertThat(logTester.logs()).containsExactly(
       "1 source file to be analyzed",
       "1/1 source file has been analyzed");
@@ -212,7 +213,7 @@ class TextAndSecretsSensorTest {
     InputFile inputFile = inputFile("foo");
     analyse(sensor(check), context, inputFile);
 
-    verify(check).initialize(any());
+    verify(check).initialize(any(), any());
     assertThat(logTester.logs()).contains("Found no rule specification for rule with key: SecretKey");
   }
 

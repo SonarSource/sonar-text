@@ -20,6 +20,7 @@
 package org.sonar.plugins.secrets.api;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.sonar.check.Rule;
@@ -37,11 +38,10 @@ class SpecificationBasedCheckTest {
 
     String fileContent = "The content contains the rule matching pattern and various other characters.";
     ExampleCheck exampleCheck = new ExampleCheck();
-    exampleCheck.initialize(specificationLoader);
+    exampleCheck.initialize(specificationLoader, new HashMap<>());
 
     assertThat(analyze(exampleCheck, fileContent)).containsExactly(
-      "secrets:exampleKey [1:25-1:46] provider message"
-    );
+      "secrets:exampleKey [1:25-1:46] provider message");
   }
 
   @Test
@@ -52,7 +52,7 @@ class SpecificationBasedCheckTest {
 
     String fileContent = "rule matching pattern with low entropy";
     ExampleCheck exampleCheck = new ExampleCheck();
-    exampleCheck.initialize(specificationLoader);
+    exampleCheck.initialize(specificationLoader, new HashMap<>());
 
     assertThat(analyze(exampleCheck, fileContent)).isEmpty();
   }
@@ -66,11 +66,10 @@ class SpecificationBasedCheckTest {
 
     String fileContent = "rule matching pattern and post filter has low entropy";
     ExampleCheck exampleCheck = new ExampleCheck();
-    exampleCheck.initialize(specificationLoader);
+    exampleCheck.initialize(specificationLoader, new HashMap<>());
 
     assertThat(analyze(exampleCheck, fileContent)).containsExactly(
-      "secrets:exampleKey [1:0-1:21] rule message"
-    );
+      "secrets:exampleKey [1:0-1:21] rule message");
   }
 
   @Test
@@ -83,7 +82,7 @@ class SpecificationBasedCheckTest {
 
     String fileContent = "rule matching pattern and patternNot matching inside and post filter has low entropy";
     ExampleCheck exampleCheck = new ExampleCheck();
-    exampleCheck.initialize(specificationLoader);
+    exampleCheck.initialize(specificationLoader, new HashMap<>());
 
     assertThat(analyze(exampleCheck, fileContent)).isEmpty();
   }
