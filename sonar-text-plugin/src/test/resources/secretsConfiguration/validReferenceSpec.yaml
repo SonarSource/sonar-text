@@ -80,3 +80,4 @@ provider:
             text
           containsSecret: true
           match: LGYIh8rDziCXCgDCUbJq1h7CKwNqnpA1il4MXL+y
+          fileName: fileName.txt

@@ -32,7 +32,7 @@ import java.util.Set;
 
 public class SchemaValidator {
 
-  private static final String FILE_LOCATION = "/org/sonar/plugins/secrets/configuration/";
+  private static final String FILE_LOCATION = "/org/sonar/plugins/secrets/configuration/specifications/";
   private static final String VALIDATION_SCHEMA_FILE = "specification-json-schema.json";
   private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
   private static final JsonSchema VALIDATION_SCHEMA = initializeValidationSchema();
