@@ -21,6 +21,7 @@ package org.sonar.plugins.secrets.utils;
 
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -58,7 +59,7 @@ public abstract class AbstractRuleExampleTest {
     }
 
     this.check = check;
-    ((SpecificationBasedCheck) check).initialize(specificationLoader);
+    ((SpecificationBasedCheck) check).initialize(specificationLoader, new HashMap<>());
   }
 
   @TestFactory
