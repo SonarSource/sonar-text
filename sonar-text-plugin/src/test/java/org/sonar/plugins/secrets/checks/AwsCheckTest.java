@@ -20,18 +20,16 @@
 package org.sonar.plugins.secrets.checks;
 
 import java.io.IOException;
-import org.junit.jupiter.api.BeforeAll;
+
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.sonar.plugins.common.Check;
-import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
-import org.sonar.plugins.secrets.api.SpecificationLoader;
 import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.analyze;
 
-@java.lang.SuppressWarnings("squid:S6290")
+@SuppressWarnings("squid:S6290")
 class AwsCheckTest extends AbstractRuleExampleTest {
 
   protected AwsCheckTest() {

@@ -21,13 +21,16 @@ package org.sonar.plugins.common;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.sonar.api.SonarProduct;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
@@ -78,7 +81,8 @@ public class TextAndSecretsSensor implements Sensor {
 
     NotBinaryFilePredicate notBinaryFilePredicate = binaryFilePredicate(sensorContext);
     FilePredicate filePredicate = isSonarLintContext(sensorContext) || analyzeAllFiles(sensorContext)
-      ? notBinaryFilePredicate : LANGUAGE_FILE_PREDICATE;
+      ? notBinaryFilePredicate
+      : LANGUAGE_FILE_PREDICATE;
     List<InputFile> inputFiles = getInputFiles(sensorContext, filePredicate);
     if (inputFiles.isEmpty()) {
       return;
@@ -175,9 +179,10 @@ public class TextAndSecretsSensor implements Sensor {
 
   protected void initializeSpecificationBasedChecks(List<Check> checks) {
     SpecificationLoader specificationLoader = new SpecificationLoader();
+    Map<InputFileContext, List<TextRange>> reportedIssuesForCtx = new HashMap<>();
     for (Check activeCheck : checks) {
       if (activeCheck instanceof SpecificationBasedCheck) {
-        ((SpecificationBasedCheck) activeCheck).initialize(specificationLoader);
+        ((SpecificationBasedCheck) activeCheck).initialize(specificationLoader, reportedIssuesForCtx);
       }
     }
   }

@@ -30,7 +30,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.analyze;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 
-@java.lang.SuppressWarnings("squid:S6336")
 class AlibabaCloudAccessKeyCheckTest extends AbstractRuleExampleTest {
   protected AlibabaCloudAccessKeyCheckTest() {
     super(new AlibabaCloudAccessKeyCheck());

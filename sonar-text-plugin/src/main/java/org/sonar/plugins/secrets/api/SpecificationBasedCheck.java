@@ -21,7 +21,9 @@ package org.sonar.plugins.secrets.api;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
@@ -35,6 +37,9 @@ public abstract class SpecificationBasedCheck extends Check {
   private static final Logger LOG = Loggers.get(SpecificationBasedCheck.class);
   private List<SecretMatcher> matcher;
 
+  // shared map between all specificationBasedChecks used to calculate if secret was already reported for textRange
+  private Map<InputFileContext, List<TextRange>> reportedIssuesForCtx;
+
   @Override
   protected String repositoryKey() {
     return SecretsRulesDefinition.REPOSITORY_KEY;
@@ -44,7 +49,8 @@ public abstract class SpecificationBasedCheck extends Check {
     super();
   }
 
-  public void initialize(SpecificationLoader loader) {
+  public void initialize(SpecificationLoader loader, Map<InputFileContext, List<TextRange>> reportedIssuesForCtx) {
+    this.reportedIssuesForCtx = reportedIssuesForCtx;
     List<Rule> rulesForKey = loader.getRulesForKey(ruleKey.rule());
     if (rulesForKey.isEmpty()) {
       LOG.error(String.format("Found no rule specification for rule with key: %s", ruleKey.rule()));
@@ -56,18 +62,20 @@ public abstract class SpecificationBasedCheck extends Check {
 
   @Override
   public void analyze(InputFileContext ctx) {
-    List<TextRange> foundSecrets = new ArrayList<>();
-
     for (SecretMatcher secretMatcher : matcher) {
       secretMatcher.findIn(ctx).stream()
         .map(match -> ctx.newTextRangeFromFileOffsets(match.getFileStartOffset(), match.getFileEndOffset()))
-        .forEach(textRange -> {
-          boolean notOverlapsExisting = foundSecrets.stream().noneMatch(foundSecret -> foundSecret.overlap(textRange));
-          if (notOverlapsExisting) {
-            foundSecrets.add(textRange);
-            ctx.reportIssue(ruleKey, textRange, secretMatcher.getMessageFromRule());
-          }
-        });
+        .forEach(textRange -> reportIfNoOverlappingSecretAlreadyFound(ctx, textRange, secretMatcher));
+    }
+  }
+
+  public void reportIfNoOverlappingSecretAlreadyFound(InputFileContext ctx, TextRange foundSecret, SecretMatcher secretMatcher) {
+    List<TextRange> reportedSecrets = reportedIssuesForCtx.compute(ctx, (k, v) -> (v == null) ? new ArrayList<>() : v);
+
+    boolean noOverlappingSecrets = reportedSecrets.stream().noneMatch(reportedSecret -> reportedSecret.overlap(foundSecret));
+    if (noOverlappingSecrets) {
+      reportedSecrets.add(foundSecret);
+      ctx.reportIssue(ruleKey, foundSecret, secretMatcher.getMessageFromRule());
     }
   }
 

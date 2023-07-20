@@ -21,6 +21,7 @@ package org.sonar.plugins.secrets.configuration.deserialization;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.sonar.plugins.secrets.configuration.model.Provider;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.RuleExample;
@@ -141,8 +142,7 @@ public class ReferenceTestModel {
       constructReference("Reference 1", ReferenceType.STANDARDS),
       constructReference("Reference 2", ReferenceType.DOCUMENTATION),
       constructReference("Reference 3", ReferenceType.CONFERENCE_PRESENTATIONS),
-      constructReference("Reference 4", ReferenceType.ARTICLES_AND_BLOG_POSTS)
-    );
+      constructReference("Reference 4", ReferenceType.ARTICLES_AND_BLOG_POSTS));
   }
 
   private static Reference constructReference(String description, ReferenceType type) {
@@ -161,15 +161,13 @@ public class ReferenceTestModel {
     matchEach.setType(BooleanCombinationType.MATCH_EACH);
     matchEach.setMatches(List.of(
       constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AFTER, "\\b(pattern-after)\\b"),
-      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AROUND, "\\b(pattern-around)\\b")
-    ));
+      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AROUND, "\\b(pattern-around)\\b")));
 
     BooleanCombination matchEitherLevelTwo = new BooleanCombination();
     matchEitherLevelTwo.setType(BooleanCombinationType.MATCH_EITHER);
     matchEitherLevelTwo.setMatches(List.of(
       constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_NOT, "\\b(pattern-not)\\b"),
-      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AROUND, "\\b(pattern-around)\\b")
-    ));
+      constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AROUND, "\\b(pattern-around)\\b")));
 
     List<Match> matches = new ArrayList<>();
     matches.add(constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_BEFORE, "\\b(pattern-before)\\b"));
@@ -219,7 +217,6 @@ public class ReferenceTestModel {
 
     return postModule;
   }
-
 
   private static void enrichRuleMetadata(RuleMetadata ruleMetadata) {
     ruleMetadata.setDefaultProfile(false);
