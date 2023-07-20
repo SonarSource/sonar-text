@@ -233,6 +233,7 @@ public class ReferenceTestModel {
 
   private static void enrichRuleExample(RuleExample example) {
     example.setMatch("LGYIh8rDziCXCgDCUbJq1h7CKwNqnpA1il4MXL+y");
+    example.setFileName("fileName.txt");
   }
 
   // --------------------------------------------------------------------------------------
