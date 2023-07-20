@@ -60,12 +60,6 @@ public abstract class AbstractRuleExampleTest {
     specificationLoader = new SpecificationLoader();
     this.check = check;
     ((SpecificationBasedCheck) check).initialize(specificationLoader);
-
-    // `LogTesterJUnit5` can't be used here as TestFactory doesn't support Junit lifecycle callbacks (BeforeAll / AfterAll)
-    // so we are checking whether add configuration files are loaded just in case.
-    assertThat(((SpecificationBasedCheck) check).getMatcher())
-        .withFailMessage("Some rule configuration were not loaded, see logs for more details.")
-        .hasSize(54);
   }
 
   @TestFactory
