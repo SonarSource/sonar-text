@@ -24,6 +24,6 @@ import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
 @java.lang.SuppressWarnings("squid:S6338")
 class AzureStorageAccountKeyCheckTest extends AbstractRuleExampleTest {
   protected AzureStorageAccountKeyCheckTest() {
-    super(new AzureStorageAccountKeyCheck(), "S6338");
+    super(new AzureStorageAccountKeyCheck());
   }
 }

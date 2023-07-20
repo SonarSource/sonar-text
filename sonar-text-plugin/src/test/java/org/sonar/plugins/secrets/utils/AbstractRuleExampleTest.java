@@ -19,19 +19,17 @@
  */
 package org.sonar.plugins.secrets.utils;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-import org.junit.jupiter.api.function.ThrowingConsumer;
+import org.junit.jupiter.api.function.Executable;
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.batch.sensor.issue.Issue;
@@ -51,13 +49,14 @@ import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
 
 public abstract class AbstractRuleExampleTest {
+  private static SpecificationLoader specificationLoader;
   private final Check check;
-  private final SpecificationLoader specificationLoader;
-  private final String rspecKey;
 
-  protected AbstractRuleExampleTest(Check check, String rspecKey) {
-    this.rspecKey = rspecKey;
-    specificationLoader = new SpecificationLoader();
+  protected AbstractRuleExampleTest(Check check) {
+    if (specificationLoader == null) {
+      specificationLoader = new SpecificationLoader();
+    }
+
     this.check = check;
     ((SpecificationBasedCheck) check).initialize(specificationLoader);
   }
@@ -65,42 +64,36 @@ public abstract class AbstractRuleExampleTest {
   @TestFactory
   @DisplayName("Execute examples from the configuration file")
   Stream<DynamicTest> loadExamples() {
-    Stream<TestInput> input = specificationLoader.getAllRules().stream()
-        .flatMap(rule -> {
-          List<RuleExample> examples = rule.getExamples();
-          return IntStream.range(0, examples.size()).mapToObj(i -> new TestInput(i, rule, examples.get(i)));
-        });
-    Function<TestInput, String> displayNameGenerator = g ->
-        g.rule.getId() + " #" + g.index + " - " + g.rule.getMetadata().getName() + " - " + (g.ruleExample.isContainsSecret() ? "positive" : "negative");
-    ThrowingConsumer<TestInput> testExecutor = g -> checkExample(g.rule, g.ruleExample);
-
-    return input
-        .filter(e -> rspecKey.equals(e.rule.getRspecKey()))
-        // For debugging of individual tests
-//        .filter(e -> "settings.py-secret-key".equals(e.rule.getId()))
-        .map(e -> DynamicTest.dynamicTest(displayNameGenerator.apply(e), () -> testExecutor.accept(e)));
+    List<Rule> rulesForKey = specificationLoader.getRulesForKey(check.ruleKey.rule());
+    return rulesForKey.stream().flatMap(
+      rule -> rule.getExamples().stream()
+        // for easier debugging of specific rules uncomment the line below
+        // .filter(example -> "<id-of-your-rule>".equals(rule.getId()))
+        .map(example -> DynamicTest.dynamicTest(displayName(rule, example), analyzeExample(rule, example))));
   }
 
-  private void checkExample(Rule rule, RuleExample ruleExample) throws IOException {
-    SensorContextTester context = sensorContext(check);
-    String exampleFileName = ruleExample.getFileName() != null ? ruleExample.getFileName() : "file.txt";
-    InputFileContext inputFileContext = new InputFileContext(context, inputFile(Path.of(exampleFileName), ruleExample.getText()));
+  private Executable analyzeExample(Rule rule, RuleExample ruleExample) {
+    return () -> {
+      SensorContextTester context = sensorContext(check);
+      String exampleFileName = ruleExample.getFileName() != null ? ruleExample.getFileName() : "file.txt";
+      InputFileContext inputFileContext = new InputFileContext(context, inputFile(Path.of(exampleFileName), ruleExample.getText()));
 
-    check.analyze(inputFileContext);
+      check.analyze(inputFileContext);
 
-    Collection<Issue> issues = context.allIssues();
-    if (ruleExample.isContainsSecret()) {
-      List<TextRange> expectedRanges = calculatePossibleRanges(ruleExample, inputFileContext);
+      Collection<Issue> issues = context.allIssues();
+      if (ruleExample.isContainsSecret()) {
+        List<TextRange> expectedRanges = calculatePossibleRanges(ruleExample, inputFileContext);
 
-      assertThat(issues).isNotEmpty();
-      assertThat(issues).anyMatch(s -> asString(s).contains(rule.getMetadata().getMessage()));
-      assertThat(issues).anyMatch(s -> asString(s).contains(rule.getRspecKey()));
-      // Since there may be multiple occurrences of `ruleExample.match` in `ruleExample.text`, we check if
-      // any of them matches the actual range.
-      assertThat(issues).map(i -> i.primaryLocation().textRange()).containsAnyElementsOf(expectedRanges);
-    } else {
-      assertThat(issues).isEmpty();
-    }
+        assertThat(issues).isNotEmpty();
+        assertThat(issues).anyMatch(s -> asString(s).contains(rule.getMetadata().getMessage()));
+        assertThat(issues).anyMatch(s -> asString(s).contains(rule.getRspecKey()));
+        // Since there may be multiple occurrences of `ruleExample.match` in `ruleExample.text`, we check if
+        // any of them matches the actual range.
+        assertThat(issues).map(i -> i.primaryLocation().textRange()).containsAnyElementsOf(expectedRanges);
+      } else {
+        assertThat(issues).isEmpty();
+      }
+    };
   }
 
   private List<TextRange> calculatePossibleRanges(RuleExample ruleExample, InputFileContext ctx) {
@@ -109,8 +102,16 @@ public abstract class AbstractRuleExampleTest {
     matching.setPattern("(" + Pattern.quote(ruleExample.getMatch().stripTrailing()) + ")");
     PatternMatcher matcher = PatternMatcher.build(matching);
     List<Match> matches = matcher.findIn(ruleExample.getText());
-    return matches.stream().map(m ->
-     ctx.newTextRangeFromFileOffsets(m.getFileStartOffset(), m.getFileEndOffset())
-    ).collect(Collectors.toList());
+    return matches.stream().map(m -> ctx.newTextRangeFromFileOffsets(m.getFileStartOffset(), m.getFileEndOffset())).collect(Collectors.toList());
+  }
+
+  private String displayName(Rule rule, RuleExample example) {
+    String positiveOrNegative = example.isContainsSecret() ? "" : " not";
+    int indexOfExampleInRule = rule.getExamples().indexOf(example) + 1;
+    return String.format("%s example %d: Should%s find issue", rule.getId(), indexOfExampleInRule, positiveOrNegative);
+  }
+
+  public Check getInitializedCheck() {
+    return check;
   }
 }

@@ -23,6 +23,6 @@ import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
 
 class IbmApiKeyCheckTest extends AbstractRuleExampleTest {
   IbmApiKeyCheckTest() {
-    super(new IbmApiKeyCheck(), "S6337");
+    super(new IbmApiKeyCheck());
   }
 }

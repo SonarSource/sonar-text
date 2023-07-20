@@ -20,12 +20,10 @@
 package org.sonar.plugins.secrets.checks;
 
 import java.nio.file.Path;
-import org.junit.jupiter.api.BeforeAll;
+
 import org.junit.jupiter.api.Test;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.common.Check;
-import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
-import org.sonar.plugins.secrets.api.SpecificationLoader;
 import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,22 +33,14 @@ import static org.sonar.plugins.common.TestUtils.inputFile;
 @java.lang.SuppressWarnings("squid:S6336")
 class AlibabaCloudAccessKeyCheckTest extends AbstractRuleExampleTest {
   protected AlibabaCloudAccessKeyCheckTest() {
-    super(new AlibabaCloudAccessKeyCheck(), "S6336");
-  }
-
-  static Check check;
-
-  @BeforeAll
-  public static void init() {
-    check = new AlibabaCloudAccessKeyCheck();
-    SpecificationLoader specificationLoader = new SpecificationLoader();
-    ((SpecificationBasedCheck) check).initialize(specificationLoader);
+    super(new AlibabaCloudAccessKeyCheck());
   }
 
   @Test
   void key_secret_negative() throws Exception {
     InputFile file = inputFile(Path.of("src", "test", "resources", "checks", "GoogleCloudAccountKeyCheck", "GoogleCloudAccountNegative" +
-        ".json"));
+      ".json"));
+    Check check = getInitializedCheck();
     assertThat(analyze(check, file)).isEmpty();
   }
 }

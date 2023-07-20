@@ -34,17 +34,8 @@ import static org.sonar.plugins.common.TestUtils.analyze;
 @java.lang.SuppressWarnings("squid:S6290")
 class AwsCheckTest extends AbstractRuleExampleTest {
 
-  static Check check;
-
   protected AwsCheckTest() {
-    super(new AwsCheck(), "S6290");
-  }
-
-  @BeforeAll
-  public static void init() {
-    check = new AwsCheck();
-    SpecificationLoader specificationLoader = new SpecificationLoader();
-    ((SpecificationBasedCheck) check).initialize(specificationLoader);
+    super(new AwsCheck());
   }
 
   @ParameterizedTest
@@ -59,6 +50,7 @@ class AwsCheckTest extends AbstractRuleExampleTest {
       "}",
   })
   void negative(String fileContent) throws IOException {
+    Check check = getInitializedCheck();
     assertThat(analyze(check, fileContent)).isEmpty();
   }
 }
