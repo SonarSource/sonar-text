@@ -76,7 +76,7 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
     return result;
   }
 
-  private List<Match> filterBasedOnFunction(List<Match> candidateMatches, List<Match> auxiliaryMatches, BiPredicate<Match, Match> comparisonFunction) {
+  private static List<Match> filterBasedOnFunction(List<Match> candidateMatches, List<Match> auxiliaryMatches, BiPredicate<Match, Match> comparisonFunction) {
     List<Match> filteredCandidates = new ArrayList<>();
 
     for (Match regexMatch : candidateMatches) {
