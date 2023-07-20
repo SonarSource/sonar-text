@@ -51,9 +51,6 @@ public class Match {
   }
 
   public boolean inDistanceOf(Match match, int distance) {
-    if (Integer.MAX_VALUE == distance) {
-      return true;
-    }
     int firstEndToSecondStartDistance = fileEndOffset - match.getFileStartOffset();
     int firstStartToSecondEndDistance = fileStartOffset - match.getFileEndOffset();
     boolean matchesOverlap = (firstEndToSecondStartDistance >= 0) && (firstStartToSecondEndDistance <= 0);
