@@ -76,21 +76,21 @@ class InputFileContextTest {
     InputFileContext ctx = inputFileContext("01234");
 
     assertThatThrownBy(() -> ctx.newTextRangeFromFileOffsets(5, 6))
-            .hasMessage("Invalid offsets: startOffset=5, endOffset=6");
+      .hasMessage("Invalid offsets: startOffset=5, endOffset=6");
 
     assertThatThrownBy(() -> ctx.newTextRangeFromFileOffsets(6, 5))
-            .hasMessage("Invalid offsets: startOffset=6, endOffset=5");
+      .hasMessage("Invalid offsets: startOffset=6, endOffset=5");
 
     assertThatThrownBy(() -> ctx.newTextRangeFromFileOffsets(2, 6))
-            .hasMessage("Invalid offsets: startOffset=2, endOffset=6");
+      .hasMessage("Invalid offsets: startOffset=2, endOffset=6");
   }
 
   @Test
   void should_fail_to_load_content_if_file_does_not_exist() {
     InputFile inputFile = inputFile(Path.of("invalid-path.txt"));
     assertThatThrownBy(() -> new InputFileContext(defaultSensorContext(), inputFile))
-            .isInstanceOf(NoSuchFileException.class)
-            .hasMessageContaining("invalid-path");
+      .isInstanceOf(NoSuchFileException.class)
+      .hasMessageContaining("invalid-path");
   }
 
   @Test
@@ -98,13 +98,13 @@ class InputFileContextTest {
     InputFile inputFile = spy(inputFile("{}"));
     when(inputFile.inputStream()).thenThrow(new IOException("Fail to read file input stream"));
     assertThatThrownBy(() -> new InputFileContext(defaultSensorContext(), inputFile))
-            .isInstanceOf(IOException.class)
-            .hasMessageContaining("Fail to read file input stream");
+      .isInstanceOf(IOException.class)
+      .hasMessageContaining("Fail to read file input stream");
   }
 
   @Test
   void should_identify_binary_file() throws IOException {
-    Path binaryFile = Path.of("target","test-classes","org","sonar","plugins","common","InputFileContextTest.class");
+    Path binaryFile = Path.of("target", "test-classes", "org", "sonar", "plugins", "common", "InputFileContextTest.class");
     InputFile inputFile = inputFile(binaryFile);
     InputFileContext ctx = new InputFileContext(defaultSensorContext(), inputFile);
     assertThat(ctx.hasNonTextCharacters()).isTrue();

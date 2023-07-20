@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.secrets.configuration.validation;
 
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;

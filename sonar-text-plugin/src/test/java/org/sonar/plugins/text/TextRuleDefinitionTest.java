@@ -61,7 +61,7 @@ class TextRuleDefinitionTest {
 
   @Test
   void each_check_should_be_declared_in_the_check_list() throws IOException {
-    Path checksPackage = Path.of("src","main","java","org","sonar","plugins","text","checks");
+    Path checksPackage = Path.of("src", "main", "java", "org", "sonar", "plugins", "text", "checks");
     try (Stream<Path> list = Files.list(checksPackage)) {
       int expectedCount = (int) list.filter(file -> file.toString().endsWith("Check.java")).count();
       assertThat(TextRuleDefinition.checks()).hasSize(expectedCount);

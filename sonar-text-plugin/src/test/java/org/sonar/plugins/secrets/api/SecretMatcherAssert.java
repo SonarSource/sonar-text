@@ -36,8 +36,7 @@ public class SecretMatcherAssert extends AbstractAssert<SecretMatcherAssert, Sec
     "C:\\Users\\User",
     "asecretstr/ng",
     "https://sonarsource.com",
-    "nonsense://secretstring"
-  );
+    "nonsense://secretstring");
   static BiPredicate<Pattern, Pattern> patternEquals = (p1, p2) -> Objects.equals(p1.pattern(), p2.pattern());
 
   protected SecretMatcherAssert(SecretMatcher matcher) {

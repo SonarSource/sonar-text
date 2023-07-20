@@ -78,7 +78,6 @@ public class Detection {
     this.post = post;
   }
 
-
   public void setRule(Rule rule) {
     this.rule = rule;
   }

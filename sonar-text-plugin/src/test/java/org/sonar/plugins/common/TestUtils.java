@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.sonar.api.SonarEdition;
-import org.sonar.api.SonarProduct;
 import org.sonar.api.SonarQubeSide;
 import org.sonar.api.SonarRuntime;
 import org.sonar.api.batch.fs.InputFile;
@@ -92,7 +91,7 @@ public class TestUtils {
   }
 
   public static InputFile inputFile(Path path, @Nullable String content) {
-    return  inputFile( path, content, null);
+    return inputFile(path, content, null);
   }
 
   public static InputFile inputFile(Path path, @Nullable String content, @Nullable String language) {

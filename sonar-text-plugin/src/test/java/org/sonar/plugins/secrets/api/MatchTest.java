@@ -56,7 +56,6 @@ class MatchTest {
     return Stream.of(
       Arguments.of("Overlapping Matches", 15, 30),
       Arguments.of("Enclosed Match", 15, 17),
-      Arguments.of("Sharing one character", 20, 25)
-    );
+      Arguments.of("Sharing one character", 20, 25));
   }
 }

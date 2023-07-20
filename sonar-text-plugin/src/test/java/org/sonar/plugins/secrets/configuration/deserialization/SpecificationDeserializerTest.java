@@ -31,8 +31,7 @@ class SpecificationDeserializerTest {
   @Test
   void deserializeMinSpecifications() {
     String fileName = "validMinSpec.yaml";
-    InputStream specificationStream =
-      Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + fileName);
+    InputStream specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + fileName);
 
     Specification result = SpecificationDeserializer.deserialize(specificationStream, fileName);
     Specification expected = ReferenceTestModel.constructMinimumSpecification();
@@ -43,8 +42,7 @@ class SpecificationDeserializerTest {
   @Test
   void deserializeReferenceSpecifications() {
     String fileName = "validReferenceSpec.yaml";
-    InputStream specificationStream =
-      Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + fileName);
+    InputStream specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + fileName);
 
     Specification result = SpecificationDeserializer.deserialize(specificationStream, fileName);
     Specification expected = ReferenceTestModel.constructReferenceSpecification();
@@ -55,8 +53,7 @@ class SpecificationDeserializerTest {
   @Test
   void throwExceptionOnInvalidFile() {
     String fileName = "invalidSpecWithUnexpectedFieldFailsDuringDeserialization.yaml";
-    InputStream specificationStream =
-      Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + fileName);
+    InputStream specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + fileName);
 
     assertThatExceptionOfType(DeserializationException.class)
       .isThrownBy(() -> SpecificationDeserializer.deserialize(specificationStream, fileName))
@@ -66,8 +63,7 @@ class SpecificationDeserializerTest {
   @Test
   void throwExceptionOnMissingFile() {
     String specificationFileName = "doesNotExist.yaml";
-    InputStream specificationStream =
-      Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + specificationFileName);
+    InputStream specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + specificationFileName);
 
     assertThatExceptionOfType(DeserializationException.class)
       .isThrownBy(() -> SpecificationDeserializer.deserialize(specificationStream, specificationFileName))

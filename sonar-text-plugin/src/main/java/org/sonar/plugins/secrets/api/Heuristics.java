@@ -51,7 +51,7 @@ public class Heuristics {
   public static boolean isPath(String input) {
     long fileSeparatorCount = input.chars().filter(c -> c == '/' || c == '\\').count();
     return fileSeparatorCount >= MINIMAL_NUMBER_OF_SEPARATORS_IN_VALID_PATH &&
-            (fileSeparatorCount * 1. / input.length()) >= MINIMAL_RATIO_OF_SEPARATOR_SYMBOLS_IN_VALID_PATH;
+      (fileSeparatorCount * 1. / input.length()) >= MINIMAL_RATIO_OF_SEPARATOR_SYMBOLS_IN_VALID_PATH;
   }
 
   public static boolean isUri(String input) {

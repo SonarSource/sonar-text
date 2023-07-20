@@ -37,8 +37,7 @@ class SchemaValidatorTest {
   @ParameterizedTest
   @ValueSource(strings = {"validMinSpec.yaml", "validReferenceSpec.yaml"})
   void testSpecificationFilesAreValid(String specificationFileName) throws IOException {
-    InputStream specificationStream =
-      Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + specificationFileName);
+    InputStream specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + specificationFileName);
     JsonNode specification = MAPPER.readTree(specificationStream);
 
     assertThatNoException().isThrownBy(() -> SchemaValidator.validate(specification, specificationFileName));
@@ -49,8 +48,7 @@ class SchemaValidatorTest {
     "invalidSpecWithUnexpectedFieldFailsDuringValidation.yaml",
     "invalidSpecWithWrongType.yaml"})
   void testSpecificationFilesAreInValid(String specificationFileName) throws IOException {
-    InputStream specificationStream =
-      Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + specificationFileName);
+    InputStream specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + specificationFileName);
     JsonNode specification = MAPPER.readTree(specificationStream);
 
     assertThatExceptionOfType(SchemaValidationException.class)
