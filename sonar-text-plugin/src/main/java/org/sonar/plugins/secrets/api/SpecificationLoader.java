@@ -21,12 +21,11 @@ package org.sonar.plugins.secrets.api;
 
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
+
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 import org.sonar.plugins.secrets.configuration.deserialization.DeserializationException;
@@ -82,10 +81,6 @@ public class SpecificationLoader {
     return rulesMappedToKey;
   }
 
-  public List<Rule> getAllRules() {
-    return rulesMappedToKey.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
-  }
-
   public static Set<String> defaultSpecifications() {
     return Set.of(
       "alibaba.yaml",
@@ -115,7 +110,6 @@ public class SpecificationLoader {
       "spotify.yaml",
       "ssh.yaml",
       "telegram.yaml",
-      "wechat.yaml"
-    );
+      "wechat.yaml");
   }
 }
