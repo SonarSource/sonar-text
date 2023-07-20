@@ -29,6 +29,9 @@ public class RuleExample {
   @Nullable
   private String match;
 
+  @Nullable
+  private String fileName;
+
   public String getText() {
     return text;
   }
@@ -52,5 +55,14 @@ public class RuleExample {
 
   public void setMatch(@Nullable String match) {
     this.match = match;
+  }
+
+  @Nullable
+  public String getFileName() {
+    return fileName;
+  }
+
+  public void setFileName(@Nullable String fileName) {
+    this.fileName = fileName;
   }
 }
