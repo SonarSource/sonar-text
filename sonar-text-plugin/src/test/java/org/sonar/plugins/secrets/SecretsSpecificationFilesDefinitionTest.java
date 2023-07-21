@@ -19,13 +19,14 @@
  */
 package org.sonar.plugins.secrets;
 
-import java.util.Set;
+import org.junit.jupiter.api.Test;
 
-public class SecretsSpecificationFilesDefinition {
+import static org.assertj.core.api.Assertions.assertThat;
 
-  private SecretsSpecificationFilesDefinition() {
+class SecretsSpecificationFilesDefinitionTest {
 
+  @Test
+  void e() {
+    assertThat(SecretsSpecificationFilesDefinition.existingSecretSpecifications()).hasSizeGreaterThanOrEqualTo(28);
   }
-
-  //<REPLACE-WITH-SET-OF-FILENAMES>
 }

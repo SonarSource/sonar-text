@@ -23,7 +23,7 @@ import java.util.List;
 import org.sonar.api.SonarRuntime;
 import org.sonar.plugins.common.CommonRulesDefinition;
 import org.sonar.plugins.common.DefaultQualityProfileDefinition;
-<REPLACE-WITH-IMPORTS-OF-ALL-CHECKS>
+//<REPLACE-WITH-IMPORTS-OF-ALL-CHECKS>
 public class SecretsRulesDefinition extends CommonRulesDefinition {
 
   public static final String REPOSITORY_KEY = "secrets";
@@ -39,5 +39,5 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
     }
   }
 
-  <REPLACE-WITH-LIST-OF-CHECKS>
+  //<REPLACE-WITH-LIST-OF-CHECKS>
 }

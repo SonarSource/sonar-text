@@ -51,6 +51,7 @@ class UpdatingSpecificationFilesGenerator {
   private final Charset charset = StandardCharsets.UTF_8;
   private static final Logger LOG = Loggers.get(UpdatingSpecificationFilesGenerator.class);
 
+  // Suppress warning, as there are no assertions inside here
   @Test
   @SuppressWarnings("java:S2699")
   void firstStep() {
@@ -59,7 +60,6 @@ class UpdatingSpecificationFilesGenerator {
 
   @Test
   void secondStep() {
-
     SpecificationLoader specificationLoader = new SpecificationLoader();
 
     List<String> listOfAlreadyExistingKeys = retrieveAlreadyExistingKeys();
@@ -82,7 +82,7 @@ class UpdatingSpecificationFilesGenerator {
     writeUpdatedRulesDefinition(newCheckNames);
   }
 
-  List<String> retrieveAlreadyExistingKeys() {
+  private List<String> retrieveAlreadyExistingKeys() {
     List<String> rspecKeys = new ArrayList<>();
 
     List<Class<?>> checks = SecretsRulesDefinition.checks();
@@ -119,8 +119,8 @@ class UpdatingSpecificationFilesGenerator {
       Files.copy(checkTemplatePath, checkPath);
 
       String content = Files.readString(checkPath, charset);
-      content = content.replaceAll("GenericCheckTemplate", checkName);
-      content = content.replaceAll("<RSPEC-KEY>", rspecKey);
+      content = content.replace("GenericCheckTemplate", checkName);
+      content = content.replace("<RSPEC-KEY>", rspecKey);
       Files.write(checkPath, content.getBytes(charset));
     } catch (IOException e) {
       LOG.error("Error while writing Check file with name \"" + checkName + ".java\", please fix manually", e);
@@ -131,15 +131,15 @@ class UpdatingSpecificationFilesGenerator {
     LOG.info(successMessage);
   }
 
-  public void writeCheckTestFile(String checkName) {
+  private void writeCheckTestFile(String checkName) {
     Path checkTestPath = Path.of("src", "test", "java", "org", "sonar", "plugins", "secrets", "checks", checkName + "Test.java");
     Path checkTestTemplatePath = Path.of("src", "test", "resources", "templates", "GenericCheckTestTemplate.java");
     try {
       Files.copy(checkTestTemplatePath, checkTestPath);
 
       String content = Files.readString(checkTestPath, charset);
-      content = content.replaceAll("GenericCheckTemplate", checkName);
-      content = content.replaceAll("GenericCheckTemplateTest", checkName + "Test");
+      content = content.replace("GenericCheckTemplate", checkName);
+      content = content.replace("GenericCheckTemplateTest", checkName + "Test");
       Files.write(checkTestPath, content.getBytes(charset));
     } catch (IOException e) {
       LOG.error("Error while writing Check Test file with name \"" + checkName + "Test.java\", please fix manually", e);
@@ -150,7 +150,7 @@ class UpdatingSpecificationFilesGenerator {
     LOG.info(successMessage);
   }
 
-  public void writeSpecificationFileDefinition() {
+  private void writeSpecificationFileDefinition() {
     Path specificationsDirectoy = Path.of("src", "main", "resources", "org", "sonar", "plugins", "secrets", "configuration");
     String[] extensionsToSearchFor = new String[] {"yaml"};
     Collection<File> files = FileUtils.listFiles(new File(specificationsDirectoy.toUri()), extensionsToSearchFor, false);
@@ -164,7 +164,7 @@ class UpdatingSpecificationFilesGenerator {
       Files.copy(specificationDefinitionTemplatePath, specificationDefinitionPath, StandardCopyOption.REPLACE_EXISTING);
 
       String content = Files.readString(specificationDefinitionPath, charset);
-      content = content.replaceAll("<REPLACE-WITH-SET-OF-FILENAMES>", generateSpecificationDefinitionSet(listOfFileNames));
+      content = content.replace("//<REPLACE-WITH-SET-OF-FILENAMES>", generateSpecificationDefinitionSet(listOfFileNames));
       Files.write(specificationDefinitionPath, content.getBytes(charset));
     } catch (IOException e) {
       LOG.error("Error while writing SecretsSpecificationFilesDefinition", e);
@@ -188,8 +188,8 @@ class UpdatingSpecificationFilesGenerator {
       Files.copy(checkTestTemplatePath, rulesDefPath, StandardCopyOption.REPLACE_EXISTING);
 
       String content = Files.readString(rulesDefPath, charset);
-      content = content.replace("<REPLACE-WITH-IMPORTS-OF-ALL-CHECKS>", generateImportsFor(updatedCheckNames));
-      content = content.replaceAll("<REPLACE-WITH-LIST-OF-CHECKS>", generateChecksMethodFor(updatedCheckNames));
+      content = content.replace("//<REPLACE-WITH-IMPORTS-OF-ALL-CHECKS>", generateImportsFor(updatedCheckNames));
+      content = content.replace("//<REPLACE-WITH-LIST-OF-CHECKS>", generateChecksMethodFor(updatedCheckNames));
       Files.write(rulesDefPath, content.getBytes(charset));
     } catch (IOException e) {
       LOG.error("Error when updating SecretRulesDefinition.java, please fix manually", e);
@@ -207,7 +207,9 @@ class UpdatingSpecificationFilesGenerator {
     sb.append("    return List.of(");
     sb.append(System.lineSeparator());
     for (int i = 0; i < checkNames.size(); i++) {
-      sb.append("      " + checkNames.get(i) + ".class");
+      sb.append("      ");
+      sb.append(checkNames.get(i));
+      sb.append(".class");
       if (i == checkNames.size() - 1) {
         sb.append(");");
       } else {
