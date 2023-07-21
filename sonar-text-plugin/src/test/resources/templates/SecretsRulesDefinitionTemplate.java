@@ -23,15 +23,7 @@ import java.util.List;
 import org.sonar.api.SonarRuntime;
 import org.sonar.plugins.common.CommonRulesDefinition;
 import org.sonar.plugins.common.DefaultQualityProfileDefinition;
-import org.sonar.plugins.secrets.checks.AlibabaCloudAccessKeyCheck;
-import org.sonar.plugins.secrets.checks.AwsCheck;
-import org.sonar.plugins.secrets.checks.AzureStorageAccountKeyCheck;
-import org.sonar.plugins.secrets.checks.CommonKeyCheck;
-import org.sonar.plugins.secrets.checks.GoogleApiKeyCheck;
-import org.sonar.plugins.secrets.checks.GoogleCloudAccountKeyCheck;
-import org.sonar.plugins.secrets.checks.IbmApiKeyCheck;
-import org.sonar.plugins.secrets.checks.MwsAuthTokenCheck;
-
+<REPLACE-WITH-IMPORTS-OF-ALL-CHECKS>
 public class SecretsRulesDefinition extends CommonRulesDefinition {
 
   public static final String REPOSITORY_KEY = "secrets";
@@ -47,15 +39,5 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
     }
   }
 
-  public static List<Class<?>> checks() {
-    return List.of(
-      AlibabaCloudAccessKeyCheck.class,
-      AwsCheck.class,
-      AzureStorageAccountKeyCheck.class,
-      CommonKeyCheck.class,
-      GoogleApiKeyCheck.class,
-      GoogleCloudAccountKeyCheck.class,
-      IbmApiKeyCheck.class,
-      MwsAuthTokenCheck.class);
-  }
+  <REPLACE-WITH-LIST-OF-CHECKS>
 }

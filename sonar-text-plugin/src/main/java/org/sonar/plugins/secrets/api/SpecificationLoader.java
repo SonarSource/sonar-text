@@ -34,6 +34,8 @@ import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.Specification;
 import org.sonar.plugins.secrets.configuration.validation.SchemaValidationException;
 
+import static org.sonar.plugins.secrets.SecretsSpecificationFilesDefinition.existingSecretSpecifications;
+
 public class SpecificationLoader {
   private static final Logger LOG = Loggers.get(SpecificationLoader.class);
 
@@ -41,7 +43,7 @@ public class SpecificationLoader {
   private final Map<String, List<Rule>> rulesMappedToKey;
 
   public SpecificationLoader() {
-    this(DEFAULT_SPECIFICATION_LOCATION, defaultSpecifications());
+    this(DEFAULT_SPECIFICATION_LOCATION, existingSecretSpecifications());
   }
 
   public SpecificationLoader(String specificationLocation, Set<String> specifications) {
@@ -77,39 +79,7 @@ public class SpecificationLoader {
     return rulesMappedToKey.getOrDefault(key, new ArrayList<>());
   }
 
-  Map<String, List<Rule>> getRulesMappedToKey() {
+  public Map<String, List<Rule>> getRulesMappedToKey() {
     return rulesMappedToKey;
-  }
-
-  public static Set<String> defaultSpecifications() {
-    return Set.of(
-      "alibaba.yaml",
-      "aws.yaml",
-      "azure.yaml",
-      "clarifai.yaml",
-      "django.yaml",
-      "facebook.yaml",
-      "gcp.yaml",
-      "github.yaml",
-      "gitlab.yaml",
-      "google-api.yaml",
-      "google-oauth2.yaml",
-      "google-recaptcha.yaml",
-      "ibm.yaml",
-      "mongodb.yaml",
-      "mws.yaml",
-      "mysql.yaml",
-      "odbc.yaml",
-      "openweathermap.yaml",
-      "postgresql.yaml",
-      "pubkey-crypto.yaml",
-      "rapidapi.yaml",
-      "riot.yaml",
-      "sendgrid.yaml",
-      "sonarqube.yaml",
-      "spotify.yaml",
-      "ssh.yaml",
-      "telegram.yaml",
-      "wechat.yaml");
   }
 }
