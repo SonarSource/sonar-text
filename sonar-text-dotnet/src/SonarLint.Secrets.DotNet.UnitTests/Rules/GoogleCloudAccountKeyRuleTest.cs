@@ -28,7 +28,6 @@ using System.Linq;
 using static SonarLint.Secrets.DotNet.UnitTests.JavaTestFileUtils;
 using static SonarLint.Secrets.DotNet.UnitTests.TestUtils;
 
-@java.lang.SuppressWarnings("squid:S6335")
 namespace SonarLint.Secrets.DotNet.UnitTests.Rules
 {
     [TestClass]
