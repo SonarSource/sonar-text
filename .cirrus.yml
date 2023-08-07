@@ -63,7 +63,7 @@ qa_task_filter_template: &QA_TASK_FILTER
 
 build_task:
   <<: *ONLY_IF_SONARSOURCE_QA
-  <<: *LINUX_1_CPU_1G
+  <<: *LINUX_2_CPU_4G_JAVA_17
   env:
     SIGN_KEY: VAULT[development/kv/data/sign data.key]
     PGP_PASSPHRASE: VAULT[development/kv/data/sign data.passphrase]
