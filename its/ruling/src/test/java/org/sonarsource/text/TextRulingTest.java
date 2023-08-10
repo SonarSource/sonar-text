@@ -39,6 +39,7 @@ public class TextRulingTest {
   private static final String DEFAULT_SQ_VERSION = "LATEST_RELEASE";
   private static final String LITS_PLUGIN_VERSION = "0.11.0.2659";
   private static final File LITS_DIFFERENCES_FILE = FileLocation.of("target/differences").getFile();
+  private static final String SCANNER_VERSION = "5.0.1.3006";
 
   @ClassRule
   public static Orchestrator ORCHESTRATOR = Orchestrator.builderEnv()
@@ -65,6 +66,7 @@ public class TextRulingTest {
     ORCHESTRATOR.getServer().associateProjectToQualityProfile("project", "text", "rules");
     ORCHESTRATOR.getServer().associateProjectToQualityProfile("project", "secrets", "rules");
     SonarScanner build = SonarScanner.create(FileLocation.of("src/test/resources/sources").getFile())
+      .setScannerVersion(SCANNER_VERSION)
       .setProjectKey("project")
       .setProjectName("project")
       .setProjectVersion("1")

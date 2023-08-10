@@ -40,6 +40,7 @@ import static java.util.Collections.singletonList;
 public abstract class TestBase {
 
   private static final String LANGUAGE_KEY = "text";
+  private static final String SCANNER_VERSION = "5.0.1.3006";
 
   @ClassRule
   public static final Orchestrator ORCHESTRATOR = Tests.ORCHESTRATOR;
@@ -50,6 +51,7 @@ public abstract class TestBase {
       ORCHESTRATOR.getServer().associateProjectToQualityProfile(projectKey, LANGUAGE_KEY, profileName);
     }
     return SonarScanner.create()
+      .setScannerVersion(SCANNER_VERSION)
       .setProjectDir(new File(directoryToScan))
       .setProjectKey(projectKey)
       .setProjectName(projectKey)
