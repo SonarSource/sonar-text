@@ -76,5 +76,4 @@ class SecretsRulesDefinitionTest {
       assertThat(SecretsRulesDefinition.checks()).hasSize(expectedCount);
     }
   }
-
 }

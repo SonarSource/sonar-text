@@ -26,8 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.plugins.secrets.configuration.deserialization.DeserializationException;
 import org.sonar.plugins.secrets.configuration.deserialization.SpecificationDeserializer;
 import org.sonar.plugins.secrets.configuration.model.Rule;
@@ -37,7 +37,7 @@ import org.sonar.plugins.secrets.configuration.validation.SchemaValidationExcept
 import static org.sonar.plugins.secrets.SecretsSpecificationFilesDefinition.existingSecretSpecifications;
 
 public class SpecificationLoader {
-  private static final Logger LOG = Loggers.get(SpecificationLoader.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SpecificationLoader.class);
 
   public static final String DEFAULT_SPECIFICATION_LOCATION = "org/sonar/plugins/secrets/configuration/";
   private final Map<String, List<Rule>> rulesMappedToKey;

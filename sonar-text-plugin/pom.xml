@@ -44,8 +44,9 @@
       <artifactId>json-schema-validator</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.dataformat</groupId>
-      <artifactId>jackson-dataformat-yaml</artifactId>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <!-- unit tests -->
@@ -57,6 +58,11 @@
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.sonarsource.api.plugin</groupId>
+      <artifactId>sonar-plugin-api-test-fixtures</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -110,8 +116,8 @@
             <configuration>
               <rules>
                 <requireFilesSize>
-                  <maxsize>3000000</maxsize>
-                  <minsize>2900000</minsize>
+                  <maxsize>2950000</maxsize>
+                  <minsize>2850000</minsize>
                   <files>
                     <file>${project.build.directory}/${project.build.finalName}.jar</file>
                   </files>

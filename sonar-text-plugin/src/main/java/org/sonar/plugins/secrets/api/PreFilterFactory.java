@@ -24,8 +24,8 @@ import java.util.Locale;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.FileFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
@@ -34,7 +34,7 @@ public class PreFilterFactory {
   private PreFilterFactory() {
   }
 
-  private static final Logger LOG = Loggers.get(PreFilterFactory.class);
+  private static final Logger LOG = LoggerFactory.getLogger(PreFilterFactory.class);
   private static final Predicate<InputFileContext> INCLUDE_ALL_FILES = ctx -> true;
 
   public static Predicate<InputFileContext> createPredicate(@Nullable PreModule pre) {

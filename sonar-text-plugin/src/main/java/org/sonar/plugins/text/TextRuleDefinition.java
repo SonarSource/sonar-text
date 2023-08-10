@@ -28,7 +28,7 @@ import org.sonar.plugins.text.checks.BIDICharacterCheck;
 public class TextRuleDefinition extends CommonRulesDefinition {
 
   public static final String REPOSITORY_KEY = "text";
-  public static final String REPOSITORY_NAME = "SonarQube";
+  public static final String REPOSITORY_NAME = "Sonar";
 
   public TextRuleDefinition(SonarRuntime sonarRuntime) {
     super(sonarRuntime, REPOSITORY_KEY, REPOSITORY_NAME, TextLanguage.KEY, checks());

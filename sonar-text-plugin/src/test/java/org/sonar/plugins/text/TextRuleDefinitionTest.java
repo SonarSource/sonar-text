@@ -43,7 +43,7 @@ class TextRuleDefinitionTest {
 
     RulesDefinition.Repository repository = context.repository("text");
     assertThat(repository).isNotNull();
-    assertThat(repository.name()).isEqualTo("SonarQube");
+    assertThat(repository.name()).isEqualTo("Sonar");
     assertThat(repository.language()).isEqualTo("text");
     assertThat(repository.rules()).hasSize(1);
   }
