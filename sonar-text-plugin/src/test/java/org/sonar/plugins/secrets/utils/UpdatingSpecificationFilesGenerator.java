@@ -37,8 +37,8 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.sonar.api.internal.apachecommons.io.FileUtils;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.api.SpecificationLoader;
@@ -49,7 +49,7 @@ import org.sonar.plugins.secrets.configuration.model.Rule;
 class UpdatingSpecificationFilesGenerator {
 
   private final Charset charset = StandardCharsets.UTF_8;
-  private static final Logger LOG = Loggers.get(UpdatingSpecificationFilesGenerator.class);
+  private static final Logger LOG = LoggerFactory.getLogger(UpdatingSpecificationFilesGenerator.class);
 
   // Suppress warning, as there are no assertions inside here
   @Test

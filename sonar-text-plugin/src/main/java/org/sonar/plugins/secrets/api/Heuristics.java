@@ -21,8 +21,8 @@ package org.sonar.plugins.secrets.api;
 
 import java.util.List;
 import java.util.regex.Pattern;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Heuristics {
   private Heuristics() {
@@ -32,7 +32,7 @@ public class Heuristics {
   private static final double MINIMAL_RATIO_OF_SEPARATOR_SYMBOLS_IN_VALID_PATH = 0.15;
   private static final Pattern uriPattern = Pattern.compile("^(https?|ftps?|file|smtp|imap)://.*$");
 
-  private static final Logger LOG = Loggers.get(Heuristics.class);
+  private static final Logger LOG = LoggerFactory.getLogger(Heuristics.class);
 
   public static boolean matchesHeuristics(String candidateSecret, List<String> heuristics) {
     return heuristics.stream().anyMatch(heuristic -> {

@@ -35,6 +35,7 @@ import org.sonar.plugins.secrets.checks.MwsAuthTokenCheck;
 public class SecretsRulesDefinition extends CommonRulesDefinition {
 
   public static final String REPOSITORY_KEY = "secrets";
+
   public static final String REPOSITORY_NAME = "Sonar Secrets Analyzer";
 
   public SecretsRulesDefinition(SonarRuntime sonarRuntime) {

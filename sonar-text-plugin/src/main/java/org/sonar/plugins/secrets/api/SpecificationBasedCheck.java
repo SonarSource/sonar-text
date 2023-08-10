@@ -23,10 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.TextRange;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
@@ -34,7 +33,7 @@ import org.sonar.plugins.secrets.configuration.model.Rule;
 
 public abstract class SpecificationBasedCheck extends Check {
 
-  private static final Logger LOG = Loggers.get(SpecificationBasedCheck.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SpecificationBasedCheck.class);
   private List<SecretMatcher> matcher;
 
   // shared map between all specificationBasedChecks used to calculate if secret was already reported for textRange
@@ -51,9 +50,10 @@ public abstract class SpecificationBasedCheck extends Check {
 
   public void initialize(SpecificationLoader loader, Map<InputFileContext, List<TextRange>> reportedIssuesForCtx) {
     this.reportedIssuesForCtx = reportedIssuesForCtx;
-    List<Rule> rulesForKey = loader.getRulesForKey(ruleKey.rule());
+    String rule = ruleKey.rule();
+    List<Rule> rulesForKey = loader.getRulesForKey(rule);
     if (rulesForKey.isEmpty()) {
-      LOG.error(String.format("Found no rule specification for rule with key: %s", ruleKey.rule()));
+      LOG.error("Found no rule specification for rule with key: {}", rule);
     }
     this.matcher = rulesForKey.stream()
       .map(SecretMatcher::build)

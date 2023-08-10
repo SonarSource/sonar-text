@@ -69,14 +69,15 @@
     <gitRepositoryName>sonar-text</gitRepositoryName>
 
     <!-- dependency versions -->
-    <sonar.version>9.8.0.63668</sonar.version>
-    <sonar.api.version>9.13.0.360</sonar.api.version>
+    <sonar.version>10.1.0.73491</sonar.version>
+    <sonar.api.version>10.0.0.695</sonar.api.version>
     <analyzer.commons.version>2.5.0.1358</analyzer.commons.version>
     <orchestrator.version>3.40.0.183</orchestrator.version>
     <junit.version>5.9.1</junit.version>
     <assertj.version>3.23.1</assertj.version>
     <findbugs.version>3.0.2</findbugs.version>
     <mockito.version>4.10.0</mockito.version>
+    <version.slf4j>1.7.30</version.slf4j>
     <jackson.version>2.15.1</jackson.version>
     <networknt.version>1.0.81</networknt.version>
     <spotless.version>2.38.0</spotless.version>
@@ -134,8 +135,19 @@
           </exclusion>
         </exclusions>
       </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${version.slf4j}</version>
+      </dependency>
 
       <!-- Test dependencies -->
+      <dependency>
+        <groupId>org.sonarsource.api.plugin</groupId>
+        <artifactId>sonar-plugin-api-test-fixtures</artifactId>
+        <version>${sonar.api.version}</version>
+        <scope>test</scope>
+      </dependency>
       <dependency>
         <groupId>org.sonarsource.sonarqube</groupId>
         <artifactId>sonar-testing-harness</artifactId>
@@ -193,7 +205,10 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <configuration/>
+          <configuration>
+            <redirectTestOutputToFile>true</redirectTestOutputToFile>
+            <reportsDirectory>${project.build.directory}/test-reports</reportsDirectory>
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -221,7 +236,9 @@
             <java>
               <eclipse>
                 <version>4.21.0</version>
-                <file>https://raw.githubusercontent.com/SonarSource/sonar-developer-toolset/master/eclipse/sonar-formatter.xml</file>
+                <file>
+                  https://raw.githubusercontent.com/SonarSource/sonar-developer-toolset/master/eclipse/sonar-formatter.xml
+                </file>
               </eclipse>
             </java>
           </configuration>
