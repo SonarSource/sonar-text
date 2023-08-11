@@ -71,7 +71,7 @@
     <!-- dependency versions -->
     <sonar.version>10.1.0.73491</sonar.version>
     <sonar.api.version>10.0.0.695</sonar.api.version>
-    <analyzer.commons.version>2.5.0.1358</analyzer.commons.version>
+    <analyzer.commons.version>2.6.0.1473</analyzer.commons.version>
     <orchestrator.version>3.40.0.183</orchestrator.version>
     <junit.version>5.9.1</junit.version>
     <assertj.version>3.23.1</assertj.version>
