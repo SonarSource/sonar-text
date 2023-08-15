@@ -79,7 +79,7 @@
     <mockito.version>4.10.0</mockito.version>
     <version.slf4j>1.7.30</version.slf4j>
     <jackson.version>2.15.1</jackson.version>
-    <networknt.version>1.0.81</networknt.version>
+    <networknt.version>1.0.86</networknt.version>
     <spotless.version>2.38.0</spotless.version>
 
     <!-- Release: enable publication to Bintray -->
