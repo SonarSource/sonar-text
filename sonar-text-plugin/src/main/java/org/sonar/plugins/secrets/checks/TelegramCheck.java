@@ -22,6 +22,6 @@ package org.sonar.plugins.secrets.checks;
 import org.sonar.check.Rule;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 
-@Rule(key = "S6652")
-public class CommonKeyCheck extends SpecificationBasedCheck {
+@Rule(key = "S6701")
+public class TelegramCheck extends SpecificationBasedCheck {
 }

@@ -25,12 +25,33 @@ import org.sonar.plugins.common.CommonRulesDefinition;
 import org.sonar.plugins.common.DefaultQualityProfileDefinition;
 import org.sonar.plugins.secrets.checks.AlibabaCloudAccessKeyCheck;
 import org.sonar.plugins.secrets.checks.AwsCheck;
+import org.sonar.plugins.secrets.checks.AzureCheck;
 import org.sonar.plugins.secrets.checks.AzureStorageAccountKeyCheck;
-import org.sonar.plugins.secrets.checks.CommonKeyCheck;
+import org.sonar.plugins.secrets.checks.ClarifaiCheck;
+import org.sonar.plugins.secrets.checks.DjangoCheck;
+import org.sonar.plugins.secrets.checks.FacebookCheck;
+import org.sonar.plugins.secrets.checks.GenericpublickeycryptographyCheck;
+import org.sonar.plugins.secrets.checks.GitHubCheck;
+import org.sonar.plugins.secrets.checks.GitLabCheck;
 import org.sonar.plugins.secrets.checks.GoogleApiKeyCheck;
+import org.sonar.plugins.secrets.checks.GoogleCheck;
 import org.sonar.plugins.secrets.checks.GoogleCloudAccountKeyCheck;
+import org.sonar.plugins.secrets.checks.GoogleUniqueNameCheck;
 import org.sonar.plugins.secrets.checks.IbmApiKeyCheck;
+import org.sonar.plugins.secrets.checks.MongoDBCheck;
 import org.sonar.plugins.secrets.checks.MwsAuthTokenCheck;
+import org.sonar.plugins.secrets.checks.MySQLCheck;
+import org.sonar.plugins.secrets.checks.ODBCJDBCConnectionStringCheck;
+import org.sonar.plugins.secrets.checks.OpenSSHCheck;
+import org.sonar.plugins.secrets.checks.OpenWeatherMapCheck;
+import org.sonar.plugins.secrets.checks.PostgreSQLCheck;
+import org.sonar.plugins.secrets.checks.RapidAPICheck;
+import org.sonar.plugins.secrets.checks.RiotCheck;
+import org.sonar.plugins.secrets.checks.SendgridCheck;
+import org.sonar.plugins.secrets.checks.SonarQubeCheck;
+import org.sonar.plugins.secrets.checks.SpotifyCheck;
+import org.sonar.plugins.secrets.checks.TelegramCheck;
+import org.sonar.plugins.secrets.checks.WeChatCheck;
 
 public class SecretsRulesDefinition extends CommonRulesDefinition {
 
@@ -52,11 +73,32 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
     return List.of(
       AlibabaCloudAccessKeyCheck.class,
       AwsCheck.class,
+      AzureCheck.class,
       AzureStorageAccountKeyCheck.class,
-      CommonKeyCheck.class,
+      ClarifaiCheck.class,
+      DjangoCheck.class,
+      FacebookCheck.class,
+      GenericpublickeycryptographyCheck.class,
+      GitHubCheck.class,
+      GitLabCheck.class,
       GoogleApiKeyCheck.class,
+      GoogleCheck.class,
       GoogleCloudAccountKeyCheck.class,
+      GoogleUniqueNameCheck.class,
       IbmApiKeyCheck.class,
-      MwsAuthTokenCheck.class);
+      MongoDBCheck.class,
+      MwsAuthTokenCheck.class,
+      MySQLCheck.class,
+      ODBCJDBCConnectionStringCheck.class,
+      OpenSSHCheck.class,
+      OpenWeatherMapCheck.class,
+      PostgreSQLCheck.class,
+      RapidAPICheck.class,
+      RiotCheck.class,
+      SendgridCheck.class,
+      SonarQubeCheck.class,
+      SpotifyCheck.class,
+      TelegramCheck.class,
+      WeChatCheck.class);
   }
 }
