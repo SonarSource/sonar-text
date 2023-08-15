@@ -17,31 +17,30 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets.configuration.deserialization;
+package org.sonar.plugins.secrets.configuration;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.IOException;
 import java.io.InputStream;
-import org.sonar.plugins.secrets.configuration.model.Specification;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.sonar.plugins.secrets.configuration.validation.SchemaValidator;
 
-public class SpecificationDeserializer {
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
+class SpecificationValidationTest {
+
+  private static final String SPECIFICATIONS_METHOD_NAME = "org.sonar.plugins.secrets.SecretsSpecificationFilesDefinition#existingSecretSpecifications";
   private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
 
-  private SpecificationDeserializer() {
-  }
+  @ParameterizedTest
+  @MethodSource(SPECIFICATIONS_METHOD_NAME)
+  void validateSpecificationFiles(String fileName) throws IOException {
+    InputStream specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("org/sonar/plugins/secrets/configuration/" + fileName);
+    JsonNode specification = MAPPER.readTree(specificationStream);
 
-  public static Specification deserialize(InputStream specificationStream, String fileName) {
-    try {
-      JsonNode specification = MAPPER.readTree(specificationStream);
-      return MAPPER.treeToValue(specification, Specification.class);
-    } catch (IOException e) {
-      throw new DeserializationException(String.format("Deserialization of specification failed for file: %s", fileName), e);
-    } catch (IllegalArgumentException e) {
-      throw new DeserializationException(
-        String.format("Deserialization of specification failed for file because it was not found: %s", fileName), e);
-    }
+    assertThatNoException().isThrownBy(() -> SchemaValidator.validate(specification, fileName));
   }
 }
