@@ -30,24 +30,32 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.junit.jupiter.api.Test;
-import org.sonar.api.internal.apachecommons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonar.api.internal.apachecommons.io.FileUtils;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.api.SpecificationLoader;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 
-// This name is intentionally not ending in "Test" to not get picked up automatically
+// This name is intentionally not ending in "Test" to not get picked up automatically by maven
 @SuppressWarnings("java:S3577")
 class UpdatingSpecificationFilesGenerator {
 
+  private final static String CHECK_TESTS_PATH_PREFIX = String.join(File.separator, "src", "test", "java", "org", "sonar", "plugins", "secrets", "checks");
+  private final static String SECRETS_MODULE_PATH_PREFIX = String.join(File.separator, "src", "main", "java", "org", "sonar", "plugins", "secrets");
+  private final static String SECRETS_MODULE_RESOURCE_PATH_PREFIX = String.join(File.separator, "src", "main", "resources", "org", "sonar");
+  private final static String SPECIFICATION_FILES_PATH = String.join(File.separator, SECRETS_MODULE_RESOURCE_PATH_PREFIX, "plugins", "secrets");
+  private final static String CHECK_PATH_PREFIX = String.join(File.separator, SECRETS_MODULE_PATH_PREFIX, "checks");
+  private final static String TEMPLATE_PATH_PREFIX = String.join(File.separator, "src", "test", "resources", "templates");
+  private final static String RSPEC_FILES_PATH_PREFIX = String.join(File.separator, SECRETS_MODULE_RESOURCE_PATH_PREFIX, "l10n", "secrets", "rules", "secrets");
   private final Charset charset = StandardCharsets.UTF_8;
   private static final Logger LOG = LoggerFactory.getLogger(UpdatingSpecificationFilesGenerator.class);
 
@@ -62,28 +70,34 @@ class UpdatingSpecificationFilesGenerator {
   void secondStep() {
     SpecificationLoader specificationLoader = new SpecificationLoader();
 
-    List<String> listOfAlreadyExistingKeys = retrieveAlreadyExistingKeys();
-    Set<String> setOfExistingCheckClassNames = SecretsRulesDefinition.checks().stream().map(Class::getSimpleName).collect(Collectors.toSet());
+    Map<String, String> existingKeysMappedToFileName = retrieveAlreadyExistingKeys();
 
     Map<String, List<Rule>> rulesMappedToKey = specificationLoader.getRulesMappedToKey();
 
-    Set<String> keysToImplementChecksFor = rulesMappedToKey.keySet();
-    keysToImplementChecksFor.removeAll(listOfAlreadyExistingKeys);
+    Set<String> keysToImplementChecksFor = new HashSet<>(rulesMappedToKey.keySet());
+    keysToImplementChecksFor.removeAll(existingKeysMappedToFileName.keySet());
+
+    Set<String> keysNotUsedAnymore = new HashSet<>(existingKeysMappedToFileName.keySet());
+    keysNotUsedAnymore.removeAll(rulesMappedToKey.keySet());
 
     List<String> newCheckNames = new ArrayList<>();
     for (String rspecKey : keysToImplementChecksFor) {
       String checkName = rulesMappedToKey.get(rspecKey).get(0).getProvider().getMetadata().getName();
-      checkName = sanitizeCheckName(checkName, setOfExistingCheckClassNames);
+      checkName = sanitizeCheckName(checkName, rspecKey, existingKeysMappedToFileName);
       writeCheckFile(checkName, rspecKey);
       writeCheckTestFile(checkName);
       newCheckNames.add(checkName);
     }
 
-    writeUpdatedRulesDefinition(newCheckNames);
+    Set<String> checkNamesNotUsedAnymore = keysNotUsedAnymore.stream().map(existingKeysMappedToFileName::get).collect(Collectors.toSet());
+
+    removeUnusedChecks(keysNotUsedAnymore, existingKeysMappedToFileName);
+    writeUpdatedRulesDefinition(newCheckNames, checkNamesNotUsedAnymore);
+    constructFileForRulesAPI(keysToImplementChecksFor);
   }
 
-  private List<String> retrieveAlreadyExistingKeys() {
-    List<String> rspecKeys = new ArrayList<>();
+  private Map<String, String> retrieveAlreadyExistingKeys() {
+    Map<String, String> keyToFileName = new HashMap<>();
 
     List<Class<?>> checks = SecretsRulesDefinition.checks();
     for (Class<?> check : checks) {
@@ -95,26 +109,26 @@ class UpdatingSpecificationFilesGenerator {
         LOG.error("Error while retrieving already existing keys");
         throw new RuntimeException(e);
       }
-      rspecKeys.add(instantiatedCheck.ruleKey.rule());
+      keyToFileName.put(instantiatedCheck.ruleKey.rule(), check.getSimpleName());
     }
 
-    return rspecKeys;
+    return keyToFileName;
   }
 
-  private String sanitizeCheckName(String checkName, Set<String> existingClassNames) {
+  private String sanitizeCheckName(String checkName, String rspecKey, Map<String, String> existingClassNames) {
     checkName = checkName.replaceAll("[^a-zA-Z]", "");
     checkName = checkName + "Check";
 
-    if (existingClassNames.contains(checkName)) {
+    if (existingClassNames.containsValue(checkName)) {
       checkName = checkName.replace("Check", "UniqueNameCheck");
     }
-    existingClassNames.add(checkName);
+    existingClassNames.put(rspecKey, checkName);
     return checkName;
   }
 
   private void writeCheckFile(String checkName, String rspecKey) {
-    Path checkPath = Path.of("src", "main", "java", "org", "sonar", "plugins", "secrets", "checks", checkName + ".java");
-    Path checkTemplatePath = Path.of("src", "test", "resources", "templates", "GenericCheckTemplate.java");
+    Path checkPath = Path.of(CHECK_PATH_PREFIX, checkName + ".java");
+    Path checkTemplatePath = Path.of(TEMPLATE_PATH_PREFIX, "GenericCheckTemplate.java");
     try {
       Files.copy(checkTemplatePath, checkPath);
 
@@ -127,13 +141,12 @@ class UpdatingSpecificationFilesGenerator {
       throw new RuntimeException(e);
     }
 
-    String successMessage = String.format("Successfully generated Check \"%s.java\" with rspecKey %s", checkName, rspecKey);
-    LOG.info(successMessage);
+    LOG.info("Successfully generated Check \"{}.java\" with rspecKey {}", checkName, rspecKey);
   }
 
   private void writeCheckTestFile(String checkName) {
-    Path checkTestPath = Path.of("src", "test", "java", "org", "sonar", "plugins", "secrets", "checks", checkName + "Test.java");
-    Path checkTestTemplatePath = Path.of("src", "test", "resources", "templates", "GenericCheckTestTemplate.java");
+    Path checkTestPath = Path.of(CHECK_TESTS_PATH_PREFIX, checkName + "Test.java");
+    Path checkTestTemplatePath = Path.of(TEMPLATE_PATH_PREFIX, "GenericCheckTestTemplate.java");
     try {
       Files.copy(checkTestTemplatePath, checkTestPath);
 
@@ -146,19 +159,18 @@ class UpdatingSpecificationFilesGenerator {
       throw new RuntimeException(e);
     }
 
-    String successMessage = String.format("Successfully generated Check \"%sTest.java\"", checkName);
-    LOG.info(successMessage);
+    LOG.info("Successfully generated Check \"{}Test.java\"", checkName);
   }
 
   private void writeSpecificationFileDefinition() {
-    Path specificationsDirectoy = Path.of("src", "main", "resources", "org", "sonar", "plugins", "secrets", "configuration");
+    Path specificationsDirectory = Path.of(SPECIFICATION_FILES_PATH, "configuration");
     String[] extensionsToSearchFor = new String[] {"yaml"};
-    Collection<File> files = FileUtils.listFiles(new File(specificationsDirectoy.toUri()), extensionsToSearchFor, false);
+    Collection<File> files = FileUtils.listFiles(new File(specificationsDirectory.toUri()), extensionsToSearchFor, false);
 
     List<String> listOfFileNames = files.stream().map(File::getName).sorted().collect(Collectors.toList());
 
-    Path specificationDefinitionPath = Path.of("src", "main", "java", "org", "sonar", "plugins", "secrets", "SecretsSpecificationFilesDefinition.java");
-    Path specificationDefinitionTemplatePath = Path.of("src", "test", "resources", "templates", "SecretsSpecificationFilesDefinitionTemplate.java");
+    Path specificationDefinitionPath = Path.of(SECRETS_MODULE_PATH_PREFIX, "SecretsSpecificationFilesDefinition.java");
+    Path specificationDefinitionTemplatePath = Path.of(TEMPLATE_PATH_PREFIX, "SecretsSpecificationFilesDefinitionTemplate.java");
 
     try {
       Files.copy(specificationDefinitionTemplatePath, specificationDefinitionPath, StandardCopyOption.REPLACE_EXISTING);
@@ -174,16 +186,46 @@ class UpdatingSpecificationFilesGenerator {
     LOG.info("Successfully generated SecretsSpecificationFilesDefinition");
   }
 
-  private void writeUpdatedRulesDefinition(List<String> checkNames) {
+  private void removeUnusedChecks(Set<String> keysNotUsedAnymore, Map<String, String> rspecKeysMappedToCheckNames) {
+    for (String key : keysNotUsedAnymore) {
+      String filename = rspecKeysMappedToCheckNames.get(key);
+
+      if (filename != null) {
+        removeUnusedCheck(filename, key);
+      }
+    }
+  }
+
+  private void removeUnusedCheck(String checkName, String rspecKey) {
+    Path checkPath = Path.of(CHECK_PATH_PREFIX, checkName + ".java");
+    Path checkTestPath = Path.of(CHECK_TESTS_PATH_PREFIX, checkName + "Test.java");
+    Path rspecJson = Path.of(RSPEC_FILES_PATH_PREFIX, rspecKey + ".json");
+    Path rspecHtml = Path.of(RSPEC_FILES_PATH_PREFIX, rspecKey + ".html");
+
+    try {
+      Files.delete(checkPath);
+      Files.delete(checkTestPath);
+      Files.delete(rspecJson);
+      Files.delete(rspecHtml);
+    } catch (IOException e) {
+      LOG.error("Error while deleting Check with name \"" + checkName + "\", please fix manually", e);
+      throw new RuntimeException(e);
+    }
+
+    LOG.info("Successfully removed Check \"{}\" with rspecKey %s", checkName);
+  }
+
+  private void writeUpdatedRulesDefinition(List<String> checkNames, Set<String> checkNamesNotUsedAnymore) {
     Set<String> uniqueCheckNames = SecretsRulesDefinition.checks().stream().map(Class::getSimpleName).collect(Collectors.toSet());
     uniqueCheckNames.addAll(checkNames);
+    uniqueCheckNames.removeAll(checkNamesNotUsedAnymore);
 
     List<String> updatedCheckNames = new ArrayList<>(uniqueCheckNames);
 
     Collections.sort(updatedCheckNames);
 
-    Path checkTestTemplatePath = Path.of("src", "test", "resources", "templates", "SecretsRulesDefinitionTemplate.java");
-    Path rulesDefPath = Path.of("src", "main", "java", "org", "sonar", "plugins", "secrets", "SecretsRulesDefinition.java");
+    Path checkTestTemplatePath = Path.of(TEMPLATE_PATH_PREFIX, "SecretsRulesDefinitionTemplate.java");
+    Path rulesDefPath = Path.of(SECRETS_MODULE_PATH_PREFIX, "SecretsRulesDefinition.java");
     try {
       Files.copy(checkTestTemplatePath, rulesDefPath, StandardCopyOption.REPLACE_EXISTING);
 
@@ -248,6 +290,30 @@ class UpdatingSpecificationFilesGenerator {
       sb.append("import org.sonar.plugins.secrets.checks.");
       sb.append(checkName);
       sb.append(";");
+      sb.append(System.lineSeparator());
+    }
+    return sb.toString();
+  }
+
+  private void constructFileForRulesAPI(Set<String> keysToUpdateRuleAPIFor) {
+    Path pathToWriteUpdateFileTo = Path.of(TEMPLATE_PATH_PREFIX, "rspecKeysToUpdate.txt");
+    String content = generateContentForRulesAPIUpdateFile(keysToUpdateRuleAPIFor);
+
+    try {
+      Files.write(pathToWriteUpdateFileTo, content.getBytes(charset));
+    } catch (IOException e) {
+      LOG.error("Error when trying to write update file ruleAPI, please fix manually", e);
+      throw new RuntimeException(e);
+    }
+
+    LOG.info("Successfully generated rule-api update file");
+  }
+
+  private String generateContentForRulesAPIUpdateFile(Set<String> keysToUpdateRuleAPIFor) {
+    StringBuilder sb = new StringBuilder();
+
+    for (String key : keysToUpdateRuleAPIFor) {
+      sb.append(key);
       sb.append(System.lineSeparator());
     }
     return sb.toString();
