@@ -45,10 +45,17 @@ import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.api.SpecificationLoader;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 
-// This name is intentionally not ending in "Test" to not get picked up automatically
+// This name is intentionally not ending in "Test" to not get picked up automatically by maven
 @SuppressWarnings("java:S3577")
 class UpdatingSpecificationFilesGenerator {
 
+  private final static String CHECK_TESTS_PATH_PREFIX = String.join(File.separator, "src", "test", "java", "org", "sonar", "plugins", "secrets", "checks");
+  private final static String SECRETS_MODULE_PATH_PREFIX = String.join(File.separator, "src", "main", "java", "org", "sonar", "plugins", "secrets");
+  private final static String SECRETS_MODULE_RESOURCE_PATH_PREFIX = String.join(File.separator, "src", "main", "resources", "org", "sonar");
+  private final static String SPECIFICATION_FILES_PATH = String.join(File.separator, SECRETS_MODULE_RESOURCE_PATH_PREFIX, "plugins", "secrets");
+  private final static String CHECK_PATH_PREFIX = String.join(File.separator, SECRETS_MODULE_PATH_PREFIX, "checks");
+  private final static String TEMPLATE_PATH_PREFIX = String.join(File.separator, "src", "test", "resources", "templates");
+  private final static String RSPEC_FILES_PATH_PREFIX = String.join(File.separator, SECRETS_MODULE_RESOURCE_PATH_PREFIX, "l10n", "secrets", "rules", "secrets");
   private final Charset charset = StandardCharsets.UTF_8;
   private static final Logger LOG = LoggerFactory.getLogger(UpdatingSpecificationFilesGenerator.class);
 
@@ -120,8 +127,8 @@ class UpdatingSpecificationFilesGenerator {
   }
 
   private void writeCheckFile(String checkName, String rspecKey) {
-    Path checkPath = Path.of("src", "main", "java", "org", "sonar", "plugins", "secrets", "checks", checkName + ".java");
-    Path checkTemplatePath = Path.of("src", "test", "resources", "templates", "GenericCheckTemplate.java");
+    Path checkPath = Path.of(CHECK_PATH_PREFIX, checkName + ".java");
+    Path checkTemplatePath = Path.of(TEMPLATE_PATH_PREFIX, "GenericCheckTemplate.java");
     try {
       Files.copy(checkTemplatePath, checkPath);
 
@@ -138,8 +145,8 @@ class UpdatingSpecificationFilesGenerator {
   }
 
   private void writeCheckTestFile(String checkName) {
-    Path checkTestPath = Path.of("src", "test", "java", "org", "sonar", "plugins", "secrets", "checks", checkName + "Test.java");
-    Path checkTestTemplatePath = Path.of("src", "test", "resources", "templates", "GenericCheckTestTemplate.java");
+    Path checkTestPath = Path.of(CHECK_TESTS_PATH_PREFIX, checkName + "Test.java");
+    Path checkTestTemplatePath = Path.of(TEMPLATE_PATH_PREFIX, "GenericCheckTestTemplate.java");
     try {
       Files.copy(checkTestTemplatePath, checkTestPath);
 
@@ -156,14 +163,14 @@ class UpdatingSpecificationFilesGenerator {
   }
 
   private void writeSpecificationFileDefinition() {
-    Path specificationsDirectoy = Path.of("src", "main", "resources", "org", "sonar", "plugins", "secrets", "configuration");
+    Path specificationsDirectory = Path.of(SPECIFICATION_FILES_PATH, "configuration");
     String[] extensionsToSearchFor = new String[] {"yaml"};
-    Collection<File> files = FileUtils.listFiles(new File(specificationsDirectoy.toUri()), extensionsToSearchFor, false);
+    Collection<File> files = FileUtils.listFiles(new File(specificationsDirectory.toUri()), extensionsToSearchFor, false);
 
     List<String> listOfFileNames = files.stream().map(File::getName).sorted().collect(Collectors.toList());
 
-    Path specificationDefinitionPath = Path.of("src", "main", "java", "org", "sonar", "plugins", "secrets", "SecretsSpecificationFilesDefinition.java");
-    Path specificationDefinitionTemplatePath = Path.of("src", "test", "resources", "templates", "SecretsSpecificationFilesDefinitionTemplate.java");
+    Path specificationDefinitionPath = Path.of(SECRETS_MODULE_PATH_PREFIX, "SecretsSpecificationFilesDefinition.java");
+    Path specificationDefinitionTemplatePath = Path.of(TEMPLATE_PATH_PREFIX, "SecretsSpecificationFilesDefinitionTemplate.java");
 
     try {
       Files.copy(specificationDefinitionTemplatePath, specificationDefinitionPath, StandardCopyOption.REPLACE_EXISTING);
@@ -190,10 +197,11 @@ class UpdatingSpecificationFilesGenerator {
   }
 
   private void removeUnusedCheck(String checkName, String rspecKey) {
-    Path checkPath = Path.of("src", "main", "java", "org", "sonar", "plugins", "secrets", "checks", checkName + ".java");
-    Path checkTestPath = Path.of("src", "test", "java", "org", "sonar", "plugins", "secrets", "checks", checkName + "Test.java");
-    Path rspecJson = Path.of("src", "main", "resources", "org", "sonar", "l10n", "secrets", "rules", "secrets", rspecKey + ".json");
-    Path rspecHtml = Path.of("src", "main", "resources", "org", "sonar", "l10n", "secrets", "rules", "secrets", rspecKey + ".html");
+    Path checkPath = Path.of(CHECK_PATH_PREFIX, checkName + ".java");
+    Path checkTestPath = Path.of(CHECK_TESTS_PATH_PREFIX, checkName + "Test.java");
+    Path rspecJson = Path.of(RSPEC_FILES_PATH_PREFIX, rspecKey + ".json");
+    Path rspecHtml = Path.of(RSPEC_FILES_PATH_PREFIX, rspecKey + ".html");
+
     try {
       Files.delete(checkPath);
       Files.delete(checkTestPath);
@@ -216,8 +224,8 @@ class UpdatingSpecificationFilesGenerator {
 
     Collections.sort(updatedCheckNames);
 
-    Path checkTestTemplatePath = Path.of("src", "test", "resources", "templates", "SecretsRulesDefinitionTemplate.java");
-    Path rulesDefPath = Path.of("src", "main", "java", "org", "sonar", "plugins", "secrets", "SecretsRulesDefinition.java");
+    Path checkTestTemplatePath = Path.of(TEMPLATE_PATH_PREFIX, "SecretsRulesDefinitionTemplate.java");
+    Path rulesDefPath = Path.of(SECRETS_MODULE_PATH_PREFIX, "SecretsRulesDefinition.java");
     try {
       Files.copy(checkTestTemplatePath, rulesDefPath, StandardCopyOption.REPLACE_EXISTING);
 
@@ -288,7 +296,7 @@ class UpdatingSpecificationFilesGenerator {
   }
 
   private void constructFileForRulesAPI(Set<String> keysToUpdateRuleAPIFor) {
-    Path pathToWriteUpdateFileTo = Path.of("src", "test", "resources", "templates", "rspecKeysToUpdate.txt");
+    Path pathToWriteUpdateFileTo = Path.of(TEMPLATE_PATH_PREFIX, "rspecKeysToUpdate.txt");
     String content = generateContentForRulesAPIUpdateFile(keysToUpdateRuleAPIFor);
 
     try {
