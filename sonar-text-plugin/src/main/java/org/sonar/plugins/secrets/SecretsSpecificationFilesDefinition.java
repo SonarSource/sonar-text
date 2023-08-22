@@ -35,6 +35,7 @@ public class SecretsSpecificationFilesDefinition {
       "clarifai.yaml",
       "django.yaml",
       "facebook.yaml",
+      "firebase.yaml",
       "gcp.yaml",
       "github.yaml",
       "gitlab.yaml",
