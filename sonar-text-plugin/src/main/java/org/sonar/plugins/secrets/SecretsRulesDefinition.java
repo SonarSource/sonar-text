@@ -28,6 +28,7 @@ import org.sonar.plugins.secrets.checks.AwsCheck;
 import org.sonar.plugins.secrets.checks.AzureCheck;
 import org.sonar.plugins.secrets.checks.AzureStorageAccountKeyCheck;
 import org.sonar.plugins.secrets.checks.ClarifaiCheck;
+import org.sonar.plugins.secrets.checks.DiscordWebhookURLCheck;
 import org.sonar.plugins.secrets.checks.DjangoCheck;
 import org.sonar.plugins.secrets.checks.FacebookCheck;
 import org.sonar.plugins.secrets.checks.GenericpublickeycryptographyCheck;
@@ -56,7 +57,6 @@ import org.sonar.plugins.secrets.checks.WeChatCheck;
 public class SecretsRulesDefinition extends CommonRulesDefinition {
 
   public static final String REPOSITORY_KEY = "secrets";
-
   public static final String REPOSITORY_NAME = "Sonar Secrets Analyzer";
 
   public SecretsRulesDefinition(SonarRuntime sonarRuntime) {
@@ -76,6 +76,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       AzureCheck.class,
       AzureStorageAccountKeyCheck.class,
       ClarifaiCheck.class,
+      DiscordWebhookURLCheck.class,
       DjangoCheck.class,
       FacebookCheck.class,
       GenericpublickeycryptographyCheck.class,
