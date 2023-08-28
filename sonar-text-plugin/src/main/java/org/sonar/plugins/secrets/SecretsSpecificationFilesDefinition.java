@@ -57,6 +57,7 @@ public class SecretsSpecificationFilesDefinition {
       "spotify.yaml",
       "ssh.yaml",
       "telegram.yaml",
-      "wechat.yaml");
+      "wechat.yaml",
+      "zapier.yaml");
   }
 }
