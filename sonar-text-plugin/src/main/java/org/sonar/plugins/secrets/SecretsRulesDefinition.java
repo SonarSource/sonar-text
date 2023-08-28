@@ -50,13 +50,13 @@ import org.sonar.plugins.secrets.checks.RiotCheck;
 import org.sonar.plugins.secrets.checks.SendgridCheck;
 import org.sonar.plugins.secrets.checks.SonarQubeCheck;
 import org.sonar.plugins.secrets.checks.SpotifyCheck;
+import org.sonar.plugins.secrets.checks.StripeWebhookSecretCheck;
 import org.sonar.plugins.secrets.checks.TelegramCheck;
 import org.sonar.plugins.secrets.checks.WeChatCheck;
 
 public class SecretsRulesDefinition extends CommonRulesDefinition {
 
   public static final String REPOSITORY_KEY = "secrets";
-
   public static final String REPOSITORY_NAME = "Sonar Secrets Analyzer";
 
   public SecretsRulesDefinition(SonarRuntime sonarRuntime) {
@@ -98,6 +98,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       SendgridCheck.class,
       SonarQubeCheck.class,
       SpotifyCheck.class,
+      StripeWebhookSecretCheck.class,
       TelegramCheck.class,
       WeChatCheck.class);
   }
