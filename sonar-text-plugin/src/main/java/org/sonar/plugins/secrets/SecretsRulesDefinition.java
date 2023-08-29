@@ -54,6 +54,7 @@ import org.sonar.plugins.secrets.checks.SlackWebhookURLCheck;
 import org.sonar.plugins.secrets.checks.SlackWebhookURLUniqueNameCheck;
 import org.sonar.plugins.secrets.checks.SonarQubeCheck;
 import org.sonar.plugins.secrets.checks.SpotifyCheck;
+import org.sonar.plugins.secrets.checks.StripeWebhookSecretCheck;
 import org.sonar.plugins.secrets.checks.TelegramCheck;
 import org.sonar.plugins.secrets.checks.WeChatCheck;
 import org.sonar.plugins.secrets.checks.ZapierWebhookUrlCheck;
@@ -106,6 +107,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       SlackWebhookURLUniqueNameCheck.class,
       SonarQubeCheck.class,
       SpotifyCheck.class,
+      StripeWebhookSecretCheck.class,
       TelegramCheck.class,
       WeChatCheck.class,
       ZapierWebhookUrlCheck.class);

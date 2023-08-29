@@ -58,6 +58,7 @@ public class SecretsSpecificationFilesDefinition {
       "sonarqube.yaml",
       "spotify.yaml",
       "ssh.yaml",
+      "stripe.yaml",
       "telegram.yaml",
       "wechat.yaml",
       "zapier.yaml");
