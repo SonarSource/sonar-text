@@ -43,7 +43,7 @@ mvn verify -Dsonar.runtimeVersion=LATEST_RELEASE -B -e -V
 ### Check if dependencies need to be updated
 
 If you have a `~/.m2/settings.xml` containing some private servers and repositories, it's safer to use
-a custom emtpy `settings.xml` to only look for latest version publicly available on maven central.
+a custom empty `settings.xml` to only look for latest version publicly available on maven central.
 
 ```shell
 echo "<settings/>" > empty-settings.xml
@@ -54,19 +54,14 @@ rm empty-settings.xml
 ### Update rule description
 
 ```shell
-cd sonarpedia-secrets
-java -jar ../../sonar-rule-api/target/rule-api-2.4.0-SNAPSHOT.jar update
-cd ../sonarpedia-text
-java -jar ../../sonar-rule-api/target/rule-api-2.4.0-SNAPSHOT.jar update
+mvn exec:exec@update --non-recursive -Drules-metadata.directory=sonarpedia-secrets
+mvn exec:exec@update --non-recursive -Drules-metadata.directory=sonarpedia-text
 ```
 
 ### Generate files to include new secrets
 
 After the change, addition or removal of secret specifications, this script can be run to generate the Java classes that are needed 
 for the inclusion or deletion of these secrets.
-
-To run this script you should specify the file name of the rule-api jar `<ruleApiFileName>`, otherwise a default value of `rule-api-snap.jar` will be assumed.
-The rule-api jar needs to be located in the root folder of the project.
 
 As we use the enforcer plugin to define a file size of the build, this can lead to test failures after adding new secret specifications.
 The `<minsize>` and `<maxsize>` can be changed in `sonar-text-plugin/pom.xml`.

@@ -1,12 +1,5 @@
 #!/bin/bash
 
-# Specification of the rules-api jar can be done in the call of this script as the first argument
-if [[ "$1" ]]; then
-    ruleapifilename=$1
-else
-    ruleapifilename="rule-api-snap.jar"
-fi
-
 echo ""
 echo "--------- Generation of Java classes ---------"
 echo ""
@@ -34,7 +27,7 @@ while IFS= read -r line
 do
     echo ""
 	echo "--------- Generating rspec files for: $line ---------"
-	java -jar ../$ruleapifilename generate -rule $line
+	mvn exec:exec@generate --non-recursive -Drules-metadata.directory=sonarpedia-secrets -DruleId="$line"
 	echo ""
 done < "$input"
 
