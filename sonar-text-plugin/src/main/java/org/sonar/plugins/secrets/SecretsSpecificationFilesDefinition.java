@@ -50,6 +50,7 @@ public class SecretsSpecificationFilesDefinition {
       "mysql.yaml",
       "odbc.yaml",
       "openweathermap.yaml",
+      "planetscale.yaml",
       "postgresql.yaml",
       "pubkey-crypto.yaml",
       "rapidapi.yaml",
