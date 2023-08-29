@@ -55,6 +55,7 @@ import org.sonar.plugins.secrets.checks.SonarQubeCheck;
 import org.sonar.plugins.secrets.checks.SpotifyCheck;
 import org.sonar.plugins.secrets.checks.TelegramCheck;
 import org.sonar.plugins.secrets.checks.WeChatCheck;
+import org.sonar.plugins.secrets.checks.ZapierWebhookUrlCheck;
 
 public class SecretsRulesDefinition extends CommonRulesDefinition {
 
@@ -104,6 +105,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       SonarQubeCheck.class,
       SpotifyCheck.class,
       TelegramCheck.class,
-      WeChatCheck.class);
+      WeChatCheck.class,
+      ZapierWebhookUrlCheck.class);
   }
 }
