@@ -44,6 +44,7 @@ public class SecretsSpecificationFilesDefinition {
       "google-recaptcha.yaml",
       "ibm.yaml",
       "mongodb.yaml",
+      "ms-teams.yaml",
       "mws.yaml",
       "mysql.yaml",
       "odbc.yaml",
