@@ -23,6 +23,7 @@ import java.util.List;
 import org.sonar.api.SonarRuntime;
 import org.sonar.plugins.common.CommonRulesDefinition;
 import org.sonar.plugins.common.DefaultQualityProfileDefinition;
+import org.sonar.plugins.secrets.checks.AirtableCheck;
 import org.sonar.plugins.secrets.checks.AlchemyApiKeyCheck;
 import org.sonar.plugins.secrets.checks.AlibabaCloudAccessKeyCheck;
 import org.sonar.plugins.secrets.checks.AwsCheck;
@@ -79,6 +80,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
 
   public static List<Class<?>> checks() {
     return List.of(
+      AirtableCheck.class,
       AlchemyApiKeyCheck.class,
       AlibabaCloudAccessKeyCheck.class,
       AwsCheck.class,
