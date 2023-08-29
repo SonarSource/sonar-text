@@ -45,6 +45,7 @@ public class SecretsSpecificationFilesDefinition {
       "google-recaptcha.yaml",
       "ibm.yaml",
       "mongodb.yaml",
+      "ms-teams.yaml",
       "mws.yaml",
       "mysql.yaml",
       "odbc.yaml",
@@ -58,6 +59,7 @@ public class SecretsSpecificationFilesDefinition {
       "sonarqube.yaml",
       "spotify.yaml",
       "ssh.yaml",
+      "stripe.yaml",
       "telegram.yaml",
       "wechat.yaml",
       "zapier.yaml");
