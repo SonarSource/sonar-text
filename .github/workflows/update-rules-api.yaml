@@ -1,0 +1,29 @@
+---
+name: rule-api-update
+on:
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # write for peter-evans/create-pull-request, read for actions/checkout
+      pull-requests: write # write for peter-evans/create-pull-request
+    steps:
+      - run: |
+          mvn exec:exec@update -X -e --non-recursive -Drules-metadata.directory=sonarpedia-text
+          mvn exec:exec@update -X -e --non-recursive -Drules-metadata.directory=sonarpedia-secrets
+      - run: |
+          if git diff --exit-code; then
+            echo "::set-env name=contains_update::false"
+          else
+            echo "::set-env name=contains_update::true"
+          fi
+      - uses: peter-evans/create-pull-request@v3.5.1
+        if: ${{ env.contains_update == 'true' }}
+        with:
+          author: github-actions[bot] <noreply@github.com>
+          commit-message: Update rules metadata
+          title: Update rules metadata
+          branch: bot/update-rule-metadata
+          branch-suffix: timestamp
