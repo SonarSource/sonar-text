@@ -53,10 +53,12 @@ public class SecretsSpecificationFilesDefinition {
       "rapidapi.yaml",
       "riot.yaml",
       "sendgrid.yaml",
+      "slack.yaml",
       "sonarqube.yaml",
       "spotify.yaml",
       "ssh.yaml",
       "telegram.yaml",
-      "wechat.yaml");
+      "wechat.yaml",
+      "zapier.yaml");
   }
 }
