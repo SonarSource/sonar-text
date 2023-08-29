@@ -46,6 +46,7 @@ import org.sonar.plugins.secrets.checks.MySQLCheck;
 import org.sonar.plugins.secrets.checks.ODBCJDBCConnectionStringCheck;
 import org.sonar.plugins.secrets.checks.OpenSSHCheck;
 import org.sonar.plugins.secrets.checks.OpenWeatherMapCheck;
+import org.sonar.plugins.secrets.checks.PlanetscaleCheck;
 import org.sonar.plugins.secrets.checks.PostgreSQLCheck;
 import org.sonar.plugins.secrets.checks.RapidAPICheck;
 import org.sonar.plugins.secrets.checks.RiotCheck;
@@ -99,6 +100,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       ODBCJDBCConnectionStringCheck.class,
       OpenSSHCheck.class,
       OpenWeatherMapCheck.class,
+      PlanetscaleCheck.class,
       PostgreSQLCheck.class,
       RapidAPICheck.class,
       RiotCheck.class,
