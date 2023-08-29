@@ -50,10 +50,13 @@ import org.sonar.plugins.secrets.checks.PostgreSQLCheck;
 import org.sonar.plugins.secrets.checks.RapidAPICheck;
 import org.sonar.plugins.secrets.checks.RiotCheck;
 import org.sonar.plugins.secrets.checks.SendgridCheck;
+import org.sonar.plugins.secrets.checks.SlackWebhookURLCheck;
+import org.sonar.plugins.secrets.checks.SlackWebhookURLUniqueNameCheck;
 import org.sonar.plugins.secrets.checks.SonarQubeCheck;
 import org.sonar.plugins.secrets.checks.SpotifyCheck;
 import org.sonar.plugins.secrets.checks.TelegramCheck;
 import org.sonar.plugins.secrets.checks.WeChatCheck;
+import org.sonar.plugins.secrets.checks.ZapierWebhookUrlCheck;
 
 public class SecretsRulesDefinition extends CommonRulesDefinition {
 
@@ -99,9 +102,12 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       RapidAPICheck.class,
       RiotCheck.class,
       SendgridCheck.class,
+      SlackWebhookURLCheck.class,
+      SlackWebhookURLUniqueNameCheck.class,
       SonarQubeCheck.class,
       SpotifyCheck.class,
       TelegramCheck.class,
-      WeChatCheck.class);
+      WeChatCheck.class,
+      ZapierWebhookUrlCheck.class);
   }
 }
