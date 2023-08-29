@@ -33,6 +33,7 @@ public class SecretsSpecificationFilesDefinition {
       "aws.yaml",
       "azure.yaml",
       "clarifai.yaml",
+      "discord.yaml",
       "django.yaml",
       "facebook.yaml",
       "gcp.yaml",

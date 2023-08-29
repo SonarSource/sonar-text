@@ -28,6 +28,7 @@ import org.sonar.plugins.secrets.checks.AwsCheck;
 import org.sonar.plugins.secrets.checks.AzureCheck;
 import org.sonar.plugins.secrets.checks.AzureStorageAccountKeyCheck;
 import org.sonar.plugins.secrets.checks.ClarifaiCheck;
+import org.sonar.plugins.secrets.checks.DiscordWebhookURLCheck;
 import org.sonar.plugins.secrets.checks.DjangoCheck;
 import org.sonar.plugins.secrets.checks.FacebookCheck;
 import org.sonar.plugins.secrets.checks.GenericpublickeycryptographyCheck;
@@ -77,6 +78,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       AzureCheck.class,
       AzureStorageAccountKeyCheck.class,
       ClarifaiCheck.class,
+      DiscordWebhookURLCheck.class,
       DjangoCheck.class,
       FacebookCheck.class,
       GenericpublickeycryptographyCheck.class,
