@@ -33,6 +33,7 @@ public class SecretsSpecificationFilesDefinition {
       "aws.yaml",
       "azure.yaml",
       "clarifai.yaml",
+      "discord.yaml",
       "django.yaml",
       "facebook.yaml",
       "gcp.yaml",
@@ -52,11 +53,13 @@ public class SecretsSpecificationFilesDefinition {
       "rapidapi.yaml",
       "riot.yaml",
       "sendgrid.yaml",
+      "slack.yaml",
       "sonarqube.yaml",
       "spotify.yaml",
       "ssh.yaml",
       "stripe.yaml",
       "telegram.yaml",
-      "wechat.yaml");
+      "wechat.yaml",
+      "zapier.yaml");
   }
 }
