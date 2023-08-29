@@ -36,6 +36,7 @@ public class SecretsSpecificationFilesDefinition {
       "discord.yaml",
       "django.yaml",
       "facebook.yaml",
+      "firebase.yaml",
       "gcp.yaml",
       "github.yaml",
       "gitlab.yaml",

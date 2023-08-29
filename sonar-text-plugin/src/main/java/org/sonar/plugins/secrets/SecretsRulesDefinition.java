@@ -31,6 +31,7 @@ import org.sonar.plugins.secrets.checks.ClarifaiCheck;
 import org.sonar.plugins.secrets.checks.DiscordWebhookURLCheck;
 import org.sonar.plugins.secrets.checks.DjangoCheck;
 import org.sonar.plugins.secrets.checks.FacebookCheck;
+import org.sonar.plugins.secrets.checks.FirebaseCheck;
 import org.sonar.plugins.secrets.checks.GenericpublickeycryptographyCheck;
 import org.sonar.plugins.secrets.checks.GitHubCheck;
 import org.sonar.plugins.secrets.checks.GitLabCheck;
@@ -85,6 +86,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       DiscordWebhookURLCheck.class,
       DjangoCheck.class,
       FacebookCheck.class,
+      FirebaseCheck.class,
       GenericpublickeycryptographyCheck.class,
       GitHubCheck.class,
       GitLabCheck.class,
