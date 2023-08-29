@@ -28,6 +28,7 @@ import org.sonar.plugins.secrets.checks.AwsCheck;
 import org.sonar.plugins.secrets.checks.AzureCheck;
 import org.sonar.plugins.secrets.checks.AzureStorageAccountKeyCheck;
 import org.sonar.plugins.secrets.checks.ClarifaiCheck;
+import org.sonar.plugins.secrets.checks.DiscordWebhookURLCheck;
 import org.sonar.plugins.secrets.checks.DjangoCheck;
 import org.sonar.plugins.secrets.checks.FacebookCheck;
 import org.sonar.plugins.secrets.checks.FirebaseCheck;
@@ -49,10 +50,13 @@ import org.sonar.plugins.secrets.checks.PostgreSQLCheck;
 import org.sonar.plugins.secrets.checks.RapidAPICheck;
 import org.sonar.plugins.secrets.checks.RiotCheck;
 import org.sonar.plugins.secrets.checks.SendgridCheck;
+import org.sonar.plugins.secrets.checks.SlackWebhookURLCheck;
+import org.sonar.plugins.secrets.checks.SlackWebhookURLUniqueNameCheck;
 import org.sonar.plugins.secrets.checks.SonarQubeCheck;
 import org.sonar.plugins.secrets.checks.SpotifyCheck;
 import org.sonar.plugins.secrets.checks.TelegramCheck;
 import org.sonar.plugins.secrets.checks.WeChatCheck;
+import org.sonar.plugins.secrets.checks.ZapierWebhookUrlCheck;
 
 public class SecretsRulesDefinition extends CommonRulesDefinition {
 
@@ -76,6 +80,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       AzureCheck.class,
       AzureStorageAccountKeyCheck.class,
       ClarifaiCheck.class,
+      DiscordWebhookURLCheck.class,
       DjangoCheck.class,
       FacebookCheck.class,
       FirebaseCheck.class,
@@ -97,9 +102,12 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       RapidAPICheck.class,
       RiotCheck.class,
       SendgridCheck.class,
+      SlackWebhookURLCheck.class,
+      SlackWebhookURLUniqueNameCheck.class,
       SonarQubeCheck.class,
       SpotifyCheck.class,
       TelegramCheck.class,
-      WeChatCheck.class);
+      WeChatCheck.class,
+      ZapierWebhookUrlCheck.class);
   }
 }
