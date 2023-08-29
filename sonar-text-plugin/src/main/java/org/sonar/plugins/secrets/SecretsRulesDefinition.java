@@ -31,6 +31,7 @@ import org.sonar.plugins.secrets.checks.ClarifaiCheck;
 import org.sonar.plugins.secrets.checks.DiscordWebhookURLCheck;
 import org.sonar.plugins.secrets.checks.DjangoCheck;
 import org.sonar.plugins.secrets.checks.FacebookCheck;
+import org.sonar.plugins.secrets.checks.FirebaseCheck;
 import org.sonar.plugins.secrets.checks.GenericpublickeycryptographyCheck;
 import org.sonar.plugins.secrets.checks.GitHubCheck;
 import org.sonar.plugins.secrets.checks.GitLabCheck;
@@ -46,6 +47,7 @@ import org.sonar.plugins.secrets.checks.MySQLCheck;
 import org.sonar.plugins.secrets.checks.ODBCJDBCConnectionStringCheck;
 import org.sonar.plugins.secrets.checks.OpenSSHCheck;
 import org.sonar.plugins.secrets.checks.OpenWeatherMapCheck;
+import org.sonar.plugins.secrets.checks.PlanetscaleCheck;
 import org.sonar.plugins.secrets.checks.PostgreSQLCheck;
 import org.sonar.plugins.secrets.checks.RapidAPICheck;
 import org.sonar.plugins.secrets.checks.RiotCheck;
@@ -85,6 +87,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       DiscordWebhookURLCheck.class,
       DjangoCheck.class,
       FacebookCheck.class,
+      FirebaseCheck.class,
       GenericpublickeycryptographyCheck.class,
       GitHubCheck.class,
       GitLabCheck.class,
@@ -100,6 +103,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       ODBCJDBCConnectionStringCheck.class,
       OpenSSHCheck.class,
       OpenWeatherMapCheck.class,
+      PlanetscaleCheck.class,
       PostgreSQLCheck.class,
       RapidAPICheck.class,
       RiotCheck.class,
