@@ -54,6 +54,7 @@ public class SecretsSpecificationFilesDefinition {
       "planetscale.yaml",
       "postgresql.yaml",
       "pubkey-crypto.yaml",
+      "rabbitmq.yaml",
       "rapidapi.yaml",
       "riot.yaml",
       "sendgrid.yaml",
