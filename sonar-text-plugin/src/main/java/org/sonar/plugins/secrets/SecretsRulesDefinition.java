@@ -51,6 +51,7 @@ import org.sonar.plugins.secrets.checks.OpenWeatherMapCheck;
 import org.sonar.plugins.secrets.checks.PlanetscaleCheck;
 import org.sonar.plugins.secrets.checks.PostgreSQLCheck;
 import org.sonar.plugins.secrets.checks.RapidAPICheck;
+import org.sonar.plugins.secrets.checks.RedisCheck;
 import org.sonar.plugins.secrets.checks.RiotCheck;
 import org.sonar.plugins.secrets.checks.SendgridCheck;
 import org.sonar.plugins.secrets.checks.SlackWebhookURLCheck;
@@ -107,6 +108,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       PlanetscaleCheck.class,
       PostgreSQLCheck.class,
       RapidAPICheck.class,
+      RedisCheck.class,
       RiotCheck.class,
       SendgridCheck.class,
       SlackWebhookURLCheck.class,
