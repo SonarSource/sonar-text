@@ -45,6 +45,7 @@ public class SecretsSpecificationFilesDefinition {
       "google-oauth2.yaml",
       "google-recaptcha.yaml",
       "ibm.yaml",
+      "mailgun.yaml",
       "mongodb.yaml",
       "ms-teams.yaml",
       "mws.yaml",
