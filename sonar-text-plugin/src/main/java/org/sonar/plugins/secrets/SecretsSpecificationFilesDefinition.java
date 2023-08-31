@@ -29,6 +29,7 @@ public class SecretsSpecificationFilesDefinition {
 
   public static Set<String> existingSecretSpecifications() {
     return Set.of(
+      "alchemy.yaml",
       "alibaba.yaml",
       "aws.yaml",
       "azure.yaml",
@@ -36,6 +37,7 @@ public class SecretsSpecificationFilesDefinition {
       "discord.yaml",
       "django.yaml",
       "facebook.yaml",
+      "firebase.yaml",
       "gcp.yaml",
       "github.yaml",
       "gitlab.yaml",
@@ -43,11 +45,14 @@ public class SecretsSpecificationFilesDefinition {
       "google-oauth2.yaml",
       "google-recaptcha.yaml",
       "ibm.yaml",
+      "mailgun.yaml",
       "mongodb.yaml",
+      "ms-teams.yaml",
       "mws.yaml",
       "mysql.yaml",
       "odbc.yaml",
       "openweathermap.yaml",
+      "planetscale.yaml",
       "postgresql.yaml",
       "pubkey-crypto.yaml",
       "rapidapi.yaml",
@@ -57,6 +62,7 @@ public class SecretsSpecificationFilesDefinition {
       "sonarqube.yaml",
       "spotify.yaml",
       "ssh.yaml",
+      "stripe.yaml",
       "telegram.yaml",
       "wechat.yaml",
       "zapier.yaml");
