@@ -50,6 +50,10 @@ cd ../sonarpedia-text
 java -jar ../../sonar-rule-api/target/rule-api-2.4.0-SNAPSHOT.jar update
 ```
 
+### Create new secrets
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
 ### Generate files to include new secrets
 
 After the change, addition or removal of secret specifications, this script can be run to generate the Java classes that are needed 
