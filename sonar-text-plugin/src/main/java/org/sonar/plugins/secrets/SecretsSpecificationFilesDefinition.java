@@ -29,6 +29,7 @@ public class SecretsSpecificationFilesDefinition {
 
   public static Set<String> existingSecretSpecifications() {
     return Set.of(
+      "alchemy.yaml",
       "alibaba.yaml",
       "aws.yaml",
       "azure.yaml",
@@ -44,6 +45,7 @@ public class SecretsSpecificationFilesDefinition {
       "google-oauth2.yaml",
       "google-recaptcha.yaml",
       "ibm.yaml",
+      "mailgun.yaml",
       "mongodb.yaml",
       "ms-teams.yaml",
       "mws.yaml",

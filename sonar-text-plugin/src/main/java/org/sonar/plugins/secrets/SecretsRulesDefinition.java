@@ -23,6 +23,7 @@ import java.util.List;
 import org.sonar.api.SonarRuntime;
 import org.sonar.plugins.common.CommonRulesDefinition;
 import org.sonar.plugins.common.DefaultQualityProfileDefinition;
+import org.sonar.plugins.secrets.checks.AlchemyApiKeyCheck;
 import org.sonar.plugins.secrets.checks.AlibabaCloudAccessKeyCheck;
 import org.sonar.plugins.secrets.checks.AwsCheck;
 import org.sonar.plugins.secrets.checks.AzureCheck;
@@ -40,6 +41,7 @@ import org.sonar.plugins.secrets.checks.GoogleCheck;
 import org.sonar.plugins.secrets.checks.GoogleCloudAccountKeyCheck;
 import org.sonar.plugins.secrets.checks.GoogleUniqueNameCheck;
 import org.sonar.plugins.secrets.checks.IbmApiKeyCheck;
+import org.sonar.plugins.secrets.checks.MailgunCheck;
 import org.sonar.plugins.secrets.checks.MicrosoftTeamsWebhookUrlCheck;
 import org.sonar.plugins.secrets.checks.MongoDBCheck;
 import org.sonar.plugins.secrets.checks.MwsAuthTokenCheck;
@@ -79,6 +81,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
 
   public static List<Class<?>> checks() {
     return List.of(
+      AlchemyApiKeyCheck.class,
       AlibabaCloudAccessKeyCheck.class,
       AwsCheck.class,
       AzureCheck.class,
@@ -96,6 +99,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       GoogleCloudAccountKeyCheck.class,
       GoogleUniqueNameCheck.class,
       IbmApiKeyCheck.class,
+      MailgunCheck.class,
       MicrosoftTeamsWebhookUrlCheck.class,
       MongoDBCheck.class,
       MwsAuthTokenCheck.class,
