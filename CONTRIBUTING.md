@@ -2,8 +2,7 @@
 
 ## Development environment
 
-1. Set up a Java development environment
- - Or use Docker
+1. Set up a Java development environment, or use Docker, to be ready to perform commands such as those specified in the [README.md](README.md)
 2. Set up an extension that validates YAML files, such as [YAML by RedHat](https://github.com/redhat-developer/vscode-yaml)
 3. Set up this [json-schema file](https://github.com/SonarSource/sonar-text/blob/master/sonar-text-plugin/src/main/resources/org/sonar/plugins/secrets/configuration/specifications/specification-json-schema.json) for your validation tooling
 4. Take a look at [the existing rules](https://github.com/SonarSource/sonar-text/tree/master/sonar-text-plugin/src/main/resources/org/sonar/plugins/secrets/configuration)
@@ -32,6 +31,7 @@ provider:
         (\\w)\\1{6,}|\
         testkey"
   rules:
+    # The RSpec Key corresponds to the contents of SonarSource/rspec. To create a new secret, you need to create a new rule in rspec, which will output a new rule ID (rspec key)
     - rspecKey: SXXXX
       id: fakecloud-api-key
       metadata:
@@ -51,4 +51,11 @@ provider:
           containsSecret: false
 ```
 
+## RSpec writing
+
+Depending on the impacts of leaking such a secret, pick [one of these impacts](https://github.com/SonarSource/rspec/tree/master/shared_content/secrets/impact).
+
+a minimal version of a secrets rule description like that:
+
+XXXXXXXXX
 ## Types of bugs that you will encounter
