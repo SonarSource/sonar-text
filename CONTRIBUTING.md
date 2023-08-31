@@ -6,11 +6,12 @@
  - Or use Docker
 2. Set up an extension that validates YAML files, such as [YAML by RedHat](https://github.com/redhat-developer/vscode-yaml)
 3. Set up this [json-schema file](https://github.com/SonarSource/sonar-text/blob/master/sonar-text-plugin/src/main/resources/org/sonar/plugins/secrets/configuration/specifications/specification-json-schema.json) for your validation tooling
-2. Take a look at [the existing rules](https://github.com/SonarSource/sonar-text/tree/master/sonar-text-plugin/src/main/resources/org/sonar/plugins/secrets/configuration)
+4. Take a look at [the existing rules](https://github.com/SonarSource/sonar-text/tree/master/sonar-text-plugin/src/main/resources/org/sonar/plugins/secrets/configuration)
+5. Familiarize yourself with [SonarSource/rspec](https://github.com/SonarSource/rspec)
 
 ## code structure for secret detection
 
-Take a look at this example of a secret detection specification file for a fake cloud provider:
+Take a look at the example of a secret detection specification file for a fake cloud provider below. This is considered the anatomy of a "good" secret detection file.
 
 ``` yaml
 provider:
