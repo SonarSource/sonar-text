@@ -20,24 +20,21 @@ This component helps you prevent the leakage of secrets even before you push the
 *Prerequisite*
 
 - Java 11
-- maven
 
 ```shell
-mvn clean install
+./gradlew build
 ```
 
 ### Plugin Integration tests
 
 ```shell
-cd its/ruling
-mvn verify -Dsonar.runtimeVersion=LATEST_RELEASE -B -e -V
+./gradlew :its:ruling -Dsonar.runtimeVersion=LATEST_RELEASE
 ```
 
 ### Rules Integration tests
 
 ```shell
-cd its/plugin
-mvn verify -Dsonar.runtimeVersion=LATEST_RELEASE -B -e -V
+./gradlew :its:plugin -Dsonar.runtimeVersion=LATEST_RELEASE
 ```
 
 ### Check if dependencies need to be updated

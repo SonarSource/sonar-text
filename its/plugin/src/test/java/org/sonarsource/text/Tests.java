@@ -41,7 +41,7 @@ public class Tests {
   @ClassRule
   public static final Orchestrator ORCHESTRATOR;
 
-  public static final FileLocation PLUGIN_LOCATION = FileLocation.byWildcardMavenFilename(new File("../../sonar-text-plugin/target"), "sonar-text-plugin-*.jar");
+  public static final FileLocation PLUGIN_LOCATION = FileLocation.byWildcardMavenFilename(new File("../../sonar-text-plugin/build/libs"), "sonar-text-plugin-*-all.jar");
 
   static {
     ORCHESTRATOR = Orchestrator.builderEnv()

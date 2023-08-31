@@ -104,14 +104,14 @@ class InputFileContextTest {
 
   @Test
   void should_identify_binary_file() throws IOException {
-    Path binaryFile = Path.of("target", "test-classes", "org", "sonar", "plugins", "common", "InputFileContextTest.class");
+    Path binaryFile = Path.of("build", "classes", "java", "test", "org", "sonar", "plugins", "common", "InputFileContextTest.class");
     InputFile inputFile = inputFile(binaryFile);
     InputFileContext ctx = new InputFileContext(defaultSensorContext(), inputFile);
     assertThat(ctx.hasNonTextCharacters()).isTrue();
     assertThat(ctx.lines()).isEmpty();
     assertThat(ctx.content()).isEmpty();
     String path = ctx.toString().replace('\\', '/');
-    assertThat(path).isEqualTo("target/test-classes/org/sonar/plugins/common/InputFileContextTest.class");
+    assertThat(path).isEqualTo("build/classes/java/test/org/sonar/plugins/common/InputFileContextTest.class");
   }
 
   private InputFileContext inputFileContext(String content) throws IOException {
