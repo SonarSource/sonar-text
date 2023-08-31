@@ -35,6 +35,11 @@ provider:
       id: fakecloud-api-key
       metadata:
         name: FakeCloud API Key
+      detection:
+        matching:
+          # Matching guidelines: As a best practice, make the regexes as less greedy as possible
+          # To do so, start to understand how many characters are in each part of the secret. Avoid `+` or `*`
+          pattern: "(?i)\\b(fakecloud-\\w{32})\\b"
       examples:
         - text: |
             BLABLA
@@ -43,9 +48,6 @@ provider:
         - text: |
             BLABLA
           containsSecret: false
-      detection:
-        matching:
-          pattern: "(?i)\\b(fakecloud-\w{32})\\b"
 ```
 
 ## Types of bugs that you will encounter
