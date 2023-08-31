@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.secrets.api;
 
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,9 +50,9 @@ public class PostFilterFactory {
     return postFilter;
   }
 
-  static Predicate<String> filterForPatternNot(String patternNot) {
+  static Predicate<String> filterForPatternNot(List<String> patternNot) {
     return candidateSecret -> {
-      Matcher matcher = Pattern.compile(patternNot).matcher(candidateSecret);
+      Matcher matcher = Pattern.compile(String.join("|", patternNot)).matcher(candidateSecret);
       return !matcher.find();
     };
   }
