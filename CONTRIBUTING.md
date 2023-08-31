@@ -24,22 +24,27 @@ provider:
         content:
           - "(?i)fakecloud"
     post:
-      # Avoid matching values found on SourceGraph that look like dummy passwords or insertions like:
+      # Avoid matching values found on SourceGraph that look like dummy
+      # passwords or insertions like:
       patternNot: 
         "(?i)\
         rightcloud|\
         (\\w)\\1{6,}|\
         testkey"
   rules:
-    # The RSpec Key corresponds to the contents of SonarSource/rspec. To create a new secret, you need to create a new rule in rspec, which will output a new rule ID (rspec key)
+    # The RSpec Key corresponds to the contents of SonarSource/rspec.
+    # To create a new secret, you need to create a new rule in rspec, which
+    # will output a new rule ID (rspec key)
     - rspecKey: SXXXX
       id: fakecloud-api-key
       metadata:
         name: FakeCloud API Key
       detection:
         matching:
-          # Matching guidelines: As a best practice, make the regexes as less greedy as possible
-          # To do so, start to understand how many characters are in each part of the secret. Avoid `+` or `*`
+          # Matching guidelines: As a best practice, make the regexes as less
+          # greedy as possible.
+          # To do so, start to understand how many characters are in each part
+          # of the secret. Avoid `+` or `*` for example.
           pattern: "(?i)\\b(fakecloud-\\w{32})\\b"
       examples:
         - text: |
@@ -57,5 +62,51 @@ Depending on the impacts of leaking such a secret, pick [one of these impacts](h
 
 a minimal version of a secrets rule description like that:
 
-XXXXXXXXX
+```
+include::../../../shared_content/secrets/description.adoc[]
+
+== Why is this an issue?
+
+include::../../../shared_content/secrets/rationale.adoc[]
+
+=== What is the potential impact?
+
+Below are some real-world scenarios that illustrate some impacts of an attacker
+exploiting the secret.
+
+:secret_type: secret
+
+include::../../../shared_content/secrets/impact/phishing.adoc[]
+
+include::../../../shared_content/secrets/impact/malware_distribution.adoc[]
+
+include::../../../shared_content/secrets/impact/suspicious_activities_termination.adoc[]
+
+== How to fix it
+
+include::../../../shared_content/secrets/fix/revoke.adoc[]
+
+include::../../../shared_content/secrets/fix/vault.adoc[]
+
+=== Code examples
+
+:example_secret: fakecloud-5kl947611d0oagfbij4n23h3c58g2efm
+:example_name: fakecloud-key
+:example_env: FAKECLOUD_KEY
+
+include::../../../shared_content/secrets/examples.adoc[]
+
+//=== How does this work?
+
+//=== Pitfalls
+
+//=== Going the extra mile
+
+== Resources
+
+include::../../../shared_content/secrets/resources/standards.adoc[]
+
+//=== Benchmarks
+```
+
 ## Types of bugs that you will encounter
