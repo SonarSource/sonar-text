@@ -46,6 +46,8 @@ provider:
           # To do so, start to understand how many characters are in each part
           # of the secret. Avoid `+` or `*` for example.
           pattern: "(?i)\\b(fakecloud-\\w{32})\\b"
+      # Add the compliant and non compliant example from the rspec as test cases
+      # to make sure that they are detected correctly
       examples:
         - text: |
             BLABLA
