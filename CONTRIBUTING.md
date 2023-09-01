@@ -110,3 +110,37 @@ include::../../../shared_content/secrets/resources/standards.adoc[]
 ```
 
 ## Types of bugs that you will encounter
+
+## Incomplete list of common patternNot patterns
+Often it makes sense to match the patterns to filter out case insensitive ```(?i)```.
+If parts of the patternNot need to match case sensitive the case sensivity can be anabled again via ```(?-i)```
+
+Common patterns:
+```
+# Repeating characters like xxx, ..., ***
+# it is important to place this to the very beginning of the patternNot
+# because \1 will match the same text that was captured by the first capturing group
+([\w\*\.])\1{2,}
+# Variables loaded from the environment:
+# E.g. os.getenv(...), os.environ[...], ENV(...), $env{...}
+\b(get)?env(iron)?\b
+# Other ways of loading from variables:
+# {{...}}
+^\{{2}[^}]++}{2}$
+# JS Template strings ${...}, Python template strings {...}
+^\$?\{[^}]++}$
+# Bash substitutions $...
+^\$[\w]$
+# Ruby String Interpolation #{...}, #{...}#
+^#\{[^}]++}#?$
+#  $(...)
+^\$\([^)]++)$
+# Format string
+\b%s\b
+# <...>
+^<[^>]++>$
+# Common placeholders
+1234
+foo
+bar
+```
