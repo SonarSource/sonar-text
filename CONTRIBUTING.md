@@ -125,8 +125,10 @@ Common patterns:
 ([\w\*\.])\1{2,}
 # Variables loaded from the environment:
 # E.g. os.getenv(...), os.environ[...], ENV(...), $env{...}
-# TODO: Improve this to still raise for env("secret", default="default")
-
+# When this is used the main matching pattern should make sure to match
+# for default values. E.g. env("secret", default="default") should only match
+# 'default' so that this filter does not match 'env'. As an example:
+# (?:os\.getenv\(\s*+['\"][^'\"]++['\"]\s*+,\s*+)?['\"](match secret here)
 \b(get)?env(iron)?\b
 # Other ways of loading from variables:
 # {{...}}
