@@ -125,6 +125,8 @@ Common patterns:
 ([\w\*\.])\1{2,}
 # Variables loaded from the environment:
 # E.g. os.getenv(...), os.environ[...], ENV(...), $env{...}
+# TODO: Improve this to still raise for env("secret", default="default")
+
 \b(get)?env(iron)?\b
 # Other ways of loading from variables:
 # {{...}}
