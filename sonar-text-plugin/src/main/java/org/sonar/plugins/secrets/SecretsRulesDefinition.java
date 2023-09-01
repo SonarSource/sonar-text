@@ -24,6 +24,7 @@ import org.sonar.api.SonarRuntime;
 import org.sonar.plugins.common.CommonRulesDefinition;
 import org.sonar.plugins.common.DefaultQualityProfileDefinition;
 import org.sonar.plugins.secrets.checks.AirtableAPIkeyCheck;
+import org.sonar.plugins.secrets.checks.AlchemyApiKeyCheck;
 import org.sonar.plugins.secrets.checks.AlibabaCloudAccessKeyCheck;
 import org.sonar.plugins.secrets.checks.AwsCheck;
 import org.sonar.plugins.secrets.checks.AzureCheck;
@@ -32,6 +33,7 @@ import org.sonar.plugins.secrets.checks.ClarifaiCheck;
 import org.sonar.plugins.secrets.checks.DiscordWebhookURLCheck;
 import org.sonar.plugins.secrets.checks.DjangoCheck;
 import org.sonar.plugins.secrets.checks.FacebookCheck;
+import org.sonar.plugins.secrets.checks.FirebaseCheck;
 import org.sonar.plugins.secrets.checks.GenericpublickeycryptographyCheck;
 import org.sonar.plugins.secrets.checks.GitHubCheck;
 import org.sonar.plugins.secrets.checks.GitLabCheck;
@@ -40,12 +42,15 @@ import org.sonar.plugins.secrets.checks.GoogleCheck;
 import org.sonar.plugins.secrets.checks.GoogleCloudAccountKeyCheck;
 import org.sonar.plugins.secrets.checks.GoogleUniqueNameCheck;
 import org.sonar.plugins.secrets.checks.IbmApiKeyCheck;
+import org.sonar.plugins.secrets.checks.MailgunCheck;
+import org.sonar.plugins.secrets.checks.MicrosoftTeamsWebhookUrlCheck;
 import org.sonar.plugins.secrets.checks.MongoDBCheck;
 import org.sonar.plugins.secrets.checks.MwsAuthTokenCheck;
 import org.sonar.plugins.secrets.checks.MySQLCheck;
 import org.sonar.plugins.secrets.checks.ODBCJDBCConnectionStringCheck;
 import org.sonar.plugins.secrets.checks.OpenSSHCheck;
 import org.sonar.plugins.secrets.checks.OpenWeatherMapCheck;
+import org.sonar.plugins.secrets.checks.PlanetscaleCheck;
 import org.sonar.plugins.secrets.checks.PostgreSQLCheck;
 import org.sonar.plugins.secrets.checks.RapidAPICheck;
 import org.sonar.plugins.secrets.checks.RiotCheck;
@@ -54,6 +59,8 @@ import org.sonar.plugins.secrets.checks.SlackWebhookURLCheck;
 import org.sonar.plugins.secrets.checks.SlackWebhookURLUniqueNameCheck;
 import org.sonar.plugins.secrets.checks.SonarQubeCheck;
 import org.sonar.plugins.secrets.checks.SpotifyCheck;
+import org.sonar.plugins.secrets.checks.StripeWebhookSecretCheck;
+import org.sonar.plugins.secrets.checks.StripeWebhookSecretUniqueNameCheck;
 import org.sonar.plugins.secrets.checks.TelegramCheck;
 import org.sonar.plugins.secrets.checks.WeChatCheck;
 import org.sonar.plugins.secrets.checks.ZapierWebhookUrlCheck;
@@ -76,6 +83,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
   public static List<Class<?>> checks() {
     return List.of(
       AirtableAPIkeyCheck.class,
+      AlchemyApiKeyCheck.class,
       AlibabaCloudAccessKeyCheck.class,
       AwsCheck.class,
       AzureCheck.class,
@@ -84,6 +92,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       DiscordWebhookURLCheck.class,
       DjangoCheck.class,
       FacebookCheck.class,
+      FirebaseCheck.class,
       GenericpublickeycryptographyCheck.class,
       GitHubCheck.class,
       GitLabCheck.class,
@@ -92,12 +101,15 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       GoogleCloudAccountKeyCheck.class,
       GoogleUniqueNameCheck.class,
       IbmApiKeyCheck.class,
+      MailgunCheck.class,
+      MicrosoftTeamsWebhookUrlCheck.class,
       MongoDBCheck.class,
       MwsAuthTokenCheck.class,
       MySQLCheck.class,
       ODBCJDBCConnectionStringCheck.class,
       OpenSSHCheck.class,
       OpenWeatherMapCheck.class,
+      PlanetscaleCheck.class,
       PostgreSQLCheck.class,
       RapidAPICheck.class,
       RiotCheck.class,
@@ -106,6 +118,8 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       SlackWebhookURLUniqueNameCheck.class,
       SonarQubeCheck.class,
       SpotifyCheck.class,
+      StripeWebhookSecretCheck.class,
+      StripeWebhookSecretUniqueNameCheck.class,
       TelegramCheck.class,
       WeChatCheck.class,
       ZapierWebhookUrlCheck.class);
