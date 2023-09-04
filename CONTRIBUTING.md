@@ -8,6 +8,27 @@
 4. Take a look at [the existing rules](https://github.com/SonarSource/sonar-text/tree/master/sonar-text-plugin/src/main/resources/org/sonar/plugins/secrets/configuration)
 5. Familiarize yourself with [SonarSource/rspec](https://github.com/SonarSource/rspec)
 
+## Adding a secret
+
+1. Write the yaml file
+2. Validates the yaml against the schema file
+3. use `secretSpecificationInclusionGenerator.sh <ruleApiFileName>`
+  1. It will generate the java files that will glue the yaml file to the code base
+  2. If the Rspec is already available, it will also generate additional rspec data
+4. Test the code:
+  1. If rspec data is available, do `mvn clean test`
+  2. Else, do `mvn test -Dtest=FakecloudCheckTest` and replace this test name by the one generated previously 
+
+## Common errors
+
+- Modifying code from the GitHub UI and not validating it with the schema
+  - It will raise tons of exceptions, and `"DeserializationException: Could not load specification from file: slack.yaml"]`  
+- Mismatch from what's expected in `rules[X].examples[X].match` and what's raised  (if `containsSecret` is set to true):
+  - `java.lang.AssertionError: actual is not empty while group of values to look for is.`
+- If `containsSecret` is set to false but something is still raised
+  - `Expecting empty but was: [DefaultIssue[ruleKey=secrets:SXXXXX,gap=<null>,overriddenSeverity=<null>,quickFixAvailable=false,ruleDescriptionContextKey=<null>,codeVariants=<null>,...,saved=true]]`
+- Creating overly greedy regex:
+  - The Some projects in the validation phase might not be analyzed because of time of scan
 ## code structure for secret detection
 
 Take a look at the example of a secret detection specification file for a fake cloud provider below. This is considered the anatomy of a "good" secret detection file.
@@ -27,10 +48,9 @@ provider:
       # Avoid matching values found on SourceGraph that look like dummy
       # passwords or insertions like:
       patternNot: 
-        "(?i)\
-        rightcloud|\
-        (\\w)\\1{6,}|\
-        testkey"
+        - "(\\w)\\1{6,}"
+        - "(?i)rightcloud"
+        - "(?i)testkey|(s|ex)ample""
   rules:
     # The RSpec Key corresponds to the contents of SonarSource/rspec.
     # To create a new secret, you need to create a new rule in rspec, which
@@ -111,7 +131,16 @@ include::../../../shared_content/secrets/resources/standards.adoc[]
 //=== Benchmarks
 ```
 
+## Validation process
+
+## Review Process
+
 ## Types of bugs that you will encounter
+
+### SonarWay profile issues
+
+When solving [Sonarway profile](https://github.com/SonarSource/sonar-text/blob/8a8ca0f4d5cb7ae484ccd297631c76a7d63a73b5/sonar-text-plugin/src/main/resources/org/sonar/l10n/secrets/rules/secrets/Sonar_way_profile.json) issues, mind comas, and try not to remove rule keys. This might break master without notice
+
 
 ## Incomplete list of common patternNot patterns
 Often it makes sense to match the patterns to filter out case insensitive ```(?i)```.
