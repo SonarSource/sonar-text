@@ -29,6 +29,7 @@ public class SecretsSpecificationFilesDefinition {
 
   public static Set<String> existingSecretSpecifications() {
     return Set.of(
+      "airtable.yaml",
       "alchemy.yaml",
       "alibaba.yaml",
       "aws.yaml",
