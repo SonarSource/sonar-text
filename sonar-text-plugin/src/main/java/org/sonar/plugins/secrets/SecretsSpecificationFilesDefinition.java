@@ -57,6 +57,7 @@ public class SecretsSpecificationFilesDefinition {
       "pubkey-crypto.yaml",
       "rabbitmq.yaml",
       "rapidapi.yaml",
+      "redis.yaml",
       "riot.yaml",
       "sendgrid.yaml",
       "slack.yaml",

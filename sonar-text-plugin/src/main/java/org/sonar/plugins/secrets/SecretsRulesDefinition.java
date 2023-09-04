@@ -53,6 +53,7 @@ import org.sonar.plugins.secrets.checks.PlanetscaleCheck;
 import org.sonar.plugins.secrets.checks.PostgreSQLCheck;
 import org.sonar.plugins.secrets.checks.RabbitMQCheck;
 import org.sonar.plugins.secrets.checks.RapidAPICheck;
+import org.sonar.plugins.secrets.checks.RedisCheck;
 import org.sonar.plugins.secrets.checks.RiotCheck;
 import org.sonar.plugins.secrets.checks.SendgridCheck;
 import org.sonar.plugins.secrets.checks.SlackCheck;
@@ -113,6 +114,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       PostgreSQLCheck.class,
       RabbitMQCheck.class,
       RapidAPICheck.class,
+      RedisCheck.class,
       RiotCheck.class,
       SendgridCheck.class,
       SlackCheck.class,
