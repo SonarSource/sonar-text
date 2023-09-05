@@ -41,7 +41,9 @@ provider:
         post:
           statisticalFilter:
             threshold: 4.2
-          patternNot: EXAMPLEKEY
+          patternNot:
+            - "EXAMPLEKEY"
+            - "0"
       examples:
         - text: >
             example

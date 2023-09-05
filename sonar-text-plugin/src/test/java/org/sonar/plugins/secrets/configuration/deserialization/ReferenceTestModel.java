@@ -215,7 +215,7 @@ public class ReferenceTestModel {
     heuristicsFilter.setInputString("groupName");
 
     postModule.setStatisticalFilter(statisticalFilter);
-    postModule.setPatternNot("EXAMPLEKEY");
+    postModule.setPatternNot(List.of("EXAMPLEKEY", "0"));
     postModule.setHeuristicFilter(heuristicsFilter);
 
     return postModule;
