@@ -27,7 +27,7 @@ env:
 win_vm_definition: &WINDOWS_VM_DEFINITION
   ec2_instance:
     experimental: true # see https://github.com/cirruslabs/cirrus-ci-docs/issues/1051
-    image: base-windows-dotnet-v*
+    image: pr-329-base-windows-dotnet-v*
     region: eu-central-1
     subnet_id: ${CIRRUS_AWS_SUBNET}
     type: t2.medium # see https://aws.amazon.com/ec2/instance-types/
