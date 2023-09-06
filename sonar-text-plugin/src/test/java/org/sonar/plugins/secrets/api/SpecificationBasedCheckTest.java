@@ -21,6 +21,7 @@ package org.sonar.plugins.secrets.api;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.sonar.check.Rule;
@@ -77,7 +78,7 @@ class SpecificationBasedCheckTest {
     String specificationLocation = "secretsConfiguration/postFilter/";
     Set<String> specifications = Set.of("postFilterSpec.yaml");
     SpecificationLoader specificationLoader = new SpecificationLoader(specificationLocation, specifications);
-    specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().setPatternNot("matching");
+    specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().setPatternNot(List.of("matching"));
     specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().getStatisticalFilter().setThreshold(3f);
 
     String fileContent = "rule matching pattern and patternNot matching inside and post filter has low entropy";

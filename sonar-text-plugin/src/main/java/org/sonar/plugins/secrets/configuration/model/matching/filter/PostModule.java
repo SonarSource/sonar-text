@@ -20,6 +20,7 @@
 
 package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
+import java.util.List;
 import javax.annotation.Nullable;
 
 public class PostModule {
@@ -27,7 +28,7 @@ public class PostModule {
   @Nullable
   private HeuristicsFilter heuristicFilter;
   @Nullable
-  private String patternNot;
+  private List<String> patternNot;
   @Nullable
   private StatisticalFilter statisticalFilter;
 
@@ -41,11 +42,11 @@ public class PostModule {
   }
 
   @Nullable
-  public String getPatternNot() {
+  public List<String> getPatternNot() {
     return patternNot;
   }
 
-  public void setPatternNot(@Nullable String patternNot) {
+  public void setPatternNot(@Nullable List<String> patternNot) {
     this.patternNot = patternNot;
   }
 

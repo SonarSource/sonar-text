@@ -71,7 +71,9 @@ provider:
           statisticalFilter:
             threshold: 4.2
             inputString: "groupName"
-          patternNot: EXAMPLEKEY
+          patternNot:
+            - "EXAMPLEKEY"
+            - "0"
           heuristicFilter:
             heuristics:
               - "uri"
