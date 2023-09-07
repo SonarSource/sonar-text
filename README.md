@@ -1,9 +1,19 @@
-# SonarSource Text Plugin
+# SonarText: detect BIDI Characters Vulnerabilities and Leaking Secrets
 [![Build Status](https://api.cirrus-ci.com/github/SonarSource/sonar-text.svg?branch=master)](https://cirrus-ci.com/github/SonarSource/sonar-text)
 [![Quality Gate Status](https://next.sonarqube.com/sonarqube/api/project_badges/measure?project=org.sonarsource.text%3Atext&metric=alert_status&token=75147023237a0ed7ea1a5efc5fe7ce286061ad6f)](https://next.sonarqube.com/sonarqube/dashboard?id=org.sonarsource.text%3Atext)
 [![Coverage](https://next.sonarqube.com/sonarqube/api/project_badges/measure?project=org.sonarsource.text%3Atext&metric=coverage&token=75147023237a0ed7ea1a5efc5fe7ce286061ad6f)](https://next.sonarqube.com/sonarqube/dashboard?id=org.sonarsource.text%3Atext)
 
-Plugin used to analyze all files containing text.
+This SonarSource project is a static code analyzer made to detect:
+* BIDI Characters Vulnerabilities
+* Leaking Secrets/Tokens
+
+It is a component of the Sonar Solution. It is embedded in SonarLint, SonarQube, and SonarCloud.
+This component helps you prevent the leakage of secrets even before you push them into your repository thanks to SonarLint.
+
+# Features
+* [67+ secret patterns](https://rules.sonarsource.com/secrets/) supported
+* detection of [BIDI characters](https://rules.sonarsource.com/text/) that could lead to attacks
+* detection of secrets in all files indexed by Sonar products
 
 ### Build
 
