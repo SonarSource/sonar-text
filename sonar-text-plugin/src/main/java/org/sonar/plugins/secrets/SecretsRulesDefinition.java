@@ -23,6 +23,7 @@ import java.util.List;
 import org.sonar.api.SonarRuntime;
 import org.sonar.plugins.common.CommonRulesDefinition;
 import org.sonar.plugins.common.DefaultQualityProfileDefinition;
+import org.sonar.plugins.secrets.checks.AirtableAPIkeyCheck;
 import org.sonar.plugins.secrets.checks.AlchemyApiKeyCheck;
 import org.sonar.plugins.secrets.checks.AlibabaCloudAccessKeyCheck;
 import org.sonar.plugins.secrets.checks.AwsCheck;
@@ -51,6 +52,7 @@ import org.sonar.plugins.secrets.checks.OpenSSHCheck;
 import org.sonar.plugins.secrets.checks.OpenWeatherMapCheck;
 import org.sonar.plugins.secrets.checks.PlanetscaleCheck;
 import org.sonar.plugins.secrets.checks.PostgreSQLCheck;
+import org.sonar.plugins.secrets.checks.RabbitMQCheck;
 import org.sonar.plugins.secrets.checks.RapidAPICheck;
 import org.sonar.plugins.secrets.checks.RedisCheck;
 import org.sonar.plugins.secrets.checks.RiotCheck;
@@ -83,6 +85,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
 
   public static List<Class<?>> checks() {
     return List.of(
+      AirtableAPIkeyCheck.class,
       AlchemyApiKeyCheck.class,
       AlibabaCloudAccessKeyCheck.class,
       AwsCheck.class,
@@ -111,6 +114,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       OpenWeatherMapCheck.class,
       PlanetscaleCheck.class,
       PostgreSQLCheck.class,
+      RabbitMQCheck.class,
       RapidAPICheck.class,
       RedisCheck.class,
       RiotCheck.class,

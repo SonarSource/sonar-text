@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.secrets.api;
 
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeAll;
@@ -163,14 +164,21 @@ class PostFilterFactoryTest {
 
   @Test
   void patternNotFilterShouldReturnTrue() {
-    Predicate<String> predicate = PostFilterFactory.filterForPatternNot("patternNot");
+    Predicate<String> predicate = PostFilterFactory.filterForPatternNot(List.of("patternNot"));
 
     assertThat(predicate.test("candidate secret")).isTrue();
   }
 
   @Test
   void patternNotFilterShouldReturnFalse() {
-    Predicate<String> predicate = PostFilterFactory.filterForPatternNot("patternNot");
+    Predicate<String> predicate = PostFilterFactory.filterForPatternNot(List.of("patternNot", "anythingElse"));
+
+    assertThat(predicate.test("candidate secret with patternNot")).isFalse();
+  }
+
+  @Test
+  void patternNotFilterShouldReturnFalseOnMultipleFoundPatternsProvided() {
+    Predicate<String> predicate = PostFilterFactory.filterForPatternNot(List.of("patternNot", "with"));
 
     assertThat(predicate.test("candidate secret with patternNot")).isFalse();
   }
