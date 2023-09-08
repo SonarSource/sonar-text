@@ -35,6 +35,7 @@ public class SecretsSpecificationFilesDefinition {
       "aws.yaml",
       "azure.yaml",
       "clarifai.yaml",
+      "digitalocean.yaml",
       "discord.yaml",
       "django.yaml",
       "facebook.yaml",
