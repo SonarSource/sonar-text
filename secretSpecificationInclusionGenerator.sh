@@ -10,9 +10,9 @@ fi
 echo ""
 echo "--------- Generation of Java classes ---------"
 echo ""
-mvn test -Dtest=UpdatingSpecificationFilesGenerator#firstStep
+mvn test -Dtest=UpdatingSpecificationFilesGenerator#firstStep || exit
 
-mvn test -Dtest=UpdatingSpecificationFilesGenerator#secondStep
+mvn test -Dtest=UpdatingSpecificationFilesGenerator#secondStep || exit
 
 echo ""
 echo "---------Creating current license headers---------"
