@@ -37,9 +37,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 import org.sonar.api.internal.apachecommons.io.FileUtils;
+import org.sonar.api.testfixtures.log.LogAndArguments;
+import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.api.SpecificationLoader;
@@ -59,11 +63,15 @@ class UpdatingSpecificationFilesGenerator {
   private final Charset charset = StandardCharsets.UTF_8;
   private static final Logger LOG = LoggerFactory.getLogger(UpdatingSpecificationFilesGenerator.class);
 
+  @RegisterExtension
+  LogTesterJUnit5 logTester = new LogTesterJUnit5();
+
   // Suppress warning, as there are no assertions inside here
   @Test
   @SuppressWarnings("java:S2699")
   void firstStep() {
     writeSpecificationFileDefinition();
+    testDeserializationOfSpecificationFiles();
   }
 
   @Test
@@ -314,6 +322,26 @@ class UpdatingSpecificationFilesGenerator {
 
     for (String key : keysToUpdateRuleAPIFor) {
       sb.append(key);
+      sb.append(System.lineSeparator());
+    }
+    return sb.toString();
+  }
+
+  private void testDeserializationOfSpecificationFiles() {
+    new SpecificationLoader();
+    List<LogAndArguments> errorLogs = logTester.getLogs(Level.ERROR);
+    if (!errorLogs.isEmpty()) {
+      throw new RuntimeException(failMessage(errorLogs));
+    }
+  }
+
+  private String failMessage(List<LogAndArguments> errorLogs) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("Generation process failed because of: ");
+    sb.append(System.lineSeparator());
+    for (LogAndArguments errorLog : errorLogs) {
+      sb.append("- ");
+      sb.append(errorLog.getFormattedMsg());
       sb.append(System.lineSeparator());
     }
     return sb.toString();
