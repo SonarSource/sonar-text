@@ -181,7 +181,7 @@ bar
 ```
 
 ## Template patternNot list
-
+You can pick and chose patternNots from this list depending on the use cases of the secret.
 ``` yaml
 
 patternNot:
