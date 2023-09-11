@@ -179,3 +179,36 @@ Common patterns:
 foo
 bar
 ```
+
+## Template patternNot list
+
+``` yaml
+
+patternNot:
+  # Character repeated X times
+  - ([\\w\\*\\.])\\1{X,}
+
+  # Common text placeholders
+  - "(?i)(?:s|ex)ample|foo|bar|test|abcd|redacted"
+  - "(?i)^(\\$[a-z_]*)?(db|my)?_?pass(word|wd)?" 
+  - "^<[\\w\\t -]{1,10}>?"
+  - "^\\[[\\[\\w\\t \\-]+\\]$"
+  - "^None$"
+
+  # Common numeric placeholders
+  - 1234(?:56)
+
+  # Environment variables
+  - "\\b(get)?env(iron)?\\b"
+
+  # Bash variables
+  - "\\$[({]\\w+(:-\\w+)?[})]"
+  - "(?i)^\\$[A-Z_]+$"
+  - "^\\$[a-z_]+pass(word)?$"
+
+  # Format strings and variable substitution
+  - "(?i)%s" 
+  - "\\{+[^}]*\\}+"
+  - "`+[^`]*`+"
+
+```
