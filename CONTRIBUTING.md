@@ -12,7 +12,7 @@
 
 1. Write the yaml file
 2. Validates the yaml against the schema file
-3. use `secretSpecificationInclusionGenerator.sh <ruleApiFileName>`
+3. use the script `secretSpecificationInclusionGenerator.sh <Rule-Api jar>`
   1. It will generate the java files that will glue the yaml file to the code base
   2. If the Rspec is already available, it will also generate additional rspec data
 4. Test the code:
