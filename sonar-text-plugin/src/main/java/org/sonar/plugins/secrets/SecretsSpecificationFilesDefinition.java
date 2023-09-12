@@ -73,6 +73,7 @@ public class SecretsSpecificationFilesDefinition {
       "wakatime.yaml",
       "typeform.yaml",
       "wechat.yaml",
-      "zapier.yaml");
+      "zapier.yaml",
+      "zuplo.yaml");
   }
 }
