@@ -47,6 +47,7 @@ import org.sonar.plugins.secrets.checks.MicrosoftTeamsWebhookUrlCheck;
 import org.sonar.plugins.secrets.checks.MongoDBCheck;
 import org.sonar.plugins.secrets.checks.MwsAuthTokenCheck;
 import org.sonar.plugins.secrets.checks.MySQLCheck;
+import org.sonar.plugins.secrets.checks.NPMCheck;
 import org.sonar.plugins.secrets.checks.ODBCJDBCConnectionStringCheck;
 import org.sonar.plugins.secrets.checks.OpenSSHCheck;
 import org.sonar.plugins.secrets.checks.OpenWeatherMapCheck;
@@ -109,6 +110,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       MongoDBCheck.class,
       MwsAuthTokenCheck.class,
       MySQLCheck.class,
+      NPMCheck.class,
       ODBCJDBCConnectionStringCheck.class,
       OpenSSHCheck.class,
       OpenWeatherMapCheck.class,
