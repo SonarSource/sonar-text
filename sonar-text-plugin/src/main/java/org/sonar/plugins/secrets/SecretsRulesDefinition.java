@@ -79,6 +79,7 @@ import org.sonar.plugins.secrets.checks.TelegramCheck;
 import org.sonar.plugins.secrets.checks.TypeformCheck;
 import org.sonar.plugins.secrets.checks.WakaTimeCheck;
 import org.sonar.plugins.secrets.checks.WeChatCheck;
+import org.sonar.plugins.secrets.checks.YandexCheck;
 import org.sonar.plugins.secrets.checks.ZapierWebhookUrlCheck;
 import org.sonar.plugins.secrets.checks.ZuploCheck;
 
@@ -155,7 +156,8 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       TypeformCheck.class,
       WakaTimeCheck.class,
       WeChatCheck.class,
-      ZapierWebhookUrlCheck.class,
-      ZuploCheck.class);
+      ZuploCheck.class,
+      YandexCheck.class,
+      ZapierWebhookUrlCheck.class);
   }
 }
