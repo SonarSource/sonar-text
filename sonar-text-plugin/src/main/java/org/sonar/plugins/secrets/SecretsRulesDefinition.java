@@ -68,6 +68,7 @@ import org.sonar.plugins.secrets.checks.SpotifyCheck;
 import org.sonar.plugins.secrets.checks.StripeWebhookSecretCheck;
 import org.sonar.plugins.secrets.checks.StripeWebhookSecretUniqueNameCheck;
 import org.sonar.plugins.secrets.checks.TelegramCheck;
+import org.sonar.plugins.secrets.checks.TypeformCheck;
 import org.sonar.plugins.secrets.checks.WeChatCheck;
 import org.sonar.plugins.secrets.checks.ZapierWebhookUrlCheck;
 
@@ -133,6 +134,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       StripeWebhookSecretCheck.class,
       StripeWebhookSecretUniqueNameCheck.class,
       TelegramCheck.class,
+      TypeformCheck.class,
       WeChatCheck.class,
       ZapierWebhookUrlCheck.class);
   }
