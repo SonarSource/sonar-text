@@ -71,11 +71,11 @@ class UpdatingSpecificationFilesGenerator {
   @SuppressWarnings("java:S2699")
   void firstStep() {
     writeSpecificationFileDefinition();
-    testDeserializationOfSpecificationFiles();
   }
 
   @Test
   void secondStep() {
+    testDeserializationOfSpecificationFiles();
     SpecificationLoader specificationLoader = new SpecificationLoader();
 
     Map<String, String> existingKeysMappedToFileName = retrieveAlreadyExistingKeys();
