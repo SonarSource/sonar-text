@@ -45,6 +45,7 @@ public class SecretsSpecificationFilesDefinition {
       "google-api.yaml",
       "google-oauth2.yaml",
       "google-recaptcha.yaml",
+      "hashicorp.yaml",
       "grafana.yaml",
       "ibm.yaml",
       "mailgun.yaml",
