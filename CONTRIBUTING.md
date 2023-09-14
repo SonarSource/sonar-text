@@ -185,7 +185,7 @@ You can pick and chose patternNots from this list depending on the use cases of 
 ``` yaml
 
 patternNot:
-  # Character repeated X times
+  # Character repeated at least X times
   - ([\\w\\*\\.])\\1{X,}
 
   # Common text placeholders
