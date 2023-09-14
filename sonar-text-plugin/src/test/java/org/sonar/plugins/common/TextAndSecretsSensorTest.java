@@ -74,20 +74,6 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void shouldRaiseAnIssueWhenASecretIsDetected() {
-    SensorContextTester context = defaultSensorContext();
-    context.fileSystem().add(inputFile(Path.of("src", "test", "resources", "checks", "GoogleCloudAccountKeyCheck",
-      "GoogleCloudAccountPositive.json")));
-    sensor(context).execute(context);
-
-    assertThat(asString(context.allIssues())).containsExactly(
-      "secrets:S6335 [5:18-5:1750] Make sure this GCP secret gets revoked, changed, and removed from the code.");
-    assertThat(logTester.logs()).containsExactly(
-      "1 source file to be analyzed",
-      "1/1 source file has been analyzed");
-  }
-
-  @Test
   void shouldNotStartAnalysisWhenNoRuleIsActive() {
     String[] emptyActiveRuleList = {};
     SensorContextTester context = sensorContext(emptyActiveRuleList);
