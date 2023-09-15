@@ -51,6 +51,7 @@ public class SecretsSpecificationFilesDefinition {
       "ms-teams.yaml",
       "mws.yaml",
       "mysql.yaml",
+      "npm.yaml",
       "odbc.yaml",
       "openweathermap.yaml",
       "planetscale.yaml",
