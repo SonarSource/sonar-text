@@ -211,10 +211,10 @@ class UpdatingSpecificationFilesGenerator {
     Path rspecHtml = Path.of(RSPEC_FILES_PATH_PREFIX, rspecKey + ".html");
 
     try {
-      Files.delete(checkPath);
-      Files.delete(checkTestPath);
-      Files.delete(rspecJson);
-      Files.delete(rspecHtml);
+      Files.deleteIfExists(checkPath);
+      Files.deleteIfExists(checkTestPath);
+      Files.deleteIfExists(rspecJson);
+      Files.deleteIfExists(rspecHtml);
     } catch (IOException e) {
       LOG.error("Error while deleting Check with name \"" + checkName + "\", please fix manually", e);
       throw new RuntimeException(e);
