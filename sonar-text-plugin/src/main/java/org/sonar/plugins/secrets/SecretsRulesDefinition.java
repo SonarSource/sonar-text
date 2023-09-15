@@ -53,6 +53,7 @@ import org.sonar.plugins.secrets.checks.OpenSSHCheck;
 import org.sonar.plugins.secrets.checks.OpenWeatherMapCheck;
 import org.sonar.plugins.secrets.checks.PlanetscaleCheck;
 import org.sonar.plugins.secrets.checks.PostgreSQLCheck;
+import org.sonar.plugins.secrets.checks.PyPICheck;
 import org.sonar.plugins.secrets.checks.RabbitMQCheck;
 import org.sonar.plugins.secrets.checks.RapidAPICheck;
 import org.sonar.plugins.secrets.checks.RedisCheck;
@@ -116,6 +117,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       OpenWeatherMapCheck.class,
       PlanetscaleCheck.class,
       PostgreSQLCheck.class,
+      PyPICheck.class,
       RabbitMQCheck.class,
       RapidAPICheck.class,
       RedisCheck.class,
