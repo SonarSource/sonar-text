@@ -70,6 +70,7 @@ public class SecretsSpecificationFilesDefinition {
       "ssh.yaml",
       "stripe.yaml",
       "telegram.yaml",
+      "typeform.yaml",
       "wechat.yaml",
       "zapier.yaml");
   }
