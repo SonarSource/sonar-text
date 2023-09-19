@@ -43,6 +43,7 @@ import org.sonar.plugins.secrets.checks.GoogleCloudAccountKeyCheck;
 import org.sonar.plugins.secrets.checks.GoogleUniqueNameCheck;
 import org.sonar.plugins.secrets.checks.GrafanaCheck;
 import org.sonar.plugins.secrets.checks.IbmApiKeyCheck;
+import org.sonar.plugins.secrets.checks.JFrogCheck;
 import org.sonar.plugins.secrets.checks.MailgunCheck;
 import org.sonar.plugins.secrets.checks.MicrosoftTeamsWebhookUrlCheck;
 import org.sonar.plugins.secrets.checks.MongoDBCheck;
@@ -110,6 +111,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       GoogleUniqueNameCheck.class,
       GrafanaCheck.class,
       IbmApiKeyCheck.class,
+      JFrogCheck.class,
       MailgunCheck.class,
       MicrosoftTeamsWebhookUrlCheck.class,
       MongoDBCheck.class,

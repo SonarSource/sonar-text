@@ -32,6 +32,7 @@ public class SecretsSpecificationFilesDefinition {
       "airtable.yaml",
       "alchemy.yaml",
       "alibaba.yaml",
+      "artifactory.yaml",
       "aws.yaml",
       "azure.yaml",
       "clarifai.yaml",
