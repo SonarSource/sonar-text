@@ -38,6 +38,7 @@ public class SecretsSpecificationFilesDefinition {
       "discord.yaml",
       "django.yaml",
       "facebook.yaml",
+      "figma.yaml",
       "firebase.yaml",
       "gcp.yaml",
       "github.yaml",
