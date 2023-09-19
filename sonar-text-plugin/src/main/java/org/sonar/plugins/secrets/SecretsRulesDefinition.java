@@ -33,6 +33,7 @@ import org.sonar.plugins.secrets.checks.ClarifaiCheck;
 import org.sonar.plugins.secrets.checks.DigitalOceanCheck;
 import org.sonar.plugins.secrets.checks.DiscordWebhookURLCheck;
 import org.sonar.plugins.secrets.checks.DjangoCheck;
+import org.sonar.plugins.secrets.checks.DockerHubCheck;
 import org.sonar.plugins.secrets.checks.FacebookCheck;
 import org.sonar.plugins.secrets.checks.FigmaCheck;
 import org.sonar.plugins.secrets.checks.FirebaseCheck;
@@ -43,8 +44,8 @@ import org.sonar.plugins.secrets.checks.GoogleApiKeyCheck;
 import org.sonar.plugins.secrets.checks.GoogleCheck;
 import org.sonar.plugins.secrets.checks.GoogleCloudAccountKeyCheck;
 import org.sonar.plugins.secrets.checks.GoogleUniqueNameCheck;
-import org.sonar.plugins.secrets.checks.HashicorpCheck;
 import org.sonar.plugins.secrets.checks.GrafanaCheck;
+import org.sonar.plugins.secrets.checks.HashicorpCheck;
 import org.sonar.plugins.secrets.checks.IbmApiKeyCheck;
 import org.sonar.plugins.secrets.checks.JFrogCheck;
 import org.sonar.plugins.secrets.checks.MailgunCheck;
@@ -107,6 +108,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       DigitalOceanCheck.class,
       DiscordWebhookURLCheck.class,
       DjangoCheck.class,
+      DockerHubCheck.class,
       FacebookCheck.class,
       FigmaCheck.class,
       FirebaseCheck.class,
@@ -117,8 +119,8 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       GoogleCheck.class,
       GoogleCloudAccountKeyCheck.class,
       GoogleUniqueNameCheck.class,
-      HashicorpCheck.class,
       GrafanaCheck.class,
+      HashicorpCheck.class,
       IbmApiKeyCheck.class,
       JFrogCheck.class,
       MailgunCheck.class,
