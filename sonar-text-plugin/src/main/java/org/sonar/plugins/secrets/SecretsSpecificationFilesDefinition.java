@@ -70,6 +70,7 @@ public class SecretsSpecificationFilesDefinition {
       "redis.yaml",
       "riot.yaml",
       "sendgrid.yaml",
+      "shippo.yaml",
       "shopify.yaml",
       "slack.yaml",
       "sonarqube.yaml",
