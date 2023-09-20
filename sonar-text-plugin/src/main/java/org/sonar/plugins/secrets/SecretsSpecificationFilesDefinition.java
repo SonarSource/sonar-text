@@ -61,6 +61,7 @@ public class SecretsSpecificationFilesDefinition {
       "openweathermap.yaml",
       "planetscale.yaml",
       "postgresql.yaml",
+      "postman.yaml",
       "pubkey-crypto.yaml",
       "pypi.yaml",
       "rabbitmq.yaml",
