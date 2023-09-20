@@ -36,9 +36,11 @@ public class SecretsSpecificationFilesDefinition {
       "aws.yaml",
       "azure.yaml",
       "clarifai.yaml",
+      "digitalocean.yaml",
       "discord.yaml",
       "django.yaml",
       "facebook.yaml",
+      "figma.yaml",
       "firebase.yaml",
       "gcp.yaml",
       "github.yaml",
@@ -46,6 +48,7 @@ public class SecretsSpecificationFilesDefinition {
       "google-api.yaml",
       "google-oauth2.yaml",
       "google-recaptcha.yaml",
+      "hashicorp.yaml",
       "grafana.yaml",
       "ibm.yaml",
       "mailgun.yaml",
@@ -74,6 +77,7 @@ public class SecretsSpecificationFilesDefinition {
       "typeform.yaml",
       "wakatime.yaml",
       "wechat.yaml",
-      "zapier.yaml");
+      "zapier.yaml",
+      "zuplo.yaml");
   }
 }

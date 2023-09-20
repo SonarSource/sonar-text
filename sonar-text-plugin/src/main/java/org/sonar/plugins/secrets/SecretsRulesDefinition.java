@@ -30,9 +30,11 @@ import org.sonar.plugins.secrets.checks.AwsCheck;
 import org.sonar.plugins.secrets.checks.AzureCheck;
 import org.sonar.plugins.secrets.checks.AzureStorageAccountKeyCheck;
 import org.sonar.plugins.secrets.checks.ClarifaiCheck;
+import org.sonar.plugins.secrets.checks.DigitalOceanCheck;
 import org.sonar.plugins.secrets.checks.DiscordWebhookURLCheck;
 import org.sonar.plugins.secrets.checks.DjangoCheck;
 import org.sonar.plugins.secrets.checks.FacebookCheck;
+import org.sonar.plugins.secrets.checks.FigmaCheck;
 import org.sonar.plugins.secrets.checks.FirebaseCheck;
 import org.sonar.plugins.secrets.checks.GenericpublickeycryptographyCheck;
 import org.sonar.plugins.secrets.checks.GitHubCheck;
@@ -41,6 +43,7 @@ import org.sonar.plugins.secrets.checks.GoogleApiKeyCheck;
 import org.sonar.plugins.secrets.checks.GoogleCheck;
 import org.sonar.plugins.secrets.checks.GoogleCloudAccountKeyCheck;
 import org.sonar.plugins.secrets.checks.GoogleUniqueNameCheck;
+import org.sonar.plugins.secrets.checks.HashicorpCheck;
 import org.sonar.plugins.secrets.checks.GrafanaCheck;
 import org.sonar.plugins.secrets.checks.IbmApiKeyCheck;
 import org.sonar.plugins.secrets.checks.JFrogCheck;
@@ -73,6 +76,7 @@ import org.sonar.plugins.secrets.checks.TypeformCheck;
 import org.sonar.plugins.secrets.checks.WakaTimeCheck;
 import org.sonar.plugins.secrets.checks.WeChatCheck;
 import org.sonar.plugins.secrets.checks.ZapierWebhookUrlCheck;
+import org.sonar.plugins.secrets.checks.ZuploCheck;
 
 public class SecretsRulesDefinition extends CommonRulesDefinition {
 
@@ -98,9 +102,11 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       AzureCheck.class,
       AzureStorageAccountKeyCheck.class,
       ClarifaiCheck.class,
+      DigitalOceanCheck.class,
       DiscordWebhookURLCheck.class,
       DjangoCheck.class,
       FacebookCheck.class,
+      FigmaCheck.class,
       FirebaseCheck.class,
       GenericpublickeycryptographyCheck.class,
       GitHubCheck.class,
@@ -109,6 +115,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       GoogleCheck.class,
       GoogleCloudAccountKeyCheck.class,
       GoogleUniqueNameCheck.class,
+      HashicorpCheck.class,
       GrafanaCheck.class,
       IbmApiKeyCheck.class,
       JFrogCheck.class,
@@ -140,6 +147,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       TypeformCheck.class,
       WakaTimeCheck.class,
       WeChatCheck.class,
-      ZapierWebhookUrlCheck.class);
+      ZapierWebhookUrlCheck.class,
+      ZuploCheck.class);
   }
 }
