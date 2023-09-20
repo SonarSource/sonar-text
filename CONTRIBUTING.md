@@ -29,6 +29,18 @@
   - `Expecting empty but was: [DefaultIssue[ruleKey=secrets:SXXXXX,gap=<null>,overriddenSeverity=<null>,quickFixAvailable=false,ruleDescriptionContextKey=<null>,codeVariants=<null>,...,saved=true]]`
 - Creating overly greedy regex:
   - The Some projects in the validation phase might not be analyzed because of time of scan
+  
+### Not all secrets are created equal
+We discovered that secrets generally fit into one of 3 categories:
+
+1. Those that follow a pattern and contain identifiable sequences. For example, SonarQube API tokens always start with a known prefix (sqa_, sqp_ or squ_) that’s followed by 40 hexadecimal characters.
+2. Those that follow a pattern, but which can only be identified by looking at the surrounding text. For example, AWS secret keys are always 40 base64 characters long, but only the surrounding text can identify whether they’re used with AWS.
+3. Those that follow no fixed pattern, and which are only identifiable based on the surrounding text. For example, a PostgreSQL database password is user-chosen and must be set into a named environment variable before calling the psql command-line client.
+
+As you go down the list, the secrets get harder to detect without also raising false positives. Category #3 is particularly difficult because the suspected secret could be a dummy value (e.g. `[password]`) or a variable that’s replaced at runtime.
+
+A lot of tuning is needed in order to identify and exclude values that are common false positives.  
+  
 ## code structure for secret detection
 
 Take a look at the example of a secret detection specification file for a fake cloud provider below. This is considered the anatomy of a "good" secret detection file.
