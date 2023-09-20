@@ -65,6 +65,7 @@ import org.sonar.plugins.secrets.checks.RapidAPICheck;
 import org.sonar.plugins.secrets.checks.RedisCheck;
 import org.sonar.plugins.secrets.checks.RiotCheck;
 import org.sonar.plugins.secrets.checks.SendgridCheck;
+import org.sonar.plugins.secrets.checks.ShopifyCheck;
 import org.sonar.plugins.secrets.checks.SlackCheck;
 import org.sonar.plugins.secrets.checks.SlackWebhookURLCheck;
 import org.sonar.plugins.secrets.checks.SlackWebhookURLUniqueNameCheck;
@@ -138,6 +139,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       RedisCheck.class,
       RiotCheck.class,
       SendgridCheck.class,
+      ShopifyCheck.class,
       SlackCheck.class,
       SlackWebhookURLCheck.class,
       SlackWebhookURLUniqueNameCheck.class,
