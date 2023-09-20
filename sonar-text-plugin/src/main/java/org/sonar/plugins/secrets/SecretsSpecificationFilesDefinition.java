@@ -71,8 +71,8 @@ public class SecretsSpecificationFilesDefinition {
       "ssh.yaml",
       "stripe.yaml",
       "telegram.yaml",
-      "wakatime.yaml",
       "typeform.yaml",
+      "wakatime.yaml",
       "wechat.yaml",
       "zapier.yaml");
   }
