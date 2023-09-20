@@ -46,6 +46,7 @@ import org.sonar.plugins.secrets.checks.GoogleUniqueNameCheck;
 import org.sonar.plugins.secrets.checks.HashicorpCheck;
 import org.sonar.plugins.secrets.checks.GrafanaCheck;
 import org.sonar.plugins.secrets.checks.IbmApiKeyCheck;
+import org.sonar.plugins.secrets.checks.JFrogCheck;
 import org.sonar.plugins.secrets.checks.MailgunCheck;
 import org.sonar.plugins.secrets.checks.MicrosoftTeamsWebhookUrlCheck;
 import org.sonar.plugins.secrets.checks.MongoDBCheck;
@@ -71,8 +72,8 @@ import org.sonar.plugins.secrets.checks.SpotifyCheck;
 import org.sonar.plugins.secrets.checks.StripeWebhookSecretCheck;
 import org.sonar.plugins.secrets.checks.StripeWebhookSecretUniqueNameCheck;
 import org.sonar.plugins.secrets.checks.TelegramCheck;
-import org.sonar.plugins.secrets.checks.WakaTimeCheck;
 import org.sonar.plugins.secrets.checks.TypeformCheck;
+import org.sonar.plugins.secrets.checks.WakaTimeCheck;
 import org.sonar.plugins.secrets.checks.WeChatCheck;
 import org.sonar.plugins.secrets.checks.ZapierWebhookUrlCheck;
 import org.sonar.plugins.secrets.checks.ZuploCheck;
@@ -117,6 +118,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       HashicorpCheck.class,
       GrafanaCheck.class,
       IbmApiKeyCheck.class,
+      JFrogCheck.class,
       MailgunCheck.class,
       MicrosoftTeamsWebhookUrlCheck.class,
       MongoDBCheck.class,
@@ -142,8 +144,8 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       StripeWebhookSecretCheck.class,
       StripeWebhookSecretUniqueNameCheck.class,
       TelegramCheck.class,
-      WakaTimeCheck.class,
       TypeformCheck.class,
+      WakaTimeCheck.class,
       WeChatCheck.class,
       ZapierWebhookUrlCheck.class,
       ZuploCheck.class);
