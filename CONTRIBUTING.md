@@ -220,7 +220,7 @@ patternNot:
 
   # Format strings and variable substitution
   - "(?i)%s" 
-  - "\\{+[^}]*\\}+"
+  - "\\{+[^}]*\\}++"
   - "`+[^`]*`+"
 
 ```
