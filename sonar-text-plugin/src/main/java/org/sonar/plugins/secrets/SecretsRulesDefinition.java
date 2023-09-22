@@ -47,6 +47,7 @@ import org.sonar.plugins.secrets.checks.GoogleUniqueNameCheck;
 import org.sonar.plugins.secrets.checks.GrafanaCheck;
 import org.sonar.plugins.secrets.checks.HashicorpCheck;
 import org.sonar.plugins.secrets.checks.IbmApiKeyCheck;
+import org.sonar.plugins.secrets.checks.InfuraApiKeyCheck;
 import org.sonar.plugins.secrets.checks.JFrogCheck;
 import org.sonar.plugins.secrets.checks.MailgunCheck;
 import org.sonar.plugins.secrets.checks.MicrosoftTeamsWebhookUrlCheck;
@@ -124,6 +125,7 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       GrafanaCheck.class,
       HashicorpCheck.class,
       IbmApiKeyCheck.class,
+      InfuraApiKeyCheck.class,
       JFrogCheck.class,
       MailgunCheck.class,
       MicrosoftTeamsWebhookUrlCheck.class,
@@ -156,8 +158,8 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
       TypeformCheck.class,
       WakaTimeCheck.class,
       WeChatCheck.class,
-      ZuploCheck.class,
       YandexCheck.class,
-      ZapierWebhookUrlCheck.class);
+      ZapierWebhookUrlCheck.class,
+      ZuploCheck.class);
   }
 }
