@@ -52,6 +52,7 @@ public class SecretsSpecificationFilesDefinition {
       "grafana.yaml",
       "hashicorp.yaml",
       "ibm.yaml",
+      "infura.yaml",
       "mailgun.yaml",
       "mongodb.yaml",
       "ms-teams.yaml",
