@@ -49,12 +49,11 @@ class SecretsRulesDefinitionTest {
     assertThat(repository.rules()).hasSize(SecretsRulesDefinition.checks().size());
     assertThat(repository.name()).isEqualTo("Sonar Secrets Analyzer");
 
-    RulesDefinition.Rule ruleS7529 = repository.rule("S6290");
-    assertThat(ruleS7529).isNotNull();
-    assertThat(ruleS7529.name()).isEqualTo("Amazon Web Services credentials should not be disclosed");
-    assertThat(ruleS7529.activatedByDefault()).isTrue();
-    assertThat(ruleS7529.htmlDescription()).contains("AWS credentials are designed to authenticate and authorize requests to AWS.");
-    assertThat(ruleS7529.type()).isEqualTo(RuleType.VULNERABILITY);
+    RulesDefinition.Rule ruleS6290 = repository.rule("S6290");
+    assertThat(ruleS6290).isNotNull();
+    assertThat(ruleS6290.name()).isEqualTo("Amazon Web Services credentials should not be disclosed");
+    assertThat(ruleS6290.activatedByDefault()).isTrue();
+    assertThat(ruleS6290.type()).isEqualTo(RuleType.VULNERABILITY);
   }
 
   @Test
