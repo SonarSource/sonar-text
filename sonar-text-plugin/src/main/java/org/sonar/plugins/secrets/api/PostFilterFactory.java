@@ -52,15 +52,17 @@ public class PostFilterFactory {
 
   static Predicate<String> filterForPatternNot(List<String> patternNot) {
     String pipedPatterns = pipePatternNot(patternNot);
+    var compiledPatternNot = Pattern.compile(pipedPatterns);
+
     return candidateSecret -> {
-      Matcher matcher = Pattern.compile(pipedPatterns).matcher(candidateSecret);
+      var matcher = compiledPatternNot.matcher(candidateSecret);
       return !matcher.find();
     };
   }
 
   static String pipePatternNot(List<String> patternNot) {
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < patternNot.size(); i++) {
+    var sb = new StringBuilder();
+    for (var i = 0; i < patternNot.size(); i++) {
       sb.append("(?:");
       sb.append(patternNot.get(i));
       sb.append(")");
