@@ -59,6 +59,8 @@ public class TextAndSecretsSensor implements Sensor {
 
   private boolean displayHelpAboutExcludingBinaryFile = true;
 
+  private DurationStatistics durationStatistics;
+
   public TextAndSecretsSensor(CheckFactory checkFactory) {
     this.checkFactory = checkFactory;
   }
@@ -74,6 +76,7 @@ public class TextAndSecretsSensor implements Sensor {
   @Override
   public void execute(SensorContext sensorContext) {
     List<Check> activeChecks = getActiveChecks();
+    durationStatistics = new DurationStatistics(sensorContext.config());
     initializeSpecificationBasedChecks(activeChecks);
     if (activeChecks.isEmpty()) {
       return;
@@ -109,6 +112,7 @@ public class TextAndSecretsSensor implements Sensor {
       }
     }
 
+    durationStatistics.log();
   }
 
   private static NotBinaryFilePredicate binaryFilePredicate(SensorContext sensorContext) {
@@ -182,7 +186,7 @@ public class TextAndSecretsSensor implements Sensor {
     Map<InputFileContext, List<TextRange>> reportedIssuesForCtx = new HashMap<>();
     for (Check activeCheck : checks) {
       if (activeCheck instanceof SpecificationBasedCheck) {
-        ((SpecificationBasedCheck) activeCheck).initialize(specificationLoader, reportedIssuesForCtx);
+        ((SpecificationBasedCheck) activeCheck).initialize(specificationLoader, reportedIssuesForCtx, durationStatistics);
       }
     }
   }

@@ -26,7 +26,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.sonar.api.batch.fs.InputFile;
@@ -199,7 +198,7 @@ class TextAndSecretsSensorTest {
     InputFile inputFile = inputFile("foo");
     analyse(sensor(check), context, inputFile);
 
-    verify(check).initialize(any(), any());
+    verify(check).initialize(any(), any(), any());
     assertThat(logTester.logs()).contains("Found no rule specification for rule with key: SecretKey");
   }
 

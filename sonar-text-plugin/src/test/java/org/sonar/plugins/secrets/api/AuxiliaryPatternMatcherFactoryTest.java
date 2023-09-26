@@ -29,6 +29,7 @@ import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPatternType;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.sonar.plugins.secrets.utils.TestUtils.mockDurationStatistics;
 
 class AuxiliaryPatternMatcherFactoryTest {
 
@@ -36,7 +37,7 @@ class AuxiliaryPatternMatcherFactoryTest {
   void testConstructionWhenNoContextIsGivenInRule() {
     Rule rule = ReferenceTestModel.constructMinimumSpecification().getProvider().getRules().get(0);
 
-    AuxiliaryPatternMatcher auxiliaryPatternMatcher = SecretMatcher.build(rule).getAuxiliaryPatternMatcher();
+    AuxiliaryPatternMatcher auxiliaryPatternMatcher = SecretMatcher.build(rule, mockDurationStatistics()).getAuxiliaryPatternMatcher();
 
     assertThat(auxiliaryPatternMatcher).isEqualTo(AuxiliaryPatternMatcher.NO_FILTERING_AUXILIARY_MATCHER);
   }

@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.plugins.common.Check;
+import org.sonar.plugins.common.DurationStatistics;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.configuration.model.Rule;
@@ -38,6 +39,7 @@ public abstract class SpecificationBasedCheck extends Check {
 
   // shared map between all specificationBasedChecks used to calculate if secret was already reported for textRange
   private Map<InputFileContext, List<TextRange>> reportedIssuesForCtx;
+  private DurationStatistics durationStatistics;
 
   @Override
   protected String repositoryKey() {
@@ -48,22 +50,24 @@ public abstract class SpecificationBasedCheck extends Check {
     super();
   }
 
-  public void initialize(SpecificationLoader loader, Map<InputFileContext, List<TextRange>> reportedIssuesForCtx) {
+  public void initialize(SpecificationLoader loader, Map<InputFileContext, List<TextRange>> reportedIssuesForCtx, DurationStatistics durationStatistics) {
     this.reportedIssuesForCtx = reportedIssuesForCtx;
+    this.durationStatistics = durationStatistics;
     String rule = ruleKey.rule();
     List<Rule> rulesForKey = loader.getRulesForKey(rule);
     if (rulesForKey.isEmpty()) {
       LOG.error("Found no rule specification for rule with key: {}", rule);
     }
     this.matcher = rulesForKey.stream()
-      .map(SecretMatcher::build)
+      .map(r -> SecretMatcher.build(r, durationStatistics))
       .collect(Collectors.toList());
   }
 
   @Override
   public void analyze(InputFileContext ctx) {
     for (SecretMatcher secretMatcher : matcher) {
-      secretMatcher.findIn(ctx).stream()
+      durationStatistics.timed(secretMatcher.getRuleId() + "-total", () -> secretMatcher.findIn(ctx))
+        .stream()
         .map(match -> ctx.newTextRangeFromFileOffsets(match.getFileStartOffset(), match.getFileEndOffset()))
         .forEach(textRange -> reportIfNoOverlappingSecretAlreadyFound(ctx, textRange, secretMatcher));
     }
