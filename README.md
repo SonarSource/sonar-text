@@ -54,8 +54,8 @@ rm empty-settings.xml
 ### Update rule description
 
 ```shell
-mvn exec:exec@update --non-recursive -Drules-metadata.directory=sonarpedia-secrets
-mvn exec:exec@update --non-recursive -Drules-metadata.directory=sonarpedia-text
+mvn exec:exec@update --non-recursive -Penable-rule-api -Drules-metadata.directory=sonarpedia-secrets
+mvn exec:exec@update --non-recursive -Penable-rule-api -Drules-metadata.directory=sonarpedia-text
 ```
 
 ### Generate files to include new secrets

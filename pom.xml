@@ -246,63 +246,6 @@
             </java>
           </configuration>
         </plugin>
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>exec-maven-plugin</artifactId>
-          <version>3.1.0</version>
-          <executions>
-            <execution>
-              <!-- Should always be called explicitly -->
-              <phase>none</phase>
-              <id>update</id>
-              <goals>
-                <goal>exec</goal>
-              </goals>
-              <configuration>
-                <executable>java</executable>
-                <workingDirectory>${rules-metadata.directory}</workingDirectory>
-                <arguments>
-                  <argument>-classpath</argument>
-                  <!-- workaround to include only a single jar -->
-                  <argument>${settings.localRepository}/com/sonarsource/rule-api/rule-api/${rules-api.version}/rule-api-${rules-api.version}.jar</argument>
-                  <argument>com.sonarsource.ruleapi.Main</argument>
-                  <argument>update</argument>
-                </arguments>
-              </configuration>
-            </execution>
-            <execution>
-              <!-- Should always be called explicitly -->
-              <phase>none</phase>
-              <id>generate</id>
-              <goals>
-                <goal>exec</goal>
-              </goals>
-              <configuration>
-                <executable>java</executable>
-                <workingDirectory>${rules-metadata.directory}</workingDirectory>
-                <arguments>
-                  <argument>-classpath</argument>
-                  <!-- workaround to include only a single jar -->
-                  <argument>${settings.localRepository}/com/sonarsource/rule-api/rule-api/${rules-api.version}/rule-api-${rules-api.version}.jar</argument>
-                  <argument>com.sonarsource.ruleapi.Main</argument>
-                  <argument>generate</argument>
-                  <argument>-rule</argument>
-                  <argument>${ruleId}</argument>
-                </arguments>
-              </configuration>
-            </execution>
-          </executions>
-          <dependencies>
-            <dependency>
-              <groupId>com.sonarsource.rule-api</groupId>
-              <artifactId>rule-api</artifactId>
-              <version>${rules-api.version}</version>
-            </dependency>
-          </dependencies>
-          <configuration>
-            <includeProjectDependencies>false</includeProjectDependencies>
-          </configuration>
-        </plugin>
       </plugins>
     </pluginManagement>
   </build>
@@ -313,6 +256,70 @@
       <modules>
         <module>its</module>
       </modules>
+    </profile>
+    <profile>
+      <id>enable-rule-api</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.1.0</version>
+            <executions>
+              <execution>
+                <!-- Should always be called explicitly -->
+                <phase>none</phase>
+                <id>update</id>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>java</executable>
+                  <workingDirectory>${rules-metadata.directory}</workingDirectory>
+                  <arguments>
+                    <argument>-classpath</argument>
+                    <!-- workaround to include only a single jar -->
+                    <argument>${settings.localRepository}/com/sonarsource/rule-api/rule-api/${rules-api.version}/rule-api-${rules-api.version}.jar</argument>
+                    <argument>com.sonarsource.ruleapi.Main</argument>
+                    <argument>update</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <!-- Should always be called explicitly -->
+                <phase>none</phase>
+                <id>generate</id>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>java</executable>
+                  <workingDirectory>${rules-metadata.directory}</workingDirectory>
+                  <arguments>
+                    <argument>-classpath</argument>
+                    <!-- workaround to include only a single jar -->
+                    <argument>${settings.localRepository}/com/sonarsource/rule-api/rule-api/${rules-api.version}/rule-api-${rules-api.version}.jar</argument>
+                    <argument>com.sonarsource.ruleapi.Main</argument>
+                    <argument>generate</argument>
+                    <argument>-rule</argument>
+                    <argument>${ruleId}</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+            <dependencies>
+              <dependency>
+                <groupId>com.sonarsource.rule-api</groupId>
+                <artifactId>rule-api</artifactId>
+                <version>${rules-api.version}</version>
+              </dependency>
+            </dependencies>
+            <configuration>
+              <includeProjectDependencies>false</includeProjectDependencies>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
 

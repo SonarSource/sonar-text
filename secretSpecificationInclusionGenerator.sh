@@ -27,7 +27,7 @@ while IFS= read -r line
 do
     echo ""
 	echo "--------- Generating rspec files for: $line ---------"
-	mvn exec:exec@generate --non-recursive -Drules-metadata.directory=sonarpedia-secrets -DruleId="$line"
+	mvn exec:exec@generate --non-recursive -Penable-rule-api -Drules-metadata.directory=sonarpedia-secrets -DruleId="$line"
 	echo ""
 done < "$input"
 
