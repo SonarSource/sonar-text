@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Assume the script is located in the root of the sonar-text repository
+PROJECT_ROOT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
 echo ""
 echo "--------- Generation of Java classes ---------"
 echo ""
@@ -17,11 +20,9 @@ echo "---------Formatting code---------"
 echo ""
 mvn spotless:apply
 
-cd sonarpedia-secrets
-
 # Generated file where rspec keys to update are stored.
 # This file will be generated at the secondStep of the generation of java classes
-input="../sonar-text-plugin/src/test/resources/templates/rspecKeysToUpdate.txt"
+input="$PROJECT_ROOT_DIR/sonar-text-plugin/src/test/resources/templates/rspecKeysToUpdate.txt"
 
 while IFS= read -r line
 do
@@ -31,7 +32,7 @@ do
 	echo ""
 done < "$input"
 
-rm ../sonar-text-plugin/src/test/resources/templates/rspecKeysToUpdate.txt
+rm "$PROJECT_ROOT_DIR/sonar-text-plugin/src/test/resources/templates/rspecKeysToUpdate.txt"
 
 echo ""
 echo "---------Finished Generation process---------"

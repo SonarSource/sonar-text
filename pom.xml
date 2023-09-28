@@ -73,7 +73,7 @@
     <sonar.api.version>10.1.0.809</sonar.api.version>
     <analyzer.commons.version>2.7.0.1482</analyzer.commons.version>
     <orchestrator.version>3.40.0.183</orchestrator.version>
-    <rules-api.version>2.6.0.2454</rules-api.version>
+    <rule-api.version>2.7.0.2612</rule-api.version>
     <junit.version>5.9.1</junit.version>
     <assertj.version>3.23.1</assertj.version>
     <findbugs.version>3.0.2</findbugs.version>
@@ -279,7 +279,7 @@
                   <arguments>
                     <argument>-classpath</argument>
                     <!-- workaround to include only a single jar -->
-                    <argument>${settings.localRepository}/com/sonarsource/rule-api/rule-api/${rules-api.version}/rule-api-${rules-api.version}.jar</argument>
+                    <argument>${settings.localRepository}/com/sonarsource/rule-api/rule-api/${rule-api.version}/rule-api-${rule-api.version}.jar</argument>
                     <argument>com.sonarsource.ruleapi.Main</argument>
                     <argument>update</argument>
                   </arguments>
@@ -298,7 +298,7 @@
                   <arguments>
                     <argument>-classpath</argument>
                     <!-- workaround to include only a single jar -->
-                    <argument>${settings.localRepository}/com/sonarsource/rule-api/rule-api/${rules-api.version}/rule-api-${rules-api.version}.jar</argument>
+                    <argument>${settings.localRepository}/com/sonarsource/rule-api/rule-api/${rule-api.version}/rule-api-${rule-api.version}.jar</argument>
                     <argument>com.sonarsource.ruleapi.Main</argument>
                     <argument>generate</argument>
                     <argument>-rule</argument>
@@ -311,7 +311,7 @@
               <dependency>
                 <groupId>com.sonarsource.rule-api</groupId>
                 <artifactId>rule-api</artifactId>
-                <version>${rules-api.version}</version>
+                <version>${rule-api.version}</version>
               </dependency>
             </dependencies>
             <configuration>

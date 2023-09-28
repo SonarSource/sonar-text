@@ -60,8 +60,8 @@ mvn exec:exec@update --non-recursive -Penable-rule-api -Drules-metadata.director
 
 ### Generate files to include new secrets
 
-After the change, addition or removal of secret specifications, this script can be run to generate the Java classes that are needed 
-for the inclusion or deletion of these secrets.
+After the change, addition or removal of secret specifications, this script can be run to generate the Java classes that are needed
+for the inclusion or deletion of these secrets and to update static RSPEC files.
 
 As we use the enforcer plugin to define a file size of the build, this can lead to test failures after adding new secret specifications.
 The `<minsize>` and `<maxsize>` can be changed in `sonar-text-plugin/pom.xml`.
@@ -69,8 +69,15 @@ The `<minsize>` and `<maxsize>` can be changed in `sonar-text-plugin/pom.xml`.
 ./secretSpecificationInclusionGenerator.sh <ruleApiFileName>
 ```
 
+### Generate new rule description
+
+To fetch static files for a rule SXXXX from RSPEC, execute the following command:
+```shell
+mvn exec:exec@generate --non-recursive -Penable-rule-api -Drules-metadata.directory=sonarpedia-secrets -DruleId=SXXXX
+```
+
 ### License
 
-Copyright 2012-2021 SonarSource.
+Copyright 2012-2023 SonarSource.
 
 Licensed under the [GNU Lesser General Public License, Version 3.0](https://www.gnu.org/licenses/lgpl.txt)
