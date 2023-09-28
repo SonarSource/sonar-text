@@ -32,7 +32,7 @@ class DurationStatisticsTest {
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
   @Test
-  void test() {
+  void shouldRecordSimpleStatistics() {
     var sensorContext = SensorContextTester.create(Paths.get("."));
     sensorContext.settings().setProperty("sonar.text.duration.statistics", "true");
     DurationStatistics durationStatistics = new DurationStatistics(sensorContext.config());
@@ -46,7 +46,8 @@ class DurationStatisticsTest {
     });
     durationStatistics.log();
 
-    assertThat(durationStatistics.stats).isNotEmpty();
+    assertThat(durationStatistics.stats)
+      .hasSize(1);
     assertThat(logTester.logs())
       .anyMatch(s -> s.startsWith("Duration Statistics"))
       .anyMatch(s -> s.contains("1 times"));

@@ -40,6 +40,7 @@ public class DurationStatistics {
 
   private static final String PROPERTY_KEY = "sonar.text.duration.statistics";
 
+  // modifier is package-private to make visible in tests
   final Map<String, Measurement> stats = new ConcurrentHashMap<>();
 
   private final AtomicBoolean isRecordingEnabled = new AtomicBoolean(false);
@@ -51,7 +52,7 @@ public class DurationStatistics {
   public <T> T timed(String id, Supplier<T> supplier) {
     if (isRecordingEnabled.get()) {
       long startTime = System.nanoTime();
-      T result = supplier.get();
+      var result = supplier.get();
       addRecord(id, System.nanoTime() - startTime);
       return result;
     } else {
@@ -65,47 +66,49 @@ public class DurationStatistics {
 
   public void log() {
     if (isRecordingEnabled.get()) {
-      StringBuilder out = new StringBuilder();
-      DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.ROOT);
+      var out = new StringBuilder();
+      var symbols = new DecimalFormatSymbols(Locale.ROOT);
       symbols.setGroupingSeparator('\'');
       NumberFormat format = new DecimalFormat("#,###", symbols);
       out.append("Duration Statistics");
       out.append(formatEntries(format, stats.entrySet().stream().filter(s -> s.getKey().endsWith("-total"))));
-      String outString = out.toString();
-      LOGGER.info(outString);
+      var generalReport = out.toString();
+      LOGGER.info(generalReport);
 
       out = new StringBuilder();
       out.append("Granular Duration Statistics");
       out.append(formatEntries(format, stats.entrySet().stream().filter(s -> !s.getKey().endsWith("-total"))));
-      outString = out.toString();
-      LOGGER.info(outString);
+      var verboseReport = out.toString();
+      LOGGER.info(verboseReport);
     }
   }
 
-  private StringBuilder formatEntries(Format format, Stream<Map.Entry<String, Measurement>> entries) {
+  private static StringBuilder formatEntries(Format format, Stream<Map.Entry<String, Measurement>> entries) {
     var sb = new StringBuilder();
     entries.sorted(Comparator.<Map.Entry<String, Measurement>>comparingLong(entry -> entry.getValue().total.get()).reversed())
-      .forEach(e -> {
-        var totalMs = e.getValue().total.get() / 1_000_000L;
-        var count = e.getValue().count.get();
-        var meanMs = totalMs * 1.0 / count * 1_000;
-        sb.append(", ")
-          .append(e.getKey())
-          .append(" ")
-          .append(format.format(totalMs))
-          .append(" ms ")
-          .append(e.getValue().count.get())
-          .append(" times (mean ")
-          .append(format.format(meanMs))
-          .append(" us)")
-          .append(System.lineSeparator());
-      });
+      .forEach(e -> sb.append(formatEntry(format, e.getKey(), e.getValue())));
     return sb;
   }
 
+  private static StringBuilder formatEntry(Format format, String id, Measurement measurement) {
+    var totalMs = measurement.total.get() / 1_000_000L;
+    var count = measurement.count.get();
+    var meanMs = totalMs * 1.0 / count * 1_000;
+    return new StringBuilder(", ")
+      .append(id)
+      .append(" ")
+      .append(format.format(totalMs))
+      .append(" ms ")
+      .append(measurement.count.get())
+      .append(" times (mean ")
+      .append(format.format(meanMs))
+      .append(" us)")
+      .append(System.lineSeparator());
+  }
+
   private static class Measurement {
-    final AtomicLong count = new AtomicLong();
-    final AtomicLong total = new AtomicLong();
+    private final AtomicLong count = new AtomicLong();
+    private final AtomicLong total = new AtomicLong();
 
     public void add(long delta) {
       count.incrementAndGet();
