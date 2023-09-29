@@ -83,6 +83,7 @@
     <jackson.version>2.15.1</jackson.version>
     <networknt.version>1.0.86</networknt.version>
     <spotless.version>2.38.0</spotless.version>
+    <jgit.version>6.7.0.202309050840-r</jgit.version>
 
     <!-- Release: enable publication to Bintray -->
     <artifactsToPublish>${project.groupId}:sonar-text-plugin:jar</artifactsToPublish>
@@ -94,6 +95,9 @@
     <jdk.min.version>11</jdk.min.version>
     <jdk.source.version>11</jdk.source.version>
     <jdk.target.version>11</jdk.target.version>
+
+    <!-- Override version from parent to use configuration.entryPoints -->
+    <version.shade.plugin>3.5.1</version.shade.plugin>
 
     <rules-metadata.directory>sonarpedia-secrets</rules-metadata.directory>
   </properties>
@@ -148,6 +152,11 @@
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
         <version>${version.slf4j}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jgit</groupId>
+        <artifactId>org.eclipse.jgit</artifactId>
+        <version>${jgit.version}</version>
       </dependency>
 
       <!-- Test dependencies -->

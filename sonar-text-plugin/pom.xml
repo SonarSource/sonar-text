@@ -48,6 +48,10 @@
       <artifactId>slf4j-api</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.eclipse.jgit</groupId>
+      <artifactId>org.eclipse.jgit</artifactId>
+    </dependency>
 
     <!-- unit tests -->
     <dependency>
@@ -121,8 +125,8 @@
             <configuration>
               <rules>
                 <requireFilesSize>
-                  <maxsize>3250000</maxsize>
-                  <minsize>2950000</minsize>
+                  <maxsize>5400000</maxsize>
+                  <minsize>5200000</minsize>
                   <files>
                     <file>${project.build.directory}/${project.build.finalName}.jar</file>
                   </files>
@@ -143,6 +147,10 @@
             <configuration>
               <shadedArtifactAttached>false</shadedArtifactAttached>
               <minimizeJar>true</minimizeJar>
+              <entryPoints>
+                <entryPoint>org.sonar.plugins.common.TextAndSecretsPlugin</entryPoint>
+                <entryPoint>org.sonar.plugins.common.TextAndSecretsSensor</entryPoint>
+              </entryPoints>
               <createDependencyReducedPom>false</createDependencyReducedPom>
               <filters>
                 <filter>
@@ -161,6 +169,34 @@
                   <includes>
                     <include>**</include>
                   </includes>
+                </filter>
+                <filter>
+                  <artifact>org.eclipse.jgit:org.eclipse.jgit</artifact>
+                  <excludes>
+                    <exclude>**/*.html</exclude>
+                    <!-- Some of the largest class files are excluded explicitly, other packages are not needed for sonar-text -->
+                    <exclude>org/eclipse/jgit/api/CheckoutCommand.class</exclude>
+                    <exclude>org/eclipse/jgit/api/CloneCommand.class</exclude>
+                    <exclude>org/eclipse/jgit/api/CommitCommand.class</exclude>
+                    <exclude>org/eclipse/jgit/api/MergeCommand.class</exclude>
+                    <exclude>org/eclipse/jgit/api/RebaseCommand.class</exclude>
+                    <exclude>org/eclipse/jgit/blame/**</exclude>
+                    <exclude>org/eclipse/jgit/diff/**</exclude>
+                    <exclude>org/eclipse/jgit/hooks/**</exclude>
+                    <exclude>org/eclipse/jgit/merge/**</exclude>
+                    <exclude>org/eclipse/jgit/patch/**</exclude>
+                    <exclude>org/eclipse/jgit/transport/AmazonS3.class</exclude>
+                    <exclude>org/eclipse/jgit/transport/BasePackFetchConnection.class</exclude>
+                    <exclude>org/eclipse/jgit/transport/FetchProcess.class</exclude>
+                    <exclude>org/eclipse/jgit/transport/ReceivePack.class</exclude>
+                    <exclude>org/eclipse/jgit/transport/TransportHttp.class</exclude>
+                    <exclude>org/eclipse/jgit/transport/UploadPack.class</exclude>
+                    <exclude>org/eclipse/jgit/transport/WalkFetchConnection.class</exclude>
+                    <exclude>org/eclipse/jgit/transport/http/**</exclude>
+                    <exclude>org/eclipse/jgit/internal/transport/**</exclude>
+                    <exclude>org/eclipse/jgit/internal/diffmergetool/**</exclude>
+                    <exclude>org/eclipse/jgit/internal/storage/dfs/**</exclude>
+                  </excludes>
                 </filter>
               </filters>
             </configuration>
