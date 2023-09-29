@@ -20,6 +20,7 @@
 package org.sonar.plugins.common;
 
 import java.nio.file.Paths;
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
@@ -31,25 +32,44 @@ class DurationStatisticsTest {
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
+  private static final Pattern REPORT_PATTERN = Pattern.compile(".*Statistics\\s+ {2}.*::.* \\d+ ms \\d+ times \\(mean [\\d']+ us\\)(.|\\s)*");
+
   @Test
   void shouldRecordSimpleStatistics() {
     var sensorContext = SensorContextTester.create(Paths.get("."));
     sensorContext.settings().setProperty("sonar.text.duration.statistics", "true");
     DurationStatistics durationStatistics = new DurationStatistics(sensorContext.config());
-    durationStatistics.timed("test-total", () -> {
-      try {
-        Thread.sleep(100);
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-      return null;
-    });
+    durationStatistics.timed("test::total", () -> doNothingFor(100));
     durationStatistics.log();
 
-    assertThat(durationStatistics.stats)
-      .hasSize(1);
-    assertThat(logTester.logs())
-      .anyMatch(s -> s.startsWith("Duration Statistics"))
-      .anyMatch(s -> s.contains("1 times"));
+    assertThat(logTester.logs()).hasSize(2);
+    assertThat(logTester.logs().get(0)).matches(REPORT_PATTERN);
+    assertThat(logTester.logs().get(1)).endsWith("Granular Duration Statistics" + System.lineSeparator());
+  }
+
+  @Test
+  void shouldRecordMultipleStatistics() {
+    var sensorContext = SensorContextTester.create(Paths.get("."));
+    sensorContext.settings().setProperty("sonar.text.duration.statistics", "true");
+    DurationStatistics durationStatistics = new DurationStatistics(sensorContext.config());
+    durationStatistics.timed("test-1::total", () -> doNothingFor(100));
+    durationStatistics.timed("test-1::total", () -> doNothingFor(50));
+    durationStatistics.timed("test-2::total", () -> doNothingFor(100));
+    durationStatistics.timed("test-2::part1", () -> doNothingFor(10));
+    durationStatistics.timed("test-2::part2", () -> doNothingFor(20));
+    durationStatistics.log();
+
+    assertThat(logTester.logs()).hasSize(2);
+    assertThat(logTester.logs().get(0)).matches(REPORT_PATTERN);
+    assertThat(logTester.logs().get(1)).matches(REPORT_PATTERN);
+  }
+
+  private static Object doNothingFor(long millis) {
+    try {
+      Thread.sleep(millis);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    return null;
   }
 }

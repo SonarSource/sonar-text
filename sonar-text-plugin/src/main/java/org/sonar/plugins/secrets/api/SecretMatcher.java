@@ -34,20 +34,20 @@ public class SecretMatcher {
   private final AuxiliaryPatternMatcher auxiliaryPatternMatcher;
   private final Predicate<InputFileContext> preFilter;
   private final Predicate<String> postFilter;
-  private final DurationStatistics ds;
+  private final DurationStatistics durationStatistics;
 
   SecretMatcher(Rule rule,
     PatternMatcher patternMatcher,
     AuxiliaryPatternMatcher auxiliaryPatternMatcher,
     Predicate<InputFileContext> preFilter,
     Predicate<String> postFilter,
-    DurationStatistics ds) {
+    DurationStatistics durationStatistics) {
     this.rule = rule;
     this.patternMatcher = patternMatcher;
     this.auxiliaryPatternMatcher = auxiliaryPatternMatcher;
     this.preFilter = preFilter;
     this.postFilter = postFilter;
-    this.ds = ds;
+    this.durationStatistics = durationStatistics;
   }
 
   /**
@@ -65,19 +65,25 @@ public class SecretMatcher {
   }
 
   public List<Match> findIn(InputFileContext fileContext) {
-    boolean isPreFilterMatching = ds.timed(getRuleId() + "-preFilter", () -> preFilter.test(fileContext));
-    if (!isPreFilterMatching) {
+    boolean isRejectedOnPreFilter = durationStatistics.timed(
+      getRuleId() + DurationStatistics.SUFFIX_PRE,
+      () -> !preFilter.test(fileContext));
+    if (isRejectedOnPreFilter) {
       return Collections.emptyList();
     }
 
     String content = fileContext.content();
-    List<Match> secretsFilteredOnContext = ds.timed(getRuleId() + "-matcher", () -> {
-      List<Match> candidateSecrets = patternMatcher.findIn(content);
-      return auxiliaryPatternMatcher.filter(candidateSecrets, content);
-    });
+    List<Match> secretsFilteredOnContext = durationStatistics.timed(
+      getRuleId() + DurationStatistics.SUFFIX_MATCHER,
+      () -> {
+        List<Match> candidateSecrets = patternMatcher.findIn(content);
+        return auxiliaryPatternMatcher.filter(candidateSecrets, content);
+      });
 
     return secretsFilteredOnContext.stream()
-      .filter(match -> ds.timed(getRuleId() + "-postFilter", () -> postFilter.test(match.getText())))
+      .filter(match -> durationStatistics.timed(
+        getRuleId() + DurationStatistics.SUFFIX_POST,
+        () -> postFilter.test(match.getText())))
       .collect(Collectors.toList());
   }
 

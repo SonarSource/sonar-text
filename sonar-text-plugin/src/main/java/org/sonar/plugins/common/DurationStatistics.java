@@ -40,8 +40,12 @@ public class DurationStatistics {
 
   private static final String PROPERTY_KEY = "sonar.text.duration.statistics";
 
-  // modifier is package-private to make visible in tests
-  final Map<String, Measurement> stats = new ConcurrentHashMap<>();
+  public static final String SUFFIX_TOTAL = "::total";
+  public static final String SUFFIX_PRE = "::preFilter";
+  public static final String SUFFIX_MATCHER = "::matcher";
+  public static final String SUFFIX_POST = "::postFilter";
+
+  private final Map<String, Measurement> stats = new ConcurrentHashMap<>();
 
   private final AtomicBoolean isRecordingEnabled = new AtomicBoolean(false);
 
@@ -66,20 +70,18 @@ public class DurationStatistics {
 
   public void log() {
     if (isRecordingEnabled.get()) {
-      var out = new StringBuilder();
       var symbols = new DecimalFormatSymbols(Locale.ROOT);
       symbols.setGroupingSeparator('\'');
       NumberFormat format = new DecimalFormat("#,###", symbols);
-      out.append("Duration Statistics");
-      out.append(formatEntries(format, stats.entrySet().stream().filter(s -> s.getKey().endsWith("-total"))));
-      var generalReport = out.toString();
-      LOGGER.info(generalReport);
+      var sbGeneral = new StringBuilder("Duration Statistics")
+        .append(System.lineSeparator())
+        .append(formatEntries(format, stats.entrySet().stream().filter(s -> s.getKey().endsWith(SUFFIX_TOTAL))));
+      LOGGER.info("{}", sbGeneral);
 
-      out = new StringBuilder();
-      out.append("Granular Duration Statistics");
-      out.append(formatEntries(format, stats.entrySet().stream().filter(s -> !s.getKey().endsWith("-total"))));
-      var verboseReport = out.toString();
-      LOGGER.info(verboseReport);
+      var sbVerbose = new StringBuilder("Granular Duration Statistics")
+        .append(System.lineSeparator())
+        .append(formatEntries(format, stats.entrySet().stream().filter(s -> !s.getKey().endsWith(SUFFIX_TOTAL))));
+      LOGGER.info("{}", sbVerbose);
     }
   }
 
@@ -94,7 +96,7 @@ public class DurationStatistics {
     var totalMs = measurement.total.get() / 1_000_000L;
     var count = measurement.count.get();
     var meanMs = totalMs * 1.0 / count * 1_000;
-    return new StringBuilder(", ")
+    return new StringBuilder("  ")
       .append(id)
       .append(" ")
       .append(format.format(totalMs))

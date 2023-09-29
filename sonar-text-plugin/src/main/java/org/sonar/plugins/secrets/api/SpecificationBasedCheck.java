@@ -61,20 +61,20 @@ public abstract class SpecificationBasedCheck extends Check {
   public void initialize(SpecificationLoader loader, Map<URI, List<TextRange>> reportedIssuesForCtx, DurationStatistics durationStatistics) {
     this.reportedIssuesForCtx = reportedIssuesForCtx;
     this.durationStatistics = durationStatistics;
-    String rule = ruleKey.rule();
-    List<Rule> rulesForKey = loader.getRulesForKey(rule);
+    String ruleId = ruleKey.rule();
+    List<Rule> rulesForKey = loader.getRulesForKey(ruleId);
     if (rulesForKey.isEmpty()) {
-      LOG.error("Found no rule specification for rule with key: {}", rule);
+      LOG.error("Found no rule specification for rule with key: {}", ruleId);
     }
     this.matcher = rulesForKey.stream()
-      .map(r -> SecretMatcher.build(r, durationStatistics))
+      .map(rule -> SecretMatcher.build(rule, durationStatistics))
       .collect(Collectors.toList());
   }
 
   @Override
   public void analyze(InputFileContext ctx) {
     for (SecretMatcher secretMatcher : matcher) {
-      durationStatistics.timed(secretMatcher.getRuleId() + "-total", () -> secretMatcher.findIn(ctx))
+      durationStatistics.timed(secretMatcher.getRuleId() + DurationStatistics.SUFFIX_TOTAL, () -> secretMatcher.findIn(ctx))
         .stream()
         .map(match -> ctx.newTextRangeFromFileOffsets(match.getFileStartOffset(), match.getFileEndOffset()))
         .forEach(textRange -> reportIfNoOverlappingSecretAlreadyFound(ctx, textRange, secretMatcher));
