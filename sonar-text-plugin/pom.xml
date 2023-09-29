@@ -87,6 +87,11 @@
       <version>2.0.7</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.sonarsource.java</groupId>
+      <artifactId>java-checks</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

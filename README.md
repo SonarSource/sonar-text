@@ -76,6 +76,20 @@ To fetch static files for a rule SXXXX from RSPEC, execute the following command
 mvn exec:exec@generate --non-recursive -Penable-rule-api -Drules-metadata.directory=sonarpedia-secrets -DruleId=SXXXX
 ```
 
+### Verify Regexes
+
+The Regular Expressions provided in secrets specification should be verified to avoid catastrophic backtracking and other issues.
+Currently, the Sonar products doesn't scan YAML files for Regex problems.
+To avoid potential problems the [SecretsRegexTest](sonar-text-plugin/src/test/java/org/sonar/plugins/secrets/utils/SecretsRegexTest.java) was prepared for validating regexes.
+There is a simple way to validate all specification files and a single one. 
+Currently, tests are disabled, as the issues need to be reviewed first.
+
+There is also a way of running this check from command line.
+
+```shell
+mvn test -Dtest=SecretsRegexTest#shouldValidateSingleFile -DargLine="-Dfilename=google-oauth2.yaml"
+```
+
 ### License
 
 Copyright 2012-2023 SonarSource.
