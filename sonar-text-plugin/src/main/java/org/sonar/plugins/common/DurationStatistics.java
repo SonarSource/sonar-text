@@ -49,8 +49,14 @@ public class DurationStatistics {
 
   private final AtomicBoolean isRecordingEnabled = new AtomicBoolean(false);
 
+  private final NumberFormat format;
+
   public DurationStatistics(Configuration config) {
     config.getBoolean(PROPERTY_KEY).ifPresent(isRecordingEnabled::set);
+
+    var symbols = new DecimalFormatSymbols(Locale.ROOT);
+    symbols.setGroupingSeparator('\'');
+    this.format = new DecimalFormat("#,###", symbols);
   }
 
   public <T> T timed(String id, Supplier<T> supplier) {
@@ -70,9 +76,6 @@ public class DurationStatistics {
 
   public void log() {
     if (isRecordingEnabled.get()) {
-      var symbols = new DecimalFormatSymbols(Locale.ROOT);
-      symbols.setGroupingSeparator('\'');
-      NumberFormat format = new DecimalFormat("#,###", symbols);
       var sbGeneral = new StringBuilder("Duration Statistics")
         .append(System.lineSeparator())
         .append(formatEntries(format, stats.entrySet().stream().filter(s -> s.getKey().endsWith(SUFFIX_TOTAL))));
