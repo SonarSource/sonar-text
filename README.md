@@ -66,7 +66,7 @@ for the inclusion or deletion of these secrets and to update static RSPEC files.
 As we use the enforcer plugin to define a file size of the build, this can lead to test failures after adding new secret specifications.
 The `<minsize>` and `<maxsize>` can be changed in `sonar-text-plugin/pom.xml`.
 ```shell
-./secretSpecificationInclusionGenerator.sh <ruleApiFileName>
+./secretSpecificationInclusionGenerator.sh
 ```
 
 ### Generate new rule description
