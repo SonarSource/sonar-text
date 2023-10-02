@@ -74,7 +74,8 @@ public class TextRulingTest {
       .setProperty("sonar.lits.dump.new", FileLocation.of("target/actual").getFile().getAbsolutePath())
       .setProperty("sonar.text.analyzeAllFiles", "true")
       .setProperty("sonar.cpd.exclusions", "**/*")
-      .setProperty("sonar.lits.differences", LITS_DIFFERENCES_FILE.getAbsolutePath());
+      .setProperty("sonar.lits.differences", LITS_DIFFERENCES_FILE.getAbsolutePath())
+      .setProperty("sonar.text.duration.statistics", "true");
     build.setEnvironmentVariable("SONAR_RUNNER_OPTS", "-Xmx1000m");
     ORCHESTRATOR.executeBuild(build);
 

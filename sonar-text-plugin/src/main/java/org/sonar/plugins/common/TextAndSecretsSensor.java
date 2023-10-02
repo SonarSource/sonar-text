@@ -20,6 +20,7 @@
 package org.sonar.plugins.common;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -60,6 +61,8 @@ public class TextAndSecretsSensor implements Sensor {
   private boolean displayHelpAboutExcludingBinaryFile = true;
   private final GitSupplier gitSupplier = new GitSupplier();
 
+  private DurationStatistics durationStatistics;
+
   public TextAndSecretsSensor(CheckFactory checkFactory) {
     this.checkFactory = checkFactory;
   }
@@ -75,6 +78,7 @@ public class TextAndSecretsSensor implements Sensor {
   @Override
   public void execute(SensorContext sensorContext) {
     List<Check> activeChecks = getActiveChecks();
+    durationStatistics = new DurationStatistics(sensorContext.config());
     initializeSpecificationBasedChecks(activeChecks);
     if (activeChecks.isEmpty()) {
       return;
@@ -113,6 +117,7 @@ public class TextAndSecretsSensor implements Sensor {
       }
     }
 
+    durationStatistics.log();
   }
 
   private static NotBinaryFilePredicate binaryFilePredicate(SensorContext sensorContext) {
@@ -183,10 +188,10 @@ public class TextAndSecretsSensor implements Sensor {
 
   protected void initializeSpecificationBasedChecks(List<Check> checks) {
     SpecificationLoader specificationLoader = new SpecificationLoader();
-    Map<InputFileContext, List<TextRange>> reportedIssuesForCtx = new HashMap<>();
+    Map<URI, List<TextRange>> reportedIssuesForCtx = new HashMap<>();
     for (Check activeCheck : checks) {
       if (activeCheck instanceof SpecificationBasedCheck) {
-        ((SpecificationBasedCheck) activeCheck).initialize(specificationLoader, reportedIssuesForCtx);
+        ((SpecificationBasedCheck) activeCheck).initialize(specificationLoader, reportedIssuesForCtx, durationStatistics);
       }
     }
   }

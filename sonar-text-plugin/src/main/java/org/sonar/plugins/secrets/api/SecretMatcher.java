@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import org.sonar.plugins.common.DurationStatistics;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 
@@ -33,34 +34,61 @@ public class SecretMatcher {
   private final AuxiliaryPatternMatcher auxiliaryPatternMatcher;
   private final Predicate<InputFileContext> preFilter;
   private final Predicate<String> postFilter;
+  private final DurationStatistics durationStatistics;
 
-  SecretMatcher(Rule rule, PatternMatcher patternMatcher, AuxiliaryPatternMatcher auxiliaryPatternMatcher,
-    Predicate<InputFileContext> preFilter, Predicate<String> postFilter) {
+  SecretMatcher(Rule rule,
+    PatternMatcher patternMatcher,
+    AuxiliaryPatternMatcher auxiliaryPatternMatcher,
+    Predicate<InputFileContext> preFilter,
+    Predicate<String> postFilter,
+    DurationStatistics durationStatistics) {
     this.rule = rule;
     this.patternMatcher = patternMatcher;
     this.auxiliaryPatternMatcher = auxiliaryPatternMatcher;
     this.preFilter = preFilter;
     this.postFilter = postFilter;
+    this.durationStatistics = durationStatistics;
   }
 
-  public static SecretMatcher build(Rule rule) {
+  /**
+   * Creates a new SecretMatcher from provided Rule
+   * @param rule rule to extract matcher logic from
+   * @param durationStatistics instance to collect performance statistics
+   * @return a new SecretMatcher
+   */
+  public static SecretMatcher build(Rule rule, DurationStatistics durationStatistics) {
     PatternMatcher patternMatcher = PatternMatcher.build(rule.getDetection().getMatching());
     Predicate<InputFileContext> preFilter = PreFilterFactory.createPredicate(rule.getDetection().getPre());
     Predicate<String> postFilter = PostFilterFactory.createPredicate(rule.getDetection().getPost(), rule.getDetection().getMatching());
     AuxiliaryPatternMatcher auxiliaryMatcher = AuxiliaryPatternMatcherFactory.build(rule.getDetection().getMatching());
-    return new SecretMatcher(rule, patternMatcher, auxiliaryMatcher, preFilter, postFilter);
+    return new SecretMatcher(rule, patternMatcher, auxiliaryMatcher, preFilter, postFilter, durationStatistics);
   }
 
   public List<Match> findIn(InputFileContext fileContext) {
-    if (!preFilter.test(fileContext)) {
+    boolean isRejectedOnPreFilter = durationStatistics.timed(
+      getRuleId() + DurationStatistics.SUFFIX_PRE,
+      () -> !preFilter.test(fileContext));
+    if (isRejectedOnPreFilter) {
       return Collections.emptyList();
     }
 
     String content = fileContext.content();
-    List<Match> candidateSecrets = patternMatcher.findIn(content);
-    List<Match> secretsFilteredOnContext = auxiliaryPatternMatcher.filter(candidateSecrets, content);
+    List<Match> secretsFilteredOnContext = durationStatistics.timed(
+      getRuleId() + DurationStatistics.SUFFIX_MATCHER,
+      () -> {
+        List<Match> candidateSecrets = patternMatcher.findIn(content);
+        return auxiliaryPatternMatcher.filter(candidateSecrets, content);
+      });
+
     return secretsFilteredOnContext.stream()
-      .filter(match -> postFilter.test(match.getText())).collect(Collectors.toList());
+      .filter(match -> durationStatistics.timed(
+        getRuleId() + DurationStatistics.SUFFIX_POST,
+        () -> postFilter.test(match.getText())))
+      .collect(Collectors.toList());
+  }
+
+  public String getRuleId() {
+    return rule.getId();
   }
 
   public String getMessageFromRule() {

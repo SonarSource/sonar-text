@@ -52,6 +52,7 @@ public class SecretMatcherAssert extends AbstractAssert<SecretMatcherAssert, Sec
     usingRecursiveComparison()
       .ignoringFields("preFilter")
       .ignoringFields("postFilter")
+      .ignoringFields("durationStatistics")
       .withEqualsForType(patternEquals, Pattern.class)
       .isEqualTo(expectedMatcher);
     postFilterBehavesLike(expectedMatcher);

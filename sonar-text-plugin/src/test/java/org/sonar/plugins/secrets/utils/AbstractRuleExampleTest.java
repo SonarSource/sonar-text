@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.secrets.utils;
 
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
@@ -33,7 +34,6 @@ import org.junit.jupiter.api.function.Executable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.TextRange;
-import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.InputFileContext;
@@ -49,12 +49,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
+import static org.sonar.plugins.secrets.utils.TestUtils.mockDurationStatistics;
 
 public abstract class AbstractRuleExampleTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractRuleExampleTest.class);
   private static SpecificationLoader specificationLoader;
   private final Check check;
+  private final HashMap<URI, List<TextRange>> reportedIssuesForCtx = new HashMap<>();
 
   protected AbstractRuleExampleTest(Check check) {
     if (specificationLoader == null) {
@@ -62,7 +64,7 @@ public abstract class AbstractRuleExampleTest {
     }
 
     this.check = check;
-    ((SpecificationBasedCheck) check).initialize(specificationLoader, new HashMap<>());
+    ((SpecificationBasedCheck) check).initialize(specificationLoader, reportedIssuesForCtx, mockDurationStatistics());
   }
 
   @TestFactory
@@ -78,7 +80,8 @@ public abstract class AbstractRuleExampleTest {
 
   private Executable analyzeExample(Rule rule, RuleExample ruleExample) {
     return () -> {
-      SensorContextTester context = sensorContext(check);
+      var context = sensorContext(check);
+      reportedIssuesForCtx.clear(); // all examples are independent unit tests; we don't need to track potential overlaps and can use the same filename for all
       String exampleFileName = ruleExample.getFileName() != null ? ruleExample.getFileName() : "file.txt";
       InputFileContext inputFileContext = new InputFileContext(context, inputFile(Path.of(exampleFileName), ruleExample.getText()));
 
