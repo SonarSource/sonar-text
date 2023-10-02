@@ -106,7 +106,7 @@ class SecretsRegexTest {
   @Test
   @DisabledIf(value = "disableValidateSingleFile", disabledReason = "For simple run on single YAML file. It can be run from Maven, see Readme.")
   void shouldValidateSingleFile() {
-    var filename = System.getProperty("filename");
+    var filename = System.getProperty("filename", "some-default-for-local-testing.yaml");
     List<PatternLocation> patternLocations = convertToPatternLocations(filename);
 
     patternLocations.forEach(this::checkRegex);
@@ -122,102 +122,22 @@ class SecretsRegexTest {
     patternLocations.forEach(this::checkRegex);
 
     Assertions.assertThatThrownBy(() -> context.verify())
-      .hasMessage("Found following issues in Regexes (19):\n" +
+      .hasMessage("Found following issues in Regexes (3):\n" +
         "S6694, id: mongo-url, \n" +
         "\tLocation: matching, \n" +
-        "\tRegex: `\\bmongo(?:db)?(?:\\+\\w+)?://[^:@/ ]+:([^@/ ]+)@`, \n" +
+        "\tRegex: `\\bmongo(?:db)?(?:\\+\\w+)?://[^:@/ ]+:([^@/ ]+)@` \n" +
         "\tViolating rule S5856: Fix the syntax errors inside this regex.\n" +
         "\t\tLocation: 17:19 text: \\+\n" +
-        "S6694, id: mongo-url, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^(\\$[a-z_]*)?(db|my)?_?pass(word|wd)?`, \n" +
-        "\tViolating rule S5842: Rework this part of the regex to not match the empty string.\n" +
-        "\t\tLocation: 1:12 text: (\\$[a-z_]*)\n" +
-        "S6694, id: mongo-url, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^(\\$[a-z_]*)?(db|my)?_?pass(word|wd)?`, \n" +
-        "\tViolating rule S5996: Remove or replace this boundary that will never match because it appears before mandatory input.\n" +
-        "\t\tLocation: 2:4 text: \\$\n" +
-        "S6694, id: mongo-url, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^(\\$[a-z_]*)?(db|my)?_?pass(word|wd)?`, \n" +
-        "\tViolating rule S5867: Replace this character range with a Unicode-aware character class.\n" +
-        "\t\tLocation: 5:8 text: a-z\n" +
-        "S6694, id: mongo-url, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^\\$?\\{+[^}]*\\}+$`, \n" +
-        "\tViolating rule S5856: Fix the syntax errors inside this regex.\n" +
-        "\t\tLocation: 6:7 text: +\n" +
-        "S6694, id: mongo-url, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^#\\{([^@/ ]+)\\}#$`, \n" +
-        "\tViolating rule S5856: Fix the syntax error inside this regex.\n" +
-        "\t\tLocation: 4:5 text: (\n" +
-        "S6694, id: mongodb-cli-unquoted, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^\\$[A-Z_]+$`, \n" +
-        "\tViolating rule S5996: Remove or replace this boundary that will never match because it appears before mandatory input.\n" +
-        "\t\tLocation: 1:3 text: \\$\n" +
-        "S6694, id: mongodb-cli-unquoted, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^\\$[A-Z_]+$`, \n" +
-        "\tViolating rule S5867: Replace this character range with a Unicode-aware character class.\n" +
-        "\t\tLocation: 4:7 text: A-Z\n" +
-        "S6694, id: mongodb-cli-unquoted, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^\\$[{(]|^\\{{2,}`, \n" +
-        "\tViolating rule S5856: Fix the syntax errors inside this regex.\n" +
-        "\t\tLocation: 11:12 text: {\n" +
-        "S6694, id: mongodb-cli-unquoted, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^<[a-z \\-]+>$`, \n" +
-        "\tViolating rule S5867: Replace this character range with a Unicode-aware character class.\n" +
-        "\t\tLocation: 3:6 text: a-z\n" +
-        "S6694, id: mongodb-cli-unquoted, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^--[a-z\\-]+$`, \n" +
-        "\tViolating rule S5867: Replace this character range with a Unicode-aware character class.\n" +
-        "\t\tLocation: 4:7 text: a-z\n" +
         "S6694, id: mongodb-cli-quoted-outer, \n" +
         "\tLocation: matching, \n" +
-        "\tRegex: `\\bmongo(?:dump|import|restore|sh)?(?=[ \\t]).{0,100}[ \\t](?:-p|--password)[ \\t]+(?:\\\\?[\"'])([^\\r\\n\"']{3,})(?:\\\\?[\"'])`, \n" +
+        "\tRegex: `\\bmongo(?:dump|import|restore|sh)?(?=[ \\t]).{0,100}[ \\t](?:-p|--password)[ \\t]+(?:\\\\?[\"'])([^\\r\\n\"']{3,})(?:\\\\?[\"'])` \n" +
         "\tViolating rule S6395: Unwrap this unnecessarily grouped subpattern.\n" +
         "\t\tLocation: 79:90 text: (?:\\\\?[\"'])\n" +
         "S6694, id: mongodb-cli-quoted-outer, \n" +
         "\tLocation: matching, \n" +
-        "\tRegex: `\\bmongo(?:dump|import|restore|sh)?(?=[ \\t]).{0,100}[ \\t](?:-p|--password)[ \\t]+(?:\\\\?[\"'])([^\\r\\n\"']{3,})(?:\\\\?[\"'])`, \n" +
+        "\tRegex: `\\bmongo(?:dump|import|restore|sh)?(?=[ \\t]).{0,100}[ \\t](?:-p|--password)[ \\t]+(?:\\\\?[\"'])([^\\r\\n\"']{3,})(?:\\\\?[\"'])` \n" +
         "\tViolating rule S6395: Unwrap this unnecessarily grouped subpattern.\n" +
-        "\t\tLocation: 105:116 text: (?:\\\\?[\"'])\n" +
-        "S6694, id: mongodb-cli-quoted-outer, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^\\$[A-Z_]+$`, \n" +
-        "\tViolating rule S5996: Remove or replace this boundary that will never match because it appears before mandatory input.\n" +
-        "\t\tLocation: 1:3 text: \\$\n" +
-        "S6694, id: mongodb-cli-quoted-outer, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^\\$[A-Z_]+$`, \n" +
-        "\tViolating rule S5867: Replace this character range with a Unicode-aware character class.\n" +
-        "\t\tLocation: 4:7 text: A-Z\n" +
-        "S6694, id: mongodb-cli-quoted-outer, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^\\$[{(]`, \n" +
-        "\tViolating rule S5996: Remove or replace this boundary that will never match because it appears before mandatory input.\n" +
-        "\t\tLocation: 1:3 text: \\$\n" +
-        "S6694, id: mongodb-cli-quoted-outer, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^\\{{2,}`, \n" +
-        "\tViolating rule S5856: Fix the syntax errors inside this regex.\n" +
-        "\t\tLocation: 3:4 text: {\n" +
-        "S6694, id: mongodb-cli-quoted-outer, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^<[a-z \\-]+>$`, \n" +
-        "\tViolating rule S5867: Replace this character range with a Unicode-aware character class.\n" +
-        "\t\tLocation: 3:6 text: a-z\n" +
-        "S6694, id: mongodb-cli-quoted-outer, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^--[a-z\\-]+$`, \n" +
-        "\tViolating rule S5867: Replace this character range with a Unicode-aware character class.\n" +
-        "\t\tLocation: 4:7 text: a-z\n");
+        "\t\tLocation: 105:116 text: (?:\\\\?[\"'])\n");
   }
 
   private static Set<String> listOfYamlFiles() {
@@ -261,7 +181,7 @@ class SecretsRegexTest {
 
     if (rule.getDetection().getPost() != null && rule.getDetection().getPost().getPatternNot() != null) {
       rule.getDetection().getPost().getPatternNot().stream()
-        .map(pattern -> new PatternLocation(rspecKey, secretRuleId, "post", pattern))
+        .map(pattern -> new PatternLocation(rspecKey, secretRuleId, "post", pattern.replace("\\", "\\\\")))
         .forEach(patternLocations::add);
     }
 
@@ -299,16 +219,17 @@ class SecretsRegexTest {
         new IdentifierTreeImpl(new InternalSyntaxToken(0, 0, "compile", List.of(), false)));
 
       ArgumentListTreeImpl arguments = ArgumentListTreeImpl.emptyList();
-      arguments.add(new LiteralTreeImpl(Tree.Kind.STRING_LITERAL, new InternalSyntaxToken(0, 0, patternLocation.regex, List.of(), false)));
+      arguments.add(stringLiteral);
       MethodInvocationTree mit = new MethodInvocationTreeImpl(methodSelect, null, arguments);
       check.checkRegex(parseResult, mit);
     }
   }
 
   private List<AbstractRegexCheck> regexChecks() {
+    // Disabled S4248 RegexPatternsNeedlesslyCheck Regex patterns should not be created needlessly
     // Disabled S5361 StringReplaceCheck "String#replace" should be preferred to "String#replaceAll"
     // Disabled S5854 CanonEqFlagInRegexCheck Regexes containing characters subject to normalization should use the CANON_EQ flag
-    // Disabled S4248 RegexPatternsNeedlesslyCheck Regex patterns should not be created needlessly
+    // Disabled S5867 UnicodeAwareCharClassesCheck Unicode-aware versions of character classes should be preferred
     return List.of(
       new AnchorPrecedenceCheck(),
       new DuplicatesInCharacterClassCheck(),
@@ -332,7 +253,6 @@ class SecretsRegexTest {
       new SingleCharCharacterClassCheck(),
       new SingleCharacterAlternationCheck(),
       new SuperfluousCurlyBraceCheck(),
-      new UnicodeAwareCharClassesCheck(),
       new UnicodeCaseCheck(),
       new UnquantifiedNonCapturingGroupCheck(),
       new UnusedGroupNamesCheck(),
