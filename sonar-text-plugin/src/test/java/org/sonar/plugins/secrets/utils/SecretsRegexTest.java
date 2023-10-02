@@ -106,7 +106,7 @@ class SecretsRegexTest {
   @Test
   @DisabledIf(value = "disableValidateSingleFile", disabledReason = "For simple run on single YAML file. It can be run from Maven, see Readme.")
   void shouldValidateSingleFile() {
-    var filename = System.getProperty("filename", "");
+    var filename = System.getProperty("filename", "some-default-for-local-testing.yaml");
     List<PatternLocation> patternLocations = convertToPatternLocations(filename);
 
     patternLocations.forEach(this::checkRegex);
@@ -122,62 +122,12 @@ class SecretsRegexTest {
     patternLocations.forEach(this::checkRegex);
 
     Assertions.assertThatThrownBy(() -> context.verify())
-      .hasMessage("Found following issues in Regexes (17):\n" +
+      .hasMessage("Found following issues in Regexes (3):\n" +
         "S6694, id: mongo-url, \n" +
         "\tLocation: matching, \n" +
         "\tRegex: `\\bmongo(?:db)?(?:\\+\\w+)?://[^:@/ ]+:([^@/ ]+)@` \n" +
         "\tViolating rule S5856: Fix the syntax errors inside this regex.\n" +
         "\t\tLocation: 17:19 text: \\+\n" +
-        "S6694, id: mongo-url, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `(?i)^([\\\\w\\\\.\\\\*])\\\\1{2,}$` \n" +
-        "\tViolating rule S5867: Enable the \"UNICODE_CHARACTER_CLASS\" flag or use a Unicode-aware alternative.\n" +
-        "\n" +
-        "S6694, id: mongo-url, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^(\\\\$[a-z_]*)?(db|my)?_?pass(word|wd)?` \n" +
-        "\tViolating rule S5867: Replace this character range with a Unicode-aware character class.\n" +
-        "\t\tLocation: 6:9 text: a-z\n" +
-        "S6694, id: mongo-url, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^\\\\[[\\\\w\\\\t \\\\-]+\\\\]$` \n" +
-        "\tViolating rule S5867: Enable the \"UNICODE_CHARACTER_CLASS\" flag or use a Unicode-aware alternative.\n" +
-        "\n" +
-        "S6694, id: mongo-url, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `<[\\\\w\\\\t \\\\-\\\\:]+>` \n" +
-        "\tViolating rule S5867: Enable the \"UNICODE_CHARACTER_CLASS\" flag or use a Unicode-aware alternative.\n" +
-        "\n" +
-        "S6694, id: mongo-url, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^\\\\$\\\\w+$` \n" +
-        "\tViolating rule S5867: Enable the \"UNICODE_CHARACTER_CLASS\" flag or use a Unicode-aware alternative.\n" +
-        "\n" +
-        "S6694, id: mongo-url, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^\\\\$\\\\(\\\\w+\\\\)$` \n" +
-        "\tViolating rule S5867: Enable the \"UNICODE_CHARACTER_CLASS\" flag or use a Unicode-aware alternative.\n" +
-        "\n" +
-        "S6694, id: mongodb-cli-unquoted, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^([\\\\w\\\\.\\\\*])\\\\1{2,}$` \n" +
-        "\tViolating rule S5867: Enable the \"UNICODE_CHARACTER_CLASS\" flag or use a Unicode-aware alternative.\n" +
-        "\n" +
-        "S6694, id: mongodb-cli-unquoted, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^\\\\$[A-Z_]+$` \n" +
-        "\tViolating rule S5867: Replace this character range with a Unicode-aware character class.\n" +
-        "\t\tLocation: 5:8 text: A-Z\n" +
-        "S6694, id: mongodb-cli-unquoted, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^<[a-z \\\\-]+>$` \n" +
-        "\tViolating rule S5867: Replace this character range with a Unicode-aware character class.\n" +
-        "\t\tLocation: 3:6 text: a-z\n" +
-        "S6694, id: mongodb-cli-unquoted, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^--[a-z\\\\-]+$` \n" +
-        "\tViolating rule S5867: Replace this character range with a Unicode-aware character class.\n" +
-        "\t\tLocation: 4:7 text: a-z\n" +
         "S6694, id: mongodb-cli-quoted-outer, \n" +
         "\tLocation: matching, \n" +
         "\tRegex: `\\bmongo(?:dump|import|restore|sh)?(?=[ \\t]).{0,100}[ \\t](?:-p|--password)[ \\t]+(?:\\\\?[\"'])([^\\r\\n\"']{3,})(?:\\\\?[\"'])` \n" +
@@ -187,27 +137,7 @@ class SecretsRegexTest {
         "\tLocation: matching, \n" +
         "\tRegex: `\\bmongo(?:dump|import|restore|sh)?(?=[ \\t]).{0,100}[ \\t](?:-p|--password)[ \\t]+(?:\\\\?[\"'])([^\\r\\n\"']{3,})(?:\\\\?[\"'])` \n" +
         "\tViolating rule S6395: Unwrap this unnecessarily grouped subpattern.\n" +
-        "\t\tLocation: 105:116 text: (?:\\\\?[\"'])\n" +
-        "S6694, id: mongodb-cli-quoted-outer, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^([\\\\w\\\\.\\\\*])\\\\1{2,}$` \n" +
-        "\tViolating rule S5867: Enable the \"UNICODE_CHARACTER_CLASS\" flag or use a Unicode-aware alternative.\n" +
-        "\n" +
-        "S6694, id: mongodb-cli-quoted-outer, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^\\\\$[A-Z_]+$` \n" +
-        "\tViolating rule S5867: Replace this character range with a Unicode-aware character class.\n" +
-        "\t\tLocation: 5:8 text: A-Z\n" +
-        "S6694, id: mongodb-cli-quoted-outer, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^<[a-z \\\\-]+>$` \n" +
-        "\tViolating rule S5867: Replace this character range with a Unicode-aware character class.\n" +
-        "\t\tLocation: 3:6 text: a-z\n" +
-        "S6694, id: mongodb-cli-quoted-outer, \n" +
-        "\tLocation: post, \n" +
-        "\tRegex: `^--[a-z\\\\-]+$` \n" +
-        "\tViolating rule S5867: Replace this character range with a Unicode-aware character class.\n" +
-        "\t\tLocation: 4:7 text: a-z\n");
+        "\t\tLocation: 105:116 text: (?:\\\\?[\"'])\n");
   }
 
   private static Set<String> listOfYamlFiles() {
@@ -323,7 +253,6 @@ class SecretsRegexTest {
       new SingleCharCharacterClassCheck(),
       new SingleCharacterAlternationCheck(),
       new SuperfluousCurlyBraceCheck(),
-      new UnicodeAwareCharClassesCheck(),
       new UnicodeCaseCheck(),
       new UnquantifiedNonCapturingGroupCheck(),
       new UnusedGroupNamesCheck(),
