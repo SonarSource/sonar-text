@@ -48,7 +48,7 @@ public class TestRegexScannerContext implements JavaFileScannerContext, RegexSca
     if (!issues.isEmpty()) {
       StringBuilder message = new StringBuilder(String.format("Found following issues in Regexes (%s):\n", issues.size()));
       for (Issue issue : issues) {
-        var msg = String.format("%s, id: %s, \n\tLocation: %s, \n\tRegex: `%s`, \n\tViolating rule %s: %s\n",
+        var msg = String.format("%s, id: %s, \n\tLocation: %s, \n\tRegex: `%s` \n\tViolating rule %s: %s\n",
           issue.secretRuleKey,
           issue.secretRuleId,
           issue.location,
