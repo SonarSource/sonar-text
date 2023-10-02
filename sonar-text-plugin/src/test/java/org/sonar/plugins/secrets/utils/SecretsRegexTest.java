@@ -122,22 +122,17 @@ class SecretsRegexTest {
     patternLocations.forEach(this::checkRegex);
 
     Assertions.assertThatThrownBy(() -> context.verify())
-      .hasMessage("Found following issues in Regexes (3):\n" +
-        "S6694, id: mongo-url, \n" +
-        "\tLocation: matching, \n" +
-        "\tRegex: `\\bmongo(?:db)?(?:\\+\\w+)?://[^:@/ ]+:([^@/ ]+)@` \n" +
-        "\tViolating rule S5856: Fix the syntax errors inside this regex.\n" +
-        "\t\tLocation: 17:19 text: \\+\n" +
+      .hasMessage("Found following issues in Regexes (2):\n" +
         "S6694, id: mongodb-cli-quoted-outer, \n" +
         "\tLocation: matching, \n" +
-        "\tRegex: `\\bmongo(?:dump|import|restore|sh)?(?=[ \\t]).{0,100}[ \\t](?:-p|--password)[ \\t]+(?:\\\\?[\"'])([^\\r\\n\"']{3,})(?:\\\\?[\"'])` \n" +
+        "\tRegex: `\\\\bmongo(?:dump|import|restore|sh)?(?=[ \\\\t]).{0,100}[ \\\\t](?:-p|--password)[ \\\\t]+(?:\\\\\\\\?[\"'])([^\\\\r\\\\n\"']{3,})(?:\\\\\\\\?[\"'])` \n" +
         "\tViolating rule S6395: Unwrap this unnecessarily grouped subpattern.\n" +
-        "\t\tLocation: 79:90 text: (?:\\\\?[\"'])\n" +
+        "\t\tLocation: 83:96 text: (?:\\\\\\\\?[\"'])\n" +
         "S6694, id: mongodb-cli-quoted-outer, \n" +
         "\tLocation: matching, \n" +
-        "\tRegex: `\\bmongo(?:dump|import|restore|sh)?(?=[ \\t]).{0,100}[ \\t](?:-p|--password)[ \\t]+(?:\\\\?[\"'])([^\\r\\n\"']{3,})(?:\\\\?[\"'])` \n" +
+        "\tRegex: `\\\\bmongo(?:dump|import|restore|sh)?(?=[ \\\\t]).{0,100}[ \\\\t](?:-p|--password)[ \\\\t]+(?:\\\\\\\\?[\"'])([^\\\\r\\\\n\"']{3,})(?:\\\\\\\\?[\"'])` \n" +
         "\tViolating rule S6395: Unwrap this unnecessarily grouped subpattern.\n" +
-        "\t\tLocation: 105:116 text: (?:\\\\?[\"'])\n");
+        "\t\tLocation: 113:126 text: (?:\\\\\\\\?[\"'])\n");
   }
 
   private static Set<String> listOfYamlFiles() {
@@ -173,7 +168,11 @@ class SecretsRegexTest {
 
     List<PatternLocation> patternLocations = new ArrayList<>();
     if (rule.getDetection().getMatching() != null) {
-      patternLocations.add(new PatternLocation(rspecKey, secretRuleId, "matching", rule.getDetection().getMatching().getPattern()));
+      patternLocations.add(new PatternLocation(
+        rspecKey,
+        secretRuleId,
+        "matching",
+        rule.getDetection().getMatching().getPattern().replace("\\", "\\\\")));
     }
 
     Match context = rule.getDetection().getMatching().getContext();
