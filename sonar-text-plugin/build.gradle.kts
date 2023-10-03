@@ -83,9 +83,9 @@ tasks.shadowJar {
   exclude("META-INF/*.SF")
   exclude("LICENSE*")
   exclude("NOTICE*")
-//  doLast {
-//    enforceJarSizeAndCheckContent(shadowJar.get().archiveFile.get().asFile, 39_500_000L, 41_000_000L)
-//  }
+  doLast {
+    enforceJarSize(tasks.shadowJar.get().archiveFile.get().asFile, 31_500_000L, 32_500_000L)
+  }
 }
 
 artifacts {
@@ -100,5 +100,14 @@ publishing {
     }
     artifact(tasks.sourcesJar)
     artifact(tasks.javadocJar)
+  }
+}
+
+fun enforceJarSize(file: File, minSize: Long, maxSize: Long) {
+  val size = file.length()
+  if (size < minSize) {
+    throw GradleException("${file.path} size ($size) too small. Min is $minSize")
+  } else if (size > maxSize) {
+    throw GradleException("${file.path} size ($size) too large. Max is $maxSize")
   }
 }
