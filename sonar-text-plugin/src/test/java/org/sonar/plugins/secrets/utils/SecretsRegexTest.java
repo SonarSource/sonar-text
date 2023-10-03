@@ -134,7 +134,7 @@ class SecretsRegexTest {
 
   private static Set<String> listOfYamlFiles() {
     Path specificationsDirectory = Path.of(CONFIGURATION_FILES_PATH);
-    String[] extensionsToSearchFor = new String[]{"yaml"};
+    String[] extensionsToSearchFor = new String[] {"yaml"};
     Collection<File> files = FileUtils.listFiles(new File(specificationsDirectory.toUri()), extensionsToSearchFor, false);
     return files.stream().map(File::getName).collect(Collectors.toSet());
   }

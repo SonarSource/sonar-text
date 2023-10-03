@@ -25,6 +25,12 @@ This component helps you prevent the leakage of secrets even before you push the
 ./gradlew build
 ```
 
+Apply code formatting
+
+```shell
+./gradlew spotlessApply
+```
+
 ### Plugin Integration tests
 
 ```shell
