@@ -2,6 +2,7 @@ plugins {
   id("org.sonarsource.text.java-conventions")
   id("org.sonarsource.text.artifactory-configuration")
   id("org.sonarsource.text.code-style-convention")
+  jacoco
   id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
@@ -26,6 +27,24 @@ description = "SonarSource Text Analyzer :: Plugin"
 
 tasks.test {
   useJUnitPlatform()
+}
+
+jacoco {
+  toolVersion = "0.8.10"
+}
+
+tasks.jacocoTestReport {
+  dependsOn(tasks.test)
+  reports {
+    xml.required.set(true)
+    csv.required.set(false)
+    html.required.set(false)
+  }
+}
+
+// when subproject has Jacoco plugin applied we want to generate XML report for coverage
+plugins.withType<JacocoPlugin> {
+  tasks["test"].finalizedBy("jacocoTestReport")
 }
 
 // used to be done by sonar-packaging maven plugin
