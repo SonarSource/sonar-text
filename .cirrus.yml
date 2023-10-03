@@ -156,7 +156,6 @@ promote_task:
     - source cirrus-env PROMOTE
     - curl -sSLf -H "Authorization: Bearer $GCF_ACCESS_TOKEN" "$PROMOTE_URL/$GITHUB_REPO/$GITHUB_BRANCH/$BUILD_NUMBER/$PULL_REQUEST"
     - burgr-notify-promotion
-  <<: *CLEANUP_GRADLE_CACHE_SCRIPT
 
 build_and_release_dotnet_task:
   <<: *ONLY_IF_SONARSOURCE_QA
