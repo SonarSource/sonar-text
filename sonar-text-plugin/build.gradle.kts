@@ -27,6 +27,13 @@ description = "SonarSource Text Analyzer :: Plugin"
 
 tasks.test {
   useJUnitPlatform()
+  // pass the filename property to SecretsRegexTest
+  systemProperty("filename", System.getProperty("filename"))
+  testLogging {
+    exceptionFormat =
+      org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL // log the full stack trace (default is the 1st line of the stack trace)
+    events("skipped", "failed") // verbose log for failed and skipped tests (by default the name of the tests are not logged)
+  }
 }
 
 jacoco {

@@ -37,17 +37,6 @@ This component helps you prevent the leakage of secrets even before you push the
 ./gradlew :its:plugin -Dsonar.runtimeVersion=LATEST_RELEASE
 ```
 
-### Check if dependencies need to be updated
-
-If you have a `~/.m2/settings.xml` containing some private servers and repositories, it's safer to use
-a custom empty `settings.xml` to only look for latest version publicly available on maven central.
-
-```shell
-echo "<settings/>" > empty-settings.xml
-mvn -s empty-settings.xml versions:display-dependency-updates
-rm empty-settings.xml
-```
-
 ### Update rule description
 
 Update all rule descriptions.
@@ -58,11 +47,12 @@ Update all rule descriptions.
 
 There are also tasks: `ruleApiUpdateSecrets` and `ruleApiUpdateText` for updating Secrets and Text rule descriptions.
 
-For updating only one Secret or Text rule:
+### Generate new rule description
 
+To fetch static files for a rule SXXXX from RSPEC, execute the one of following command:
 ```shell
-./gradlew ruleApiUpdateRuleSecrets -Prule=S6389
-./gradlew ruleApiUpdateRuleText -Prule=S6389
+./gradlew ruleApiUpdateRuleSecrets -Prule=SXXXX
+./gradlew ruleApiUpdateRuleText -Prule=SXXXX
 ```
 
 ### Generate files to include new secrets
@@ -76,13 +66,6 @@ The `<minsize>` and `<maxsize>` can be changed in `sonar-text-plugin/pom.xml`.
 ./secretSpecificationInclusionGenerator.sh
 ```
 
-### Generate new rule description
-
-To fetch static files for a rule SXXXX from RSPEC, execute the following command:
-```shell
-mvn exec:exec@generate --non-recursive -Penable-rule-api -Drules-metadata.directory=sonarpedia-secrets -DruleId=SXXXX
-```
-
 ### Verify Regexes
 
 The Regular Expressions provided in secrets specification should be verified to avoid catastrophic backtracking and other issues.
@@ -94,7 +77,7 @@ Currently, tests are disabled, as the issues need to be reviewed first.
 There is also a way of running this check from command line.
 
 ```shell
-mvn test -Dtest=SecretsRegexTest#shouldValidateSingleFile -DargLine="-Dfilename=google-oauth2.yaml"
+./gradlew clean test --console plain -Dorg.gradle.caching=false --tests SecretsRegexTest.shouldValidateSingleFile -Dfilename=google-oauth2.yaml
 ```
 
 ### License
