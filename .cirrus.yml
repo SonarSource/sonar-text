@@ -52,12 +52,12 @@ linux_1_cpu_1G_template: &LINUX_1_CPU_1G
     cpu: 1
     memory: 1G
 
-linux_2_cpu_4G_java_17_template: &LINUX_2_CPU_4G_JAVA_17
+linux_2_cpu_6G_java_17_template: &LINUX_2_CPU_6G_JAVA_17
   eks_container:
     <<: *LINUX_IMAGE
     image: ${CIRRUS_AWS_ACCOUNT}.dkr.ecr.eu-central-1.amazonaws.com/base:j17-latest
     cpu: 2
-    memory: 4G
+    memory: 6G
 
 only_sonarsource_qa: &ONLY_IF_SONARSOURCE_QA
   only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_PR != "" || $CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*" || $CIRRUS_BRANCH =~ "dogfood-on-.*")
@@ -82,7 +82,7 @@ cleanup_gradle_cache_script_template: &CLEANUP_GRADLE_CACHE_SCRIPT
 
 build_task:
   <<: *ONLY_IF_SONARSOURCE_QA
-  <<: *LINUX_2_CPU_4G_JAVA_17
+  <<: *LINUX_2_CPU_6G_JAVA_17
   env:
     SIGN_KEY: VAULT[development/kv/data/sign data.key]
     PGP_PASSPHRASE: VAULT[development/kv/data/sign data.passphrase]
@@ -116,7 +116,7 @@ ws_scan_task:
 
 qa_plugin_task:
   <<: *QA_TASK_FILTER
-  <<: *LINUX_2_CPU_4G_JAVA_17
+  <<: *LINUX_2_CPU_6G_JAVA_17
   env:
     matrix:
     - SQ_VERSION: LATEST_RELEASE
@@ -129,7 +129,7 @@ qa_plugin_task:
 
 qa_ruling_task:
   <<: *QA_TASK_FILTER
-  <<: *LINUX_2_CPU_4G_JAVA_17
+  <<: *LINUX_2_CPU_6G_JAVA_17
   <<: *SETUP_GRADLE_CACHE
   ruling_script:
     - source cirrus-env QA
