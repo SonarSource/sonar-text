@@ -5,8 +5,8 @@ repositories {
     url = project.uri("https://repox.jfrog.io/repox/sonarsource-private-releases")
     authentication {
       credentials {
-        val artifactoryUsername: String by project
-        val artifactoryPassword: String by project
+        val artifactoryUsername: String? by project
+        val artifactoryPassword: String? by project
         username = artifactoryUsername
         password = artifactoryPassword
       }
