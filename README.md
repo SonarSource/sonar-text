@@ -50,9 +50,19 @@ rm empty-settings.xml
 
 ### Update rule description
 
+Update all rule descriptions.
+
 ```shell
-mvn exec:exec@update --non-recursive -Penable-rule-api -Drules-metadata.directory=sonarpedia-secrets
-mvn exec:exec@update --non-recursive -Penable-rule-api -Drules-metadata.directory=sonarpedia-text
+./gradlew ruleApiUpdate
+```
+
+There are also tasks: `ruleApiUpdateSecrets` and `ruleApiUpdateText` for updating Secrets and Text rule descriptions.
+
+For updating only one Secret or Text rule:
+
+```shell
+./gradlew ruleApiUpdateRuleSecrets -Prule=S6389
+./gradlew ruleApiUpdateRuleText -Prule=S6389
 ```
 
 ### Generate files to include new secrets

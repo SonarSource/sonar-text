@@ -84,7 +84,7 @@ tasks.shadowJar {
   exclude("LICENSE*")
   exclude("NOTICE*")
   doLast {
-    enforceJarSize(tasks.shadowJar.get().archiveFile.get().asFile, 31_500_000L, 32_500_000L)
+    enforceJarSize(tasks.shadowJar.get().archiveFile.get().asFile, 3_000_000L, 3_500_000L)
   }
 }
 
