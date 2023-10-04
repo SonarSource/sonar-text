@@ -1,0 +1,20 @@
+import com.diffplug.blowdryer.Blowdryer
+
+plugins {
+  id("com.diffplug.spotless")
+}
+
+spotless {
+  encoding(Charsets.UTF_8)
+  java {
+    eclipse("4.21.0")
+      .configFile(
+        Blowdryer.immutableUrl(
+          "https://raw.githubusercontent.com/SonarSource/sonar-developer-toolset/master/eclipse/sonar-formatter.xml"
+        )
+      )
+    licenseHeaderFile(rootProject.file("LICENSE_HEADER")).updateYearWithLatest(true)
+  }
+}
+
+tasks.check { dependsOn("spotlessCheck") }

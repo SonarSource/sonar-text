@@ -24,7 +24,9 @@ import com.sonar.orchestrator.build.SonarScanner;
 import com.sonar.orchestrator.locator.FileLocation;
 import com.sonar.orchestrator.locator.MavenLocation;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -38,18 +40,19 @@ public class TextRulingTest {
   private static final String SQ_VERSION_PROPERTY = "sonar.runtimeVersion";
   private static final String DEFAULT_SQ_VERSION = "LATEST_RELEASE";
   private static final String LITS_PLUGIN_VERSION = "0.11.0.2659";
-  private static final File LITS_DIFFERENCES_FILE = FileLocation.of("target/differences").getFile();
+  private static final File LITS_OUTPUT_DIRECTORY = FileLocation.of("build/reports/lits").getFile();
+  private static final File LITS_DIFFERENCES_FILE = Path.of(LITS_OUTPUT_DIRECTORY.toURI()).resolve("differences").toFile();
 
   @ClassRule
   public static Orchestrator ORCHESTRATOR = Orchestrator.builderEnv()
     .useDefaultAdminCredentialsForBuilds(true)
     .setSonarVersion(System.getProperty(SQ_VERSION_PROPERTY, DEFAULT_SQ_VERSION))
-    .addPlugin(FileLocation.byWildcardMavenFilename(new File("../../sonar-text-plugin/target"), "sonar-text-plugin-*.jar"))
+    .addPlugin(FileLocation.byWildcardMavenFilename(new File("../../sonar-text-plugin/build/libs"), "sonar-text-plugin-*-all.jar"))
     .addPlugin(MavenLocation.of("org.sonarsource.sonar-lits-plugin", "sonar-lits-plugin", LITS_PLUGIN_VERSION))
     .build();
 
   @BeforeClass
-  public static void prepare_quality_profile() {
+  public static void prepare_quality_profile() throws IOException {
     ProfileGenerator.RulesConfiguration parameters = new ProfileGenerator.RulesConfiguration();
 
     String serverUrl = ORCHESTRATOR.getServer().getUrl();
@@ -57,6 +60,8 @@ public class TextRulingTest {
     ORCHESTRATOR.getServer().restoreProfile(FileLocation.of(textProfileFile));
     File secretsProfileFile = ProfileGenerator.generateProfile(serverUrl, "secrets", "secrets", parameters, Collections.emptySet());
     ORCHESTRATOR.getServer().restoreProfile(FileLocation.of(secretsProfileFile));
+
+    Files.createDirectories(Path.of(LITS_DIFFERENCES_FILE.getParentFile().toURI()));
   }
 
   @Test
@@ -70,8 +75,9 @@ public class TextRulingTest {
       .setProjectVersion("1")
       .setSourceDirs(".")
       .setSourceEncoding("UTF-8")
+      .setDebugLogs(true)
       .setProperty("sonar.lits.dump.old", FileLocation.of("src/test/resources/expected").getFile().getAbsolutePath())
-      .setProperty("sonar.lits.dump.new", FileLocation.of("target/actual").getFile().getAbsolutePath())
+      .setProperty("sonar.lits.dump.new", FileLocation.of(LITS_OUTPUT_DIRECTORY + "/actual").getFile().getAbsolutePath())
       .setProperty("sonar.text.analyzeAllFiles", "true")
       .setProperty("sonar.cpd.exclusions", "**/*")
       .setProperty("sonar.lits.differences", LITS_DIFFERENCES_FILE.getAbsolutePath())

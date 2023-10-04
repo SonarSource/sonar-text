@@ -20,42 +20,45 @@ This component helps you prevent the leakage of secrets even before you push the
 *Prerequisite*
 
 - Java 11
-- maven
 
 ```shell
-mvn clean install
+./gradlew build
+```
+
+Apply code formatting
+
+```shell
+./gradlew spotlessApply
 ```
 
 ### Plugin Integration tests
 
 ```shell
-cd its/ruling
-mvn verify -Dsonar.runtimeVersion=LATEST_RELEASE -B -e -V
+./gradlew :its:plugin:test -Penable_its=true -Dsonar.runtimeVersion=LATEST_RELEASE
 ```
 
 ### Rules Integration tests
 
 ```shell
-cd its/plugin
-mvn verify -Dsonar.runtimeVersion=LATEST_RELEASE -B -e -V
-```
-
-### Check if dependencies need to be updated
-
-If you have a `~/.m2/settings.xml` containing some private servers and repositories, it's safer to use
-a custom empty `settings.xml` to only look for latest version publicly available on maven central.
-
-```shell
-echo "<settings/>" > empty-settings.xml
-mvn -s empty-settings.xml versions:display-dependency-updates
-rm empty-settings.xml
+./gradlew :its:ruling:test -Penable_its=true -Dsonar.runtimeVersion=LATEST_RELEASE
 ```
 
 ### Update rule description
 
+Update all rule descriptions.
+
 ```shell
-mvn exec:exec@update --non-recursive -Penable-rule-api -Drules-metadata.directory=sonarpedia-secrets
-mvn exec:exec@update --non-recursive -Penable-rule-api -Drules-metadata.directory=sonarpedia-text
+./gradlew ruleApiUpdate
+```
+
+There are also tasks: `ruleApiUpdateSecrets` and `ruleApiUpdateText` for updating Secrets and Text rule descriptions.
+
+### Generate new rule description
+
+To fetch static files for a rule SXXXX from RSPEC, execute the one of following command:
+```shell
+./gradlew ruleApiUpdateRuleSecrets -Prule=SXXXX
+./gradlew ruleApiUpdateRuleText -Prule=SXXXX
 ```
 
 ### Generate files to include new secrets
@@ -69,13 +72,6 @@ The `<minsize>` and `<maxsize>` can be changed in `sonar-text-plugin/pom.xml`.
 ./secretSpecificationInclusionGenerator.sh
 ```
 
-### Generate new rule description
-
-To fetch static files for a rule SXXXX from RSPEC, execute the following command:
-```shell
-mvn exec:exec@generate --non-recursive -Penable-rule-api -Drules-metadata.directory=sonarpedia-secrets -DruleId=SXXXX
-```
-
 ### Verify Regexes
 
 The Regular Expressions provided in secrets specification should be verified to avoid catastrophic backtracking and other issues.
@@ -87,7 +83,7 @@ Currently, tests are disabled, as the issues need to be reviewed first.
 There is also a way of running this check from command line.
 
 ```shell
-mvn test -Dtest=SecretsRegexTest#shouldValidateSingleFile -DargLine="-Dfilename=google-oauth2.yaml"
+./gradlew --rerun-tasks :sonar-text-plugin:test --console plain --tests SecretsRegexTest.shouldValidateSingleFile -Dfilename=google-oauth2.yaml
 ```
 
 ### License

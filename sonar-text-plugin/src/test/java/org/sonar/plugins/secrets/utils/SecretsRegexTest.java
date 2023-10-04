@@ -56,7 +56,6 @@ import org.sonar.java.checks.regex.ReluctantQuantifierWithEmptyContinuationCheck
 import org.sonar.java.checks.regex.SingleCharCharacterClassCheck;
 import org.sonar.java.checks.regex.SingleCharacterAlternationCheck;
 import org.sonar.java.checks.regex.SuperfluousCurlyBraceCheck;
-import org.sonar.java.checks.regex.UnicodeAwareCharClassesCheck;
 import org.sonar.java.checks.regex.UnicodeCaseCheck;
 import org.sonar.java.checks.regex.UnquantifiedNonCapturingGroupCheck;
 import org.sonar.java.checks.regex.UnusedGroupNamesCheck;
@@ -78,8 +77,6 @@ import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombination
 import org.sonar.plugins.secrets.configuration.model.matching.Match;
 import org.sonarsource.analyzer.commons.regex.RegexParser;
 import org.sonarsource.analyzer.commons.regex.ast.FlagSet;
-
-import static org.assertj.core.api.Fail.fail;
 
 class SecretsRegexTest {
 
