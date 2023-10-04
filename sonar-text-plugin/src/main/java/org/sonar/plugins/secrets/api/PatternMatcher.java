@@ -26,10 +26,18 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.sonar.plugins.secrets.api.task.ExecutorServiceManager;
+import org.sonar.plugins.secrets.api.task.InterruptibleCharSequence;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 
 public class PatternMatcher {
+  private static final Logger LOG = LoggerFactory.getLogger(PatternMatcher.class);
+  private static final ExecutorServiceManager EXECUTOR = new ExecutorServiceManager();
+  private static final int TIMEOUT_MS = 1000;
+  private static final int UNINTERRUPTIBLE_TIMEOUT_MS = 10000;
   private final Pattern pattern;
 
   PatternMatcher(@Nullable String stringPattern) {
@@ -56,17 +64,24 @@ public class PatternMatcher {
       return Collections.emptyList();
     }
     List<Match> matches = new ArrayList<>();
-    Matcher matcher = pattern.matcher(content);
+    Matcher matcher = pattern.matcher(new InterruptibleCharSequence(content));
 
-    while (matcher.find()) {
-      MatchResult matchResult = matcher.toMatchResult();
-      if (matcher.groupCount() == 0) {
-        matches.add(new Match(matchResult.group(), matchResult.start(), matchResult.end()));
-      } else {
-        matches.add(new Match(matchResult.group(1), matchResult.start(1), matchResult.end(1)));
+    boolean executedSuccessfully = EXECUTOR.runWithTimeout(TIMEOUT_MS, UNINTERRUPTIBLE_TIMEOUT_MS, () -> {
+      while (matcher.find()) {
+        MatchResult matchResult = matcher.toMatchResult();
+        if (matcher.groupCount() == 0) {
+          matches.add(new Match(matchResult.group(), matchResult.start(), matchResult.end()));
+        } else {
+          matches.add(new Match(matchResult.group(1), matchResult.start(1), matchResult.end(1)));
+        }
       }
-    }
-    return matches;
-  }
+    });
 
+    if (executedSuccessfully) {
+      return matches;
+    } else {
+      LOG.error("Running pattern '{}' on content({}) has timed out ({}ms)", pattern.pattern(), content.length(), TIMEOUT_MS);
+      return Collections.emptyList();
+    }
+  }
 }
