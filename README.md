@@ -34,13 +34,13 @@ Apply code formatting
 ### Plugin Integration tests
 
 ```shell
-./gradlew :its:ruling -Dsonar.runtimeVersion=LATEST_RELEASE
+./gradlew :its:plugin:test -Penable_its=true -Dsonar.runtimeVersion=LATEST_RELEASE
 ```
 
 ### Rules Integration tests
 
 ```shell
-./gradlew :its:plugin -Dsonar.runtimeVersion=LATEST_RELEASE
+./gradlew :its:ruling:test -Penable_its=true -Dsonar.runtimeVersion=LATEST_RELEASE
 ```
 
 ### Update rule description
@@ -83,7 +83,7 @@ Currently, tests are disabled, as the issues need to be reviewed first.
 There is also a way of running this check from command line.
 
 ```shell
-./gradlew clean test --console plain -Dorg.gradle.caching=false --tests SecretsRegexTest.shouldValidateSingleFile -Dfilename=google-oauth2.yaml
+./gradlew --rerun-tasks :sonar-text-plugin:test --console plain --tests SecretsRegexTest.shouldValidateSingleFile -Dfilename=google-oauth2.yaml
 ```
 
 ### License

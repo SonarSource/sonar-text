@@ -3,9 +3,6 @@ plugins {
   id("org.sonarqube")
 }
 
-group = "org.sonarsource.text"
-version = "2.5-SNAPSHOT"
-
 java {
   withSourcesJar()
   withJavadocJar()

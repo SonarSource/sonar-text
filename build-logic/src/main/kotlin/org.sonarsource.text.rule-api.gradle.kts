@@ -20,27 +20,23 @@ dependencies {
   ruleApi("com.sonarsource.rule-api:rule-api:${rulApiVersion}")
 }
 
-val ruleApiUpdateSecrets = tasks.register<Exec>("ruleApiUpdateSecrets") {
+val ruleApiUpdateSecrets = tasks.register<JavaExec>("ruleApiUpdateSecrets") {
   description = "Update secret rules description"
   group = "Rule API"
   workingDir = file("${projectDir}/sonarpedia-secrets")
+  classpath = ruleApi
 
-  commandLine("java",
-    "-classpath",
-    ruleApi.resolve().first(),
-    "com.sonarsource.ruleapi.Main",
+  args("com.sonarsource.ruleapi.Main",
     "update")
 }
 
-val ruleApiUpdateText = tasks.register<Exec>("ruleApiUpdateText") {
+val ruleApiUpdateText = tasks.register<JavaExec>("ruleApiUpdateText") {
   description = "Update text rules description"
   group = "Rule API"
   workingDir = file("${projectDir}/sonarpedia-text")
+  classpath = ruleApi
 
-  commandLine("java",
-    "-classpath",
-    ruleApi.resolve().first(),
-    "com.sonarsource.ruleapi.Main",
+  args("com.sonarsource.ruleapi.Main",
     "update")
 }
 
@@ -50,34 +46,30 @@ tasks.register("ruleApiUpdate") {
   dependsOn(ruleApiUpdateSecrets, ruleApiUpdateText)
 }
 
-val rule: String by project
+val rule: String? by project
 
-tasks.register<Exec>("ruleApiUpdateRuleSecrets") {
+tasks.register<JavaExec>("ruleApiUpdateRuleSecrets") {
   description = "Update rule description for secret"
   group = "Rule API"
   workingDir = file("${projectDir}/sonarpedia-secrets")
+  classpath = ruleApi
 
-  commandLine("java",
-    "-classpath",
-    ruleApi.resolve().first(),
-    "com.sonarsource.ruleapi.Main",
+  args("com.sonarsource.ruleapi.Main",
     "generate",
     "-rule",
-    rule
+    rule.orEmpty()
   )
 }
 
-tasks.register<Exec>("ruleApiUpdateRuleText") {
+tasks.register<JavaExec>("ruleApiUpdateRuleText") {
   description = "Update rule description for text"
   group = "Rule API"
   workingDir = file("${projectDir}/sonarpedia-text")
+  classpath = ruleApi
 
-  commandLine("java",
-    "-classpath",
-    ruleApi.resolve().first(),
-    "com.sonarsource.ruleapi.Main",
+  args("com.sonarsource.ruleapi.Main",
     "generate",
     "-rule",
-    rule
+    rule.orEmpty()
   )
 }
