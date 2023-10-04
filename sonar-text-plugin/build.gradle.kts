@@ -4,6 +4,7 @@ plugins {
   id("org.sonarsource.text.code-style-convention")
   jacoco
   id("com.github.johnrengelman.shadow") version "8.1.1"
+  id("org.sonarsource.text.sonarqube")
 }
 
 dependencies {
