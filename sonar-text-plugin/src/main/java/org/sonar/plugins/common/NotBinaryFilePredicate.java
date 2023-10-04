@@ -440,7 +440,6 @@ public class NotBinaryFilePredicate implements FilePredicate {
     int len = filename.length();
     return ( /* md5 */ len == 32 || /* sha1 */ len == 40 || /* sha256 */ len == 64 || /* sha512 */ len == 128) &&
       HEX_REGEX.matcher(filename).matches() && EntropyChecker.calculateShannonEntropy(filename) > MD5_AND_SHA_MIN_ENTROPY;
-
   }
 
   public void addBinaryFileExtension(String extension) {
@@ -455,5 +454,4 @@ public class NotBinaryFilePredicate implements FilePredicate {
     }
     return filename.substring(dotPos + 1).toLowerCase(Locale.ROOT);
   }
-
 }

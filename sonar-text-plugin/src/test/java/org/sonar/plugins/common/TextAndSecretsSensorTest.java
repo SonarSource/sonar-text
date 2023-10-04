@@ -147,7 +147,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void issue_should_not_be_raised_twice_on_same_line() {
+  void issueShouldNotBeRaisedTwiceOnSameLine() {
     @Rule(key = "IssueAtLineOne")
     class ReportDuplicatedIssuesCheck extends TextCheck {
       public void analyze(InputFileContext ctx) {
@@ -247,6 +247,53 @@ class TextAndSecretsSensorTest {
 
     // does not even contain "1/1 source file has been analyzed"
     assertThat(logTester.logs()).isEmpty();
+  }
+
+  @Test
+  void shouldExecuteChecksOnIncludedTextFileNames() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setSettings(new MapSettings().setProperty("sonar.text.include.file.suffixes", "txt"));
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), "abc", null));
+    assertThat(logTester.logs()).contains("1 source file to be analyzed");
+  }
+
+  @Test
+  void shouldNotExecuteChecksOnNonIncludedTextFileNames() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setSettings(new MapSettings().setProperty("sonar.text.include.file.suffixes", "csv"));
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), "abc", null));
+    assertThat(logTester.logs()).isEmpty();
+  }
+
+  @Test
+  void shouldExecuteChecksOnMultipleIncludedTextFileNames() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setSettings(new MapSettings().setProperty("sonar.text.include.file.suffixes", "txt,csv"));
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    analyse(sensor(check), context,
+      inputFile(Path.of("Foo.txt"), "abc", null),
+      inputFile(Path.of("Foo.csv"), "abc", null),
+      inputFile(Path.of("Foo.nope"), "abc", null));
+    assertThat(logTester.logs()).containsExactly(
+      "2 source files to be analyzed",
+      "2/2 source files have been analyzed");
+  }
+
+  @Test
+  void shouldExecuteChecksOnIncludedTextFileNamesWithBinaryData() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setSettings(new MapSettings().setProperty("sonar.text.include.file.suffixes", "txt"));
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null));
+    assertThat(logTester.logs()).containsExactly(
+      "1 source file to be analyzed",
+      "1/1 source file has been analyzed");
   }
 
   @Test

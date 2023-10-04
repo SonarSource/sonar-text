@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.common;
 
+import java.util.List;
 import org.sonar.api.Plugin;
 import org.sonar.api.config.PropertyDefinition;
 import org.sonar.api.resources.Qualifiers;
@@ -34,15 +35,7 @@ public class TextAndSecretsPlugin implements Plugin {
     context.addExtensions(
       // Common
       TextAndSecretsSensor.class,
-      PropertyDefinition.builder(TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY)
-        .defaultValue("")
-        .category(TextAndSecretsSensor.TEXT_CATEGORY)
-        .name("Additional binary file suffixes")
-        .multiValues(true)
-        .description("Additional list of binary file suffixes that should not be analyzed with rules targeting text files.")
-        .subCategory("General")
-        .onQualifiers(Qualifiers.PROJECT)
-        .build(),
+      getProperties(),
 
       // Text
       TextLanguage.class,
@@ -53,5 +46,28 @@ public class TextAndSecretsPlugin implements Plugin {
       SecretsLanguage.class,
       SecretsRulesDefinition.class,
       SecretsRulesDefinition.DefaultQualityProfile.class);
+  }
+
+  public static List<PropertyDefinition> getProperties() {
+    return List.of(
+      PropertyDefinition.builder(TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY)
+        .defaultValue("")
+        .category(TextAndSecretsSensor.TEXT_CATEGORY)
+        .name("Additional binary file suffixes")
+        .multiValues(true)
+        .description("Additional list of binary file suffixes that should not be analyzed with rules targeting text files.")
+        .subCategory("General")
+        .onQualifiers(Qualifiers.PROJECT)
+        .build(),
+
+      PropertyDefinition.builder(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY)
+        .defaultValue(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_DEFAULT_VALUE)
+        .category(TextAndSecretsSensor.TEXT_CATEGORY)
+        .name("List of text file suffixes to include")
+        .multiValues(true)
+        .description("List of text file suffixes that should be analyzed with rules targeting text files, in addition to those associated to a language.")
+        .subCategory("General")
+        .onQualifiers(Qualifiers.PROJECT)
+        .build());
   }
 }

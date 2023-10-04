@@ -19,16 +19,11 @@
  */
 package org.sonar.plugins.common;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.sonar.api.SonarProduct;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.FileSystem;
@@ -42,23 +37,19 @@ import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.api.SpecificationLoader;
 import org.sonar.plugins.text.TextRuleDefinition;
-import org.sonarsource.analyzer.commons.ProgressReport;
 
 public class TextAndSecretsSensor implements Sensor {
 
-  private static final Logger LOG = LoggerFactory.getLogger(TextAndSecretsSensor.class);
-
   public static final String EXCLUDED_FILE_SUFFIXES_KEY = "sonar.text.excluded.file.suffixes";
-
   private static final String ANALYZE_ALL_FILES_KEY = "sonar.text.analyzeAllFiles";
+  public static final String INCLUDED_FILE_SUFFIXES_KEY = "sonar.text.include.file.suffixes";
+  public static final String INCLUDED_FILE_SUFFIXES_DEFAULT_VALUE = "sh,bash,zsh,ksh,ps1,yaml,yml,properties,conf,xml,pem,env,config";
 
   public static final String TEXT_CATEGORY = "Secrets";
 
   private static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
 
   private final CheckFactory checkFactory;
-
-  private boolean displayHelpAboutExcludingBinaryFile = true;
 
   private DurationStatistics durationStatistics;
 
@@ -76,6 +67,7 @@ public class TextAndSecretsSensor implements Sensor {
 
   @Override
   public void execute(SensorContext sensorContext) {
+    // Retrieve list of checks
     List<Check> activeChecks = getActiveChecks();
     durationStatistics = new DurationStatistics(sensorContext.config());
     initializeSpecificationBasedChecks(activeChecks);
@@ -83,41 +75,34 @@ public class TextAndSecretsSensor implements Sensor {
       return;
     }
 
-    NotBinaryFilePredicate notBinaryFilePredicate = binaryFilePredicate(sensorContext);
-    FilePredicate filePredicate = isSonarLintContext(sensorContext) || analyzeAllFiles(sensorContext)
-      ? notBinaryFilePredicate
-      : LANGUAGE_FILE_PREDICATE;
+    // Retrieve list of files to analyse using the right FilePredicate
+    boolean analyzeAllFiles = isSonarLintContext(sensorContext) || analyzeAllFiles(sensorContext);
+    var notBinaryFilePredicate = binaryFilePredicate(sensorContext);
+    var textFilePredicate = textFilePredicate(sensorContext);
+    FilePredicate filePredicate = analyzeAllFiles ? notBinaryFilePredicate : CombinedFilePredicate.any(LANGUAGE_FILE_PREDICATE, textFilePredicate);
     List<InputFile> inputFiles = getInputFiles(sensorContext, filePredicate);
     if (inputFiles.isEmpty()) {
       return;
     }
 
-    List<String> filenames = inputFiles.stream().map(InputFile::toString).collect(Collectors.toList());
-    ProgressReport progressReport = new ProgressReport("Progress of the text and secrets analysis", TimeUnit.SECONDS.toMillis(10));
-    progressReport.start(filenames);
-    boolean cancelled = false;
-    try {
-      for (InputFile inputFile : inputFiles) {
-        if (sensorContext.isCancelled()) {
-          cancelled = true;
-          break;
-        }
-        analyze(sensorContext, activeChecks, inputFile, notBinaryFilePredicate);
-        progressReport.nextFile();
-      }
-    } finally {
-      if (cancelled) {
-        progressReport.cancel();
-      } else {
-        progressReport.stop();
-      }
-    }
+    // Build the analyzer with the configuration
+    var analyzer = new Analyzer()
+      .sensorContext(sensorContext)
+      .activeChecks(activeChecks)
+      .analyzeAllFilesMode(analyzeAllFiles)
+      .notBinaryFilePredicate(notBinaryFilePredicate);
+
+    analyzer.analyzeFiles(inputFiles);
 
     durationStatistics.log();
   }
 
   private static NotBinaryFilePredicate binaryFilePredicate(SensorContext sensorContext) {
     return new NotBinaryFilePredicate(sensorContext.config().getStringArray(TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY));
+  }
+
+  private static TextFilePredicate textFilePredicate(SensorContext sensorContext) {
+    return new TextFilePredicate(sensorContext.config().getStringArray(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY));
   }
 
   private static boolean isSonarLintContext(SensorContext sensorContext) {
@@ -131,7 +116,7 @@ public class TextAndSecretsSensor implements Sensor {
   /**
    * In SonarLint context we want to analyze all non-binary input files, even when they are not analyzed or assigned to a language.
    * To avoid analyzing all non-binary files to reduce time and memory consumption in a non SonarLint context only files assigned to a
-   * language are analyzed.
+   * language OR file with a text extension are analyzed.
    */
   private static List<InputFile> getInputFiles(SensorContext sensorContext, FilePredicate filePredicate) {
     List<InputFile> inputFiles = new ArrayList<>();
@@ -140,37 +125,6 @@ public class TextAndSecretsSensor implements Sensor {
       inputFiles.add(inputFile);
     }
     return inputFiles;
-  }
-
-  private void analyze(SensorContext sensorContext, List<Check> activeChecks, InputFile inputFile,
-    NotBinaryFilePredicate notBinaryFilePredicate) {
-    if (notBinaryFilePredicate.apply(inputFile)) {
-      try {
-        InputFileContext inputFileContext = new InputFileContext(sensorContext, inputFile);
-        if (inputFileContext.hasNonTextCharacters()) {
-          excludeBinaryFileExtension(notBinaryFilePredicate, inputFile);
-        } else {
-          for (Check check : activeChecks) {
-            check.analyze(inputFileContext);
-          }
-        }
-      } catch (IOException | RuntimeException e) {
-        logAnalysisError(sensorContext, inputFile, e);
-      }
-    }
-  }
-
-  private void excludeBinaryFileExtension(NotBinaryFilePredicate notBinaryFilePredicate, InputFile inputFile) {
-    String extension = NotBinaryFilePredicate.extension(inputFile.filename());
-    if (extension != null) {
-      notBinaryFilePredicate.addBinaryFileExtension(extension);
-      LOG.warn("'{}' was added to the binary file filter because the file '{}' is a binary file.", extension, inputFile);
-      if (displayHelpAboutExcludingBinaryFile) {
-        displayHelpAboutExcludingBinaryFile = false;
-        LOG.info("To remove the previous warning you can add the '.{}' extension to the '{}' property.", extension,
-          TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY);
-      }
-    }
   }
 
   protected List<Check> getActiveChecks() {
@@ -191,16 +145,4 @@ public class TextAndSecretsSensor implements Sensor {
       }
     }
   }
-
-  private static void logAnalysisError(SensorContext sensorContext, InputFile inputFile, Exception e) {
-    String message = String.format("Unable to analyze file %s: %s", inputFile, e.getMessage());
-    sensorContext.newAnalysisError()
-      .message(message)
-      .onFile(inputFile)
-      .save();
-    LOG.warn(message);
-    String exceptionString = e.toString();
-    LOG.debug(exceptionString);
-  }
-
 }
