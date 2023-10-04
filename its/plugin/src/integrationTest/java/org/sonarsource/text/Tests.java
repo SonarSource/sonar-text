@@ -51,7 +51,7 @@ public class Tests {
       // sonar-php-plugin is used to bring the NOSONAR filter to php files.
       // It means someone could use this trick to hide a S6389 issue, it's probably something to fix.
       .addPlugin(MavenLocation.of("org.sonarsource.php", "sonar-php-plugin", SONAR_PHP_VERSION))
-      .restoreProfileAtStartup(FileLocation.of("src/test/resources/nosonar-text.xml"))
+      .restoreProfileAtStartup(FileLocation.of("src/integrationTest/resources/nosonar-text.xml"))
       .build();
   }
 }
