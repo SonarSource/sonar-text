@@ -24,6 +24,12 @@ This component helps you prevent the leakage of secrets even before you push the
 Simple build skipping integration tests.
 
 ```shell
+./gradlew fastBuild
+```
+
+Or explicit version:
+
+```shell
 ./gradlew build -x integrationTest
 ```
 

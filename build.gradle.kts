@@ -5,3 +5,13 @@ plugins {
 }
 
 tasks.artifactoryPublish { skip = true }
+
+tasks.register("fastBuild") {
+  group = "Build"
+  description = "Runs fast build without integration tests"
+
+  dependsOn(tasks.build)
+  gradle.taskGraph.whenReady {
+    (gradle.taskGraph as org.gradle.execution.taskgraph.TaskExecutionGraphInternal).findTask("integrationTest")?.enabled = false
+  }
+}
