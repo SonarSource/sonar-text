@@ -105,7 +105,7 @@ ws_scan_task:
   <<: *SETUP_GRADLE_CACHE
   whitesource_script:
     - source cirrus-env QA
-    - ./gradlew ${GRADLE_COMMON_FLAGS} build -x test
+    - ./gradlew ${GRADLE_COMMON_FLAGS} processResources
     - ./export_ws_variables.sh
     - source ws_scan.sh
   allow_failures: "true"
