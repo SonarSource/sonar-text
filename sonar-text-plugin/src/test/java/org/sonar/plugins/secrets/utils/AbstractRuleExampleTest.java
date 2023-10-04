@@ -55,16 +55,16 @@ public abstract class AbstractRuleExampleTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractRuleExampleTest.class);
   private static SpecificationLoader specificationLoader;
-  private final Check check;
+  private final SpecificationBasedCheck check;
   private final HashMap<URI, List<TextRange>> reportedIssuesForCtx = new HashMap<>();
 
-  protected AbstractRuleExampleTest(Check check) {
+  protected AbstractRuleExampleTest(SpecificationBasedCheck check) {
     if (specificationLoader == null) {
       specificationLoader = new SpecificationLoader();
     }
 
     this.check = check;
-    ((SpecificationBasedCheck) check).initialize(specificationLoader, reportedIssuesForCtx, mockDurationStatistics());
+    check.initialize(specificationLoader, reportedIssuesForCtx, mockDurationStatistics());
   }
 
   @TestFactory
@@ -85,7 +85,7 @@ public abstract class AbstractRuleExampleTest {
       String exampleFileName = ruleExample.getFileName() != null ? ruleExample.getFileName() : "file.txt";
       InputFileContext inputFileContext = new InputFileContext(context, inputFile(Path.of(exampleFileName), ruleExample.getText()));
 
-      check.analyze(inputFileContext);
+      check.analyze(inputFileContext, rule.getId());
 
       Collection<Issue> issues = context.allIssues();
       if (ruleExample.isContainsSecret()) {
