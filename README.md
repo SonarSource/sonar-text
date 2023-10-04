@@ -21,11 +21,19 @@ This component helps you prevent the leakage of secrets even before you push the
 
 - Java 11
 
+Simple build skipping integration tests.
+
+```shell
+./gradlew build -x integrationTest
+```
+
+Full build including integration tests.
+
 ```shell
 ./gradlew build
 ```
 
-Apply code formatting
+### Apply code formatting.
 
 ```shell
 ./gradlew spotlessApply
@@ -34,13 +42,13 @@ Apply code formatting
 ### Plugin Integration tests
 
 ```shell
-./gradlew :its:plugin:test -Penable_its=true -Dsonar.runtimeVersion=LATEST_RELEASE
+./gradlew :its:plugin:integrationTest -Dsonar.runtimeVersion=LATEST_RELEASE
 ```
 
 ### Rules Integration tests
 
 ```shell
-./gradlew :its:ruling:test -Penable_its=true -Dsonar.runtimeVersion=LATEST_RELEASE
+./gradlew :its:ruling:integrationTest -Dsonar.runtimeVersion=LATEST_RELEASE
 ```
 
 ### Update rule description

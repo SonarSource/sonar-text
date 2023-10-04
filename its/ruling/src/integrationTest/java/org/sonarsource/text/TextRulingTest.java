@@ -69,14 +69,14 @@ public class TextRulingTest {
     ORCHESTRATOR.getServer().provisionProject("project", "project");
     ORCHESTRATOR.getServer().associateProjectToQualityProfile("project", "text", "rules");
     ORCHESTRATOR.getServer().associateProjectToQualityProfile("project", "secrets", "rules");
-    SonarScanner build = SonarScanner.create(FileLocation.of("src/test/resources/sources").getFile())
+    SonarScanner build = SonarScanner.create(FileLocation.of("src/integrationTest/resources/sources").getFile())
       .setProjectKey("project")
       .setProjectName("project")
       .setProjectVersion("1")
       .setSourceDirs(".")
       .setSourceEncoding("UTF-8")
       .setDebugLogs(true)
-      .setProperty("sonar.lits.dump.old", FileLocation.of("src/test/resources/expected").getFile().getAbsolutePath())
+      .setProperty("sonar.lits.dump.old", FileLocation.of("src/integrationTest/resources/expected").getFile().getAbsolutePath())
       .setProperty("sonar.lits.dump.new", FileLocation.of(LITS_OUTPUT_DIRECTORY + "/actual").getFile().getAbsolutePath())
       .setProperty("sonar.text.analyzeAllFiles", "true")
       .setProperty("sonar.cpd.exclusions", "**/*")

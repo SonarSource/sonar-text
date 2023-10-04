@@ -1,15 +1,15 @@
 plugins {
   id("org.sonarsource.text.java-conventions")
   id("org.sonarsource.text.code-style-convention")
+  id("org.sonarsource.text.integration-test")
 }
 
 dependencies {
-  testImplementation(project(":sonar-text-plugin", configuration = "shadow"))
-  testImplementation(libs.sonar.analyzer.commons)
-  testImplementation(libs.sonar.orchestrator)
-  testImplementation(libs.assertj.core)
+  "integrationTestImplementation"(project(":sonar-text-plugin", configuration = "shadow"))
+  "integrationTestImplementation"(libs.sonar.analyzer.commons)
+  "integrationTestImplementation"(libs.sonar.orchestrator)
+  "integrationTestImplementation"(libs.assertj.core)
+
+  "integrationTestImplementation"(project)
 }
 
-tasks.test {
-  useJUnit()
-}
