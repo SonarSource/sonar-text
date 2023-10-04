@@ -11,8 +11,6 @@ dependencies {
   "integrationTestImplementation"(libs.junit.jupiter)
   "integrationTestImplementation"(libs.assertj.core)
   "integrationTestImplementation"(libs.sonar.ws)
-
-  "integrationTestImplementation"(project)
 }
 
 tasks.integrationTest {

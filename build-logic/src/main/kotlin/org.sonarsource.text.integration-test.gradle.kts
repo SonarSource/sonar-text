@@ -22,6 +22,3 @@ tasks.check {
   dependsOn(integrationTestTask)
 }
 
-dependencies {
-  "integrationTestImplementation"(project)
-}

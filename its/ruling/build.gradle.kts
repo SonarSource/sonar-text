@@ -9,7 +9,5 @@ dependencies {
   "integrationTestImplementation"(libs.sonar.analyzer.commons)
   "integrationTestImplementation"(libs.sonar.orchestrator)
   "integrationTestImplementation"(libs.assertj.core)
-
-  "integrationTestImplementation"(project)
 }
 
