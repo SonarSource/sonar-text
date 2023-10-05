@@ -18,7 +18,3 @@ val integrationTestTask = tasks.register<Test>("integrationTest") {
   classpath = configurations[integrationTest.runtimeClasspathConfigurationName] + integrationTest.output
 }
 
-tasks.check {
-  dependsOn(integrationTestTask)
-}
-
