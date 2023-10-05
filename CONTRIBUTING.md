@@ -18,6 +18,12 @@
 4. Test the code:
   1. If rspec data is available, do `mvn clean test`
   2. Else, do `mvn test -Dtest=FakecloudCheckTest` and replace this test name by the one generated previously 
+5. When rspec is finally merged:
+   ``` bash
+   pushd sonarpedia-secrets
+   java -jar ../rule-api-2.7.0.2609.jar generate -rule SXXXX
+   popd
+   ```
 
 ## Common errors
 
