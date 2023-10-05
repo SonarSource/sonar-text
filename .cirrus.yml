@@ -105,7 +105,7 @@ ws_scan_task:
   <<: *SETUP_GRADLE_CACHE
   whitesource_script:
     - source cirrus-env QA
-    - GRADLE_OPTS="-Xmx64m -Dorg.gradle.jvmargs='-Xmx3G' -Dorg.gradle.daemon=false" ./gradlew ${GRADLE_COMMON_FLAGS} processResources
+    - GRADLE_OPTS="-Xmx64m -Dorg.gradle.jvmargs='-Xmx1G -Dkotlin.daemon.jvm.options=-Xmx1500m,Xms=500m' -Dorg.gradle.daemon=false" ./gradlew ${GRADLE_COMMON_FLAGS} processResources
     - ./export_ws_variables.sh
     - source ws_scan.sh
   allow_failures: "true"
