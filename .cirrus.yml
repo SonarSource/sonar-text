@@ -46,11 +46,11 @@ linux_image_template: &LINUX_IMAGE
   namespace: default
   use_in_memory_disk: true
 
-linux_1_cpu_1G_template: &LINUX_1_CPU_1G
+linux_1_cpu_1G_template: &LINUX_1_CPU_2G
   eks_container:
     <<: *LINUX_IMAGE
     cpu: 1
-    memory: 1G
+    memory: 2G
 
 linux_2_cpu_6G_java_17_template: &LINUX_2_CPU_6G_JAVA_17
   eks_container:
@@ -97,7 +97,7 @@ build_task:
 ws_scan_task:
   depends_on:
     - build
-  <<: *LINUX_1_CPU_1G
+  <<: *LINUX_1_CPU_2G
   # run only on master and long-term branches
   only_if: $CIRRUS_USER_COLLABORATOR == 'true' && $CIRRUS_TAG == "" && ($CIRRUS_BRANCH == "master" || $CIRRUS_BRANCH =~ "branch-.*")
   env:
@@ -143,7 +143,7 @@ promote_task:
     - qa_plugin
     - ws_scan
   <<: *ONLY_IF_SONARSOURCE_QA
-  <<: *LINUX_1_CPU_1G
+  <<: *LINUX_1_CPU_2G
   env:
     #promotion cloud function
     GCF_ACCESS_TOKEN: VAULT[development/kv/data/promote data.token]
