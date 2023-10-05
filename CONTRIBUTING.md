@@ -29,6 +29,22 @@
   - `Expecting empty but was: [DefaultIssue[ruleKey=secrets:SXXXXX,gap=<null>,overriddenSeverity=<null>,quickFixAvailable=false,ruleDescriptionContextKey=<null>,codeVariants=<null>,...,saved=true]]`
 - Creating overly greedy regex:
   - The Some projects in the validation phase might not be analyzed because of time of scan
+<<<<<<< HEAD
+=======
+  
+### Not all secrets are created equal
+We discovered that secrets generally fit into one of 3 categories:
+
+1. Those that follow a pattern and contain identifiable sequences. For example, SonarQube API tokens always start with a known prefix (sqa_, sqp_ or squ_) that’s followed by 40 hexadecimal characters.
+2. Those that follow a pattern, but which can only be identified by looking at the surrounding text. For example, AWS secret keys are always 40 base64 characters long, but only the surrounding text can identify whether they’re used with AWS.
+3. Those that follow no fixed pattern, and which are only identifiable based on the surrounding text. For example, a PostgreSQL database password is user-chosen and must be set into a named environment variable before calling the psql command-line client.
+
+As you go down the list, the secrets get harder to detect without also raising false positives. Category #3 is particularly difficult because the suspected secret could be a dummy value (e.g. `[password]`) or a variable that’s replaced at runtime.
+
+A lot of tuning is needed in order to identify and exclude values that are common false positives.  
+  
+## code structure for secret detection
+>>>>>>> f952090a5f649bce3e55a110ecf993154cd688a1
 
 ## Code structure for secret detection
 
@@ -144,8 +160,7 @@ include::../../../shared_content/secrets/resources/standards.adoc[]
 
 ### SonarWay profile issues
 
-When solving [Sonarway
-profile](https://github.com/SonarSource/sonar-text/blob/8a8ca0f4d5cb7ae484ccd297631c76a7d63a73b5/sonar-text-plugin/src/main/resources/org/sonar/l10n/secrets/rules/secrets/Sonar_way_profile.json)
+When solving [Sonarway profile](https://github.com/SonarSource/sonar-text/blob/8a8ca0f4d5cb7ae484ccd297631c76a7d63a73b5/sonar-text-plugin/src/main/resources/org/sonar/l10n/secrets/rules/secrets/Sonar_way_profile.json)
 issues, mind comas, and try not to remove rule keys. This might break master without notice
 
 
