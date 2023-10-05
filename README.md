@@ -24,13 +24,13 @@ This component helps you prevent the leakage of secrets even before you push the
 Simple build skipping integration tests.
 
 ```shell
-./gradlew build -x integrationTest
+./gradlew build
 ```
 
 Full build including integration tests.
 
 ```shell
-./gradlew build
+./gradlew build integrationTest
 ```
 
 ### Apply code formatting.
@@ -75,7 +75,7 @@ After the change, addition or removal of secret specifications, this script can 
 for the inclusion or deletion of these secrets and to update static RSPEC files.
 
 As we use the enforcer plugin to define a file size of the build, this can lead to test failures after adding new secret specifications.
-The `<minsize>` and `<maxsize>` can be changed in `sonar-text-plugin/pom.xml`.
+The `<minsize>` and `<maxsize>` can be changed in `sonar-text-plugin/build.gradle.kts` (search for `enforceJarSize`).
 ```shell
 ./secretSpecificationInclusionGenerator.sh
 ```

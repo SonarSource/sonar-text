@@ -28,7 +28,7 @@ env:
   ORG_GRADLE_PROJECT_signingPassword: VAULT[development/kv/data/sign data.passphrase]
   ORG_GRADLE_PROJECT_signingKeyId: 0x7DCD4258
   GRADLE_USER_HOME: ${CIRRUS_WORKING_DIR}/.gradle
-  GRADLE_COMMON_FLAGS: --console plain
+  GRADLE_COMMON_FLAGS: --console plain --no-daemon
 
 win_vm_definition: &WINDOWS_VM_DEFINITION
   ec2_instance:
@@ -105,7 +105,7 @@ ws_scan_task:
   <<: *SETUP_GRADLE_CACHE
   whitesource_script:
     - source cirrus-env QA
-    - ./gradlew ${GRADLE_COMMON_FLAGS} processResources
+    - GRADLE_OPTS="-Xmx64m -Dorg.gradle.jvmargs='-Xmx1G'" ./gradlew ${GRADLE_COMMON_FLAGS} processResources
     - ./export_ws_variables.sh
     - source ws_scan.sh
   allow_failures: "true"
@@ -124,7 +124,7 @@ qa_plugin_task:
   <<: *SETUP_GRADLE_CACHE
   plugin_script:
     - source cirrus-env QA
-    - ./gradlew ${GRADLE_COMMON_FLAGS} -Dsonar.runtimeVersion=${SQ_VERSION} :its:plugin:check
+    - ./gradlew ${GRADLE_COMMON_FLAGS} -Dsonar.runtimeVersion=${SQ_VERSION} :its:plugin:integrationTest
   <<: *CLEANUP_GRADLE_CACHE_SCRIPT
 
 qa_ruling_task:
@@ -133,7 +133,7 @@ qa_ruling_task:
   <<: *SETUP_GRADLE_CACHE
   ruling_script:
     - source cirrus-env QA
-    - ./gradlew ${GRADLE_COMMON_FLAGS} -Dsonar.runtimeVersion=LATEST_RELEASE :its:ruling:check
+    - ./gradlew ${GRADLE_COMMON_FLAGS} -Dsonar.runtimeVersion=LATEST_RELEASE :its:ruling:integrationTest
   <<: *CLEANUP_GRADLE_CACHE_SCRIPT
 
 promote_task:
