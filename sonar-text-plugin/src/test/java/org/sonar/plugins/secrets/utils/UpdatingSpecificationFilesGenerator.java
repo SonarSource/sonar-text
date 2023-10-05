@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
@@ -68,12 +69,14 @@ class UpdatingSpecificationFilesGenerator {
 
   // Suppress warning, as there are no assertions inside here
   @Test
+  @Disabled("Should only be triggered manually")
   @SuppressWarnings("java:S2699")
   void firstStep() {
     writeSpecificationFileDefinition();
   }
 
   @Test
+  @Disabled("Should only be triggered manually")
   void secondStep() {
     testDeserializationOfSpecificationFiles();
     SpecificationLoader specificationLoader = new SpecificationLoader();

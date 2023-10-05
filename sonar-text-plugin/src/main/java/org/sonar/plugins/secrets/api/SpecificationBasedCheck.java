@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.TextRange;
@@ -73,11 +74,21 @@ public abstract class SpecificationBasedCheck extends Check {
 
   @Override
   public void analyze(InputFileContext ctx) {
+    analyze(ctx, checkId -> true);
+  }
+
+  public void analyze(InputFileContext ctx, String ruleId) {
+    analyze(ctx, checkId -> checkId.equals(ruleId));
+  }
+
+  protected void analyze(InputFileContext ctx, Predicate<String> ruleFilter) {
     for (SecretMatcher secretMatcher : matcher) {
-      durationStatistics.timed(secretMatcher.getRuleId() + DurationStatistics.SUFFIX_TOTAL, () -> secretMatcher.findIn(ctx))
-        .stream()
-        .map(match -> ctx.newTextRangeFromFileOffsets(match.getFileStartOffset(), match.getFileEndOffset()))
-        .forEach(textRange -> reportIfNoOverlappingSecretAlreadyFound(ctx, textRange, secretMatcher));
+      if (ruleFilter.test(secretMatcher.getRuleId())) {
+        durationStatistics.timed(secretMatcher.getRuleId() + DurationStatistics.SUFFIX_TOTAL, () -> secretMatcher.findIn(ctx))
+          .stream()
+          .map(match -> ctx.newTextRangeFromFileOffsets(match.getFileStartOffset(), match.getFileEndOffset()))
+          .forEach(textRange -> reportIfNoOverlappingSecretAlreadyFound(ctx, textRange, secretMatcher));
+      }
     }
   }
 
