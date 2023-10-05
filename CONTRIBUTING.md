@@ -13,8 +13,8 @@
 1. Write the yaml file
 2. Validates the yaml against the schema file
 3. use the script `secretSpecificationInclusionGenerator.sh <Rule-Api jar>`
-  1. It will generate the java files that will glue the yaml file to the code base
-  2. If the Rspec is already available, it will also generate additional rspec data
+  1. It will generate the java files serving as a "glue" between the yaml file and the code base
+  2. If the rspec text code is already available in the master branch of [SonarSource/rspec](https://github.com/SonarSource/rspec), it will also generate additional rspec data
 4. Test the code:
   1. If rspec data is available, do `mvn clean test`
   2. Else, do `mvn test -Dtest=FakecloudCheckTest` and replace this test name by the one generated previously 
@@ -29,9 +29,11 @@
   - `Expecting empty but was: [DefaultIssue[ruleKey=secrets:SXXXXX,gap=<null>,overriddenSeverity=<null>,quickFixAvailable=false,ruleDescriptionContextKey=<null>,codeVariants=<null>,...,saved=true]]`
 - Creating overly greedy regex:
   - The Some projects in the validation phase might not be analyzed because of time of scan
-## code structure for secret detection
 
-Take a look at the example of a secret detection specification file for a fake cloud provider below. This is considered the anatomy of a "good" secret detection file.
+## Code structure for secret detection
+
+Take a look at the example of a secret detection specification file for a fake
+cloud provider below. This is considered the anatomy of a "good" secret detection file.
 
 ``` yaml
 provider:
@@ -58,7 +60,9 @@ provider:
     - rspecKey: SXXXX
       id: fakecloud-api-key
       metadata:
+        # This does not influence the rule name
         name: FakeCloud API Key
+
       detection:
         matching:
           # Matching guidelines: As a best practice, make the regexes as less
@@ -66,13 +70,14 @@ provider:
           # To do so, start to understand how many characters are in each part
           # of the secret. Avoid `+` or `*` for example.
           pattern: "(?i)\\b(fakecloud-\\w{32})\\b"
+
       # Add the compliant and non compliant example from the rspec as test cases
       # to make sure that they are detected correctly
       examples:
         - text: |
-            BLABLA
+            SECRET=fakecloud-W1QrzMjSp5hYtO0KEvIU3C2dlx4GAfbn
           containsSecret: true
-          match: XXXXX
+          match: fakecloud-W1QrzMjSp5hYtO0KEvIU3C2dlx4GAfbn
         - text: |
             BLABLA
           containsSecret: false
@@ -139,58 +144,30 @@ include::../../../shared_content/secrets/resources/standards.adoc[]
 
 ### SonarWay profile issues
 
-When solving [Sonarway profile](https://github.com/SonarSource/sonar-text/blob/8a8ca0f4d5cb7ae484ccd297631c76a7d63a73b5/sonar-text-plugin/src/main/resources/org/sonar/l10n/secrets/rules/secrets/Sonar_way_profile.json) issues, mind comas, and try not to remove rule keys. This might break master without notice
+When solving [Sonarway
+profile](https://github.com/SonarSource/sonar-text/blob/8a8ca0f4d5cb7ae484ccd297631c76a7d63a73b5/sonar-text-plugin/src/main/resources/org/sonar/l10n/secrets/rules/secrets/Sonar_way_profile.json)
+issues, mind comas, and try not to remove rule keys. This might break master without notice
 
 
 ## Incomplete list of common patternNot patterns
-Often it makes sense to match the patterns to filter out case insensitive ```(?i)```.
-If parts of the patternNot need to match case sensitive the case sensivity can be anabled again via ```(?-i)```
+Often it makes sense to match the patterns to filter out case insensitive `(?i)`.
+
+If parts of the patternNot need to match case sensitive the case sensivity can be disabled via `(?-i)`.
 
 Common patterns:
-```
-# Repeating characters like xxx, ..., ***
-# it is important to place this to the very beginning of the patternNot
-# because \1 will match the same text that was captured by the first capturing group
-([\w\*\.])\1{2,}
-# Variables loaded from the environment:
-# E.g. os.getenv(...), os.environ[...], ENV(...), $env{...}
-# When this is used the main matching pattern should make sure to match
-# for default values. E.g. env("secret", default="default") should only match
-# 'default' so that this filter does not match 'env'. As an example:
-# (?:os\.getenv\(\s*+['\"][^'\"]++['\"]\s*+,\s*+)?['\"](match secret here)
-\b(get)?env(iron)?\b
-# Other ways of loading from variables:
-# {{...}}
-^\{{2}[^}]++}{2}$
-# JS Template strings ${...}, Python template strings {...}
-^\$?\{[^}]++}$
-# Bash substitutions $...
-^\$[\w]$
-# Ruby String Interpolation #{...}, #{...}#
-^#\{[^}]++}#?$
-#  $(...)
-^\$\([^)]++)$
-# Format string
-\b%s\b
-# <...>
-^<[^>]++>$
-# Common placeholders
-1234
-foo
-bar
-```
-
-## Template patternNot list
 
 ``` yaml
-
 patternNot:
-  # Character repeated X times
-  - ([\\w\\*\\.])\\1{X,}
+  # Character repeated X times like xxx, ..., \*\*\*
+  # it is important to place this to the very beginning of the patternNot
+  # because \1 will match the same text that was captured by the first capturing group
+  - "([\\w\\*\\.])\\1{X,}"
 
   # Common text placeholders
   - "(?i)(?:s|ex)ample|foo|bar|test|abcd|redacted"
   - "(?i)^(\\$[a-z_]*)?(db|my)?_?pass(word|wd)?" 
+    # <...>
+  - "^<[^>]++>$"
   - "^<[\\w\\t -]{1,10}>?"
   - "^\\[[\\[\\w\\t \\-]+\\]$"
   - "^None$"
@@ -198,17 +175,29 @@ patternNot:
   # Common numeric placeholders
   - 1234(?:56)
 
-  # Environment variables
+  # Variables loaded from the environment:
+  # E.g. os.getenv(...), os.environ[...], ENV(...), $env{...}
+  # When this is used the main matching pattern should make sure to match
+  # for default values. E.g. env("secret", default="default") should only match
+  # 'default' so that this filter does not match 'env'. As an example:
+  # (?:os\.getenv\(\s*+['\"][^'\"]++['\"]\s*+,\s*+)?['\"](match secret here)
   - "\\b(get)?env(iron)?\\b"
 
-  # Bash variables
+  # Other ways of loading from variables:
+  # {{...}}
+  - ^\{{2}[^}]++}{2}$
   - "\\$[({]\\w+(:-\\w+)?[})]"
-  - "(?i)^\\$[A-Z_]+$"
-  - "^\\$[a-z_]+pass(word)?$"
-
-  # Format strings and variable substitution
-  - "(?i)%s" 
-  - "\\{+[^}]*\\}+"
+  # `variable`
   - "`+[^`]*`+"
-
+  # JS Template strings ${...}, Python template strings {...}
+  - ^\$?\{[^}]++}$
+  # Bash substitutions $...
+  - ^\$[\w]$
+  - "^\\$[a-z_]+pass(word)?$"
+  # Ruby String Interpolation #{...}, #{...}#
+  - ^#\{[^}]++}#?$
+  #  $(...)
+  - ^\$\([^)]++)$
+  # Format string
+  - "(?i)\b%s\b" 
 ```
