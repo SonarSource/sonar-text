@@ -30,41 +30,17 @@ import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonarsource.analyzer.commons.ProgressReport;
 
-public class Analyzer {
+public final class Analyzer {
+  private static boolean displayHelpAboutExcludingBinaryFile = true;
   private static final int REPORT_REFRESH_TIME_IN_SECONDS = 10;
   private static final Logger LOG = LoggerFactory.getLogger(Analyzer.class);
-  private boolean displayHelpAboutExcludingBinaryFile = true;
 
-  private SensorContext sensorContext;
-  private List<Check> activeChecks;
-  private NotBinaryFilePredicate notBinaryFilePredicate;
-  private boolean analyzeAllFilesMode;
-
-  public Analyzer() {
-    // Empty analyzer by default, configuration provided by setters
+  private Analyzer() {
   }
 
-  public Analyzer sensorContext(SensorContext sensorContext) {
-    this.sensorContext = sensorContext;
-    return this;
-  }
-
-  public Analyzer activeChecks(List<Check> activeChecks) {
-    this.activeChecks = activeChecks;
-    return this;
-  }
-
-  public Analyzer notBinaryFilePredicate(NotBinaryFilePredicate notBinaryFilePredicate) {
-    this.notBinaryFilePredicate = notBinaryFilePredicate;
-    return this;
-  }
-
-  public Analyzer analyzeAllFilesMode(boolean analyzeAllFilesMode) {
-    this.analyzeAllFilesMode = analyzeAllFilesMode;
-    return this;
-  }
-
-  public void analyzeFiles(Collection<InputFile> inputFiles) {
+  public static void analyzeFiles(SensorContext sensorContext, List<Check> activeChecks, NotBinaryFilePredicate notBinaryFilePredicate, boolean analyzeAllFilesMode,
+    Collection<InputFile> inputFiles) {
+    displayHelpAboutExcludingBinaryFile = true;
     List<String> filenames = inputFiles.stream().map(InputFile::toString).collect(Collectors.toList());
     var progressReport = new ProgressReport("Progress of the text and secrets analysis", TimeUnit.SECONDS.toMillis(REPORT_REFRESH_TIME_IN_SECONDS));
     progressReport.start(filenames);
@@ -77,7 +53,7 @@ public class Analyzer {
           break;
         }
 
-        analyzeFile(inputFile);
+        analyzeFile(sensorContext, inputFile, analyzeAllFilesMode, notBinaryFilePredicate, activeChecks);
         progressReport.nextFile();
       }
     } finally {
@@ -89,36 +65,54 @@ public class Analyzer {
     }
   }
 
-  private void analyzeFile(InputFile inputFile) {
+  private static void analyzeFile(SensorContext sensorContext, InputFile inputFile, boolean analyzeAllFilesMode, NotBinaryFilePredicate notBinaryFilePredicate,
+    List<Check> activeChecks) {
     try {
       var inputFileContext = new InputFileContext(sensorContext, inputFile);
       if (analyzeAllFilesMode) {
-        analyzeWithNotBinaryFileCheck(inputFileContext);
+        analyzeFilesInBlacklistMode(notBinaryFilePredicate, inputFileContext, activeChecks);
       } else {
-        analyzeAllChecks(inputFileContext);
+        analyzeFilesInWhitelistMode(inputFileContext, activeChecks);
       }
     } catch (IOException | RuntimeException e) {
       logAnalysisError(sensorContext, inputFile, e);
     }
   }
 
-  private void analyzeWithNotBinaryFileCheck(InputFileContext inputFileContext) {
+  /**
+   * We suppose here that the list of provided files may contain some binary files that we couldn't exclude beforehand.
+   * If that happen, we add its extension dynamically in the blacklist to avoid all files with the same extension.
+   */
+  private static void analyzeFilesInBlacklistMode(NotBinaryFilePredicate notBinaryFilePredicate, InputFileContext inputFileContext, List<Check> activeChecks) {
     if (notBinaryFilePredicate.apply(inputFileContext.getInputFile())) {
       if (inputFileContext.hasNonTextCharacters()) {
         excludeBinaryFileExtension(notBinaryFilePredicate, inputFileContext.getInputFile());
       } else {
-        analyzeAllChecks(inputFileContext);
+        analyzeAllChecks(inputFileContext, activeChecks);
       }
     }
   }
 
-  private void analyzeAllChecks(InputFileContext inputFileContext) {
+  /**
+   * We suppose here that all provided files have been whitelisted, so we don't expected binary files.
+   * In case it still happen, we don't add the extension to the blacklist as we consider it to be an exception.
+   */
+  private static void analyzeFilesInWhitelistMode(InputFileContext inputFileContext, List<Check> activeChecks) {
+    if (inputFileContext.hasNonTextCharacters()) {
+      LOG.warn("The file '{}' contains binary data and will not be analyzed.", inputFileContext.getInputFile().filename());
+      LOG.warn("Please check this file and/or remove the extension from the 'sonar.text.included.file.suffixes' property.");
+    } else {
+      analyzeAllChecks(inputFileContext, activeChecks);
+    }
+  }
+
+  private static void analyzeAllChecks(InputFileContext inputFileContext, List<Check> activeChecks) {
     for (Check check : activeChecks) {
       check.analyze(inputFileContext);
     }
   }
 
-  private void excludeBinaryFileExtension(NotBinaryFilePredicate notBinaryFilePredicate, InputFile inputFile) {
+  private static void excludeBinaryFileExtension(NotBinaryFilePredicate notBinaryFilePredicate, InputFile inputFile) {
     String extension = NotBinaryFilePredicate.extension(inputFile.filename());
     if (extension != null) {
       notBinaryFilePredicate.addBinaryFileExtension(extension);
