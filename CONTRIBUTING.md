@@ -35,8 +35,6 @@
   - `Expecting empty but was: [DefaultIssue[ruleKey=secrets:SXXXXX,gap=<null>,overriddenSeverity=<null>,quickFixAvailable=false,ruleDescriptionContextKey=<null>,codeVariants=<null>,...,saved=true]]`
 - Creating overly greedy regex:
   - The Some projects in the validation phase might not be analyzed because of time of scan
-<<<<<<< HEAD
-=======
   
 ### Not all secrets are created equal
 We discovered that secrets generally fit into one of 3 categories:
@@ -49,9 +47,6 @@ As you go down the list, the secrets get harder to detect without also raising f
 
 A lot of tuning is needed in order to identify and exclude values that are common false positives.  
   
-## code structure for secret detection
->>>>>>> f952090a5f649bce3e55a110ecf993154cd688a1
-
 ## Code structure for secret detection
 
 Take a look at the example of a secret detection specification file for a fake
