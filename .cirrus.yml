@@ -78,7 +78,6 @@ cleanup_gradle_cache_script_template: &CLEANUP_GRADLE_CACHE_SCRIPT
     - /usr/bin/find "${CIRRUS_WORKING_DIR}/.gradle/caches/" -name "*.lock" -type f -delete
     - rm -rf "${CIRRUS_WORKING_DIR}/.gradle/caches/8.3/"
     - rm -rf "${CIRRUS_WORKING_DIR}/.gradle/caches/journal-1/"
-    - rm -rf "${CIRRUS_WORKING_DIR}/.gradle/caches/build-cache-1/"
 
 build_task:
   <<: *ONLY_IF_SONARSOURCE_QA
