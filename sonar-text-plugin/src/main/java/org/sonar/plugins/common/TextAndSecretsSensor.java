@@ -43,7 +43,7 @@ public class TextAndSecretsSensor implements Sensor {
   public static final String EXCLUDED_FILE_SUFFIXES_KEY = "sonar.text.excluded.file.suffixes";
   private static final String ANALYZE_ALL_FILES_KEY = "sonar.text.analyzeAllFiles";
   public static final String INCLUDED_FILE_SUFFIXES_KEY = "sonar.text.included.file.suffixes";
-  public static final String INCLUDED_FILE_SUFFIXES_DEFAULT_VALUE = "sh,bash,zsh,ksh,ps1,yaml,yml,properties,conf,xml,pem,env,config";
+  public static final String INCLUDED_FILE_SUFFIXES_DEFAULT_VALUE = "sh,bash,zsh,ksh,ps1,properties,conf,pem,env,config";
 
   public static final String TEXT_CATEGORY = "Secrets";
 

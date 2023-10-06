@@ -74,6 +74,8 @@ public class FileDetectionTest extends TestBase {
   public static Collection<Object> configurations() {
     return Arrays.asList(new Object[][] {
       {TEXT_FILES_ONLY_SUBFOLDER, true, null, 2},
+      {TEXT_FILES_ONLY_SUBFOLDER, true, "", 2},
+      {TEXT_FILES_ONLY_SUBFOLDER, true, " ", 2},
       {TEXT_FILES_ONLY_SUBFOLDER, false, "txt", 1},
       {TEXT_FILES_ONLY_SUBFOLDER, false, null, 0},
       {TEXT_FILES_ONLY_SUBFOLDER, false, "bash,txt", 2},

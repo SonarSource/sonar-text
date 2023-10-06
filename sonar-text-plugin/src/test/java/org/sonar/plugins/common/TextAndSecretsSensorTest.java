@@ -56,7 +56,6 @@ import static org.sonar.plugins.common.TestUtils.sensorContext;
 class TextAndSecretsSensorTest {
 
   private static final String SENSITIVE_BIDI_CHARS = "\u0002\u0004";
-  private static final String INCLUDE_SUFFIX_KEY = "sonar.text.included.file.suffixes";
 
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
@@ -254,7 +253,7 @@ class TextAndSecretsSensorTest {
   void shouldExecuteChecksOnIncludedTextFileNames() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setSettings(new MapSettings().setProperty(INCLUDE_SUFFIX_KEY, "txt"));
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY, "txt"));
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), "abc", null));
     assertThat(logTester.logs()).contains("1 source file to be analyzed");
@@ -264,7 +263,7 @@ class TextAndSecretsSensorTest {
   void shouldNotExecuteChecksOnNonIncludedTextFileNames() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setSettings(new MapSettings().setProperty(INCLUDE_SUFFIX_KEY, "csv"));
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY, "csv"));
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), "abc", null));
     assertThat(logTester.logs()).isEmpty();
@@ -274,7 +273,7 @@ class TextAndSecretsSensorTest {
   void shouldExecuteChecksOnMultipleIncludedTextFileNames() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setSettings(new MapSettings().setProperty(INCLUDE_SUFFIX_KEY, "txt,csv"));
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY, "txt,csv"));
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
       inputFile(Path.of("Foo.txt"), "abc", null),
@@ -289,7 +288,7 @@ class TextAndSecretsSensorTest {
   void shouldExecuteChecksOnIncludedTextFileNamesWithBinaryData() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setSettings(new MapSettings().setProperty(INCLUDE_SUFFIX_KEY, "txt"));
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY, "txt"));
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null));
     assertThat(logTester.logs()).containsExactlyInAnyOrder(
@@ -318,7 +317,7 @@ class TextAndSecretsSensorTest {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = defaultSensorContext();
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
-    context.setSettings(new MapSettings().setProperty(INCLUDE_SUFFIX_KEY, "txt"));
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY, "txt"));
     analyse(sensor(check), context,
       inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null),
       inputFile(Path.of("FileWithoutExtension"), SENSITIVE_BIDI_CHARS, null));
