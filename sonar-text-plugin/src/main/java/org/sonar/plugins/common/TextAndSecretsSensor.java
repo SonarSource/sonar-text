@@ -104,15 +104,14 @@ public class TextAndSecretsSensor implements Sensor {
    * List of text extension to include are provided by configuration key {@link TextAndSecretsSensor#INCLUDED_FILE_SUFFIXES_KEY}
    */
   private static FilePredicate plaintextFilePredicate(SensorContext sensorContext) {
-    List<FilePredicate> extensionPredicates = new ArrayList<>();
     String[] plaintextFileExtensions = sensorContext.config().getStringArray(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY);
-
     if (plaintextFileExtensions.length == 0) {
       return sensorContext.fileSystem().predicates().none();
     }
 
+    List<FilePredicate> extensionPredicates = new ArrayList<>();
     for (String extension : plaintextFileExtensions) {
-      FilePredicate filePredicate = sensorContext.fileSystem().predicates().hasExtension(extension);
+      var filePredicate = sensorContext.fileSystem().predicates().hasExtension(extension);
       extensionPredicates.add(filePredicate);
     }
     return sensorContext.fileSystem().predicates().or(extensionPredicates);
