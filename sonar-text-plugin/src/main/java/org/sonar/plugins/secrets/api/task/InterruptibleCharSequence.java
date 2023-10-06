@@ -20,7 +20,7 @@
 package org.sonar.plugins.secrets.api.task;
 
 public class InterruptibleCharSequence implements CharSequence {
-  CharSequence wrappedSequence;
+  private final CharSequence wrappedSequence;
 
   public InterruptibleCharSequence(CharSequence wrappedSequence) {
     super();
@@ -28,7 +28,6 @@ public class InterruptibleCharSequence implements CharSequence {
   }
 
   // Should be wrapped in runtime exception as we want the thread to kill itself
-  @SuppressWarnings("java:S112")
   public char charAt(int index) {
     if (Thread.interrupted()) {
       throw new RuntimeException(new InterruptedException());

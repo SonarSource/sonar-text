@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.MatchResult;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -64,7 +63,7 @@ public class PatternMatcher {
       return Collections.emptyList();
     }
     List<Match> matches = new ArrayList<>();
-    Matcher matcher = pattern.matcher(new InterruptibleCharSequence(content));
+    var matcher = pattern.matcher(new InterruptibleCharSequence(content));
 
     boolean executedSuccessfully = EXECUTOR.runWithTimeout(TIMEOUT_MS, UNINTERRUPTIBLE_TIMEOUT_MS, () -> {
       while (matcher.find()) {

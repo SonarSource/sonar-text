@@ -45,7 +45,7 @@ public class ExecutorServiceManager {
   }
 
   public boolean runWithTimeout(int timeoutMs, int ultimateTimeoutMs, Runnable run) {
-    ExecutorService executorService = getLastExecutorService();
+    var executorService = getLastExecutorService();
     Future<?> future = executorService.submit(run);
 
     try {
