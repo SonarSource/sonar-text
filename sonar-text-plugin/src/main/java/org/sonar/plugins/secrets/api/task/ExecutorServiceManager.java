@@ -28,6 +28,11 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Provide an intermediately class to work with {@link ExecutorService}.
+ * It is dedicated to run tasks that are suspected to cause timeout, it will take care to stop them properly and ensure to keep a valid {@link ExecutorService}.
+ * The main entrypoint is the {@link #runWithTimeout} method.
+ */
 public class ExecutorServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(ExecutorServiceManager.class);
   /**
@@ -56,6 +61,8 @@ public class ExecutorServiceManager {
   /**
    * Execute the provided {@link Runnable} and try to interrupt it once {@link ExecutorServiceManager#timeoutMs} number of milliseconds has elapsed.
    * The {@link Runnable} must handle thread interruption properly, otherwise it will break the ongoing and next calls to this method.
+   * @param run the task to be executed, it must support the interruption mechanism
+   * @return true if the task was executed within the timeout time, false otherwise
    */
   public boolean runWithTimeout(Runnable run) {
     var executorService = getLastExecutorService();
@@ -79,11 +86,12 @@ public class ExecutorServiceManager {
     return false;
   }
 
-  private boolean waitFutureCompletion(Future<?> future, int timeoutMs) throws ExecutionException, InterruptedException {
+  private static boolean waitFutureCompletion(Future<?> future, int timeoutMs) throws ExecutionException, InterruptedException {
     try {
       future.get(timeoutMs, TimeUnit.MILLISECONDS);
       return true;
     } catch (TimeoutException e) {
+      LOG.debug(String.format("Task timeout after %dms.", timeoutMs));
       return false;
     }
   }

@@ -19,6 +19,12 @@
  */
 package org.sonar.plugins.secrets.api.task;
 
+/**
+ * Provide an interruptible version of the {@link CharSequence}, dedicated to be used in task that can be interrupted.
+ * It is used here with the {@link ExecutorServiceManager} to execute task based on processing char sequence using the JDK API (Regex).
+ * Since we don't have a control nor any possibility to interrupt regex matching out of the box, we use this adapted version of {@link CharSequence}
+ * to achieve that.
+ */
 public class InterruptibleCharSequence implements CharSequence {
   private final CharSequence wrappedSequence;
 
