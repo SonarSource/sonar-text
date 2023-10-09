@@ -31,7 +31,7 @@ publishing {
         }
       }
       scm {
-        url.set("https://github.com/SonarSource/sonar-text")
+        url.set("https://github.com/SonarSource/sonar-text-enterprise")
       }
       developers {
         developer {
@@ -80,7 +80,7 @@ artifactory {
       publications("mavenJava")
       setProperties(
         mapOf(
-          "build.name" to "sonar-text",
+          "build.name" to "sonar-text-enterprise",
           "version" to project.version.toString(),
           "build.number" to project.ext["buildNumber"].toString(),
           "pr.branch.target" to System.getenv("PULL_REQUEST_BRANCH_TARGET"),
@@ -96,7 +96,7 @@ artifactory {
   }
 
   clientConfig.info.addEnvironmentProperty("PROJECT_VERSION", project.version.toString())
-  clientConfig.info.buildName = "sonar-text"
+  clientConfig.info.buildName = "sonar-text-enterprise"
   clientConfig.info.buildNumber = project.ext["buildNumber"].toString()
   clientConfig.isIncludeEnvVars = true
   clientConfig.envVarsExcludePatterns =
