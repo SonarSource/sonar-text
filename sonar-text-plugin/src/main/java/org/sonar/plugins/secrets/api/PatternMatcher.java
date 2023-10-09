@@ -35,8 +35,6 @@ import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 public class PatternMatcher {
   private static final Logger LOG = LoggerFactory.getLogger(PatternMatcher.class);
   private static final ExecutorServiceManager EXECUTOR = new ExecutorServiceManager();
-  private static final int TIMEOUT_MS = 1000;
-  private static final int UNINTERRUPTIBLE_TIMEOUT_MS = 10000;
   private final Pattern pattern;
 
   PatternMatcher(@Nullable String stringPattern) {
@@ -65,7 +63,7 @@ public class PatternMatcher {
     List<Match> matches = new ArrayList<>();
     var matcher = pattern.matcher(new InterruptibleCharSequence(content));
 
-    boolean executedSuccessfully = EXECUTOR.runWithTimeout(TIMEOUT_MS, UNINTERRUPTIBLE_TIMEOUT_MS, () -> {
+    boolean executedSuccessfully = EXECUTOR.runWithTimeout(() -> {
       while (matcher.find()) {
         MatchResult matchResult = matcher.toMatchResult();
         if (matcher.groupCount() == 0) {
@@ -76,11 +74,9 @@ public class PatternMatcher {
       }
     });
 
-    if (executedSuccessfully) {
-      return matches;
-    } else {
-      LOG.error("Running pattern '{}' on content({}) has timed out ({}ms)", pattern.pattern(), content.length(), TIMEOUT_MS);
-      return Collections.emptyList();
+    if (!executedSuccessfully) {
+      LOG.error("Running pattern '{}' on content({}) has timed out ({}ms)", pattern.pattern(), content.length(), ExecutorServiceManager.timeoutMs);
     }
+    return matches;
   }
 }

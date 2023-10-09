@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.secrets.api;
 
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -37,81 +38,99 @@ class ExecutorServiceManagerTest {
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
-  SpyMaster spyMaster = spy(SpyMaster.class);
-  ExecutorServiceManager executor = new ExecutorServiceManager();
+  SpyableObject spiedObject;
+  ExecutorServiceManager executor;
 
   @BeforeEach
   void setUp() {
-    spyMaster = spy(SpyMaster.class);
+    spiedObject = spy(SpyableObject.class);
+    ExecutorServiceManager.timeoutMs = 100;
+    ExecutorServiceManager.uninterruptibleTimeoutMs = 100;
     executor = new ExecutorServiceManager();
   }
 
   @Test
   void testMethodCalledNormally() {
-    boolean runWithSuccess = executor.runWithTimeout(100, 100, () -> {
-      spyMaster.method();
+    boolean runWithSuccess = executor.runWithTimeout(() -> {
+      spiedObject.method();
     });
 
     assertThat(runWithSuccess).isTrue();
-    verify(spyMaster).method();
+    verify(spiedObject).method();
     assertThat(logTester.logs()).isEmpty();
   }
 
   @Test
   void testInterruptedMethodNotCalled() {
-    boolean runWithSuccess = executor.runWithTimeout(100, 100, () -> {
+    boolean runWithSuccess = executor.runWithTimeout(() -> {
       waitForever();
-      spyMaster.method();
+      spiedObject.method();
     });
 
     assertThat(runWithSuccess).isFalse();
-    verify(spyMaster, never()).method();
+    verify(spiedObject, never()).method();
     assertThat(logTester.logs()).isEmpty();
   }
 
   @Test
   void testNormalCallAfterInterruptedCall() {
-    boolean runWithSuccess1 = executor.runWithTimeout(100, 100, () -> {
+    boolean runWithSuccess1 = executor.runWithTimeout(() -> {
       waitForever();
-      spyMaster.method();
+      spiedObject.method();
     });
-    boolean runWithSuccess2 = executor.runWithTimeout(100, 100, () -> {
-      spyMaster.method();
+    boolean runWithSuccess2 = executor.runWithTimeout(() -> {
+      spiedObject.method();
     });
 
     assertThat(runWithSuccess1).isFalse();
     assertThat(runWithSuccess2).isTrue();
-    verify(spyMaster).method();
+    verify(spiedObject).method();
     assertThat(logTester.logs()).isEmpty();
   }
 
   @Test
   void testTwoConsecutiveNormalCall() {
-    boolean runWithSuccess1 = executor.runWithTimeout(100, 100, () -> {
-      spyMaster.method();
+    boolean runWithSuccess1 = executor.runWithTimeout(() -> {
+      spiedObject.method();
     });
-    boolean runWithSuccess2 = executor.runWithTimeout(100, 100, () -> {
-      spyMaster.method();
+    boolean runWithSuccess2 = executor.runWithTimeout(() -> {
+      spiedObject.method();
     });
 
     assertThat(runWithSuccess1).isTrue();
     assertThat(runWithSuccess2).isTrue();
-    verify(spyMaster, times(2)).method();
+    verify(spiedObject, times(2)).method();
     assertThat(logTester.logs()).isEmpty();
   }
 
   @Test
   void testInterruptionPrevented() {
-    assertThatThrownBy(() -> executor.runWithTimeout(100, 100, () -> {
+    assertThatThrownBy(() -> executor.runWithTimeout(() -> {
       waitForeverAndPreventInterruption();
-      spyMaster.method();
+      spiedObject.method();
     }))
       .isInstanceOf(RuntimeException.class)
       .hasMessage("Couldn't interrupt task after normal timeout(100ms) and interruption timeout(100ms).");
     assertThat(logTester.logs()).containsExactly("Couldn't interrupt task, waiting for it to finish...");
   }
 
-  static class SpyMaster {
+  @Test
+  void testInterruptionOnRunWithTimeout() {
+    ExecutorServiceManager.timeoutMs = 10000;
+    ExecutorServiceManager.uninterruptibleTimeoutMs = 10000;
+    Throwable t = runAndInterrupt(() -> {
+      executor.runWithTimeout(() -> {
+        waitForever();
+        spiedObject.method();
+      });
+    });
+    assertThat(t)
+      .isInstanceOf(RuntimeException.class)
+      .hasMessage("java.lang.InterruptedException");
+    verify(spiedObject, never()).method();
+  }
+
+  static class SpyableObject {
     void method() {
     }
   }
@@ -130,5 +149,19 @@ class ExecutorServiceManagerTest {
     } catch (InterruptedException e) {
       waitForever();
     }
+  }
+
+  Throwable runAndInterrupt(Runnable run) {
+    AtomicReference<Throwable> exception = new AtomicReference<>();
+    Thread thread = new Thread(run);
+    thread.setUncaughtExceptionHandler((th, ex) -> exception.set(ex));
+    thread.start();
+    thread.interrupt();
+    try {
+      thread.join();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+    return exception.get();
   }
 }

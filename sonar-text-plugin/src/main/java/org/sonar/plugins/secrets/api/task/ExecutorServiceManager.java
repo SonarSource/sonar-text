@@ -30,6 +30,8 @@ import org.slf4j.LoggerFactory;
 
 public class ExecutorServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(ExecutorServiceManager.class);
+  public static int timeoutMs = 10000;
+  public static int uninterruptibleTimeoutMs = 10000;
   private ExecutorService lastExecutorService;
 
   public ExecutorServiceManager() {
@@ -44,25 +46,27 @@ public class ExecutorServiceManager {
     return lastExecutorService;
   }
 
-  public boolean runWithTimeout(int timeoutMs, int ultimateTimeoutMs, Runnable run) {
+  public boolean runWithTimeout(Runnable run) {
     var executorService = getLastExecutorService();
     Future<?> future = executorService.submit(run);
 
     try {
       future.get(timeoutMs, TimeUnit.MILLISECONDS);
       return true;
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+    } catch (TimeoutException e) {
       executorService.shutdownNow();
       try {
         if (!executorService.awaitTermination(timeoutMs, TimeUnit.MILLISECONDS)) {
           LOG.error("Couldn't interrupt task, waiting for it to finish...");
-          if (!executorService.awaitTermination(ultimateTimeoutMs, TimeUnit.MILLISECONDS)) {
-            throw new RuntimeException(String.format("Couldn't interrupt task after normal timeout(%dms) and interruption timeout(%dms).", timeoutMs, ultimateTimeoutMs));
+          if (!executorService.awaitTermination(uninterruptibleTimeoutMs, TimeUnit.MILLISECONDS)) {
+            throw new RuntimeException(String.format("Couldn't interrupt task after normal timeout(%dms) and interruption timeout(%dms).", timeoutMs, uninterruptibleTimeoutMs));
           }
         }
       } catch (InterruptedException ex) {
         throw new RuntimeException(ex);
       }
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
     }
     return false;
   }
