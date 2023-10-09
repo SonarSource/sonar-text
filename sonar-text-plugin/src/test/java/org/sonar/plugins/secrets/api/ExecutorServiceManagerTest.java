@@ -38,12 +38,12 @@ class ExecutorServiceManagerTest {
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
-  SpyableObject spiedObject;
+  DummyObject dummyObject;
   ExecutorServiceManager executor;
 
   @BeforeEach
   void setUp() {
-    spiedObject = spy(SpyableObject.class);
+    dummyObject = spy(DummyObject.class);
     ExecutorServiceManager.timeoutMs = 100;
     ExecutorServiceManager.uninterruptibleTimeoutMs = 100;
     executor = new ExecutorServiceManager();
@@ -52,11 +52,11 @@ class ExecutorServiceManagerTest {
   @Test
   void testMethodCalledNormally() {
     boolean runWithSuccess = executor.runWithTimeout(() -> {
-      spiedObject.method();
+      dummyObject.method();
     });
 
     assertThat(runWithSuccess).isTrue();
-    verify(spiedObject).method();
+    verify(dummyObject).method();
     assertThat(logTester.logs()).isEmpty();
   }
 
@@ -64,11 +64,11 @@ class ExecutorServiceManagerTest {
   void testInterruptedMethodNotCalled() {
     boolean runWithSuccess = executor.runWithTimeout(() -> {
       waitForever();
-      spiedObject.method();
+      dummyObject.method();
     });
 
     assertThat(runWithSuccess).isFalse();
-    verify(spiedObject, never()).method();
+    verify(dummyObject, never()).method();
     assertThat(logTester.logs()).isEmpty();
   }
 
@@ -76,41 +76,48 @@ class ExecutorServiceManagerTest {
   void testNormalCallAfterInterruptedCall() {
     boolean runWithSuccess1 = executor.runWithTimeout(() -> {
       waitForever();
-      spiedObject.method();
+      dummyObject.method();
     });
     boolean runWithSuccess2 = executor.runWithTimeout(() -> {
-      spiedObject.method();
+      dummyObject.method();
     });
 
     assertThat(runWithSuccess1).isFalse();
     assertThat(runWithSuccess2).isTrue();
-    verify(spiedObject).method();
+    verify(dummyObject).method();
     assertThat(logTester.logs()).isEmpty();
   }
 
   @Test
   void testTwoConsecutiveNormalCall() {
     boolean runWithSuccess1 = executor.runWithTimeout(() -> {
-      spiedObject.method();
+      dummyObject.method();
     });
     boolean runWithSuccess2 = executor.runWithTimeout(() -> {
-      spiedObject.method();
+      dummyObject.method();
     });
 
     assertThat(runWithSuccess1).isTrue();
     assertThat(runWithSuccess2).isTrue();
-    verify(spiedObject, times(2)).method();
+    verify(dummyObject, times(2)).method();
     assertThat(logTester.logs()).isEmpty();
   }
 
   @Test
-  void testInterruptionPrevented() {
+  void testInterruptionPreventedAndNextUseBroken() {
     assertThatThrownBy(() -> executor.runWithTimeout(() -> {
       waitForeverAndPreventInterruption();
-      spiedObject.method();
+      dummyObject.method();
     }))
       .isInstanceOf(RuntimeException.class)
       .hasMessage("Couldn't interrupt task after normal timeout(100ms) and interruption timeout(100ms).");
+
+    boolean runWithSuccess2 = executor.runWithTimeout(() -> {
+      dummyObject.method();
+    });
+
+    assertThat(runWithSuccess2).isTrue();
+    verify(dummyObject, times(1)).method();
     assertThat(logTester.logs()).containsExactly("Couldn't interrupt task, waiting for it to finish...");
   }
 
@@ -121,16 +128,16 @@ class ExecutorServiceManagerTest {
     Throwable t = runAndInterrupt(() -> {
       executor.runWithTimeout(() -> {
         waitForever();
-        spiedObject.method();
+        dummyObject.method();
       });
     });
     assertThat(t)
       .isInstanceOf(RuntimeException.class)
       .hasMessage("java.lang.InterruptedException");
-    verify(spiedObject, never()).method();
+    verify(dummyObject, never()).method();
   }
 
-  static class SpyableObject {
+  static class DummyObject {
     void method() {
     }
   }

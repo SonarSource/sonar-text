@@ -30,7 +30,14 @@ import org.slf4j.LoggerFactory;
 
 public class ExecutorServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(ExecutorServiceManager.class);
+  /**
+   * The timeout time in millisecond after which the {@link ExecutorServiceManager} will try to interrupt the thread.
+   */
   public static int timeoutMs = 10000;
+  /**
+   * The timeout time in millisecond after which the {@link ExecutorServiceManager} will stop waiting for the precedent interruption to be effective
+   * and will throw a {@link RuntimeException}
+   */
   public static int uninterruptibleTimeoutMs = 10000;
   private ExecutorService lastExecutorService;
 
@@ -46,28 +53,38 @@ public class ExecutorServiceManager {
     return lastExecutorService;
   }
 
+  /**
+   * Execute the provided {@link Runnable} and try to interrupt it once {@link ExecutorServiceManager#timeoutMs} number of milliseconds has elapsed.
+   * The {@link Runnable} must handle thread interruption properly, otherwise it will break the ongoing and next calls to this method.
+   */
   public boolean runWithTimeout(Runnable run) {
     var executorService = getLastExecutorService();
     Future<?> future = executorService.submit(run);
 
     try {
-      future.get(timeoutMs, TimeUnit.MILLISECONDS);
-      return true;
-    } catch (TimeoutException e) {
-      executorService.shutdownNow();
-      try {
+      if (waitFutureCompletion(future, timeoutMs)) {
+        return true;
+      } else {
+        executorService.shutdownNow();
         if (!executorService.awaitTermination(timeoutMs, TimeUnit.MILLISECONDS)) {
           LOG.error("Couldn't interrupt task, waiting for it to finish...");
           if (!executorService.awaitTermination(uninterruptibleTimeoutMs, TimeUnit.MILLISECONDS)) {
             throw new RuntimeException(String.format("Couldn't interrupt task after normal timeout(%dms) and interruption timeout(%dms).", timeoutMs, uninterruptibleTimeoutMs));
           }
         }
-      } catch (InterruptedException ex) {
-        throw new RuntimeException(ex);
       }
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
     return false;
+  }
+
+  private boolean waitFutureCompletion(Future<?> future, int timeoutMs) throws ExecutionException, InterruptedException {
+    try {
+      future.get(timeoutMs, TimeUnit.MILLISECONDS);
+      return true;
+    } catch (TimeoutException e) {
+      return false;
+    }
   }
 }
