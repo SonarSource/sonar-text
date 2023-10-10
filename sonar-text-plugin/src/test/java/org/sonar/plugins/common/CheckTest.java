@@ -30,8 +30,8 @@ class CheckTest {
   @Test
   void rule_id() {
     Check validRuleKeyCheck = new ValidRuleKeyCheck();
-    assertThat(validRuleKeyCheck.ruleKey.repository()).isEqualTo("test");
-    assertThat(validRuleKeyCheck.ruleKey.rule()).isEqualTo("bar");
+    assertThat(validRuleKeyCheck.getRuleKey().repository()).isEqualTo("test");
+    assertThat(validRuleKeyCheck.getRuleKey().rule()).isEqualTo("bar");
 
     assertThatThrownBy(EmptyCheck::new)
       .isInstanceOf(IllegalStateException.class)

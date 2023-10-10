@@ -46,6 +46,7 @@ import org.sonar.api.internal.apachecommons.io.FileUtils;
 import org.sonar.api.testfixtures.log.LogAndArguments;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.plugins.common.Check;
+import org.sonar.plugins.secrets.SecretsCheckList;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.api.SpecificationLoader;
 import org.sonar.plugins.secrets.configuration.model.Rule;
@@ -110,7 +111,7 @@ class UpdatingSpecificationFilesGenerator {
   private Map<String, String> retrieveAlreadyExistingKeys() {
     Map<String, String> keyToFileName = new HashMap<>();
 
-    List<Class<?>> checks = SecretsRulesDefinition.checks();
+    List<Class<?>> checks = new SecretsCheckList().checks();
     for (Class<?> check : checks) {
       Constructor<?>[] declaredConstructors = check.getDeclaredConstructors();
       Check instantiatedCheck;
@@ -120,7 +121,7 @@ class UpdatingSpecificationFilesGenerator {
         LOG.error("Error while retrieving already existing keys");
         throw new RuntimeException(e);
       }
-      keyToFileName.put(instantiatedCheck.ruleKey.rule(), check.getSimpleName());
+      keyToFileName.put(instantiatedCheck.getRuleKey().rule(), check.getSimpleName());
     }
 
     return keyToFileName;
@@ -227,7 +228,7 @@ class UpdatingSpecificationFilesGenerator {
   }
 
   private void writeUpdatedRulesDefinition(List<String> checkNames, Set<String> checkNamesNotUsedAnymore) {
-    Set<String> uniqueCheckNames = SecretsRulesDefinition.checks().stream().map(Class::getSimpleName).collect(Collectors.toSet());
+    Set<String> uniqueCheckNames = new SecretsCheckList().checks().stream().map(Class::getSimpleName).collect(Collectors.toSet());
     uniqueCheckNames.addAll(checkNames);
     uniqueCheckNames.removeAll(checkNamesNotUsedAnymore);
 
@@ -235,8 +236,8 @@ class UpdatingSpecificationFilesGenerator {
 
     Collections.sort(updatedCheckNames);
 
-    Path checkTestTemplatePath = Path.of(TEMPLATE_PATH_PREFIX, "SecretsRulesDefinitionTemplate.java");
-    Path rulesDefPath = Path.of(SECRETS_MODULE_PATH_PREFIX, "SecretsRulesDefinition.java");
+    Path checkTestTemplatePath = Path.of(TEMPLATE_PATH_PREFIX, "SecretsCheckListTemplate.java");
+    Path rulesDefPath = Path.of(SECRETS_MODULE_PATH_PREFIX, "SecretsCheckList.java");
     try {
       Files.copy(checkTestTemplatePath, rulesDefPath, StandardCopyOption.REPLACE_EXISTING);
 
@@ -255,22 +256,19 @@ class UpdatingSpecificationFilesGenerator {
   private String generateChecksMethodFor(List<String> checkNames) {
     StringBuilder sb = new StringBuilder();
 
-    sb.append("public static List<Class<?>> checks() {");
-    sb.append(System.lineSeparator());
-    sb.append("    return List.of(");
+    sb.append("private static final List<Class<?>> SECRET_CHECKS = List.of(");
     sb.append(System.lineSeparator());
     for (int i = 0; i < checkNames.size(); i++) {
-      sb.append("      ");
+      sb.append("  ");
       sb.append(checkNames.get(i));
       sb.append(".class");
       if (i == checkNames.size() - 1) {
         sb.append(");");
       } else {
         sb.append(",");
+        sb.append(System.lineSeparator());
       }
-      sb.append(System.lineSeparator());
     }
-    sb.append("  }");
     return sb.toString();
   }
 

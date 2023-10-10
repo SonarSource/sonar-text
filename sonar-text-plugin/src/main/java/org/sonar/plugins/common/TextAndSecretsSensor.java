@@ -38,9 +38,11 @@ import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
+import org.sonar.plugins.secrets.SecretsCheckList;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.api.SpecificationLoader;
+import org.sonar.plugins.text.TextCheckList;
 import org.sonar.plugins.text.TextRuleDefinition;
 import org.sonarsource.analyzer.commons.ProgressReport;
 
@@ -56,7 +58,7 @@ public class TextAndSecretsSensor implements Sensor {
 
   private static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
 
-  private final CheckFactory checkFactory;
+  protected final CheckFactory checkFactory;
 
   private boolean displayHelpAboutExcludingBinaryFile = true;
 
@@ -174,11 +176,12 @@ public class TextAndSecretsSensor implements Sensor {
   }
 
   protected List<Check> getActiveChecks() {
-    List<Check> checks = new ArrayList<>();
-    checks.addAll(checkFactory.<Check>create(TextRuleDefinition.REPOSITORY_KEY)
-      .addAnnotatedChecks(TextRuleDefinition.checks()).all());
+    List<Check> checks = new ArrayList<>(checkFactory.<Check>create(TextRuleDefinition.REPOSITORY_KEY)
+      .addAnnotatedChecks(new TextCheckList().checks()).all());
+
+    List<Class<?>> secretChecks = new SecretsCheckList().checks();
     checks.addAll(checkFactory.<Check>create(SecretsRulesDefinition.REPOSITORY_KEY)
-      .addAnnotatedChecks(SecretsRulesDefinition.checks()).all());
+      .addAnnotatedChecks(secretChecks).all());
     return checks;
   }
 

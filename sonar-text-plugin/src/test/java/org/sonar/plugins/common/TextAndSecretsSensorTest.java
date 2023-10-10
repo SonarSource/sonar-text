@@ -61,7 +61,7 @@ class TextAndSecretsSensorTest {
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
   @Test
-  void describe() {
+  void shouldDescribeWithoutErrors() {
     DefaultSensorDescriptor descriptor = new DefaultSensorDescriptor();
     sensor(defaultSensorContext()).describe(descriptor);
 
@@ -117,7 +117,7 @@ class TextAndSecretsSensorTest {
   @Rule(key = "IssueAtLineOne")
   class ReportIssueAtLineOneCheck extends TextCheck {
     public void analyze(InputFileContext ctx) {
-      ctx.reportIssue(ruleKey, 1, "testIssue");
+      ctx.reportIssue(getRuleKey(), 1, "testIssue");
     }
   }
 
@@ -136,7 +136,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void stopOnCancellation() {
+  void shouldStopOnCancellation() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     context.setCancelled(true);
@@ -147,12 +147,12 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void issue_should_not_be_raised_twice_on_same_line() {
+  void issueShouldNotBeRaisedTwiceOnSameLine() {
     @Rule(key = "IssueAtLineOne")
     class ReportDuplicatedIssuesCheck extends TextCheck {
       public void analyze(InputFileContext ctx) {
-        ctx.reportIssue(ruleKey, 1, "testIssue");
-        ctx.reportIssue(ruleKey, 1, "testIssue");
+        ctx.reportIssue(getRuleKey(), 1, "testIssue");
+        ctx.reportIssue(getRuleKey(), 1, "testIssue");
       }
     }
     Check check = new ReportDuplicatedIssuesCheck();
@@ -327,7 +327,7 @@ class TextAndSecretsSensorTest {
   }
 
   private TextAndSecretsSensor sensor(Check check) {
-    CheckFactory checkFactory = new CheckFactory(activeRules(check.ruleKey.toString()));
+    CheckFactory checkFactory = new CheckFactory(activeRules(check.getRuleKey().toString()));
     return new TextAndSecretsSensor(checkFactory) {
       @Override
       protected List<Check> getActiveChecks() {

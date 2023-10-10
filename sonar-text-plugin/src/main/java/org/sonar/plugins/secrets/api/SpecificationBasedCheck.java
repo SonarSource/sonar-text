@@ -62,14 +62,18 @@ public abstract class SpecificationBasedCheck extends Check {
   public void initialize(SpecificationLoader loader, Map<URI, List<TextRange>> reportedIssuesForCtx, DurationStatistics durationStatistics) {
     this.reportedIssuesForCtx = reportedIssuesForCtx;
     this.durationStatistics = durationStatistics;
-    String ruleId = ruleKey.rule();
-    List<Rule> rulesForKey = loader.getRulesForKey(ruleId);
+    String ruleId = getRuleKey().rule();
+    List<Rule> rulesForKey = retrieveRules(loader, ruleId);
     if (rulesForKey.isEmpty()) {
       LOG.error("Found no rule specification for rule with key: {}", ruleId);
     }
     this.matcher = rulesForKey.stream()
       .map(rule -> SecretMatcher.build(rule, durationStatistics))
       .collect(Collectors.toList());
+  }
+
+  public List<Rule> retrieveRules(SpecificationLoader loader, String ruleKey) {
+    return loader.getRulesForKey(ruleKey);
   }
 
   @Override
@@ -98,7 +102,7 @@ public abstract class SpecificationBasedCheck extends Check {
     boolean noOverlappingSecrets = reportedSecrets.stream().noneMatch(reportedSecret -> reportedSecret.overlap(foundSecret));
     if (noOverlappingSecrets) {
       reportedSecrets.add(foundSecret);
-      ctx.reportIssue(ruleKey, foundSecret, secretMatcher.getMessageFromRule());
+      ctx.reportIssue(getRuleKey(), foundSecret, secretMatcher.getMessageFromRule());
     }
   }
 

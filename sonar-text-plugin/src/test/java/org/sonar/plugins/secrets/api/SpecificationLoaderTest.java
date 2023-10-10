@@ -26,6 +26,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
+import org.sonar.plugins.secrets.SecretsCheckList;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel;
 import org.sonar.plugins.secrets.configuration.model.Rule;
@@ -42,7 +43,7 @@ class SpecificationLoaderTest {
     SpecificationLoader specificationLoader = new SpecificationLoader();
     Map<String, List<Rule>> rulesMappedToKey = specificationLoader.getRulesMappedToKey();
 
-    assertThat(rulesMappedToKey.values()).hasSize(SecretsRulesDefinition.checks().size());
+    assertThat(rulesMappedToKey.values()).hasSize(new SecretsCheckList().checks().size());
     assertThat(logTester.getLogs()).isEmpty();
   }
 

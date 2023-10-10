@@ -43,13 +43,16 @@ import org.sonar.api.batch.sensor.issue.IssueLocation;
 import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.Version;
+import org.sonar.plugins.secrets.SecretsCheckList;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
+import org.sonar.plugins.text.TextCheckList;
 import org.sonar.plugins.text.TextRuleDefinition;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class TestUtils {
 
+  private static final SecretsCheckList secretsCheckList = new SecretsCheckList();
   private static final Version VERSION = Version.create(9, 9);
   public static final SonarRuntime SONARLINT_RUNTIME = SonarRuntimeImpl.forSonarLint(VERSION);
   public static final SonarRuntime SONARQUBE_RUNTIME = SonarRuntimeImpl.forSonarQube(VERSION, SonarQubeSide.SERVER, SonarEdition.COMMUNITY);
@@ -118,11 +121,11 @@ public class TestUtils {
   }
 
   public static String[] allRuleKeys() {
-    return Stream.of(SecretsRulesDefinition.checks(), TextRuleDefinition.checks())
+    return Stream.of(secretsCheckList.checks(), new TextCheckList().checks())
       .flatMap(Collection::stream)
       .map(checkClass -> {
         try {
-          return ((Check) checkClass.getDeclaredConstructor().newInstance()).ruleKey.toString();
+          return ((Check) checkClass.getDeclaredConstructor().newInstance()).getRuleKey().toString();
         } catch (ReflectiveOperationException e) {
           throw new RuntimeException(e);
         }
@@ -131,7 +134,7 @@ public class TestUtils {
   }
 
   public static SensorContextTester sensorContext(Check check) {
-    return sensorContext(check.ruleKey.toString());
+    return sensorContext(check.getRuleKey().toString());
   }
 
   public static SensorContextTester defaultSensorContext() {

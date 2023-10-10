@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SecretsSpecificationFilesDefinitionTest {
 
   @Test
-  void e() {
+  void secretSpecificationsShouldBeCounted() {
     assertThat(SecretsSpecificationFilesDefinition.existingSecretSpecifications()).hasSizeGreaterThanOrEqualTo(28);
   }
 }

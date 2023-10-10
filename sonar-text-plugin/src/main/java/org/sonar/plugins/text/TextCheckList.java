@@ -17,28 +17,16 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.common;
+package org.sonar.plugins.text;
 
-import org.junit.jupiter.api.Test;
-import org.sonar.api.Plugin;
-import org.sonar.api.SonarEdition;
-import org.sonar.api.SonarQubeSide;
-import org.sonar.api.SonarRuntime;
-import org.sonar.api.internal.SonarRuntimeImpl;
-import org.sonar.api.utils.Version;
+import java.util.List;
+import org.sonar.plugins.text.checks.BIDICharacterCheck;
 
-import static org.assertj.core.api.Assertions.assertThat;
+public class TextCheckList {
 
-class TextAndSecretsPluginTest {
-
-  private static final Version VERSION_8_9 = Version.create(8, 9);
-
-  @Test
-  void shouldDefineExtensions() {
-    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(VERSION_8_9, SonarQubeSide.SCANNER, SonarEdition.COMMUNITY);
-    Plugin.Context context = new Plugin.Context(runtime);
-    Plugin plugin = new TextAndSecretsPlugin();
-    plugin.define(context);
-    assertThat(context.getExtensions()).hasSize(8);
+  public List<Class<?>> checks() {
+    return TEXT_CHECKS;
   }
+
+  public static final List<Class<?>> TEXT_CHECKS = List.of(BIDICharacterCheck.class);
 }

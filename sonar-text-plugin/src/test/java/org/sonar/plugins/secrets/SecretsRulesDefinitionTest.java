@@ -36,9 +36,10 @@ import static org.sonar.plugins.secrets.SecretsRulesDefinition.REPOSITORY_KEY;
 
 class SecretsRulesDefinitionTest {
 
+  private static final SonarRuntime sonarRuntime = SonarRuntimeImpl.forSonarLint(Version.create(8, 9));
+
   @Test
-  void define_rules() {
-    SonarRuntime sonarRuntime = SonarRuntimeImpl.forSonarLint(Version.create(8, 9));
+  void shouldDefineRules() {
     SecretsRulesDefinition rulesDefinition = new SecretsRulesDefinition(sonarRuntime);
     RulesDefinition.Context context = new RulesDefinition.Context();
     rulesDefinition.define(context);
@@ -46,7 +47,7 @@ class SecretsRulesDefinitionTest {
     assertThat(context.repositories()).hasSize(1);
     RulesDefinition.Repository repository = context.repository(REPOSITORY_KEY);
     assertThat(repository).isNotNull();
-    assertThat(repository.rules()).hasSize(SecretsRulesDefinition.checks().size());
+    assertThat(repository.rules()).hasSize(rulesDefinition.checks().size());
     assertThat(repository.name()).isEqualTo("Sonar Secrets Analyzer");
 
     RulesDefinition.Rule ruleS6290 = repository.rule("S6290");
@@ -57,22 +58,24 @@ class SecretsRulesDefinitionTest {
   }
 
   @Test
-  void define_sonar_way_profile() {
+  void shouldDefineSonarWayProfile() {
+    SecretsRulesDefinition rulesDefinition = new SecretsRulesDefinition(sonarRuntime);
     BuiltInQualityProfilesDefinition.Context context = new BuiltInQualityProfilesDefinition.Context();
     BuiltInQualityProfilesDefinition profileDefinition = new SecretsRulesDefinition.DefaultQualityProfile();
     profileDefinition.define(context);
     BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile("secrets", "Sonar way");
     assertThat(profile.language()).isEqualTo("secrets");
     assertThat(profile.name()).isEqualTo("Sonar way");
-    assertThat(profile.rules()).hasSize(SecretsRulesDefinition.checks().size());
+    assertThat(profile.rules()).hasSize(rulesDefinition.checks().size());
   }
 
   @Test
-  void each_check_should_be_declared_in_the_check_list() throws IOException {
+  void eachCheckShouldBeDeclaredInTheCheckList() throws IOException {
+    SecretsRulesDefinition rulesDefinition = new SecretsRulesDefinition(sonarRuntime);
     Path checksPackage = Path.of("src", "main", "java", "org", "sonar", "plugins", "secrets", "checks");
     try (Stream<Path> list = Files.walk(checksPackage)) {
       int expectedCount = (int) list.filter(file -> file.toString().endsWith("Check.java")).count();
-      assertThat(SecretsRulesDefinition.checks()).hasSize(expectedCount);
+      assertThat(rulesDefinition.checks()).hasSize(expectedCount);
     }
   }
 }

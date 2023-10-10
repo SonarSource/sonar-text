@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.common;
 
+import java.util.Collections;
 import java.util.List;
 import org.sonar.api.SonarRuntime;
 import org.sonar.api.server.rule.RulesDefinition;
@@ -32,25 +33,32 @@ public class CommonRulesDefinition implements RulesDefinition {
   public final String repositoryKey;
   public final String repositoryName;
   public final String languageKey;
-  private final List<Class<?>> checks;
 
   public CommonRulesDefinition(SonarRuntime sonarRuntime, String repositoryKey, String repositoryName,
-    String languageKey, List<Class<?>> checks) {
+    String languageKey) {
     this.sonarRuntime = sonarRuntime;
     this.repositoryKey = repositoryKey;
     this.repositoryName = repositoryName;
     this.languageKey = languageKey;
-    this.checks = checks;
   }
 
   @Override
   public void define(Context context) {
     NewRepository repository = context.createRepository(repositoryKey, languageKey).setName(repositoryName);
+
+    loadRepository(repository);
+    repository.done();
+  }
+
+  public List<Class<?>> checks() {
+    return Collections.emptyList();
+  }
+
+  public void loadRepository(NewRepository repository) {
     String resourcePath = resourcePath(repositoryKey, languageKey);
     String defaultProfilePath = DefaultQualityProfileDefinition.profilePath(repositoryKey, languageKey);
     RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(resourcePath, defaultProfilePath, sonarRuntime);
-    ruleMetadataLoader.addRulesByAnnotatedClass(repository, checks);
-    repository.done();
+    ruleMetadataLoader.addRulesByAnnotatedClass(repository, checks());
   }
 
   public static String resourcePath(String repository, String language) {

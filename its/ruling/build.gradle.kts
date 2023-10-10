@@ -2,6 +2,7 @@ plugins {
   id("org.sonarsource.text.java-conventions")
   id("org.sonarsource.text.code-style-convention")
   id("org.sonarsource.text.integration-test")
+  id("org.sonarqube")
 }
 
 dependencies {
@@ -11,3 +12,6 @@ dependencies {
   "integrationTestImplementation"(libs.assertj.core)
 }
 
+sonar {
+  isSkipProject = true
+}

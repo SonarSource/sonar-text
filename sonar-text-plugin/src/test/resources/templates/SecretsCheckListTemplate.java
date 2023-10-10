@@ -20,24 +20,14 @@
 package org.sonar.plugins.secrets;
 
 import java.util.List;
-import org.sonar.api.SonarRuntime;
-import org.sonar.plugins.common.CommonRulesDefinition;
-import org.sonar.plugins.common.DefaultQualityProfileDefinition;
 //<REPLACE-WITH-IMPORTS-OF-ALL-CHECKS>
-public class SecretsRulesDefinition extends CommonRulesDefinition {
 
-  public static final String REPOSITORY_KEY = "secrets";
-  public static final String REPOSITORY_NAME = "Sonar Secrets Analyzer";
-
-  public SecretsRulesDefinition(SonarRuntime sonarRuntime) {
-    super(sonarRuntime, REPOSITORY_KEY, REPOSITORY_NAME, SecretsLanguage.KEY, checks());
-  }
-
-  public static class DefaultQualityProfile extends DefaultQualityProfileDefinition {
-    public DefaultQualityProfile() {
-      super(REPOSITORY_KEY, SecretsLanguage.KEY);
-    }
-  }
+public class SecretsCheckList {
 
   //<REPLACE-WITH-LIST-OF-CHECKS>
+
+  public List<Class<?>> checks() {
+    return SECRET_CHECKS;
+  }
+
 }

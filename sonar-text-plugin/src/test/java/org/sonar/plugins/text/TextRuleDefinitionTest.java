@@ -61,10 +61,12 @@ class TextRuleDefinitionTest {
 
   @Test
   void each_check_should_be_declared_in_the_check_list() throws IOException {
+    SonarRuntime sonarRuntime = SonarRuntimeImpl.forSonarLint(Version.parse("7.2.1.58118"));
+    TextRuleDefinition rulesDefinition = new TextRuleDefinition(sonarRuntime);
     Path checksPackage = Path.of("src", "main", "java", "org", "sonar", "plugins", "text", "checks");
     try (Stream<Path> list = Files.list(checksPackage)) {
       int expectedCount = (int) list.filter(file -> file.toString().endsWith("Check.java")).count();
-      assertThat(TextRuleDefinition.checks()).hasSize(expectedCount);
+      assertThat(rulesDefinition.checks()).hasSize(expectedCount);
     }
   }
 

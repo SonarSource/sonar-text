@@ -23,7 +23,6 @@ import java.util.List;
 import org.sonar.api.SonarRuntime;
 import org.sonar.plugins.common.CommonRulesDefinition;
 import org.sonar.plugins.common.DefaultQualityProfileDefinition;
-import org.sonar.plugins.text.checks.BIDICharacterCheck;
 
 public class TextRuleDefinition extends CommonRulesDefinition {
 
@@ -31,7 +30,7 @@ public class TextRuleDefinition extends CommonRulesDefinition {
   public static final String REPOSITORY_NAME = "Sonar";
 
   public TextRuleDefinition(SonarRuntime sonarRuntime) {
-    super(sonarRuntime, REPOSITORY_KEY, REPOSITORY_NAME, TextLanguage.KEY, checks());
+    super(sonarRuntime, REPOSITORY_KEY, REPOSITORY_NAME, TextLanguage.KEY);
   }
 
   public static class DefaultQualityProfile extends DefaultQualityProfileDefinition {
@@ -40,8 +39,9 @@ public class TextRuleDefinition extends CommonRulesDefinition {
     }
   }
 
-  public static List<Class<?>> checks() {
-    return List.of(BIDICharacterCheck.class);
+  @Override
+  public List<Class<?>> checks() {
+    return new TextCheckList().checks();
   }
 
 }

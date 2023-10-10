@@ -25,7 +25,7 @@ import org.sonar.check.Rule;
 
 public abstract class Check {
 
-  public final RuleKey ruleKey;
+  private RuleKey ruleKey;
 
   protected Check() {
     Rule ruleAnnotation = AnnotationUtils.getAnnotation(getClass(), Rule.class);
@@ -42,5 +42,13 @@ public abstract class Check {
   protected abstract String repositoryKey();
 
   public abstract void analyze(InputFileContext ctx);
+
+  public RuleKey getRuleKey() {
+    return ruleKey;
+  }
+
+  public void setRuleKey(RuleKey ruleKey) {
+    this.ruleKey = ruleKey;
+  }
 
 }

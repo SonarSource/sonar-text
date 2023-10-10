@@ -70,7 +70,7 @@ public abstract class AbstractRuleExampleTest {
   @TestFactory
   @DisplayName("Execute examples from the configuration file")
   Stream<DynamicTest> loadExamples() {
-    List<Rule> rulesForKey = specificationLoader.getRulesForKey(check.ruleKey.rule());
+    List<Rule> rulesForKey = specificationLoader.getRulesForKey(check.getRuleKey().rule());
     return rulesForKey.stream().flatMap(
       rule -> rule.getExamples().stream()
         // for easier debugging of specific rules uncomment the line below
