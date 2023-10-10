@@ -41,9 +41,10 @@ public class ExecutorServiceManager {
   public static int timeoutMs = 10000;
   /**
    * The timeout time in millisecond after which the {@link ExecutorServiceManager} will stop waiting for the precedent interruption to be effective
-   * and will throw a {@link RuntimeException}
+   * and will throw a {@link RuntimeException}.
+   * Currently set to a very long time (16min) as once it's reached it will kill the analyzer.
    */
-  public static int uninterruptibleTimeoutMs = 10000;
+  public static int uninterruptibleTimeoutMs = 1000000;
   private ExecutorService lastExecutorService;
 
   public ExecutorServiceManager() {
