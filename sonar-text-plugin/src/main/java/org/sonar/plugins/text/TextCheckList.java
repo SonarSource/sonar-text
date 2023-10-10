@@ -24,9 +24,10 @@ import org.sonar.plugins.text.checks.BIDICharacterCheck;
 
 public class TextCheckList {
 
+  public static final List<Class<?>> TEXT_CHECKS = List.of(BIDICharacterCheck.class);
+
   public List<Class<?>> checks() {
     return TEXT_CHECKS;
   }
 
-  public static final List<Class<?>> TEXT_CHECKS = List.of(BIDICharacterCheck.class);
 }

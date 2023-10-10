@@ -186,13 +186,17 @@ public class TextAndSecretsSensor implements Sensor {
   }
 
   protected void initializeSpecificationBasedChecks(List<Check> checks) {
-    SpecificationLoader specificationLoader = new SpecificationLoader();
+    var specificationLoader = constructSpecificationLoader();
     Map<URI, List<TextRange>> reportedIssuesForCtx = new HashMap<>();
     for (Check activeCheck : checks) {
       if (activeCheck instanceof SpecificationBasedCheck) {
         ((SpecificationBasedCheck) activeCheck).initialize(specificationLoader, reportedIssuesForCtx, durationStatistics);
       }
     }
+  }
+
+  protected SpecificationLoader constructSpecificationLoader() {
+    return new SpecificationLoader();
   }
 
   private static void logAnalysisError(SensorContext sensorContext, InputFile inputFile, Exception e) {
