@@ -66,7 +66,7 @@ tasks.withType<Sign> {
 }
 
 artifactory {
-  val artifactsToPublish = System.getenv()["ARTIFACTS_TO_PUBLISH"] ?: "org.sonarsource.text:sonar-text-plugin:jar"
+  val artifactsToPublish = "org.sonarsource.text:sonar-text-plugin:jar"
 
   clientConfig.info.addEnvironmentProperty("ARTIFACTS_TO_PUBLISH", artifactsToPublish)
   clientConfig.info.addEnvironmentProperty("ARTIFACTS_TO_DOWNLOAD", "")
