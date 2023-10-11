@@ -250,9 +250,59 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
+  void shouldExecuteChecksOnIncludedTextFileNames() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY, "txt"));
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), "abc", null));
+    assertThat(logTester.logs()).contains("1 source file to be analyzed");
+  }
+
+  @Test
+  void shouldNotExecuteChecksOnNonIncludedTextFileNames() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY, "csv"));
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), "abc", null));
+    assertThat(logTester.logs()).isEmpty();
+  }
+
+  @Test
+  void shouldExecuteChecksOnMultipleIncludedTextFileNames() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY, "txt,csv"));
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    analyse(sensor(check), context,
+      inputFile(Path.of("Foo.txt"), "abc", null),
+      inputFile(Path.of("Foo.csv"), "abc", null),
+      inputFile(Path.of("Foo.nope"), "abc", null));
+    assertThat(logTester.logs()).containsExactly(
+      "2 source files to be analyzed",
+      "2/2 source files have been analyzed");
+  }
+
+  @Test
+  void shouldExecuteChecksOnIncludedTextFileNamesWithBinaryData() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY, "txt"));
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null));
+    assertThat(logTester.logs()).containsExactlyInAnyOrder(
+      "The file 'Foo.txt' contains binary data and will not be analyzed.",
+      "Please check this file and/or remove the extension from the 'sonar.text.included.file.suffixes' property.",
+      "1 source file to be analyzed",
+      "1/1 source file has been analyzed");
+  }
+
+  @Test
   void shouldNotExcludeBinaryFileContentIfLanguageIsNotNull() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = defaultSensorContext();
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, "java"));
 
     assertThat(asString(context.allIssues())).containsExactly(
@@ -263,7 +313,24 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void shouldExcludeBinaryFileContentIfLanguageIsNullAndExcludeTheExtension() {
+  void shouldNotExcludeBinaryFileContentIfLanguageIsNullAndExtensionIncludedWithSonarqube() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = defaultSensorContext();
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY, "txt"));
+    analyse(sensor(check), context,
+      inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of("FileWithoutExtension"), SENSITIVE_BIDI_CHARS, null));
+
+    assertThat(logTester.logs()).containsExactlyInAnyOrder(
+      "The file 'Foo.txt' contains binary data and will not be analyzed.",
+      "Please check this file and/or remove the extension from the 'sonar.text.included.file.suffixes' property.",
+      "1 source file to be analyzed",
+      "1/1 source file has been analyzed");
+  }
+
+  @Test
+  void shouldExcludeBinaryFileContentIfLanguageIsNullWithSonarlint() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = defaultSensorContext();
     analyse(sensor(check), context,
@@ -339,5 +406,4 @@ class TextAndSecretsSensorTest {
   private static TextAndSecretsSensor sensor(SensorContext sensorContext) {
     return new TextAndSecretsSensor(new CheckFactory(sensorContext.activeRules()));
   }
-
 }

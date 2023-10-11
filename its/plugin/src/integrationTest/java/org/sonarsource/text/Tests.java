@@ -30,7 +30,8 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
   NoSonarTest.class,
-  TextPhpTest.class
+  TextPhpTest.class,
+  FileDetectionTest.class
 })
 public class Tests {
 
