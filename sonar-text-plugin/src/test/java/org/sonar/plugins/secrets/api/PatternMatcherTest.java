@@ -21,11 +21,17 @@ package org.sonar.plugins.secrets.api;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.sonar.api.testfixtures.log.LogTesterJUnit5;
+import org.sonar.plugins.secrets.api.task.ExecutorServiceManager;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PatternMatcherTest {
+
+  @RegisterExtension
+  LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
   @Test
   void testWithNoSuppliedPattern() {
@@ -46,5 +52,25 @@ class PatternMatcherTest {
     PatternMatcher patternMatcher = new PatternMatcher("\\b(pattern)\\b");
     List<Match> matches = patternMatcher.findIn("pattern pattern");
     assertThat(matches).hasSize(2);
+  }
+
+  @Test
+  void patternMatcherShouldTimeoutAndReturnNothingOnCatastrophicBacktracking() {
+    ExecutorServiceManager.setTimeoutMs(100);
+    ExecutorServiceManager.setUninterruptibleTimeoutMs(100);
+    PatternMatcher patternMatcher = new PatternMatcher("(x+x+x+x+x+x+x+x+x+x+)+y");
+    List<Match> matches = patternMatcher.findIn("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+    assertThat(matches).isEmpty();
+    assertThat(logTester.logs()).containsExactly("Running pattern '(x+x+x+x+x+x+x+x+x+x+)+y' on content(40) has timed out (100ms)");
+  }
+
+  @Test
+  void patternMatcherShouldTimeoutAndReturnSomeFirstResultOnCatastrophicBacktracking() {
+    ExecutorServiceManager.setTimeoutMs(100);
+    ExecutorServiceManager.setUninterruptibleTimeoutMs(100);
+    PatternMatcher patternMatcher = new PatternMatcher("(\\d+|(x+x+x+x+x+x+x+x+x+x+)+y)");
+    List<Match> matches = patternMatcher.findIn("1234xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+    assertThat(matches).hasSize(1);
+    assertThat(logTester.logs()).containsExactly("Running pattern '(\\d+|(x+x+x+x+x+x+x+x+x+x+)+y)' on content(44) has timed out (100ms)");
   }
 }
