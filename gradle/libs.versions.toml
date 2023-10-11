@@ -15,6 +15,7 @@ mockito = "4.10.0"
 jfrog-gradle = "4.28.2"
 spotless-gradle = "6.22.0"
 blowdryer-gradle = "1.7.0"
+yguard = "2.10.0"
 
 [libraries]
 sonar-analyzer-commons = { module = "org.sonarsource.analyzer-commons:sonar-analyzer-commons", version.ref = "sonar-commons" }
@@ -35,3 +36,4 @@ jfrog-buildinfo-gradle = { module = "org.jfrog.buildinfo:build-info-extractor-gr
 diffplug-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless-gradle" }
 diffplug-blowdryer = { module = "com.diffplug:blowdryer", version.ref = "blowdryer-gradle" }
 sonar-license-api = { module = "com.sonarsource.license:license-api", version.ref = "sonar-license-api" }
+yguard = { module = "com.yworks:yguard", version.ref = "yguard"}
