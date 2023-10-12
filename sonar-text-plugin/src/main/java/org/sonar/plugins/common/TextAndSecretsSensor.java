@@ -53,6 +53,8 @@ public class TextAndSecretsSensor implements Sensor {
 
   protected final CheckFactory checkFactory;
 
+  private final GitSupplier gitSupplier = new GitSupplier();
+
   private DurationStatistics durationStatistics;
 
   public TextAndSecretsSensor(CheckFactory checkFactory) {
@@ -78,10 +80,17 @@ public class TextAndSecretsSensor implements Sensor {
     }
 
     // Retrieve list of files to analyse using the right FilePredicate
-    boolean analyzeAllFiles = isSonarLintContext(sensorContext) || analyzeAllFiles(sensorContext);
+    boolean sonarLintContext = isSonarLintContext(sensorContext);
+    boolean analyzeAllFiles = sonarLintContext || analyzeAllFiles(sensorContext);
     var notBinaryFilePredicate = notBinaryFilePredicate(sensorContext);
     var textFilePredicate = plaintextFilePredicate(sensorContext);
     FilePredicate filePredicate = analyzeAllFiles ? notBinaryFilePredicate : sensorContext.fileSystem().predicates().or(LANGUAGE_FILE_PREDICATE, textFilePredicate);
+
+    if (!sonarLintContext) {
+      FilePredicate trackedByGitPredicate = new GitTrackedFilePredicate(getGitSupplier());
+      filePredicate = sensorContext.fileSystem().predicates().and(filePredicate, trackedByGitPredicate);
+    }
+
     List<InputFile> inputFiles = getInputFiles(sensorContext, filePredicate);
     if (inputFiles.isEmpty()) {
       return;
@@ -163,5 +172,9 @@ public class TextAndSecretsSensor implements Sensor {
 
   protected SpecificationLoader constructSpecificationLoader() {
     return new SpecificationLoader();
+  }
+
+  public GitSupplier getGitSupplier() {
+    return gitSupplier;
   }
 }
