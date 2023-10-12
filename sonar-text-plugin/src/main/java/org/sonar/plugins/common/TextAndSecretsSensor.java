@@ -43,9 +43,10 @@ import org.sonar.plugins.text.TextRuleDefinition;
 public class TextAndSecretsSensor implements Sensor {
 
   public static final String EXCLUDED_FILE_SUFFIXES_KEY = "sonar.text.excluded.file.suffixes";
+  public static final String TEXT_INCLUSIONS_KEY = "sonar.text.inclusions";
+  public static final String TEXT_INCLUSIONS_DEFAULT_VALUE = "**/*.sh,**/*.bash,**/*.zsh,**/*.ksh,**/*.ps1,**/*.properties," +
+    "**/*.conf,**/*.pem,**/*.config,.env,.aws/config";
   private static final String ANALYZE_ALL_FILES_KEY = "sonar.text.analyzeAllFiles";
-  public static final String INCLUDED_FILE_SUFFIXES_KEY = "sonar.text.included.file.suffixes";
-  public static final String INCLUDED_FILE_SUFFIXES_DEFAULT_VALUE = "sh,bash,zsh,ksh,ps1,properties,conf,pem,env,config";
 
   public static final String TEXT_CATEGORY = "Secrets";
 
@@ -112,17 +113,17 @@ public class TextAndSecretsSensor implements Sensor {
   /**
    * Whitelist approach: provide a predicate that include file that are considered as text file.
    * Example: for 'exe', 'txt' and 'unknown', it will return true for 'txt'
-   * List of text extension to include are provided by configuration key {@link TextAndSecretsSensor#INCLUDED_FILE_SUFFIXES_KEY}
+   * List of text extension to include are provided by configuration key {@link TextAndSecretsSensor#TEXT_INCLUSIONS_KEY}
    */
   private static FilePredicate plaintextFilePredicate(SensorContext sensorContext) {
-    String[] plaintextFileExtensions = sensorContext.config().getStringArray(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY);
+    String[] plaintextFileExtensions = sensorContext.config().getStringArray(TEXT_INCLUSIONS_KEY);
     if (plaintextFileExtensions.length == 0) {
       return sensorContext.fileSystem().predicates().none();
     }
 
     List<FilePredicate> extensionPredicates = new ArrayList<>();
     for (String extension : plaintextFileExtensions) {
-      var filePredicate = sensorContext.fileSystem().predicates().hasExtension(extension);
+      var filePredicate = sensorContext.fileSystem().predicates().matchesPathPattern(extension);
       extensionPredicates.add(filePredicate);
     }
     return sensorContext.fileSystem().predicates().or(extensionPredicates);

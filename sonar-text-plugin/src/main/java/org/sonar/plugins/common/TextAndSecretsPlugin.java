@@ -60,8 +60,8 @@ public class TextAndSecretsPlugin implements Plugin {
         .onQualifiers(Qualifiers.PROJECT)
         .build(),
 
-      PropertyDefinition.builder(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY)
-        .defaultValue(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_DEFAULT_VALUE)
+      PropertyDefinition.builder(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY)
+        .defaultValue(TextAndSecretsSensor.TEXT_INCLUSIONS_DEFAULT_VALUE)
         .category(TextAndSecretsSensor.TEXT_CATEGORY)
         .name("List of text file suffixes to include")
         .multiValues(true)

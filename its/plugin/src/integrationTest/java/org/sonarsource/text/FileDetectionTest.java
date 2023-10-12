@@ -52,14 +52,14 @@ public class FileDetectionTest extends TestBase {
   @Test
   public void shouldFindFilesAsPerConfiguration() {
     // need to define a different project key for every check
-    String projectKey = PROJECT_KEY + counter++;
+    String projectKey = PROJECT_KEY + nextInt();
 
     SonarScanner sonarScanner = getSonarScanner(projectKey, BASE_DIRECTORY + subfolder, NO_SONAR_PROFILE_NAME);
     if (analyzeAllMode) {
       sonarScanner.setProperty("sonar.text.analyzeAllFiles", "true");
     }
     if (includedTextExtensions != null) {
-      sonarScanner.setProperty("sonar.text.included.file.suffixes", includedTextExtensions);
+      sonarScanner.setProperty("sonar.text.inclusions", includedTextExtensions);
     }
 
     ORCHESTRATOR.executeBuild(sonarScanner);
@@ -76,13 +76,17 @@ public class FileDetectionTest extends TestBase {
       {TEXT_FILES_ONLY_SUBFOLDER, true, null, 2},
       {TEXT_FILES_ONLY_SUBFOLDER, true, "", 2},
       {TEXT_FILES_ONLY_SUBFOLDER, true, " ", 2},
-      {TEXT_FILES_ONLY_SUBFOLDER, false, "txt", 1},
+      {TEXT_FILES_ONLY_SUBFOLDER, false, "**/*txt", 1},
       {TEXT_FILES_ONLY_SUBFOLDER, false, null, 0},
-      {TEXT_FILES_ONLY_SUBFOLDER, false, "bash,txt", 2},
+      {TEXT_FILES_ONLY_SUBFOLDER, false, "**/*.bash,**/*txt", 2},
       {MIX_TEXT_BINARY_FILES_SUBFOLDER, true, null, 2},
-      {MIX_TEXT_BINARY_FILES_SUBFOLDER, false, "txt", 1},
-      {MIX_TEXT_BINARY_FILES_SUBFOLDER, false, "exe", 1},
-      {MIX_TEXT_BINARY_FILES_SUBFOLDER, false, "bash,txt", 2},
+      {MIX_TEXT_BINARY_FILES_SUBFOLDER, false, "**/*.txt", 1},
+      {MIX_TEXT_BINARY_FILES_SUBFOLDER, false, "**/*.exe", 1},
+      {MIX_TEXT_BINARY_FILES_SUBFOLDER, false, "**/*.bash,**/*.txt", 2},
     });
+  }
+
+  private static int nextInt() {
+    return counter++;
   }
 }

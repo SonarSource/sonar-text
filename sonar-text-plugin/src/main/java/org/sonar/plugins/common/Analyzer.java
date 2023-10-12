@@ -99,8 +99,8 @@ public final class Analyzer {
    */
   private static void analyzeFilesInWhitelistMode(InputFileContext inputFileContext, List<Check> activeChecks) {
     if (inputFileContext.hasNonTextCharacters()) {
-      LOG.warn("The file '{}' contains binary data and will not be analyzed.", inputFileContext.getInputFile().filename());
-      LOG.warn("Please check this file and/or remove the extension from the 'sonar.text.included.file.suffixes' property.");
+      LOG.warn("The file '{}' contains binary data and will not be analyzed.", inputFileContext.getInputFile());
+      LOG.warn("Please check this file and/or remove the extension from the '{}' property.", TextAndSecretsSensor.TEXT_INCLUSIONS_KEY);
     } else {
       analyzeAllChecks(inputFileContext, activeChecks);
     }

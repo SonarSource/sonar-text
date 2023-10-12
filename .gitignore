@@ -12,6 +12,7 @@ build/
 *.ipr
 .idea/
 .run/
+out/
 
 # ---- Eclipse
 .classpath

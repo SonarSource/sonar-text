@@ -60,6 +60,7 @@ import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.defaultSensorContext;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
+import static org.sonar.plugins.common.TextAndSecretsSensor.TEXT_INCLUSIONS_DEFAULT_VALUE;
 
 class TextAndSecretsSensorTest {
 
@@ -261,7 +262,7 @@ class TextAndSecretsSensorTest {
   void shouldExecuteChecksOnIncludedTextFileNames() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY, "txt"));
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt"));
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), "abc", null));
     assertThat(logTester.logs()).contains("1 source file to be analyzed");
@@ -271,7 +272,7 @@ class TextAndSecretsSensorTest {
   void shouldNotExecuteChecksOnNonIncludedTextFileNames() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY, "csv"));
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.csv"));
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), "abc", null));
     assertThat(logTester.logs()).isEmpty();
@@ -281,28 +282,119 @@ class TextAndSecretsSensorTest {
   void shouldExecuteChecksOnMultipleIncludedTextFileNames() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY, "txt,csv"));
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt,*.csv"));
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    analyse(sensor(check), context,
+      inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of("Foo.csv"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of("Foo.nope"), "abc", null));
+    assertThat(logTester.logs()).containsExactlyInAnyOrder(
+      "The file 'Foo.txt' contains binary data and will not be analyzed.",
+      "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.",
+      "2 source files to be analyzed",
+      "The file 'Foo.csv' contains binary data and will not be analyzed.",
+      "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.",
+      "2/2 source files have been analyzed");
+  }
+
+  @Test
+  void shouldNotExecuteChecksOnMultipleIncludedTextFileNamesWithoutAstrix() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, ".txt,.csv"));
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
       inputFile(Path.of("Foo.txt"), "abc", null),
       inputFile(Path.of("Foo.csv"), "abc", null),
       inputFile(Path.of("Foo.nope"), "abc", null));
-    assertThat(logTester.logs()).containsExactly(
-      "2 source files to be analyzed",
-      "2/2 source files have been analyzed");
+    assertThat(logTester.logs()).isEmpty();
+  }
+
+  @Test
+  void shouldExecuteChecksOnDotEnvFile() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, ".env"));
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    analyse(sensor(check), context,
+      inputFile(Path.of(".env"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of("Foo.env"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of(".environment"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of("Foo.environment"), SENSITIVE_BIDI_CHARS, null));
+    assertThat(logTester.logs()).containsExactlyInAnyOrder(
+      "1 source file to be analyzed",
+      "The file '.env' contains binary data and will not be analyzed.",
+      "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.",
+      "1/1 source file has been analyzed");
+  }
+
+  @Test
+  void shouldExecuteChecksOnDotAwsConfig() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, ".aws/config"));
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    analyse(sensor(check), context,
+      inputFile(Path.of(".aws", "config"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of(".aws-config"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of(".aws/configuration"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of("config"), SENSITIVE_BIDI_CHARS, null));
+    assertThat(logTester.logs()).containsExactlyInAnyOrder(
+      "The file '.aws/config' contains binary data and will not be analyzed.",
+      "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.",
+      "1 source file to be analyzed",
+      "1/1 source file has been analyzed");
+  }
+
+  @Test
+  void shouldExecuteChecksOnDefaults() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    // INCLUDED_FILE_SUFFIXES_KEY is set to default value
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, TEXT_INCLUSIONS_DEFAULT_VALUE));
+    context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
+    analyse(sensor(check), context,
+      inputFile(Path.of("script", "start.sh"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of("run.bash"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of("a.zsh"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of("b.ksh"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of("win.ps1"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of("gradle.properties"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of("config", "some.conf"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of("my.pem"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of("ccc.config"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of(".env"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of(".aws", "config"), SENSITIVE_BIDI_CHARS, null),
+      // doesn't mach the pattern
+      inputFile(Path.of("foo", "bar"), SENSITIVE_BIDI_CHARS, null));
+    assertThat(logTester.logs()).contains(
+      "11 source files to be analyzed",
+      "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.",
+      "The file 'config/some.conf' contains binary data and will not be analyzed.",
+      "The file '.aws/config' contains binary data and will not be analyzed.",
+      "The file 'script/start.sh' contains binary data and will not be analyzed.",
+      "The file 'my.pem' contains binary data and will not be analyzed.",
+      "The file '.env' contains binary data and will not be analyzed.",
+      "The file 'win.ps1' contains binary data and will not be analyzed.",
+      "The file 'run.bash' contains binary data and will not be analyzed.",
+      "The file 'ccc.config' contains binary data and will not be analyzed.",
+      "The file 'a.zsh' contains binary data and will not be analyzed.",
+      "The file 'b.ksh' contains binary data and will not be analyzed.",
+      "The file 'gradle.properties' contains binary data and will not be analyzed.",
+      "11/11 source files have been analyzed");
   }
 
   @Test
   void shouldExecuteChecksOnIncludedTextFileNamesWithBinaryData() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY, "txt"));
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt"));
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null));
     assertThat(logTester.logs()).containsExactlyInAnyOrder(
       "The file 'Foo.txt' contains binary data and will not be analyzed.",
-      "Please check this file and/or remove the extension from the 'sonar.text.included.file.suffixes' property.",
       "1 source file to be analyzed",
+      "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.",
       "1/1 source file has been analyzed");
   }
 
@@ -325,15 +417,15 @@ class TextAndSecretsSensorTest {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = defaultSensorContext();
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
-    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.INCLUDED_FILE_SUFFIXES_KEY, "txt"));
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt"));
     analyse(sensor(check), context,
       inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null),
       inputFile(Path.of("FileWithoutExtension"), SENSITIVE_BIDI_CHARS, null));
 
     assertThat(logTester.logs()).containsExactlyInAnyOrder(
       "The file 'Foo.txt' contains binary data and will not be analyzed.",
-      "Please check this file and/or remove the extension from the 'sonar.text.included.file.suffixes' property.",
       "1 source file to be analyzed",
+      "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.",
       "1/1 source file has been analyzed");
   }
 
@@ -384,8 +476,8 @@ class TextAndSecretsSensorTest {
     assertThat(analysisError.inputFile()).isEqualTo(inputFile);
     assertThat(analysisError.message()).startsWith("Unable to analyze").endsWith("Fail to read file input stream");
     assertThat(analysisError.location()).isNull();
-
-    assertThat(logTester.logs()).anyMatch(log -> log.startsWith("Unable to analyze"));
+    // It looks like org.eclipse.jgit.util.FS_POSIX call LOG.warn(null) or similar
+    assertThat(logTester.logs()).anyMatch(log -> log != null && log.startsWith("Unable to analyze"));
   }
 
   @Test

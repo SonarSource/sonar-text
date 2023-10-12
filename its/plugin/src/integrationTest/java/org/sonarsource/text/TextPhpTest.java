@@ -30,7 +30,7 @@ public class TextPhpTest extends TestBase {
   private static final String PROJECT_KEY = "textPhp";
 
   @Test
-  public void test_php_nosonar() {
+  public void testPhpNoSonar() {
     ORCHESTRATOR.executeBuild(getSonarScanner(PROJECT_KEY, BASE_DIRECTORY, NO_SONAR_PROFILE_NAME));
 
     assertThat(getMeasureAsInt(PROJECT_KEY, "files")).isEqualTo(1);
