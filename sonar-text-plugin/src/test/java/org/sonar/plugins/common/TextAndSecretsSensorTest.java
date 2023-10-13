@@ -25,12 +25,9 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.mockito.Mockito;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.Sensor;
@@ -38,7 +35,6 @@ import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.error.AnalysisError;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
-import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.check.Rule;
@@ -48,13 +44,9 @@ import org.sonar.plugins.text.checks.BIDICharacterCheck;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonar.plugins.common.GitTrackedFilePredicateTest.setupGitMock;
-import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME;
 import static org.sonar.plugins.common.TestUtils.activeRules;
 import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.defaultSensorContext;
@@ -465,8 +457,7 @@ class TextAndSecretsSensorTest {
   void analysisErrorShouldBeRaisedOnCorruptedFile() throws IOException {
     Check check = new BIDICharacterCheck();
     SensorContextTester context = sensorContext(check);
-    context.setRuntime(SONARQUBE_RUNTIME);
-    InputFile inputFile = spy(inputFile(Path.of("a.txt"), "{}", "secrets"));
+    InputFile inputFile = spy(inputFile("{}"));
     when(inputFile.inputStream()).thenThrow(new IOException("Fail to read file input stream"));
     analyse(sensor(check), context, inputFile);
 
@@ -478,55 +469,6 @@ class TextAndSecretsSensorTest {
     assertThat(analysisError.location()).isNull();
     // It looks like org.eclipse.jgit.util.FS_POSIX call LOG.warn(null) or similar
     assertThat(logTester.logs()).anyMatch(log -> log != null && log.startsWith("Unable to analyze"));
-  }
-
-  @Test
-  void shouldNotAnalyzeUntrackedFiles() throws IOException, GitAPIException {
-    Check check = new ReportIssueAtLineOneCheck();
-    SensorContextTester context = sensorContext(check);
-    context.setRuntime(SONARQUBE_RUNTIME);
-    var sensor = sensor(check);
-    var spy = Mockito.spy(sensor);
-    var gitSupplier = mock(GitSupplier.class);
-    Path fooJavaPath = Path.of("src", "foo.java");
-    String relativePathFooJava = "src" + fooJavaPath.getFileSystem().getSeparator() + "foo.java";
-    var gitMock = setupGitMock(Set.of("a.txt", relativePathFooJava));
-    when(gitSupplier.getGit()).thenReturn(gitMock);
-    when(spy.getGitSupplier()).thenReturn(gitSupplier);
-
-    analyse(spy, context,
-      inputFile(Path.of("a.txt"), "{}", "secrets"),
-      inputFile(Path.of("b.txt"), "{}", "secrets"),
-      inputFile(fooJavaPath));
-
-    Collection<Issue> issues = context.allIssues();
-    assertThat(issues)
-      .hasSize(1)
-      .map(it -> ((InputFile) it.primaryLocation().inputComponent()).filename())
-      .containsExactly("b.txt");
-    assertThat(logTester.logs().get(0)).endsWith("1 source file to be analyzed");
-  }
-
-  @Test
-  void shouldNotCallGitFilePredicateInSonarlintContext() throws IOException, GitAPIException {
-    Check check = new ReportIssueAtLineOneCheck();
-    SensorContextTester context = sensorContext(check);
-    var sensor = sensor(check);
-    var spy = Mockito.spy(sensor);
-    var gitSupplier = mock(GitSupplier.class);
-    var gitMock = setupGitMock(Set.of("a.txt"));
-    when(gitSupplier.getGit()).thenReturn(gitMock);
-    when(spy.getGitSupplier()).thenReturn(gitSupplier);
-
-    analyse(spy, context,
-      inputFile(Path.of("a.txt"), "{}"),
-      inputFile(Path.of("b.txt"), "{}"));
-
-    Collection<Issue> issues = context.allIssues();
-    assertThat(issues).hasSize(2);
-    assertThat(logTester.logs().get(0)).endsWith("2 source files to be analyzed");
-    verify(gitSupplier, times(0)).getGit();
-    verify(spy, times(0)).getGitSupplier();
   }
 
   private void analyseDirectory(Sensor sensor, SensorContextTester context, Path directory) throws IOException {
