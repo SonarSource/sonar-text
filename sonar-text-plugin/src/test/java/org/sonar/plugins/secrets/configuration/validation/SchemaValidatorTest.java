@@ -40,7 +40,7 @@ class SchemaValidatorTest {
     InputStream specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + specificationFileName);
     JsonNode specification = MAPPER.readTree(specificationStream);
 
-    assertThatNoException().isThrownBy(() -> SchemaValidator.validate(specification, specificationFileName));
+    assertThatNoException().isThrownBy(() -> SchemaValidator.validateSpecification(specification, specificationFileName));
   }
 
   @ParameterizedTest
@@ -52,7 +52,7 @@ class SchemaValidatorTest {
     JsonNode specification = MAPPER.readTree(specificationStream);
 
     assertThatExceptionOfType(SchemaValidationException.class)
-      .isThrownBy(() -> SchemaValidator.validate(specification, specificationFileName))
+      .isThrownBy(() -> SchemaValidator.validateSpecification(specification, specificationFileName))
       .withMessage(String.format("Specification file \"%s\" failed the schema validation", specificationFileName));
   }
 }

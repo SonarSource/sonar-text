@@ -34,25 +34,30 @@ public class SchemaValidator {
   private static final String FILE_LOCATION = "/org/sonar/plugins/secrets/configuration/specifications/";
   private static final String VALIDATION_SCHEMA_FILE = "specification-json-schema.json";
   private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
-  private static final JsonSchema VALIDATION_SCHEMA = initializeValidationSchema();
+  private static final JsonSchema SPECIFICATION_VALIDATION_SCHEMA;
 
   private SchemaValidator() {
   }
 
-  private static JsonSchema initializeValidationSchema() {
+  static {
     JsonSchemaFactory schemaFactory = JsonSchemaFactory
       .builder(JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012))
       .objectMapper(MAPPER)
       .build();
     InputStream validationSchema = SchemaValidator.class.getResourceAsStream(FILE_LOCATION + VALIDATION_SCHEMA_FILE);
-    return schemaFactory.getSchema(validationSchema);
+
+    SPECIFICATION_VALIDATION_SCHEMA = schemaFactory.getSchema(validationSchema);
   }
 
-  public static void validate(JsonNode specification, String fileName) {
-    Set<ValidationMessage> validate = VALIDATION_SCHEMA.validate(specification);
+  public static void validateSpecification(JsonNode specification, String fileName) {
+    Set<ValidationMessage> validate = validate(specification);
     if (!validate.isEmpty()) {
       String errorMessage = String.format("Specification file \"%s\" failed the schema validation", fileName);
       throw new SchemaValidationException(errorMessage);
     }
+  }
+
+  public static Set<ValidationMessage> validate(JsonNode specification) {
+    return SPECIFICATION_VALIDATION_SCHEMA.validate(specification);
   }
 }

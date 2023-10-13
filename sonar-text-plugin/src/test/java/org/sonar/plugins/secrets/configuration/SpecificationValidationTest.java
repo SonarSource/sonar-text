@@ -41,6 +41,6 @@ class SpecificationValidationTest {
     InputStream specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("org/sonar/plugins/secrets/configuration/" + fileName);
     JsonNode specification = MAPPER.readTree(specificationStream);
 
-    assertThatNoException().isThrownBy(() -> SchemaValidator.validate(specification, fileName));
+    assertThatNoException().isThrownBy(() -> SchemaValidator.validateSpecification(specification, fileName));
   }
 }
