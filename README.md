@@ -15,7 +15,7 @@ This component helps you prevent the leakage of secrets even before you push the
 * detection of [BIDI characters](https://rules.sonarsource.com/text/) that could lead to attacks
 * detection of secrets in all files indexed by Sonar products
 
-### Build
+## Build
 
 *Prerequisite*
 
@@ -27,28 +27,10 @@ Simple build skipping integration tests.
 ./gradlew build
 ```
 
-Full build including integration tests.
-
-```shell
-./gradlew build integrationTest
-```
-
 ### Apply code formatting.
 
 ```shell
 ./gradlew spotlessApply
-```
-
-### Plugin Integration tests
-
-```shell
-./gradlew :its:plugin:integrationTest -Dsonar.runtimeVersion=LATEST_RELEASE
-```
-
-### Rules Integration tests
-
-```shell
-./gradlew :its:ruling:integrationTest -Dsonar.runtimeVersion=LATEST_RELEASE
 ```
 
 ### Update rule description

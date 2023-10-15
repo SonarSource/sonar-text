@@ -16,8 +16,6 @@ plugins {
 rootProject.name = "text"
 includeBuild("build-logic")
 include(":sonar-text-plugin")
-include(":its:plugin")
-include(":its:ruling")
 
 dependencyResolutionManagement {
   repositories {
