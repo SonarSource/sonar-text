@@ -24,9 +24,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.sonar.api.SonarProduct;
 import org.sonar.api.batch.fs.FilePredicate;
-import org.sonar.api.batch.fs.FileSystem;
+import org.sonar.api.batch.fs.FilePredicates;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.rule.CheckFactory;
@@ -81,16 +82,9 @@ public class TextAndSecretsSensor implements Sensor {
     }
 
     // Retrieve list of files to analyse using the right FilePredicate
-    boolean sonarLintContext = isSonarLintContext(sensorContext);
-    boolean analyzeAllFiles = sonarLintContext || analyzeAllFiles(sensorContext);
+    boolean analyzeAllFiles = isSonarLintContext(sensorContext) || analyzeAllFiles(sensorContext);
     var notBinaryFilePredicate = notBinaryFilePredicate(sensorContext);
-    var textFilePredicate = plaintextFilePredicate(sensorContext);
-    FilePredicate filePredicate = analyzeAllFiles ? notBinaryFilePredicate : sensorContext.fileSystem().predicates().or(LANGUAGE_FILE_PREDICATE, textFilePredicate);
-
-    if (!sonarLintContext) {
-      FilePredicate trackedByGitPredicate = new GitTrackedFilePredicate(getGitSupplier());
-      filePredicate = sensorContext.fileSystem().predicates().and(filePredicate, trackedByGitPredicate);
-    }
+    var filePredicate = constructFilePredicate(sensorContext, notBinaryFilePredicate, analyzeAllFiles);
 
     List<InputFile> inputFiles = getInputFiles(sensorContext, filePredicate);
     if (inputFiles.isEmpty()) {
@@ -99,6 +93,24 @@ public class TextAndSecretsSensor implements Sensor {
 
     Analyzer.analyzeFiles(sensorContext, activeChecks, notBinaryFilePredicate, analyzeAllFiles, inputFiles);
     durationStatistics.log();
+  }
+
+  private FilePredicate constructFilePredicate(SensorContext sensorContext, FilePredicate notBinaryFilePredicate, boolean analyzeAllFiles) {
+    if (analyzeAllFiles) {
+      // if we're in a sonarlint context, we return this predicate as well
+      return notBinaryFilePredicate;
+    }
+    var trackedByGitPredicate = new GitTrackedFilePredicate(getGitSupplier());
+    if (!trackedByGitPredicate.isGitStatusSuccessful()) {
+      return LANGUAGE_FILE_PREDICATE;
+    }
+    FilePredicates predicates = sensorContext.fileSystem().predicates();
+    // Retrieve list of files to analyse using the right FilePredicate
+    var textFilePredicate = plaintextFilePredicate(sensorContext);
+
+    return predicates.and(
+      predicates.or(LANGUAGE_FILE_PREDICATE, textFilePredicate),
+      trackedByGitPredicate);
   }
 
   /**
@@ -144,7 +156,7 @@ public class TextAndSecretsSensor implements Sensor {
    */
   private static List<InputFile> getInputFiles(SensorContext sensorContext, FilePredicate filePredicate) {
     List<InputFile> inputFiles = new ArrayList<>();
-    FileSystem fileSystem = sensorContext.fileSystem();
+    var fileSystem = sensorContext.fileSystem();
     for (InputFile inputFile : fileSystem.inputFiles(filePredicate)) {
       inputFiles.add(inputFile);
     }

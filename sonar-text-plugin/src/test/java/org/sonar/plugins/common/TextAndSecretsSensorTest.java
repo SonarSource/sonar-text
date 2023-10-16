@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
+
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -48,18 +49,9 @@ import org.sonar.plugins.text.checks.BIDICharacterCheck;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.sonar.plugins.common.GitTrackedFilePredicateTest.setupGitMock;
-import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME;
-import static org.sonar.plugins.common.TestUtils.activeRules;
-import static org.sonar.plugins.common.TestUtils.asString;
-import static org.sonar.plugins.common.TestUtils.defaultSensorContext;
-import static org.sonar.plugins.common.TestUtils.inputFile;
-import static org.sonar.plugins.common.TestUtils.sensorContext;
+import static org.sonar.plugins.common.TestUtils.*;
 import static org.sonar.plugins.common.TextAndSecretsSensor.TEXT_INCLUSIONS_DEFAULT_VALUE;
 
 class TextAndSecretsSensorTest {
@@ -486,15 +478,15 @@ class TextAndSecretsSensorTest {
     SensorContextTester context = sensorContext(check);
     context.setRuntime(SONARQUBE_RUNTIME);
     var sensor = sensor(check);
-    var spy = Mockito.spy(sensor);
+    var sensorSpy = Mockito.spy(sensor);
     var gitSupplier = mock(GitSupplier.class);
     Path fooJavaPath = Path.of("src", "foo.java");
     String relativePathFooJava = "src" + fooJavaPath.getFileSystem().getSeparator() + "foo.java";
     var gitMock = setupGitMock(Set.of("a.txt", relativePathFooJava));
     when(gitSupplier.getGit()).thenReturn(gitMock);
-    when(spy.getGitSupplier()).thenReturn(gitSupplier);
+    when(sensorSpy.getGitSupplier()).thenReturn(gitSupplier);
 
-    analyse(spy, context,
+    analyse(sensorSpy, context,
       inputFile(Path.of("a.txt"), "{}", "secrets"),
       inputFile(Path.of("b.txt"), "{}", "secrets"),
       inputFile(fooJavaPath));
@@ -512,13 +504,13 @@ class TextAndSecretsSensorTest {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     var sensor = sensor(check);
-    var spy = Mockito.spy(sensor);
+    var sensorSpy = Mockito.spy(sensor);
     var gitSupplier = mock(GitSupplier.class);
     var gitMock = setupGitMock(Set.of("a.txt"));
     when(gitSupplier.getGit()).thenReturn(gitMock);
-    when(spy.getGitSupplier()).thenReturn(gitSupplier);
+    when(sensorSpy.getGitSupplier()).thenReturn(gitSupplier);
 
-    analyse(spy, context,
+    analyse(sensorSpy, context,
       inputFile(Path.of("a.txt"), "{}"),
       inputFile(Path.of("b.txt"), "{}"));
 
@@ -526,7 +518,29 @@ class TextAndSecretsSensorTest {
     assertThat(issues).hasSize(2);
     assertThat(logTester.logs().get(0)).endsWith("2 source files to be analyzed");
     verify(gitSupplier, times(0)).getGit();
-    verify(spy, times(0)).getGitSupplier();
+    verify(sensorSpy, times(0)).getGitSupplier();
+  }
+
+  @Test
+  void shouldOnlyAnalyzeFilesBelongingToALanguageIfNoGitRepositoryIsFoundEvenIfInclusionsKeySet() throws IOException {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setRuntime(SONARQUBE_RUNTIME);
+    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt"));
+    var sensor = sensor(check);
+    var sensorSpy = Mockito.spy(sensor);
+    var gitSupplier = mock(GitSupplier.class);
+    // GitTrackedFilePredicate.isGitStatusSuccessful will return false
+    when(gitSupplier.getGit()).thenThrow(RuntimeException.class);
+    when(sensorSpy.getGitSupplier()).thenReturn(gitSupplier);
+
+    analyse(sensorSpy, context,
+      inputFile(Path.of("a.txt"), "{}", "secrets"),
+      inputFile(Path.of("b.txt"), "{}"));
+
+    Collection<Issue> issues = context.allIssues();
+    assertThat(issues).hasSize(1);
+    assertThat(logTester.logs().get(0)).endsWith("1 source file to be analyzed");
   }
 
   private void analyseDirectory(Sensor sensor, SensorContextTester context, Path directory) throws IOException {

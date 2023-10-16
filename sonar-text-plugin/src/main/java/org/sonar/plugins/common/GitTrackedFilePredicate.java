@@ -61,4 +61,8 @@ public class GitTrackedFilePredicate implements FilePredicate {
       return true;
     }
   }
+
+  public boolean isGitStatusSuccessful() {
+    return isGitStatusSuccessful;
+  }
 }

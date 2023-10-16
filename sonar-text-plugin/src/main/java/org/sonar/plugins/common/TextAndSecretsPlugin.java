@@ -63,9 +63,10 @@ public class TextAndSecretsPlugin implements Plugin {
       PropertyDefinition.builder(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY)
         .defaultValue(TextAndSecretsSensor.TEXT_INCLUSIONS_DEFAULT_VALUE)
         .category(TextAndSecretsSensor.TEXT_CATEGORY)
-        .name("List of text file suffixes to include")
+        .name("List of file path patterns to include")
         .multiValues(true)
-        .description("List of text file suffixes that should be analyzed with rules targeting text files, in addition to those associated to a language.")
+        .description("List of file path patterns that should be analyzed with rules targeting text files (ie. Secret rules, BIDI rule), " +
+          "in addition to those associated to a language. This is only applied when the scanner detects a git repository.")
         .subCategory("General")
         .onQualifiers(Qualifiers.PROJECT)
         .build());
