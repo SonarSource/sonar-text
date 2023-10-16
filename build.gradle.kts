@@ -6,4 +6,3 @@ plugins {
 }
 
 tasks.artifactoryPublish { skip = true }
-
