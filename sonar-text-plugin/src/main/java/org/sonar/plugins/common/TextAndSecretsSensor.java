@@ -106,10 +106,10 @@ public class TextAndSecretsSensor implements Sensor {
     }
     FilePredicates predicates = sensorContext.fileSystem().predicates();
     // Retrieve list of files to analyse using the right FilePredicate
-    var textFilePredicate = plaintextFilePredicate(sensorContext);
+    var pathPatternPredicate = includedPathPatternsFilePredicate(sensorContext);
 
     return predicates.and(
-      predicates.or(LANGUAGE_FILE_PREDICATE, textFilePredicate),
+      predicates.or(LANGUAGE_FILE_PREDICATE, pathPatternPredicate),
       trackedByGitPredicate);
   }
 
@@ -125,20 +125,20 @@ public class TextAndSecretsSensor implements Sensor {
   /**
    * Whitelist approach: provide a predicate that include file that are considered as text file.
    * Example: for 'exe', 'txt' and 'unknown', it will return true for 'txt'
-   * List of text extension to include are provided by configuration key {@link TextAndSecretsSensor#TEXT_INCLUSIONS_KEY}
+   * List of path patterns to include are provided by configuration key {@link TextAndSecretsSensor#TEXT_INCLUSIONS_KEY}
    */
-  private static FilePredicate plaintextFilePredicate(SensorContext sensorContext) {
-    String[] plaintextFileExtensions = sensorContext.config().getStringArray(TEXT_INCLUSIONS_KEY);
-    if (plaintextFileExtensions.length == 0) {
+  private static FilePredicate includedPathPatternsFilePredicate(SensorContext sensorContext) {
+    String[] includedPathPatterns = sensorContext.config().getStringArray(TEXT_INCLUSIONS_KEY);
+    if (includedPathPatterns.length == 0) {
       return sensorContext.fileSystem().predicates().none();
     }
 
-    List<FilePredicate> extensionPredicates = new ArrayList<>();
-    for (String extension : plaintextFileExtensions) {
-      var filePredicate = sensorContext.fileSystem().predicates().matchesPathPattern(extension);
-      extensionPredicates.add(filePredicate);
+    List<FilePredicate> pathPatternsPredicates = new ArrayList<>();
+    for (String pathPattern : includedPathPatterns) {
+      var filePredicate = sensorContext.fileSystem().predicates().matchesPathPattern(pathPattern);
+      pathPatternsPredicates.add(filePredicate);
     }
-    return sensorContext.fileSystem().predicates().or(extensionPredicates);
+    return sensorContext.fileSystem().predicates().or(pathPatternsPredicates);
   }
 
   private static boolean isSonarLintContext(SensorContext sensorContext) {

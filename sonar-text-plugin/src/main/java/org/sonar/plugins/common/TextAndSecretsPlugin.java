@@ -35,7 +35,6 @@ public class TextAndSecretsPlugin implements Plugin {
     context.addExtensions(
       // Common
       TextAndSecretsSensor.class,
-      getProperties(),
 
       // Text
       TextLanguage.class,
@@ -46,9 +45,11 @@ public class TextAndSecretsPlugin implements Plugin {
       SecretsLanguage.class,
       SecretsRulesDefinition.class,
       SecretsRulesDefinition.DefaultQualityProfile.class);
+
+    context.addExtensions(createUIProperties());
   }
 
-  public static List<PropertyDefinition> getProperties() {
+  public static List<PropertyDefinition> createUIProperties() {
     return List.of(
       PropertyDefinition.builder(TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY)
         .defaultValue("")
