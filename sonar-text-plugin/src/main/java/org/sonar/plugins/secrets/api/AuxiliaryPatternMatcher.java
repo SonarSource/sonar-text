@@ -21,24 +21,47 @@ package org.sonar.plugins.secrets.api;
 
 import java.util.List;
 
+/**
+ * Interface for all auxiliary matcher.
+ */
 public interface AuxiliaryPatternMatcher {
 
   DefaultAuxiliaryMatcher NO_FILTERING_AUXILIARY_MATCHER = new DefaultAuxiliaryMatcher();
 
-  List<Match> filter(List<Match> candidateMatches, String content);
+  /**
+   * Filters the list of {@link Match candidateMatches} based on the content. The actual filtering behavior is dependent on the actual implementation.
+   * @param candidateMatches matches to be filtered
+   * @param content content where the matches where found
+   * @param ruleId id of the rule this matcher stems from. Useful for logging.
+   * @return list of filtered matches
+   */
+  List<Match> filter(List<Match> candidateMatches, String content, String ruleId);
 
+  /**
+   * Returns a new {@link AuxiliaryPatternMatcher}, which conjuncts the results of this {@link AuxiliaryPatternMatcher} and the provided secondMatcher.
+   * @param secondMatcher {@link AuxiliaryPatternMatcher} to be conjuncted with
+   * @return the constructed {@link AuxiliaryPatternMatcher}
+   */
   default AuxiliaryPatternMatcher and(AuxiliaryPatternMatcher secondMatcher) {
     return new ConjunctionMatcher(this, secondMatcher);
   }
 
+  /**
+   * Returns a new {@link AuxiliaryPatternMatcher}, which disjuncts the results of this {@link AuxiliaryPatternMatcher} and the provided secondMatcher.
+   * @param secondMatcher {@link AuxiliaryPatternMatcher} to be disjuncted with
+   * @return the constructed {@link AuxiliaryPatternMatcher}
+   */
   default AuxiliaryPatternMatcher or(AuxiliaryPatternMatcher secondMatcher) {
     return new DisjunctionMatcher(this, secondMatcher);
   }
 
+  /**
+   * Default implementation of the {@link AuxiliaryPatternMatcher} which has no filtering behavior.
+   */
   class DefaultAuxiliaryMatcher implements AuxiliaryPatternMatcher {
 
     @Override
-    public List<Match> filter(List<Match> candidateMatches, String content) {
+    public List<Match> filter(List<Match> candidateMatches, String content, String ruleId) {
       return candidateMatches;
     }
   }

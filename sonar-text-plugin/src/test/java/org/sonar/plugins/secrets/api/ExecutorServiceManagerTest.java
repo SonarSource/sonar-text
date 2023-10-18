@@ -20,6 +20,7 @@
 package org.sonar.plugins.secrets.api;
 
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -41,6 +42,14 @@ class ExecutorServiceManagerTest {
   DummyObject dummyObject;
   ExecutorServiceManager executor;
 
+  @AfterEach
+  public void cleanUp() {
+    int defaultTimeout = 10_000;
+    // due to running other tests, this property can be changed. That's why we need to set the default after each test.
+    ExecutorServiceManager.setTimeoutMs(defaultTimeout);
+    ExecutorServiceManager.setUninterruptibleTimeoutMs(defaultTimeout);
+  }
+
   @BeforeEach
   void setUp() {
     dummyObject = spy(DummyObject.class);
@@ -51,9 +60,9 @@ class ExecutorServiceManagerTest {
 
   @Test
   void testMethodCalledNormally() {
-    boolean runWithSuccess = executor.runWithTimeout(() -> {
+    boolean runWithSuccess = executor.runRegexMatchingWithTimeout(() -> {
       dummyObject.method();
-    });
+    }, "<pattern-for-logging>", "<rule-id>");
 
     assertThat(runWithSuccess).isTrue();
     verify(dummyObject).method();
@@ -62,10 +71,10 @@ class ExecutorServiceManagerTest {
 
   @Test
   void testInterruptedMethodNotCalled() {
-    boolean runWithSuccess = executor.runWithTimeout(() -> {
+    boolean runWithSuccess = executor.runRegexMatchingWithTimeout(() -> {
       waitForever();
       dummyObject.method();
-    });
+    }, "<pattern-for-logging>", "<rule-id>");
 
     assertThat(runWithSuccess).isFalse();
     verify(dummyObject, never()).method();
@@ -74,13 +83,13 @@ class ExecutorServiceManagerTest {
 
   @Test
   void testNormalCallAfterInterruptedCall() {
-    boolean runWithSuccess1 = executor.runWithTimeout(() -> {
+    boolean runWithSuccess1 = executor.runRegexMatchingWithTimeout(() -> {
       waitForever();
       dummyObject.method();
-    });
-    boolean runWithSuccess2 = executor.runWithTimeout(() -> {
+    }, "<pattern-for-logging>", "<rule-id>");
+    boolean runWithSuccess2 = executor.runRegexMatchingWithTimeout(() -> {
       dummyObject.method();
-    });
+    }, "<pattern-for-logging>", "<rule-id>");
 
     assertThat(runWithSuccess1).isFalse();
     assertThat(runWithSuccess2).isTrue();
@@ -90,12 +99,12 @@ class ExecutorServiceManagerTest {
 
   @Test
   void testTwoConsecutiveNormalCall() {
-    boolean runWithSuccess1 = executor.runWithTimeout(() -> {
+    boolean runWithSuccess1 = executor.runRegexMatchingWithTimeout(() -> {
       dummyObject.method();
-    });
-    boolean runWithSuccess2 = executor.runWithTimeout(() -> {
+    }, "<pattern-for-logging>", "<rule-id>");
+    boolean runWithSuccess2 = executor.runRegexMatchingWithTimeout(() -> {
       dummyObject.method();
-    });
+    }, "<pattern-for-logging>", "<rule-id>");
 
     assertThat(runWithSuccess1).isTrue();
     assertThat(runWithSuccess2).isTrue();
@@ -105,20 +114,22 @@ class ExecutorServiceManagerTest {
 
   @Test
   void testInterruptionPreventedAndNextUseBroken() {
-    assertThatThrownBy(() -> executor.runWithTimeout(() -> {
+    assertThatThrownBy(() -> executor.runRegexMatchingWithTimeout(() -> {
       waitForeverAndPreventInterruption();
       dummyObject.method();
-    }))
+    }, "<pattern-for-logging>", "<rule-id>"))
       .isInstanceOf(RuntimeException.class)
-      .hasMessage("Couldn't interrupt task after normal timeout(100ms) and interruption timeout(100ms).");
+      .hasMessage(
+        "Couldn't interrupt secret-matching task of rule with id \"<rule-id>\" after normal timeout(100ms) and interruption timeout(100ms). Related pattern is \"<pattern-for-logging>\"");
 
-    boolean runWithSuccess2 = executor.runWithTimeout(() -> {
+    boolean runWithSuccess2 = executor.runRegexMatchingWithTimeout(() -> {
       dummyObject.method();
-    });
+    }, "<pattern-for-logging>", "<rule-id>");
 
     assertThat(runWithSuccess2).isTrue();
     verify(dummyObject, times(1)).method();
-    assertThat(logTester.logs()).containsExactly("Couldn't interrupt task, waiting for it to finish.");
+    assertThat(logTester.logs())
+      .containsExactly("Couldn't interrupt secret-matching task of rule with id \"<rule-id>\", waiting for it to finish. Related pattern is \"<pattern-for-logging>\"");
   }
 
   @Test
@@ -126,10 +137,10 @@ class ExecutorServiceManagerTest {
     ExecutorServiceManager.setTimeoutMs(10000);
     ExecutorServiceManager.setUninterruptibleTimeoutMs(10000);
     Throwable t = runAndInterrupt(() -> {
-      executor.runWithTimeout(() -> {
+      executor.runRegexMatchingWithTimeout(() -> {
         waitForever();
         dummyObject.method();
-      });
+      }, "<pattern-for-logging>", "<rule-id>");
     });
     assertThat(t)
       .isInstanceOf(RuntimeException.class)

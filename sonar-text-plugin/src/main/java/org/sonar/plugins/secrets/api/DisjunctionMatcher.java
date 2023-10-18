@@ -21,20 +21,28 @@ package org.sonar.plugins.secrets.api;
 
 import java.util.List;
 
+/**
+ * A {@link AuxiliaryPatternMatcher} which disjuncts both filtering results of the provided {@link AuxiliaryPatternMatcher}.
+ */
 public class DisjunctionMatcher implements AuxiliaryPatternMatcher {
 
   private final AuxiliaryPatternMatcher matcherLeft;
   private final AuxiliaryPatternMatcher matcherRight;
 
+  /**
+   * Creates a new {@link DisjunctionMatcher}.
+   * @param matcherLeft first {@link AuxiliaryPatternMatcher}
+   * @param matcherRight second {@link AuxiliaryPatternMatcher}
+   */
   public DisjunctionMatcher(AuxiliaryPatternMatcher matcherLeft, AuxiliaryPatternMatcher matcherRight) {
     this.matcherLeft = matcherLeft;
     this.matcherRight = matcherRight;
   }
 
   @Override
-  public List<Match> filter(List<Match> regexMatch, String content) {
-    List<Match> matchesLeft = matcherLeft.filter(regexMatch, content);
-    matchesLeft.addAll(matcherRight.filter(regexMatch, content));
+  public List<Match> filter(List<Match> regexMatch, String content, String ruleId) {
+    List<Match> matchesLeft = matcherLeft.filter(regexMatch, content, ruleId);
+    matchesLeft.addAll(matcherRight.filter(regexMatch, content, ruleId));
     return matchesLeft;
   }
 }

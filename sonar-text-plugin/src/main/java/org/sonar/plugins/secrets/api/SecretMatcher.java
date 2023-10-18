@@ -86,8 +86,8 @@ public class SecretMatcher {
     List<Match> secretsFilteredOnContext = durationStatistics.timed(
       getRuleId() + DurationStatistics.SUFFIX_MATCHER,
       () -> {
-        List<Match> candidateSecrets = patternMatcher.findIn(content);
-        return auxiliaryPatternMatcher.filter(candidateSecrets, content);
+        List<Match> candidateSecrets = patternMatcher.findIn(content, getRuleId());
+        return auxiliaryPatternMatcher.filter(candidateSecrets, content, getRuleId());
       });
 
     return secretsFilteredOnContext.stream()

@@ -36,21 +36,21 @@ class PatternMatcherTest {
   @Test
   void testWithNoSuppliedPattern() {
     PatternMatcher noDetectionMatcher = PatternMatcher.build((Matching) null);
-    List<Match> matches = noDetectionMatcher.findIn("test");
+    List<Match> matches = noDetectionMatcher.findIn("test", "<test-rule-id>");
     assertThat(matches).isEmpty();
   }
 
   @Test
   void patternMatcherShouldNotRelyOnRegexDelimiters() {
     PatternMatcher patternMatcher = new PatternMatcher("pattern");
-    List<Match> matches = patternMatcher.findIn("pattern pattern");
+    List<Match> matches = patternMatcher.findIn("pattern pattern", "<test-rule-id>");
     assertThat(matches).hasSize(2);
   }
 
   @Test
   void patternMatcherShouldProduceTwoMatchesWithDelimiters() {
     PatternMatcher patternMatcher = new PatternMatcher("\\b(pattern)\\b");
-    List<Match> matches = patternMatcher.findIn("pattern pattern");
+    List<Match> matches = patternMatcher.findIn("pattern pattern", "<test-rule-id>");
     assertThat(matches).hasSize(2);
   }
 
@@ -59,9 +59,10 @@ class PatternMatcherTest {
     ExecutorServiceManager.setTimeoutMs(100);
     ExecutorServiceManager.setUninterruptibleTimeoutMs(100);
     PatternMatcher patternMatcher = new PatternMatcher("(x+x+x+x+x+x+x+x+x+x+)+y");
-    List<Match> matches = patternMatcher.findIn("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+    List<Match> matches = patternMatcher.findIn("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "<test-rule-id>");
     assertThat(matches).isEmpty();
-    assertThat(logTester.logs()).containsExactly("Running pattern '(x+x+x+x+x+x+x+x+x+x+)+y' on content(40) has timed out (100ms)");
+    assertThat(logTester.logs())
+      .containsExactly("Running pattern in rule with id \"<test-rule-id>\" on content of length 40 has timed out after 100ms. Related pattern is \"(x+x+x+x+x+x+x+x+x+x+)+y\".");
   }
 
   @Test
@@ -69,8 +70,9 @@ class PatternMatcherTest {
     ExecutorServiceManager.setTimeoutMs(100);
     ExecutorServiceManager.setUninterruptibleTimeoutMs(100);
     PatternMatcher patternMatcher = new PatternMatcher("(\\d+|(x+x+x+x+x+x+x+x+x+x+)+y)");
-    List<Match> matches = patternMatcher.findIn("1234xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+    List<Match> matches = patternMatcher.findIn("1234xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "<test-rule-id>");
     assertThat(matches).hasSize(1);
-    assertThat(logTester.logs()).containsExactly("Running pattern '(\\d+|(x+x+x+x+x+x+x+x+x+x+)+y)' on content(44) has timed out (100ms)");
+    assertThat(logTester.logs()).containsExactly(
+      "Running pattern in rule with id \"<test-rule-id>\" on content of length 44 has timed out after 100ms. Related pattern is \"(\\\\d+|(x+x+x+x+x+x+x+x+x+x+)+y)\".");
   }
 }

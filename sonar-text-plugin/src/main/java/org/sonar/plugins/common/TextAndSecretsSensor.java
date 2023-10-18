@@ -24,7 +24,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Optional;
+import java.util.function.Consumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.SonarProduct;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.FilePredicates;
@@ -38,17 +41,20 @@ import org.sonar.plugins.secrets.SecretsCheckList;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.api.SpecificationLoader;
+import org.sonar.plugins.secrets.api.task.ExecutorServiceManager;
 import org.sonar.plugins.text.TextCheckList;
 import org.sonar.plugins.text.TextRuleDefinition;
 
 public class TextAndSecretsSensor implements Sensor {
 
+  private static final Logger LOG = LoggerFactory.getLogger(TextAndSecretsSensor.class);
   public static final String EXCLUDED_FILE_SUFFIXES_KEY = "sonar.text.excluded.file.suffixes";
   public static final String TEXT_INCLUSIONS_KEY = "sonar.text.inclusions";
   public static final String TEXT_INCLUSIONS_DEFAULT_VALUE = "**/*.sh,**/*.bash,**/*.zsh,**/*.ksh,**/*.ps1,**/*.properties," +
     "**/*.conf,**/*.pem,**/*.config,.env,.aws/config";
   private static final String ANALYZE_ALL_FILES_KEY = "sonar.text.analyzeAllFiles";
-
+  public static final String REGEX_MATCH_TIMEOUT_KEY = "sonar.text.regex.timeout.match";
+  public static final String REGEX_EXECUTION_TIMEOUT_KEY = "sonar.text.regex.timeout.execution";
   public static final String TEXT_CATEGORY = "Secrets";
 
   private static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
@@ -90,6 +96,9 @@ public class TextAndSecretsSensor implements Sensor {
     if (inputFiles.isEmpty()) {
       return;
     }
+
+    configureRegexEngineTimeout(sensorContext, REGEX_MATCH_TIMEOUT_KEY, ExecutorServiceManager::setTimeoutMs);
+    configureRegexEngineTimeout(sensorContext, REGEX_EXECUTION_TIMEOUT_KEY, ExecutorServiceManager::setUninterruptibleTimeoutMs);
 
     Analyzer.analyzeFiles(sensorContext, activeChecks, notBinaryFilePredicate, analyzeAllFiles, inputFiles);
     durationStatistics.log();
@@ -180,6 +189,16 @@ public class TextAndSecretsSensor implements Sensor {
       if (activeCheck instanceof SpecificationBasedCheck) {
         ((SpecificationBasedCheck) activeCheck).initialize(specificationLoader, reportedIssuesForCtx, durationStatistics);
       }
+    }
+  }
+
+  private static void configureRegexEngineTimeout(SensorContext sensorContext, String key, Consumer<Integer> setTimeoutMs) {
+    try {
+      Optional<Integer> valueAsInt = sensorContext.config().getInt(key);
+      valueAsInt.ifPresent(setTimeoutMs);
+    } catch (IllegalStateException e) {
+      // provided value not in the expected format - do nothing
+      LOG.debug("Provided value with key \"{}\" is not parseable as an integer", key, e);
     }
   }
 

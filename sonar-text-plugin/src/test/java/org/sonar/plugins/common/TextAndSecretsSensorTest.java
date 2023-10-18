@@ -29,8 +29,11 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.slf4j.event.Level;
 import org.sonar.api.batch.fs.InputFile;
@@ -45,6 +48,7 @@ import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.check.Rule;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
+import org.sonar.plugins.secrets.api.task.ExecutorServiceManager;
 import org.sonar.plugins.text.api.TextCheck;
 import org.sonar.plugins.text.checks.BIDICharacterCheck;
 
@@ -61,6 +65,14 @@ class TextAndSecretsSensorTest {
 
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
+
+  @AfterEach
+  public void cleanUp() {
+    int defaultTimeout = 10_000;
+    // due to running other tests, this property can be changed. That's why we need to set the default after each test.
+    ExecutorServiceManager.setTimeoutMs(defaultTimeout);
+    ExecutorServiceManager.setUninterruptibleTimeoutMs(defaultTimeout);
+  }
 
   @Test
   void shouldDescribeWithoutErrors() {
@@ -542,6 +554,43 @@ class TextAndSecretsSensorTest {
     Collection<Issue> issues = context.allIssues();
     assertThat(issues).hasSize(1);
     assertThat(logTester.logs().get(0)).endsWith("1 source file to be analyzed");
+  }
+
+  @Test
+  void shouldUsePropertyDefinedTimeoutValues() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    MapSettings mapSettings = new MapSettings();
+    mapSettings.setProperty(TextAndSecretsSensor.REGEX_MATCH_TIMEOUT_KEY, "1");
+    mapSettings.setProperty(TextAndSecretsSensor.REGEX_EXECUTION_TIMEOUT_KEY, "2");
+    context.setSettings(mapSettings);
+    analyse(sensor(check), context,
+      inputFile(Path.of(".txt"), "{}"));
+    assertThat(ExecutorServiceManager.getTimeoutMs()).isEqualTo(1);
+    assertThat(ExecutorServiceManager.getUninterruptibleTimeoutMs()).isEqualTo(2);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+    "-1",
+    "4.5",
+    "0",
+    "no-number",
+    "null"
+  })
+  void shouldUseDefaultTimeoutWhenPropertyNotInAValidFormat(String propertyValue) {
+    int defaultTimeout = 10_000;
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    MapSettings mapSettings = new MapSettings();
+    mapSettings.setProperty(TextAndSecretsSensor.REGEX_MATCH_TIMEOUT_KEY, propertyValue);
+    mapSettings.setProperty(TextAndSecretsSensor.REGEX_EXECUTION_TIMEOUT_KEY, propertyValue);
+    context.setSettings(mapSettings);
+    // actual behavior to test
+    analyse(sensor(check), context,
+      inputFile(Path.of(".txt"), "{}"));
+    assertThat(ExecutorServiceManager.getTimeoutMs()).isEqualTo(defaultTimeout);
+    assertThat(ExecutorServiceManager.getUninterruptibleTimeoutMs()).isEqualTo(defaultTimeout);
   }
 
   private void analyseDirectory(Sensor sensor, SensorContextTester context, Path directory) throws IOException {

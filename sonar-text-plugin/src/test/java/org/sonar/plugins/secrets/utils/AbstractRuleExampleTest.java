@@ -89,7 +89,7 @@ public abstract class AbstractRuleExampleTest {
 
       Collection<Issue> issues = context.allIssues();
       if (ruleExample.isContainsSecret()) {
-        List<TextRange> expectedRanges = calculatePossibleRanges(ruleExample, inputFileContext);
+        List<TextRange> expectedRanges = calculatePossibleRanges(ruleExample, inputFileContext, rule.getId());
 
         assertThat(issues).withFailMessage(() -> failingMessage(issues, rule, ruleExample)).isNotEmpty();
         assertThat(issues).anyMatch(s -> asString(s).contains(rule.getMetadata().getMessage()));
@@ -105,12 +105,12 @@ public abstract class AbstractRuleExampleTest {
     };
   }
 
-  private List<TextRange> calculatePossibleRanges(RuleExample ruleExample, InputFileContext ctx) {
+  private List<TextRange> calculatePossibleRanges(RuleExample ruleExample, InputFileContext ctx, String ruleId) {
     Matching matching = new Matching();
     // `Matcher#findIn` uses `Matcher#find`, so the pattern doesn't need to match the entire string
     matching.setPattern("(" + Pattern.quote(ruleExample.getMatch().stripTrailing()) + ")");
     PatternMatcher matcher = PatternMatcher.build(matching);
-    List<Match> matches = matcher.findIn(ruleExample.getText());
+    List<Match> matches = matcher.findIn(ruleExample.getText(), ruleId);
     return matches.stream().map(m -> ctx.newTextRangeFromFileOffsets(m.getFileStartOffset(), m.getFileEndOffset())).collect(Collectors.toList());
   }
 

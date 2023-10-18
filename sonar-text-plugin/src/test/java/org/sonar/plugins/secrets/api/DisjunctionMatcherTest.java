@@ -42,9 +42,9 @@ class DisjunctionMatcherTest {
       AuxiliaryPatternType.PATTERN_AFTER, new PatternMatcher("\\b(after)\\b"), Integer.MAX_VALUE);
     AuxiliaryPatternMatcher disjunctionMatcher = auxiliaryMatcherAfter.or(auxiliaryMatcherBefore);
 
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
 
-    List<Match> result = disjunctionMatcher.filter(candidateSecrets, content);
+    List<Match> result = disjunctionMatcher.filter(candidateSecrets, content, "<test-rule-id>");
 
     assertThat(disjunctionMatcher).isInstanceOf(DisjunctionMatcher.class);
     assertThat(result).containsExactlyElementsOf(candidateSecrets);
@@ -60,9 +60,9 @@ class DisjunctionMatcherTest {
     AuxiliaryPatternMatcher disjunctionMatcher = auxiliaryMatcherAfter.or(auxiliaryMatcherBefore);
 
     String content = "candidate secret";
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn("candidate secret");
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn("candidate secret", "<test-rule-id>");
 
-    List<Match> result = disjunctionMatcher.filter(candidateSecrets, content);
+    List<Match> result = disjunctionMatcher.filter(candidateSecrets, content, "<test-rule-id>");
 
     assertThat(disjunctionMatcher).isInstanceOf(DisjunctionMatcher.class);
     assertThat(result).isEmpty();

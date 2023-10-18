@@ -26,6 +26,9 @@ import java.util.function.BiPredicate;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPatternType;
 
+/**
+ * Matcher for auxiliary patterns, which can be found in the context of candidate secrets.
+ */
 public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
 
   private final AuxiliaryPatternType type;
@@ -38,6 +41,11 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
     this.maxDistance = maxDistance;
   }
 
+  /**
+   * Creates a {@link AuxiliaryMatcher} based on the provided {@link AuxiliaryPattern}.
+   * @param auxiliaryPattern the input {@link AuxiliaryPattern}
+   * @return the constructed {@link AuxiliaryMatcher}
+   */
   public static AuxiliaryMatcher build(AuxiliaryPattern auxiliaryPattern) {
     int maxDistance = Integer.MAX_VALUE;
     if (auxiliaryPattern.getMaxCharacterDistance() != null) {
@@ -46,13 +54,14 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
     return new AuxiliaryMatcher(auxiliaryPattern.getType(), PatternMatcher.build(auxiliaryPattern), maxDistance);
   }
 
-  public List<Match> filter(List<Match> candidateMatches, String content) {
+  @Override
+  public List<Match> filter(List<Match> candidateMatches, String content, String ruleId) {
     if (AuxiliaryPatternType.PATTERN_NOT == type) {
       // Not supported at the moment, so we don't filter anything
       // SONARTEXT-54: Implement missing features of detection logic
       return candidateMatches;
     }
-    List<Match> auxiliaryMatches = auxiliaryPatternMatcher.findIn(content);
+    List<Match> auxiliaryMatches = auxiliaryPatternMatcher.findIn(content, ruleId);
     if (auxiliaryMatches.isEmpty()) {
       return new ArrayList<>();
     }

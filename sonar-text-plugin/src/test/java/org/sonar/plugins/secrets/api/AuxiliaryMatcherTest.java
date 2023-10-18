@@ -41,9 +41,9 @@ class AuxiliaryMatcherTest {
     AuxiliaryMatcher auxiliaryMatcher = new AuxiliaryMatcher(
       patternType, new PatternMatcher("\\b(" + auxiliaryPattern + ")\\b"), Integer.MAX_VALUE);
 
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
 
-    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content);
+    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content, "<test-rule-id>");
 
     assertThat(result).containsExactlyElementsOf(candidateSecrets);
   }
@@ -75,9 +75,9 @@ class AuxiliaryMatcherTest {
     AuxiliaryMatcher auxiliaryMatcher = new AuxiliaryMatcher(
       patternType, new PatternMatcher("\\b(" + auxiliaryPattern + ")\\b"), Integer.MAX_VALUE);
 
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
 
-    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content);
+    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content, "<test-rule-id>");
 
     assertThat(result).isEmpty();
   }
@@ -100,9 +100,9 @@ class AuxiliaryMatcherTest {
       AuxiliaryPatternType.PATTERN_AFTER, new PatternMatcher("\\b(auxPattern)\\b"), 200);
 
     String content = "candidate secret and candidate secret and auxPattern";
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
 
-    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content);
+    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content, "<test-rule-id>");
 
     assertThat(result).containsExactlyElementsOf(candidateSecrets);
   }
@@ -113,9 +113,9 @@ class AuxiliaryMatcherTest {
       AuxiliaryPatternType.PATTERN_AFTER, new PatternMatcher("\\b(auxPattern)\\b"), 2);
 
     String content = "candidate secret and candidate secret and auxPattern";
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
 
-    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content);
+    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content, "<test-rule-id>");
 
     assertThat(result).isEmpty();
   }
@@ -126,9 +126,9 @@ class AuxiliaryMatcherTest {
       AuxiliaryPatternType.PATTERN_AFTER, new PatternMatcher("\\b(auxPattern)\\b"), 10);
 
     String content = "candidate secret and candidate secret and auxPattern";
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
 
-    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content);
+    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content, "<test-rule-id>");
 
     assertThat(result).containsExactly(candidateSecrets.get(1));
   }

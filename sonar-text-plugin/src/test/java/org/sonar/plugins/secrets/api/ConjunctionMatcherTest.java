@@ -41,9 +41,9 @@ class ConjunctionMatcherTest {
     AuxiliaryPatternMatcher conjunctionMatcher = auxiliaryMatcherAfter.and(auxiliaryMatcherBefore);
 
     String content = "before candidate secret after";
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
 
-    List<Match> result = conjunctionMatcher.filter(candidateSecrets, content);
+    List<Match> result = conjunctionMatcher.filter(candidateSecrets, content, "<test-rule-id>");
 
     assertThat(conjunctionMatcher).isInstanceOf(ConjunctionMatcher.class);
     assertThat(result).containsExactlyElementsOf(candidateSecrets);
@@ -59,9 +59,9 @@ class ConjunctionMatcherTest {
       AuxiliaryPatternType.PATTERN_AFTER, new PatternMatcher("\\b(after)\\b"), Integer.MAX_VALUE);
     AuxiliaryPatternMatcher conjunctionMatcher = auxiliaryMatcherAfter.and(auxiliaryMatcherBefore);
 
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content);
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
 
-    List<Match> result = conjunctionMatcher.filter(candidateSecrets, content);
+    List<Match> result = conjunctionMatcher.filter(candidateSecrets, content, "<test-rule-id>");
 
     assertThat(conjunctionMatcher).isInstanceOf(ConjunctionMatcher.class);
     assertThat(result).isEmpty();

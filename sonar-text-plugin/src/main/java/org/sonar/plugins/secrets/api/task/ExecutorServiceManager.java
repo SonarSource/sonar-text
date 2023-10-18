@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Provide an intermediately class to work with {@link ExecutorService}.
  * It is dedicated to run tasks that are suspected to cause timeout, it will take care to stop them properly and ensure to keep a valid {@link ExecutorService}.
- * The main entrypoint is the {@link #runWithTimeout} method.
+ * The main entrypoint is the {@link #runRegexMatchingWithTimeout} method.
  */
 public class ExecutorServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(ExecutorServiceManager.class);
@@ -64,14 +64,16 @@ public class ExecutorServiceManager {
    * The {@link Runnable} must handle thread interruption properly, otherwise it will break the ongoing and next calls to this method.
    *
    * @param run the task to be executed, it must support the interruption mechanism
+   * @param pattern the regex pattern which is being matched against, for logging purposes
+   * @param ruleId id of the rule the pattern belongs to
    * @return true if the task was executed within the timeout time, false otherwise
    */
-  public boolean runWithTimeout(Runnable run) {
+  public boolean runRegexMatchingWithTimeout(Runnable run, String pattern, String ruleId) {
     var executorService = getLastExecutorService();
     Future<?> future = executorService.submit(run);
 
     try {
-      if (waitFutureCompletion(future, timeoutMs)) {
+      if (waitFutureCompletion(future, ruleId, timeoutMs)) {
         return true;
       }
       executorService.shutdownNow();
@@ -79,10 +81,19 @@ public class ExecutorServiceManager {
       if (terminationSuccessFull) {
         return false;
       }
-      LOG.error("Couldn't interrupt task, waiting for it to finish.");
+      String patternToDisplay = pattern.replace("\\", "\\\\");
+      LOG.error("Couldn't interrupt secret-matching task of rule with id \"{}\", waiting for it to finish. " +
+        "Related pattern is \"{}\"",
+        ruleId,
+        patternToDisplay);
       terminationSuccessFull = executorService.awaitTermination(uninterruptibleTimeoutMs, TimeUnit.MILLISECONDS);
       if (!terminationSuccessFull) {
-        throw new RuntimeException(String.format("Couldn't interrupt task after normal timeout(%dms) and interruption timeout(%dms).", timeoutMs, uninterruptibleTimeoutMs));
+        throw new RuntimeException(
+          String.format("Couldn't interrupt secret-matching task of rule with id \"%s\" after normal timeout(%dms) and interruption timeout(%dms). Related pattern is \"%s\"",
+            ruleId,
+            timeoutMs,
+            uninterruptibleTimeoutMs,
+            patternToDisplay));
       }
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
@@ -90,12 +101,12 @@ public class ExecutorServiceManager {
     return false;
   }
 
-  private static boolean waitFutureCompletion(Future<?> future, int timeoutMs) throws ExecutionException, InterruptedException {
+  private static boolean waitFutureCompletion(Future<?> future, String ruleId, int timeoutMs) throws ExecutionException, InterruptedException {
     try {
       future.get(timeoutMs, TimeUnit.MILLISECONDS);
       return true;
     } catch (TimeoutException e) {
-      LOG.debug(String.format("Timeout secret-matching task after %dms.", timeoutMs));
+      LOG.debug(String.format("Timeout secret-matching task of rule with id \"%s\" after %dms.", ruleId, timeoutMs));
       return false;
     }
   }
@@ -105,7 +116,9 @@ public class ExecutorServiceManager {
   }
 
   public static void setTimeoutMs(int timeoutMs) {
-    ExecutorServiceManager.timeoutMs = timeoutMs;
+    if (timeoutMs > 0) {
+      ExecutorServiceManager.timeoutMs = timeoutMs;
+    }
   }
 
   public static int getUninterruptibleTimeoutMs() {
@@ -113,6 +126,8 @@ public class ExecutorServiceManager {
   }
 
   public static void setUninterruptibleTimeoutMs(int uninterruptibleTimeoutMs) {
-    ExecutorServiceManager.uninterruptibleTimeoutMs = uninterruptibleTimeoutMs;
+    if (uninterruptibleTimeoutMs > 0) {
+      ExecutorServiceManager.uninterruptibleTimeoutMs = uninterruptibleTimeoutMs;
+    }
   }
 }
