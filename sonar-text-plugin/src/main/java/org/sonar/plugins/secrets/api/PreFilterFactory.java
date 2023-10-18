@@ -27,22 +27,31 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.plugins.common.InputFileContext;
+import org.sonar.plugins.secrets.configuration.model.RuleScope;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.FileFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
-public class PreFilterFactory {
-  private PreFilterFactory() {
-  }
-
+/**
+ * The Factory class for producing a Predicate from {@link PreModule}.
+ */
+public final class PreFilterFactory {
   private static final Logger LOG = LoggerFactory.getLogger(PreFilterFactory.class);
   private static final Predicate<InputFileContext> INCLUDE_ALL_FILES = ctx -> true;
 
+  private PreFilterFactory() {
+  }
+
+  /**
+   * Produce a predicate from {@link PreModule}.
+   * @param pre the input {@link PreModule}
+   * @return a predicate
+   */
   public static Predicate<InputFileContext> createPredicate(@Nullable PreModule pre) {
     if (pre == null) {
       return INCLUDE_ALL_FILES;
     }
 
-    Predicate<InputFileContext> predicate = INCLUDE_ALL_FILES;
+    Predicate<InputFileContext> predicate = scopeBasedFilePredicate(pre);
     FileFilter include = pre.getInclude();
     FileFilter reject = pre.getReject();
     if (reject != null) {
@@ -52,6 +61,18 @@ public class PreFilterFactory {
       predicate = predicate.and(ctx -> matches(include, ctx));
     }
     return predicate;
+  }
+
+  private static Predicate<InputFileContext> scopeBasedFilePredicate(PreModule pre) {
+    var scopes = pre.getScopes();
+    if (scopes == null || scopes.isEmpty() || scopes.size() == RuleScope.values().length) {
+      return INCLUDE_ALL_FILES;
+    }
+
+    return (InputFileContext inputFileContext) -> {
+      var type = inputFileContext.getInputFile().type();
+      return scopes.contains(RuleScope.valueOf(type.toString().toUpperCase(Locale.ROOT)));
+    };
   }
 
   private static boolean matches(FileFilter filter, InputFileContext ctx) {

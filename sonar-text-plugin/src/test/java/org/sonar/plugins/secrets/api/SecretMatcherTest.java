@@ -19,15 +19,29 @@
  */
 package org.sonar.plugins.secrets.api;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel;
 import org.sonar.plugins.secrets.configuration.model.Rule;
+import org.sonar.plugins.secrets.configuration.model.RuleScope;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.sonar.plugins.common.TestUtils.inputFile;
+import static org.sonar.plugins.common.TestUtils.inputFileContext;
 import static org.sonar.plugins.secrets.api.AuxiliaryPatternMatcherFactoryTest.constructReferenceAuxiliaryMatcher;
 import static org.sonar.plugins.secrets.api.SecretMatcherAssert.assertThat;
+import static org.sonar.plugins.secrets.configuration.model.RuleScope.MAIN;
+import static org.sonar.plugins.secrets.configuration.model.RuleScope.TEST;
 import static org.sonar.plugins.secrets.utils.TestUtils.mockDurationStatistics;
 
 class SecretMatcherTest {
@@ -92,4 +106,33 @@ class SecretMatcherTest {
     assertThat(actualMatcher).behavesLike(expectedMatcher);
   }
 
+  static List<Arguments> shouldFindIssueInMainFile() {
+    return List.of(
+      Arguments.of(List.of(MAIN, TEST), InputFile.Type.MAIN, 1),
+      Arguments.of(List.of(MAIN, TEST), InputFile.Type.TEST, 1),
+      Arguments.of(List.of(MAIN), InputFile.Type.MAIN, 1),
+      Arguments.of(List.of(MAIN), InputFile.Type.TEST, 0),
+      Arguments.of(List.of(TEST), InputFile.Type.MAIN, 0),
+      Arguments.of(List.of(TEST), InputFile.Type.TEST, 1),
+      Arguments.of(List.of(), InputFile.Type.MAIN, 1),
+      Arguments.of(List.of(), InputFile.Type.TEST, 1));
+  }
+
+  @ParameterizedTest
+  @MethodSource
+  void shouldFindIssueInMainFile(List<RuleScope> scopesInSpec, InputFile.Type type, int expectedMatches) throws IOException {
+    var specification = ReferenceTestModel.constructMinimumSpecification();
+    var rule = specification.getProvider().getRules().get(0);
+    var detection = rule.getDetection();
+    var preModule = new PreModule();
+    preModule.setScopes(scopesInSpec);
+    detection.setPre(preModule);
+    SecretMatcher actualMatcher = SecretMatcher.build(rule, mockDurationStatistics());
+    var inputFile = inputFile(Path.of(".env"), "rule matching pattern", null, type);
+    var fileContext = inputFileContext(inputFile);
+
+    var result = actualMatcher.findIn(fileContext);
+
+    assertThat(result).hasSize(expectedMatches);
+  }
 }

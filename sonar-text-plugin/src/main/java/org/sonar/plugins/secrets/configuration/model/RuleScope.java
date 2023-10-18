@@ -17,45 +17,14 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets.configuration.model.matching.filter;
+package org.sonar.plugins.secrets.configuration.model;
 
-import java.util.List;
-import javax.annotation.Nullable;
-import org.sonar.plugins.secrets.configuration.model.RuleScope;
+import com.fasterxml.jackson.annotation.JsonAlias;
 
-public class PreModule {
+public enum RuleScope {
 
-  @Nullable
-  private FileFilter include;
-  @Nullable
-  private FileFilter reject;
-  @Nullable
-  private List<RuleScope> scopes;
-
-  @Nullable
-  public FileFilter getInclude() {
-    return include;
-  }
-
-  public void setInclude(@Nullable FileFilter include) {
-    this.include = include;
-  }
-
-  @Nullable
-  public FileFilter getReject() {
-    return reject;
-  }
-
-  public void setReject(@Nullable FileFilter reject) {
-    this.reject = reject;
-  }
-
-  @Nullable
-  public List<RuleScope> getScopes() {
-    return scopes;
-  }
-
-  public void setScopes(@Nullable List<RuleScope> scopes) {
-    this.scopes = scopes;
-  }
+  @JsonAlias("main")
+  MAIN,
+  @JsonAlias("test")
+  TEST
 }

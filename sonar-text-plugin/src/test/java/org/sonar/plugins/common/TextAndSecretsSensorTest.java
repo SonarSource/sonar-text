@@ -32,6 +32,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
+import org.slf4j.event.Level;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.Sensor;
@@ -399,7 +400,7 @@ class TextAndSecretsSensorTest {
 
     assertThat(asString(context.allIssues())).containsExactly(
       "text:IssueAtLineOne [1:0-1:2] testIssue");
-    assertThat(logTester.logs()).containsExactly(
+    assertThat(logTester.logs(Level.INFO)).containsExactly(
       "1 source file to be analyzed",
       "1/1 source file has been analyzed");
   }

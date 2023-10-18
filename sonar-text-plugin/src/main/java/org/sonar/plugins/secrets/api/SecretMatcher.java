@@ -27,6 +27,9 @@ import org.sonar.plugins.common.DurationStatistics;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 
+/**
+ * Checks if the file contains some secrets.
+ */
 public class SecretMatcher {
 
   private final Rule rule;
@@ -52,18 +55,25 @@ public class SecretMatcher {
 
   /**
    * Creates a new SecretMatcher from provided Rule
-   * @param rule rule to extract matcher logic from
+   *
+   * @param rule               rule to extract matcher logic from
    * @param durationStatistics instance to collect performance statistics
    * @return a new SecretMatcher
    */
   public static SecretMatcher build(Rule rule, DurationStatistics durationStatistics) {
-    PatternMatcher patternMatcher = PatternMatcher.build(rule.getDetection().getMatching());
+    var patternMatcher = PatternMatcher.build(rule.getDetection().getMatching());
     Predicate<InputFileContext> preFilter = PreFilterFactory.createPredicate(rule.getDetection().getPre());
     Predicate<String> postFilter = PostFilterFactory.createPredicate(rule.getDetection().getPost(), rule.getDetection().getMatching());
-    AuxiliaryPatternMatcher auxiliaryMatcher = AuxiliaryPatternMatcherFactory.build(rule.getDetection().getMatching());
+    var auxiliaryMatcher = AuxiliaryPatternMatcherFactory.build(rule.getDetection().getMatching());
     return new SecretMatcher(rule, patternMatcher, auxiliaryMatcher, preFilter, postFilter, durationStatistics);
   }
 
+  /**
+   * Returns a list of {@link Match matches} found in {@link InputFileContext}.
+   *
+   * @param fileContext the file that will be scanned.
+   * @return list of matches.
+   */
   public List<Match> findIn(InputFileContext fileContext) {
     boolean isRejectedOnPreFilter = durationStatistics.timed(
       getRuleId() + DurationStatistics.SUFFIX_PRE,

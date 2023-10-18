@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -98,12 +99,19 @@ public class TestUtils {
   }
 
   public static InputFile inputFile(Path path, @Nullable String content, @Nullable String language) {
+    return inputFile(path, content, language, null);
+  }
+
+  public static InputFile inputFile(Path path, @Nullable String content, @Nullable String language, @Nullable InputFile.Type type) {
     TestInputFileBuilder builder = new TestInputFileBuilder(".", path.toString())
       .setType(InputFile.Type.MAIN)
       .setLanguage(language)
       .setCharset(UTF_8);
     if (content != null) {
       builder.setContents(content);
+    }
+    if (type != null) {
+      builder.setType(type);
     }
     return builder.build();
   }
@@ -131,6 +139,11 @@ public class TestUtils {
         }
       })
       .toArray(String[]::new);
+  }
+
+  public static InputFileContext inputFileContext(InputFile inputFile) throws IOException {
+    var sensorContext = SensorContextTester.create(Paths.get("."));
+    return new InputFileContext(sensorContext, inputFile);
   }
 
   public static SensorContextTester sensorContext(Check check) {
