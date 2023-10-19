@@ -63,7 +63,7 @@ public class TextAndSecretsSensor implements Sensor {
 
   private final GitSupplier gitSupplier = new GitSupplier();
 
-  private DurationStatistics durationStatistics;
+  protected DurationStatistics durationStatistics;
 
   public TextAndSecretsSensor(CheckFactory checkFactory) {
     this.checkFactory = checkFactory;
@@ -151,7 +151,7 @@ public class TextAndSecretsSensor implements Sensor {
   }
 
   private static boolean isSonarLintContext(SensorContext sensorContext) {
-    return sensorContext.runtime().getProduct().equals(SonarProduct.SONARLINT);
+    return sensorContext.runtime().getProduct() == SonarProduct.SONARLINT;
   }
 
   private static boolean analyzeAllFiles(SensorContext sensorContext) {
