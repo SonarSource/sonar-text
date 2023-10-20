@@ -7,7 +7,7 @@ This SonarSource project is a static code analyzer made to detect:
 * BIDI Characters Vulnerabilities
 * Leaking Secrets/Tokens
 
-It is a component of the Sonar Solution. It is embedded in SonarLint, SonarQube, and SonarCloud.
+It is a component of the Sonar [Clean Code solution](https://www.sonarsource.com/solutions/clean-code/?utm_medium=referral&utm_source=github&utm_campaign=clean-code&utm_content=sonar-text). It is embedded in SonarLint, SonarQube, and SonarCloud.
 This component helps you prevent the leakage of secrets even before you push them into your repository thanks to SonarLint.
 
 # Features
@@ -45,7 +45,7 @@ There are also tasks: `ruleApiUpdateSecrets` and `ruleApiUpdateText` for updatin
 
 ### Generate new rule description
 
-To fetch static files for a rule SXXXX from RSPEC, execute the one of following command:
+To fetch static files for a rule SXXXX from RSPEC, execute the one of following commands:
 ```shell
 ./gradlew ruleApiUpdateRuleSecrets -Prule=SXXXX
 ./gradlew ruleApiUpdateRuleText -Prule=SXXXX
@@ -56,7 +56,7 @@ To fetch static files for a rule SXXXX from RSPEC, execute the one of following 
 After the change, addition or removal of secret specifications, this script can be run to generate the Java classes that are needed
 for the inclusion or deletion of these secrets and to update static RSPEC files.
 
-As we use the enforcer plugin to define a file size of the build, this can lead to test failures after adding new secret specifications.
+As we use the enforcer plugin to define the file size of the build, this can lead to test failures after adding new secret specifications.
 The `<minsize>` and `<maxsize>` can be changed in `sonar-text-plugin/build.gradle.kts` (search for `enforceJarSize`).
 ```shell
 ./secretSpecificationInclusionGenerator.sh
@@ -64,13 +64,13 @@ The `<minsize>` and `<maxsize>` can be changed in `sonar-text-plugin/build.gradl
 
 ### Verify Regexes
 
-The Regular Expressions provided in secrets specification should be verified to avoid catastrophic backtracking and other issues.
-Currently, the Sonar products doesn't scan YAML files for Regex problems.
+The Regular Expressions provided in the secrets specification should be verified to avoid catastrophic backtracking and other issues.
+Currently, the Sonar products don't scan YAML files for Regex problems.
 To avoid potential problems the [SecretsRegexTest](sonar-text-plugin/src/test/java/org/sonar/plugins/secrets/utils/SecretsRegexTest.java) was prepared for validating regexes.
 There is a simple way to validate all specification files and a single one. 
 Currently, tests are disabled, as the issues need to be reviewed first.
 
-There is also a way of running this check from command line.
+There is also a way of running this check from the command line.
 
 ```shell
 ./gradlew --rerun-tasks :sonar-text-plugin:test --console plain --tests SecretsRegexTest.shouldValidateSingleFile -Dfilename=google-oauth2.yaml
