@@ -86,26 +86,6 @@ tasks.jar {
     }
 }
 
-val jGitExclusions =
-    listOf(
-        "about.html",
-        "org/eclipse/jgit/blame/**",
-        "org/eclipse/jgit/hooks/**",
-        "org/eclipse/jgit/merge/**",
-        "org/eclipse/jgit/patch/**",
-        "org/eclipse/jgit/transport/AmazonS3.class",
-        "org/eclipse/jgit/transport/BasePackFetchConnection.class",
-        "org/eclipse/jgit/transport/FetchProcess.class",
-        "org/eclipse/jgit/transport/ReceivePack.class",
-        "org/eclipse/jgit/transport/TransportHttp.class",
-        "org/eclipse/jgit/transport/UploadPack.class",
-        "org/eclipse/jgit/transport/WalkFetchConnection.class",
-        "org/eclipse/jgit/transport/http/**",
-        "org/eclipse/jgit/internal/transport/**",
-        "org/eclipse/jgit/internal/diffmergetool/**",
-        "org/eclipse/jgit/internal/storage/dfs/**"
-    )
-
 tasks.shadowJar {
     minimize()
     exclude("META-INF/LICENSE*")
@@ -115,15 +95,8 @@ tasks.shadowJar {
     exclude("LICENSE*")
     exclude("NOTICE*")
 
-    // jGit Exclusions
-    exclude(jGitExclusions)
-    exclude {
-        (it.name.endsWith("Command.class") && it.name != "StatusCommand.class" && it.name != "GitCommand.class") ||
-            it.name.endsWith("Result.class")
-    }
-
     doLast {
-        enforceJarSize(tasks.shadowJar.get().archiveFile.get().asFile, 5_500_000L, 6_000_000L)
+        enforceJarSize(tasks.shadowJar.get().archiveFile.get().asFile, 6_000_000L, 6_500_000L)
     }
 }
 

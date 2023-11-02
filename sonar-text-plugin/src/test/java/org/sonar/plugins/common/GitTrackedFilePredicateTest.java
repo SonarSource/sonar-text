@@ -86,6 +86,21 @@ class GitTrackedFilePredicateTest {
     logTester.setLevel(Level.INFO);
   }
 
+  @Test
+  void shouldNotCrashWhenStatusThrowsRuntimeException() throws IOException {
+    logTester.setLevel(Level.DEBUG);
+
+    var gitWrapper = mock(GitSupplier.class);
+    when(gitWrapper.getGit()).thenThrow(RuntimeException.class);
+    FilePredicate predicate = new GitTrackedFilePredicate(gitWrapper);
+
+    assertThat(predicate.apply(inputFile(Path.of("a.txt")))).isTrue();
+    assertThat(predicate.apply(inputFile(Path.of("src", "b.txt")))).isTrue();
+    assertThat(logTester.logs(Level.DEBUG).get(0)).contains("Unable to retrieve Git status, won't perform any exclusions");
+
+    logTester.setLevel(Level.INFO);
+  }
+
   static Git setupGitMock(Set<String> untrackedFiles) throws GitAPIException {
     var git = mock(Git.class);
     var statusCommandMock = mock(StatusCommand.class);
