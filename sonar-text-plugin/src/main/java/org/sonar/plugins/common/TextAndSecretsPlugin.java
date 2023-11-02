@@ -21,6 +21,7 @@ package org.sonar.plugins.common;
 
 import java.util.List;
 import org.sonar.api.Plugin;
+import org.sonar.api.PropertyType;
 import org.sonar.api.config.PropertyDefinition;
 import org.sonar.api.resources.Qualifiers;
 import org.sonar.plugins.secrets.SecretsLanguage;
@@ -29,6 +30,8 @@ import org.sonar.plugins.text.TextLanguage;
 import org.sonar.plugins.text.TextRuleDefinition;
 
 public class TextAndSecretsPlugin implements Plugin {
+
+  private static final String GENERAL_SUBCATEGORY = "General";
 
   @Override
   public void define(Context context) {
@@ -51,13 +54,24 @@ public class TextAndSecretsPlugin implements Plugin {
 
   public static List<PropertyDefinition> createUIProperties() {
     return List.of(
+      PropertyDefinition.builder(TextAndSecretsSensor.ANALYZER_ACTIVATION_KEY)
+        .index(1)
+        .defaultValue(String.valueOf(TextAndSecretsSensor.ANALYZER_ACTIVATION_DEFAULT_VALUE))
+        .name("Activate Secrets Analysis")
+        .description("Disabling Secrets analysis ensures that no files are analyzed for containing secrets.")
+        .type(PropertyType.BOOLEAN)
+        .onQualifiers(Qualifiers.PROJECT)
+        .category(TextAndSecretsSensor.TEXT_CATEGORY)
+        .subCategory(GENERAL_SUBCATEGORY)
+        .build(),
+
       PropertyDefinition.builder(TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY)
         .defaultValue("")
         .category(TextAndSecretsSensor.TEXT_CATEGORY)
         .name("Additional binary file suffixes")
         .multiValues(true)
         .description("Additional list of binary file suffixes that should not be analyzed with rules targeting text files.")
-        .subCategory("General")
+        .subCategory(GENERAL_SUBCATEGORY)
         .onQualifiers(Qualifiers.PROJECT)
         .build(),
 
@@ -68,7 +82,7 @@ public class TextAndSecretsPlugin implements Plugin {
         .multiValues(true)
         .description("List of file path patterns that should be analyzed with rules targeting text files (ie. Secret rules, BIDI rule), " +
           "in addition to those associated to a language. This is only applied when the scanner detects a git repository.")
-        .subCategory("General")
+        .subCategory(GENERAL_SUBCATEGORY)
         .onQualifiers(Qualifiers.PROJECT)
         .build());
   }

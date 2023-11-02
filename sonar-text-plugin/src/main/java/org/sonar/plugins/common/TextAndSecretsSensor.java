@@ -55,6 +55,8 @@ public class TextAndSecretsSensor implements Sensor {
   private static final String ANALYZE_ALL_FILES_KEY = "sonar.text.analyzeAllFiles";
   public static final String REGEX_MATCH_TIMEOUT_KEY = "sonar.text.regex.timeout.match";
   public static final String REGEX_EXECUTION_TIMEOUT_KEY = "sonar.text.regex.timeout.execution";
+  public static final String ANALYZER_ACTIVATION_KEY = "sonar.text.activate";
+  public static final boolean ANALYZER_ACTIVATION_DEFAULT_VALUE = true;
   public static final String TEXT_CATEGORY = "Secrets";
 
   private static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
@@ -79,6 +81,10 @@ public class TextAndSecretsSensor implements Sensor {
 
   @Override
   public void execute(SensorContext sensorContext) {
+    if (!isActive(sensorContext)) {
+      return;
+    }
+
     // Retrieve list of checks
     List<Check> activeChecks = getActiveChecks();
     durationStatistics = new DurationStatistics(sensorContext.config());
@@ -148,6 +154,10 @@ public class TextAndSecretsSensor implements Sensor {
       pathPatternsPredicates.add(filePredicate);
     }
     return sensorContext.fileSystem().predicates().or(pathPatternsPredicates);
+  }
+
+  private static boolean isActive(SensorContext sensorContext) {
+    return sensorContext.config().getBoolean(ANALYZER_ACTIVATION_KEY).orElse(ANALYZER_ACTIVATION_DEFAULT_VALUE);
   }
 
   private static boolean isSonarLintContext(SensorContext sensorContext) {

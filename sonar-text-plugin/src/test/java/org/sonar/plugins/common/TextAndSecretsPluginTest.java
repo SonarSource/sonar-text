@@ -39,6 +39,6 @@ class TextAndSecretsPluginTest {
     Plugin.Context context = new Plugin.Context(runtime);
     Plugin plugin = new TextAndSecretsPlugin();
     plugin.define(context);
-    assertThat(context.getExtensions()).hasSize(9);
+    assertThat(context.getExtensions()).hasSize(10);
   }
 }

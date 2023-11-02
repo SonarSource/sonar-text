@@ -593,6 +593,21 @@ class TextAndSecretsSensorTest {
     assertThat(ExecutorServiceManager.getUninterruptibleTimeoutMs()).isEqualTo(defaultTimeout);
   }
 
+  @Test
+  void shouldNotStartAnalysisWhenAnalysisIsDeactivated() {
+    Check check = new ReportIssueAtLineOneCheck();
+    InputFile inputFile = inputFile("foo");
+
+    SensorContextTester context = sensorContext(check);
+    MapSettings mapSettings = new MapSettings();
+    mapSettings.setProperty(TextAndSecretsSensor.ANALYZER_ACTIVATION_KEY, "false");
+    context.setSettings(mapSettings);
+    analyse(sensor(check), context, inputFile);
+
+    assertThat(context.allIssues()).isEmpty();
+    assertThat(logTester.logs()).isEmpty();
+  }
+
   private void analyseDirectory(Sensor sensor, SensorContextTester context, Path directory) throws IOException {
     try (Stream<Path> list = Files.list(directory)) {
       list.sorted().forEach(file -> context.fileSystem().add(inputFile(file)));
