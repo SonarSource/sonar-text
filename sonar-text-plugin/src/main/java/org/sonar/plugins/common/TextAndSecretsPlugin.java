@@ -65,6 +65,17 @@ public class TextAndSecretsPlugin implements Plugin {
         .subCategory(GENERAL_SUBCATEGORY)
         .build(),
 
+      PropertyDefinition.builder(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY)
+        .index(2)
+        .defaultValue(String.valueOf(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_DEFAULT_VALUE))
+        .name("Activate inclusion of custom file path patterns")
+        .description("Disabling custom file path patterns ensures that only files associated to a language will get analyzed.")
+        .type(PropertyType.BOOLEAN)
+        .onQualifiers(Qualifiers.PROJECT)
+        .category(TextAndSecretsSensor.TEXT_CATEGORY)
+        .subCategory(GENERAL_SUBCATEGORY)
+        .build(),
+
       PropertyDefinition.builder(TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY)
         .defaultValue("")
         .category(TextAndSecretsSensor.TEXT_CATEGORY)

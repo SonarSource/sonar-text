@@ -34,6 +34,7 @@ public class GitTrackedFilePredicate implements FilePredicate {
   private Set<String> untrackedFileNames;
   private Git git;
   private boolean isGitStatusSuccessful;
+  private Path projectRootPath;
 
   public GitTrackedFilePredicate(GitSupplier gitSupplier) {
     try {
@@ -50,12 +51,20 @@ public class GitTrackedFilePredicate implements FilePredicate {
         this.git.close();
       }
     }
+    this.projectRootPath = Path.of(".").toAbsolutePath();
+    try {
+      projectRootPath = projectRootPath.toRealPath();
+    } catch (IOException e) {
+      var message = String.format("Unable to resolve real path of project for %s", projectRootPath);
+      LOG.debug(message, e);
+    }
   }
 
   @Override
   public boolean apply(InputFile inputFile) {
     if (isGitStatusSuccessful) {
-      var relativePath = Path.of(".").toAbsolutePath().relativize(Path.of(inputFile.uri())).toString();
+      var filePath = Path.of(inputFile.uri()).toAbsolutePath();
+      var relativePath = projectRootPath.relativize(filePath).toString();
       return !untrackedFileNames.contains(relativePath);
     } else {
       return true;

@@ -57,6 +57,8 @@ public class TextAndSecretsSensor implements Sensor {
   public static final String REGEX_EXECUTION_TIMEOUT_KEY = "sonar.text.regex.timeout.execution";
   public static final String ANALYZER_ACTIVATION_KEY = "sonar.text.activate";
   public static final boolean ANALYZER_ACTIVATION_DEFAULT_VALUE = true;
+  public static final String INCLUSIONS_ACTIVATION_KEY = "sonar.text.inclusions.activate";
+  public static final boolean INCLUSIONS_ACTIVATION_DEFAULT_VALUE = false;
   public static final String TEXT_CATEGORY = "Secrets";
 
   private static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
@@ -115,6 +117,12 @@ public class TextAndSecretsSensor implements Sensor {
       // if we're in a sonarlint context, we return this predicate as well
       return notBinaryFilePredicate;
     }
+
+    // if the property is inactive, we prevent jgit from being initialized
+    if (!isJGitAndInclusionsActive(sensorContext)) {
+      return LANGUAGE_FILE_PREDICATE;
+    }
+
     var trackedByGitPredicate = new GitTrackedFilePredicate(getGitSupplier());
     if (!trackedByGitPredicate.isGitStatusSuccessful()) {
       return LANGUAGE_FILE_PREDICATE;
@@ -158,6 +166,10 @@ public class TextAndSecretsSensor implements Sensor {
 
   private static boolean isActive(SensorContext sensorContext) {
     return sensorContext.config().getBoolean(ANALYZER_ACTIVATION_KEY).orElse(ANALYZER_ACTIVATION_DEFAULT_VALUE);
+  }
+
+  private static boolean isJGitAndInclusionsActive(SensorContext sensorContext) {
+    return sensorContext.config().getBoolean(INCLUSIONS_ACTIVATION_KEY).orElse(INCLUSIONS_ACTIVATION_DEFAULT_VALUE);
   }
 
   private static boolean isSonarLintContext(SensorContext sensorContext) {

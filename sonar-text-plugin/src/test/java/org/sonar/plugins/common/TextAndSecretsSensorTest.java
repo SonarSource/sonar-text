@@ -267,7 +267,10 @@ class TextAndSecretsSensorTest {
   void shouldExecuteChecksOnIncludedTextFileNames() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt"));
+    MapSettings mapSettings = new MapSettings();
+    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt");
+    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
+    context.setSettings(mapSettings);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), "abc", null));
     assertThat(logTester.logs()).contains("1 source file to be analyzed");
@@ -277,7 +280,10 @@ class TextAndSecretsSensorTest {
   void shouldNotExecuteChecksOnNonIncludedTextFileNames() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.csv"));
+    MapSettings mapSettings = new MapSettings();
+    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.csv");
+    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
+    context.setSettings(mapSettings);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), "abc", null));
     assertThat(logTester.logs()).isEmpty();
@@ -287,7 +293,10 @@ class TextAndSecretsSensorTest {
   void shouldExecuteChecksOnMultipleIncludedTextFileNames() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt,*.csv"));
+    MapSettings mapSettings = new MapSettings();
+    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt,*.csv");
+    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
+    context.setSettings(mapSettings);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
       inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null),
@@ -306,7 +315,10 @@ class TextAndSecretsSensorTest {
   void shouldNotExecuteChecksOnMultipleIncludedTextFileNamesWithoutAstrix() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, ".txt,.csv"));
+    MapSettings mapSettings = new MapSettings();
+    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, ".txt,.csv");
+    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
+    context.setSettings(mapSettings);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
       inputFile(Path.of("Foo.txt"), "abc", null),
@@ -319,7 +331,10 @@ class TextAndSecretsSensorTest {
   void shouldExecuteChecksOnDotEnvFile() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, ".env"));
+    MapSettings mapSettings = new MapSettings();
+    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, ".env");
+    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
+    context.setSettings(mapSettings);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
       inputFile(Path.of(".env"), SENSITIVE_BIDI_CHARS, null),
@@ -337,7 +352,10 @@ class TextAndSecretsSensorTest {
   void shouldExecuteChecksOnDotAwsConfig() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, ".aws/config"));
+    MapSettings mapSettings = new MapSettings();
+    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, ".aws/config");
+    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
+    context.setSettings(mapSettings);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
       inputFile(Path.of(".aws", "config"), SENSITIVE_BIDI_CHARS, null),
@@ -355,8 +373,11 @@ class TextAndSecretsSensorTest {
   void shouldExecuteChecksOnDefaults() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
+    MapSettings mapSettings = new MapSettings();
     // INCLUDED_FILE_SUFFIXES_KEY is set to default value
-    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, TEXT_INCLUSIONS_DEFAULT_VALUE));
+    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, TEXT_INCLUSIONS_DEFAULT_VALUE);
+    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
+    context.setSettings(mapSettings);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
       inputFile(Path.of("script", "start.sh"), SENSITIVE_BIDI_CHARS, null),
@@ -393,7 +414,11 @@ class TextAndSecretsSensorTest {
   void shouldExecuteChecksOnIncludedTextFileNamesWithBinaryData() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt"));
+    MapSettings mapSettings = new MapSettings();
+    // INCLUDED_FILE_SUFFIXES_KEY is set to default value
+    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt");
+    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
+    context.setSettings(mapSettings);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null));
     assertThat(logTester.logs()).containsExactlyInAnyOrder(
@@ -422,7 +447,10 @@ class TextAndSecretsSensorTest {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = defaultSensorContext();
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
-    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt"));
+    MapSettings mapSettings = new MapSettings();
+    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt");
+    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
+    context.setSettings(mapSettings);
     analyse(sensor(check), context,
       inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null),
       inputFile(Path.of("FileWithoutExtension"), SENSITIVE_BIDI_CHARS, null));
@@ -489,6 +517,9 @@ class TextAndSecretsSensorTest {
   void shouldNotAnalyzeUntrackedFiles() throws IOException, GitAPIException {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
+    MapSettings mapSettings = new MapSettings();
+    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
+    context.setSettings(mapSettings);
     context.setRuntime(SONARQUBE_RUNTIME);
     var sensor = sensor(check);
     var sensorSpy = Mockito.spy(sensor);
@@ -535,7 +566,29 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void shouldOnlyAnalyzeFilesBelongingToALanguageIfNoGitRepositoryIsFoundEvenIfInclusionsKeySet() throws IOException {
+  void shouldNotCallGitFilePredicateOnDefault() throws IOException, GitAPIException {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    var sensor = sensor(check);
+    var sensorSpy = Mockito.spy(sensor);
+    var gitSupplier = mock(GitSupplier.class);
+    var gitMock = setupGitMock(Set.of("a.txt"));
+    when(gitSupplier.getGit()).thenReturn(gitMock);
+    when(sensorSpy.getGitSupplier()).thenReturn(gitSupplier);
+
+    analyse(sensorSpy, context,
+      inputFile(Path.of("a.txt"), "{}"),
+      inputFile(Path.of("b.txt"), "{}"));
+
+    Collection<Issue> issues = context.allIssues();
+    assertThat(issues).hasSize(2);
+    assertThat(logTester.logs().get(0)).endsWith("2 source files to be analyzed");
+    verify(gitSupplier, times(0)).getGit();
+    verify(sensorSpy, times(0)).getGitSupplier();
+  }
+
+  @Test
+  void shouldOnlyAnalyzeFilesBelongingToALanguageNoGitRepositoryIsFoundEvenIfInclusionsKeySet() throws IOException {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     context.setRuntime(SONARQUBE_RUNTIME);
