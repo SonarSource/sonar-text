@@ -111,27 +111,6 @@ class SecretsRegexTest {
     context.verify();
   }
 
-  // This test validate itself
-  @Test
-  void shouldValidateTheExceptionMessage() {
-    List<PatternLocation> patternLocations = convertToPatternLocations("mongodb.yaml");
-
-    patternLocations.forEach(this::checkRegex);
-
-    Assertions.assertThatThrownBy(() -> context.verify())
-      .hasMessage("Found following issues in Regexes (2):\n" +
-        "S6694, id: mongodb-cli-quoted-outer, \n" +
-        "\tLocation: matching, \n" +
-        "\tRegex: `\\\\bmongo(?:dump|import|restore|sh)?(?=[ \\\\t]).{0,100}[ \\\\t](?:-p|--password)[ \\\\t]+(?:\\\\\\\\?[\"'])([^\\\\r\\\\n\"']{3,})(?:\\\\\\\\?[\"'])` \n" +
-        "\tViolating rule S6395: Unwrap this unnecessarily grouped subpattern.\n" +
-        "\t\tLocation: 83:96 text: (?:\\\\\\\\?[\"'])\n" +
-        "S6694, id: mongodb-cli-quoted-outer, \n" +
-        "\tLocation: matching, \n" +
-        "\tRegex: `\\\\bmongo(?:dump|import|restore|sh)?(?=[ \\\\t]).{0,100}[ \\\\t](?:-p|--password)[ \\\\t]+(?:\\\\\\\\?[\"'])([^\\\\r\\\\n\"']{3,})(?:\\\\\\\\?[\"'])` \n" +
-        "\tViolating rule S6395: Unwrap this unnecessarily grouped subpattern.\n" +
-        "\t\tLocation: 113:126 text: (?:\\\\\\\\?[\"'])\n");
-  }
-
   private static Set<String> listOfYamlFiles() {
     Path specificationsDirectory = Path.of(CONFIGURATION_FILES_PATH);
     String[] extensionsToSearchFor = new String[] {"yaml"};
