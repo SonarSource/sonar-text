@@ -85,7 +85,6 @@ class SecretsRegexTest {
   private final TestRegexScannerContext context = new TestRegexScannerContext();
 
   @Test
-  @Disabled("The issues should be review")
   void shouldValidateAllRegexesInConfiguration() {
     Set<String> listOfFileNames = listOfYamlFiles();
 
