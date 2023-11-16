@@ -1,7 +1,7 @@
 Set-Location "$env:CIRRUS_WORKING_DIR\\sonar-text-dotnet"
 
 Write-Host "Setting up artifactory authentication for promotion"
-jf config add "repox" --url https://repox.jfrog.io --access-token $env:ARTIFACTORY_PROMOTE_TOKEN --overwrite
+jf config add "repox" --url https://repox.jfrog.io --access-token $env:ARTIFACTORY_PROMOTE_ACCESS_TOKEN --overwrite
 jf rt ping # Check if the artifactory configuration is successfull
 
 $isMasterOrBranchBuild  = "$env:CIRRUS_BRANCH" -eq "master" -or "$env:CIRRUS_BRANCH".startsWith("branch-")
