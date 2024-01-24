@@ -6,6 +6,7 @@ sonar-java = "7.24.0.32100"
 sonar-scanner-gradle = "4.4.0.3356"
 sonar-orchestrator = "3.40.0.183"
 sonar-license-api = "3.4"
+sonarlint-core = "9.7.0.76859"
 slf4j = "1.7.30"
 jackson = "2.15.1"
 json-schema-validator = "1.0.86"
@@ -27,6 +28,7 @@ sonar-ws = { module = "org.sonarsource.sonarqube:sonar-ws", version.ref = "sonar
 sonar-java-checks = { module = "org.sonarsource.java:java-checks", version.ref = "sonar-java" }
 sonar-scanner-gradle = { module = "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin", version.ref = "sonar-scanner-gradle" }
 sonar-orchestrator = { module = "org.sonarsource.orchestrator:sonar-orchestrator", version.ref = "sonar-orchestrator" }
+sonarlint-core = { module = "org.sonarsource.sonarlint.core:sonarlint-core", version.ref = "sonarlint-core" }
 jackson-dataformat-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jackson" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 com-networknt-jsonSchemaValidator = { module = "com.networknt:json-schema-validator", version.ref = "json-schema-validator" }
