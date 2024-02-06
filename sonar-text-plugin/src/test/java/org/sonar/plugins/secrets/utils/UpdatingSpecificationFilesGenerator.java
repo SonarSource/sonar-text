@@ -36,8 +36,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +47,6 @@ import org.sonar.api.testfixtures.log.LogAndArguments;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.secrets.SecretsCheckList;
-import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.api.SpecificationLoader;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 
@@ -70,14 +69,14 @@ class UpdatingSpecificationFilesGenerator {
 
   // Suppress warning, as there are no assertions inside here
   @Test
-  @Disabled("Should only be triggered manually")
+  @EnabledIfEnvironmentVariable(named = "GENERATION_ENABLED", matches = "true", disabledReason = "This test should not be executed during a normal test run")
   @SuppressWarnings("java:S2699")
   void firstStep() {
     writeSpecificationFileDefinition();
   }
 
   @Test
-  @Disabled("Should only be triggered manually")
+  @EnabledIfEnvironmentVariable(named = "GENERATION_ENABLED", matches = "true", disabledReason = "This test should not be executed during a normal test run")
   void secondStep() {
     testDeserializationOfSpecificationFiles();
     SpecificationLoader specificationLoader = new SpecificationLoader();
