@@ -6,9 +6,9 @@ PROJECT_ROOT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && 
 echo ""
 echo "--------- Generation of Java classes ---------"
 echo ""
-GENERATION_ENABLED=true ./gradlew :sonar-text-plugin:test --tests --rerun UpdatingSpecificationFilesGenerator.firstStep || exit
+GENERATION_ENABLED=true ./gradlew :sonar-text-plugin:test --tests UpdatingSpecificationFilesGenerator.firstStep || exit
 
-GENERATION_ENABLED=true ./gradlew :sonar-text-plugin:test --tests --rerun UpdatingSpecificationFilesGenerator.secondStep || exit
+GENERATION_ENABLED=true ./gradlew :sonar-text-plugin:test --tests UpdatingSpecificationFilesGenerator.secondStep || exit
 
 echo ""
 echo "---------Creating current license headers and formatting code---------"

@@ -64,6 +64,7 @@ public class SecretsSpecificationFilesDefinition {
       "planetscale.yaml",
       "postgresql.yaml",
       "postman.yaml",
+      "postmark.yaml",
       "pubkey-crypto.yaml",
       "pypi.yaml",
       "rabbitmq.yaml",

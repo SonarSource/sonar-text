@@ -58,6 +58,7 @@ import org.sonar.plugins.secrets.checks.OpenWeatherMapCheck;
 import org.sonar.plugins.secrets.checks.PlanetscaleCheck;
 import org.sonar.plugins.secrets.checks.PostgreSQLCheck;
 import org.sonar.plugins.secrets.checks.PostmanCheck;
+import org.sonar.plugins.secrets.checks.PostmarkCheck;
 import org.sonar.plugins.secrets.checks.PyPICheck;
 import org.sonar.plugins.secrets.checks.RabbitMQCheck;
 import org.sonar.plugins.secrets.checks.RapidAPICheck;
@@ -122,6 +123,7 @@ public class SecretsCheckList {
     PlanetscaleCheck.class,
     PostgreSQLCheck.class,
     PostmanCheck.class,
+    PostmarkCheck.class,
     PyPICheck.class,
     RabbitMQCheck.class,
     RapidAPICheck.class,
