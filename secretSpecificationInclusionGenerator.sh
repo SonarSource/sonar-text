@@ -23,7 +23,7 @@ while IFS= read -r line
 do
     echo ""
 	echo "--------- Generating rspec files for: $line ---------"
-	./gradlew ruleApiUpdateRuleSecrets -Prule="$line"
+	./gradlew ruleApiGenerateRuleSecrets -Prule="$line"
 	echo ""
 done < "$input"
 

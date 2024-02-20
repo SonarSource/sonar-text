@@ -55,7 +55,7 @@ tasks.register("ruleApiUpdate") {
 
 val rule: String? by project
 
-tasks.register<JavaExec>("ruleApiUpdateRuleSecrets") {
+tasks.register<JavaExec>("ruleApiGenerateRuleSecrets") {
     description = "Update rule description for secret"
     group = "Rule API"
     workingDir = file("$projectDir/sonarpedia-secrets")
@@ -69,7 +69,7 @@ tasks.register<JavaExec>("ruleApiUpdateRuleSecrets") {
     )
 }
 
-tasks.register<JavaExec>("ruleApiUpdateRuleText") {
+tasks.register<JavaExec>("ruleApiGenerateRuleText") {
     description = "Update rule description for text"
     group = "Rule API"
     workingDir = file("$projectDir/sonarpedia-text")

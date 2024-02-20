@@ -41,14 +41,15 @@ Update all rule descriptions.
 ./gradlew ruleApiUpdate
 ```
 
-There are also tasks: `ruleApiUpdateSecrets` and `ruleApiUpdateText` for updating Secrets and Text rule descriptions.
+There are also tasks: `ruleApiUpdateSecrets`, `ruleApiUpdateText` and `ruleApiUpdateEnterprise` for updating Secrets, Text and Enterprise rule descriptions.
 
 ### Generate new rule description
 
 To fetch static files for a rule SXXXX from RSPEC, execute the one of following commands:
 ```shell
-./gradlew ruleApiUpdateRuleSecrets -Prule=SXXXX
-./gradlew ruleApiUpdateRuleText -Prule=SXXXX
+./gradlew ruleApiGenerateRuleSecrets -Prule=SXXXX
+./gradlew ruleApiGenerateRuleText -Prule=SXXXX
+./gradlew ruleApiGenerateRuleEnterprise -Prule=SXXXX
 ```
 
 ### Generate files to include new secrets
