@@ -21,9 +21,15 @@ input="$PROJECT_ROOT_DIR/sonar-text-plugin/src/test/resources/templates/rspecKey
 
 while IFS= read -r line
 do
-    echo ""
-	echo "--------- Generating rspec files for: $line ---------"
-	./gradlew ruleApiGenerateRuleSecrets -Prule="$line"
+  echo ""
+  if [ -z "$1" ]
+  then
+    echo "--------- Generating rspec files for '$line' from branch: '$1' ---------"
+    ./gradlew ruleApiGenerateRuleSecrets -Prule="$line" -Pbranch="$1"
+  else
+  	echo "--------- Generating rspec files for '$line' from branch: 'master' ---------"
+    ./gradlew ruleApiGenerateRuleSecrets -Prule="$line"
+  fi
 	echo ""
 done < "$input"
 
