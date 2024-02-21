@@ -22,9 +22,14 @@ package org.sonar.plugins.common;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.util.Collection;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextRange;
+import org.sonar.api.batch.sensor.internal.SensorContextTester;
+import org.sonar.api.batch.sensor.issue.Issue;
+import org.sonar.api.rule.RuleKey;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,8 +40,15 @@ import static org.sonar.plugins.common.TestUtils.inputFile;
 
 class InputFileContextTest {
 
+  private SensorContextTester sensorContext;
+
+  @BeforeEach
+  void beforeEach() {
+    sensorContext = defaultSensorContext();
+  }
+
   @Test
-  void should_convert_when_offset_are_identical_and_on_same_line() throws IOException {
+  void shouldConvertWhenOffsetAreIdenticalAndOnSameLine() throws IOException {
     InputFileContext ctx = inputFileContext("first");
 
     TextRange range = ctx.newTextRangeFromFileOffsets(0, 1);
@@ -48,7 +60,7 @@ class InputFileContextTest {
   }
 
   @Test
-  void should_convert_when_offsets_are_on_different_lines_separated_by_line_feed() throws IOException {
+  void shouldConvertWhenOffsetsAreOnDifferentLinesSeparatedByLineFeed() throws IOException {
     InputFileContext ctx = inputFileContext("first\nsecond");
 
     TextRange range = ctx.newTextRangeFromFileOffsets(0, 12);
@@ -60,7 +72,7 @@ class InputFileContextTest {
   }
 
   @Test
-  void should_convert_when_offsets_are_not_on_the_first_line() throws IOException {
+  void shouldConvertWhenOffsetsAreNotOnTheFirstLine() throws IOException {
     InputFileContext ctx = inputFileContext("first\nsecond\nthird\nfourth");
 
     TextRange range = ctx.newTextRangeFromFileOffsets(19, 25);
@@ -72,7 +84,7 @@ class InputFileContextTest {
   }
 
   @Test
-  void should_fail_when_offsets_invalid() throws IOException {
+  void shouldFailWhenOffsetsInvalid() throws IOException {
     InputFileContext ctx = inputFileContext("01234");
 
     assertThatThrownBy(() -> ctx.newTextRangeFromFileOffsets(5, 6))
@@ -86,7 +98,7 @@ class InputFileContextTest {
   }
 
   @Test
-  void should_fail_to_load_content_if_file_does_not_exist() {
+  void shouldFailToLoadContentIfFileDoesNotExist() {
     InputFile inputFile = inputFile(Path.of("invalid-path.txt"));
     assertThatThrownBy(() -> new InputFileContext(defaultSensorContext(), inputFile))
       .isInstanceOf(NoSuchFileException.class)
@@ -94,7 +106,7 @@ class InputFileContextTest {
   }
 
   @Test
-  void should_fail_to_load_content_if_corrupted_file() throws IOException {
+  void shouldFailToLoadContentIfCorruptedFile() throws IOException {
     InputFile inputFile = spy(inputFile("{}"));
     when(inputFile.inputStream()).thenThrow(new IOException("Fail to read file input stream"));
     assertThatThrownBy(() -> new InputFileContext(defaultSensorContext(), inputFile))
@@ -103,7 +115,7 @@ class InputFileContextTest {
   }
 
   @Test
-  void should_identify_binary_file() throws IOException {
+  void shouldIdentifyBinaryFile() throws IOException {
     Path binaryFile = Path.of("build", "classes", "java", "test", "org", "sonar", "plugins", "common", "InputFileContextTest.class");
     InputFile inputFile = inputFile(binaryFile);
     InputFileContext ctx = new InputFileContext(defaultSensorContext(), inputFile);
@@ -114,8 +126,27 @@ class InputFileContextTest {
     assertThat(path).isEqualTo("build/classes/java/test/org/sonar/plugins/common/InputFileContextTest.class");
   }
 
+  @Test
+  void shouldNotRaiseAnIssueOnOverlappingTextRange() throws IOException {
+    InputFileContext ctx = inputFileContext("{some content inside this file}");
+    TextRange range1 = ctx.newTextRangeFromFileOffsets(2, 6);
+
+    ctx.reportSecretIssue(RuleKey.parse("s:42"), range1, "report secret issue 1");
+    ctx.reportSecretIssue(RuleKey.parse("s:1337"), ctx.newTextRangeFromFileOffsets(0, 4), "overlapping secret");
+    ctx.reportSecretIssue(RuleKey.parse("s:1337"), ctx.newTextRangeFromFileOffsets(4, 8), "overlapping secret");
+    ctx.reportSecretIssue(RuleKey.parse("s:1337"), ctx.newTextRangeFromFileOffsets(3, 5), "overlapping secret");
+
+    Collection<Issue> actual = sensorContext.allIssues();
+
+    assertThat(actual)
+      .hasSize(1)
+      .anyMatch(issue -> issue.primaryLocation().message().equals("report secret issue 1"))
+      .anyMatch(issue -> issue.primaryLocation().textRange().equals(range1));
+
+  }
+
   private InputFileContext inputFileContext(String content) throws IOException {
-    return new InputFileContext(defaultSensorContext(), inputFile(content));
+    return new InputFileContext(sensorContext, inputFile(content));
   }
 
 }

@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
-
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -54,9 +53,18 @@ import org.sonar.plugins.text.checks.BIDICharacterCheck;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.sonar.plugins.common.GitTrackedFilePredicateTest.setupGitMock;
-import static org.sonar.plugins.common.TestUtils.*;
+import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME;
+import static org.sonar.plugins.common.TestUtils.activeRules;
+import static org.sonar.plugins.common.TestUtils.asString;
+import static org.sonar.plugins.common.TestUtils.defaultSensorContext;
+import static org.sonar.plugins.common.TestUtils.inputFile;
+import static org.sonar.plugins.common.TestUtils.sensorContext;
 import static org.sonar.plugins.common.TextAndSecretsSensor.TEXT_INCLUSIONS_DEFAULT_VALUE;
 
 class TextAndSecretsSensorTest {
@@ -131,7 +139,7 @@ class TextAndSecretsSensorTest {
   @Rule(key = "IssueAtLineOne")
   class ReportIssueAtLineOneCheck extends TextCheck {
     public void analyze(InputFileContext ctx) {
-      ctx.reportIssue(getRuleKey(), 1, "testIssue");
+      ctx.reportTextIssue(getRuleKey(), 1, "testIssue");
     }
   }
 
@@ -158,27 +166,6 @@ class TextAndSecretsSensorTest {
     assertThat(context.allIssues()).isEmpty();
     assertThat(logTester.logs()).containsExactly(
       "1 source file to be analyzed");
-  }
-
-  @Test
-  void issueShouldNotBeRaisedTwiceOnSameLine() {
-    @Rule(key = "IssueAtLineOne")
-    class ReportDuplicatedIssuesCheck extends TextCheck {
-      public void analyze(InputFileContext ctx) {
-        ctx.reportIssue(getRuleKey(), 1, "testIssue");
-        ctx.reportIssue(getRuleKey(), 1, "testIssue");
-      }
-    }
-    Check check = new ReportDuplicatedIssuesCheck();
-    SensorContextTester context = sensorContext(check);
-    InputFile inputFile = inputFile("foo");
-    analyse(sensor(check), context, inputFile);
-
-    assertThat(asString(context.allIssues())).containsExactly(
-      "text:IssueAtLineOne [1:0-1:3] testIssue");
-    assertThat(logTester.logs()).containsExactly(
-      "1 source file to be analyzed",
-      "1/1 source file has been analyzed");
   }
 
   @Test
@@ -212,7 +199,7 @@ class TextAndSecretsSensorTest {
     InputFile inputFile = inputFile("foo");
     analyse(sensor(check), context, inputFile);
 
-    verify(check).initialize(any(), any(), any());
+    verify(check).initialize(any(), any());
     assertThat(logTester.logs()).contains("Found no rule specification for rule with key: SecretKey");
   }
 

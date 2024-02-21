@@ -54,7 +54,7 @@ public class BIDICharacterCheck extends TextCheck {
   @Override
   public void analyze(InputFileContext ctx) {
     List<String> lines = ctx.lines();
-    for (int lineOffset = 0; lineOffset < lines.size(); lineOffset++) {
+    for (var lineOffset = 0; lineOffset < lines.size(); lineOffset++) {
       checkLine(ctx, lines.get(lineOffset), lineOffset + 1);
     }
   }
@@ -78,8 +78,8 @@ public class BIDICharacterCheck extends TextCheck {
     Deque<Integer> unclosedFormattingColumns = new ArrayDeque<>();
     Deque<Integer> unclosedIsolateColumns = new ArrayDeque<>();
 
-    for (int i = 0; i < lineContent.length(); i++) {
-      char currentChar = lineContent.charAt(i);
+    for (var i = 0; i < lineContent.length(); i++) {
+      var currentChar = lineContent.charAt(i);
       if (BIDI_FORMATTING_CHARS.contains(currentChar)) {
         unclosedFormattingColumns.push(i);
       } else if (BIDI_ISOLATE_CHARS.contains(currentChar)) {
@@ -101,15 +101,19 @@ public class BIDICharacterCheck extends TextCheck {
       return;
     }
 
-    int columnToReport = 0;
+    var columnToReport = 0;
     if (!unclosedFormattingColumns.isEmpty() && !unclosedIsolateColumns.isEmpty()) {
-      columnToReport = (unclosedFormattingColumns.getFirst() < unclosedIsolateColumns.getFirst()) ? unclosedFormattingColumns.getFirst() : unclosedIsolateColumns.getFirst();
+      if (unclosedFormattingColumns.getFirst() < unclosedIsolateColumns.getFirst()) {
+        columnToReport = unclosedFormattingColumns.getFirst();
+      } else {
+        columnToReport = unclosedIsolateColumns.getFirst();
+      }
     } else if (!unclosedFormattingColumns.isEmpty()) {
       columnToReport = unclosedFormattingColumns.getFirst();
     } else {
       columnToReport = unclosedIsolateColumns.getFirst();
     }
 
-    ctx.reportIssue(getRuleKey(), lineNumber, String.format(MESSAGE_FORMAT, columnToReport + 1));
+    ctx.reportTextIssue(getRuleKey(), lineNumber, String.format(MESSAGE_FORMAT, columnToReport + 1));
   }
 }

@@ -21,19 +21,15 @@ package org.sonar.plugins.common;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextPointer;
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.sensor.SensorContext;
-import org.sonar.api.batch.sensor.issue.NewIssue;
 import org.sonar.api.rule.RuleKey;
 
 import static java.util.Objects.requireNonNull;
@@ -51,15 +47,17 @@ public class InputFileContext {
   private final List<String> lines;
 
   private final String normalizedContent;
-  private final Set<String> raisedIssues = new HashSet<>();
+
+  // Used to verify, that we don't raise more than one secret issue for any overlapping text range, regardless of the secret
+  private final List<TextRange> reportedSecretIssues = new ArrayList<>();
 
   public InputFileContext(SensorContext sensorContext, InputFile inputFile) throws IOException {
     this.sensorContext = sensorContext;
     this.inputFile = inputFile;
     boolean checkNonTextCharacters = inputFile.language() == null;
     List<String> contentLines = new ArrayList<>();
-    try (InputStream in = inputFile.inputStream()) {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(in, inputFile.charset()));
+    try (var in = inputFile.inputStream()) {
+      var reader = new BufferedReader(new InputStreamReader(in, inputFile.charset()));
       String line = reader.readLine();
       while (line != null) {
         if (checkNonTextCharacters && BinaryFileUtils.hasNonTextCharacters(line)) {
@@ -94,35 +92,36 @@ public class InputFileContext {
     return inputFile.toString();
   }
 
-  public void reportIssue(RuleKey ruleKey, int line, String message) {
-    if (raisedIssues.add(ruleKey + ":" + line)) {
-      NewIssue issue = sensorContext.newIssue();
+  public void reportTextIssue(RuleKey ruleKey, int line, String message) {
+    var issue = sensorContext.newIssue();
+    issue
+      .forRule(ruleKey)
+      .at(issue.newLocation()
+        .on(inputFile)
+        .at(inputFile.selectLine(line))
+        .message(message))
+      .save();
+  }
+
+  public void reportSecretIssue(RuleKey ruleKey, TextRange textRange, String message) {
+    if (!overlappingSecretAlreadyReported(textRange)) {
+      reportedSecretIssues.add(textRange);
+      var issue = sensorContext.newIssue();
       issue
         .forRule(ruleKey)
         .at(issue.newLocation()
           .on(inputFile)
-          .at(inputFile.selectLine(line))
+          .at(textRange)
           .message(message))
         .save();
     }
   }
 
-  public void reportIssue(RuleKey ruleKey, TextRange textRange, String message) {
-    NewIssue issue = sensorContext.newIssue();
-    issue
-      .forRule(ruleKey)
-      .at(issue.newLocation()
-        .on(inputFile)
-        .at(textRange)
-        .message(message))
-      .save();
-  }
-
   public TextRange newTextRangeFromFileOffsets(int startOffset, int endOffset) {
-    int lineNumber = 1;
+    var lineNumber = 1;
     TextPointer startPointer = null;
-    int currentLineStartOffset = 0;
-    int charOffset = 0;
+    var currentLineStartOffset = 0;
+    var charOffset = 0;
     for (; charOffset < normalizedContent.length(); charOffset++) {
       if (charOffset == startOffset) {
         startPointer = inputFile.newPointer(lineNumber, startOffset - currentLineStartOffset);
@@ -144,6 +143,10 @@ public class InputFileContext {
     }
     // should not happen as input parameters are supposed to be valid offsets
     throw new IllegalStateException("Invalid offsets: startOffset=" + startOffset + ", endOffset=" + endOffset);
+  }
+
+  public boolean overlappingSecretAlreadyReported(TextRange textRange) {
+    return reportedSecretIssues.stream().anyMatch(textRange::overlap);
   }
 
   public InputFile getInputFile() {

@@ -19,11 +19,8 @@
  */
 package org.sonar.plugins.common;
 
-import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
@@ -32,7 +29,6 @@ import org.sonar.api.SonarProduct;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.FilePredicates;
 import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
@@ -206,10 +202,9 @@ public class TextAndSecretsSensor implements Sensor {
 
   protected void initializeSpecificationBasedChecks(List<Check> checks) {
     var specificationLoader = constructSpecificationLoader();
-    Map<URI, List<TextRange>> reportedIssuesForCtx = new HashMap<>();
     for (Check activeCheck : checks) {
       if (activeCheck instanceof SpecificationBasedCheck) {
-        ((SpecificationBasedCheck) activeCheck).initialize(specificationLoader, reportedIssuesForCtx, durationStatistics);
+        ((SpecificationBasedCheck) activeCheck).initialize(specificationLoader, durationStatistics);
       }
     }
   }
