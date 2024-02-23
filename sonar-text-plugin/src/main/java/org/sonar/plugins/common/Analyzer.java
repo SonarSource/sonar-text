@@ -22,17 +22,13 @@ package org.sonar.plugins.common;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
-import org.sonarsource.analyzer.commons.ProgressReport;
 
 public final class Analyzer {
   private static boolean displayHelpAboutExcludingBinaryFile = true;
-  private static final int REPORT_REFRESH_TIME_IN_SECONDS = 10;
   private static final Logger LOG = LoggerFactory.getLogger(Analyzer.class);
 
   private Analyzer() {
@@ -41,9 +37,8 @@ public final class Analyzer {
   public static void analyzeFiles(SensorContext sensorContext, List<Check> activeChecks, NotBinaryFilePredicate notBinaryFilePredicate, boolean analyzeAllFilesMode,
     Collection<InputFile> inputFiles) {
     displayHelpAboutExcludingBinaryFile = true;
-    List<String> filenames = inputFiles.stream().map(InputFile::toString).collect(Collectors.toList());
-    var progressReport = new ProgressReport("Progress of the text and secrets analysis", TimeUnit.SECONDS.toMillis(REPORT_REFRESH_TIME_IN_SECONDS));
-    progressReport.start(filenames);
+    var progressReport = new MultiFileProgressReport();
+    progressReport.start(inputFiles.size());
     var cancelled = false;
 
     try {
@@ -53,8 +48,9 @@ public final class Analyzer {
           break;
         }
 
+        progressReport.startAnalysisFor(inputFile.toString());
         analyzeFile(sensorContext, inputFile, analyzeAllFilesMode, notBinaryFilePredicate, activeChecks);
-        progressReport.nextFile();
+        progressReport.finishAnalysisFor(inputFile.toString());
       }
     } finally {
       if (cancelled) {
