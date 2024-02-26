@@ -59,7 +59,7 @@ public abstract class SpecificationBasedCheck extends Check {
     String ruleId = getRuleKey().rule();
     List<Rule> rulesForKey = retrieveRules(loader, ruleId);
     if (rulesForKey.isEmpty()) {
-      LOG.error("Found no rule specification for rule with key: {}", ruleId);
+      LOG.warn("Found no rule specification for rule with key: {}", ruleId);
     }
     this.matcher = rulesForKey.stream()
       .map(rule -> SecretMatcher.build(rule, durationStatistics))

@@ -57,7 +57,7 @@ public class SpecificationLoader {
       try {
         specification = loadSpecification(specificationLocation, specificationFileName);
       } catch (DeserializationException | SchemaValidationException e) {
-        LOG.error("{}: Could not load specification from file: {}", e.getClass().getSimpleName(), specificationFileName);
+        LOG.warn("{}: Could not load specification from file: {}", e.getClass().getSimpleName(), specificationFileName);
         continue;
       }
 

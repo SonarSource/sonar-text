@@ -82,7 +82,7 @@ public class ExecutorServiceManager {
         return false;
       }
       String patternToDisplay = pattern.replace("\\", "\\\\");
-      LOG.error("Couldn't interrupt secret-matching task of rule with id \"{}\", waiting for it to finish. " +
+      LOG.warn("Couldn't interrupt secret-matching task of rule with id \"{}\", waiting for it to finish. " +
         "Related pattern is \"{}\"",
         ruleId,
         patternToDisplay);
