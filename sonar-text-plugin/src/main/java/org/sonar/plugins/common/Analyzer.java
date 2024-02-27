@@ -60,6 +60,7 @@ public final class Analyzer {
       .collect(Collectors.toList());
 
     if (analyzableFiles.isEmpty()) {
+      LOG.debug("There are no files to be analyzed");
       return;
     }
 

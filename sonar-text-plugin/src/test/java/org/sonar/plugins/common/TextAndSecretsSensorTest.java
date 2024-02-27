@@ -35,6 +35,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
+import org.slf4j.event.Level;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.Sensor;
@@ -537,8 +538,10 @@ class TextAndSecretsSensorTest {
 
   @Test
   void shouldNotCallGitFilePredicateOnDefault() throws IOException, GitAPIException {
+    logTester.setLevel(Level.DEBUG);
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
+    context.setRuntime(SONARQUBE_RUNTIME);
     var sensor = sensor(check);
     var sensorSpy = Mockito.spy(sensor);
     var gitSupplier = mock(GitSupplier.class);
@@ -547,22 +550,27 @@ class TextAndSecretsSensorTest {
     when(sensorSpy.getGitSupplier()).thenReturn(gitSupplier);
 
     analyse(sensorSpy, context,
-      inputFile(Path.of("a.txt"), "{}"),
-      inputFile(Path.of("b.txt"), "{}"));
+      inputFile(Path.of("a.txt"), "{}", "secrets"),
+      inputFile(Path.of("b.txt"), "{}", "secrets"));
 
     Collection<Issue> issues = context.allIssues();
     assertThat(issues).hasSize(2);
-    assertCorrectLogs(logTester.logs(), 2);
+    assertCorrectLogs(logTester.logs(), 2,
+      "Analyzing only language associated files, \"sonar.text.inclusions.activate\" property is deactivated");
     verify(gitSupplier, times(0)).getGit();
     verify(sensorSpy, times(0)).getGitSupplier();
   }
 
   @Test
   void shouldOnlyAnalyzeFilesBelongingToALanguageNoGitRepositoryIsFoundEvenIfInclusionsKeySet() throws IOException {
+    logTester.setLevel(Level.DEBUG);
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     context.setRuntime(SONARQUBE_RUNTIME);
-    context.setSettings(new MapSettings().setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt"));
+    MapSettings mapSettings = new MapSettings();
+    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
+    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt");
+    context.setSettings(mapSettings);
     var sensor = sensor(check);
     var sensorSpy = Mockito.spy(sensor);
     var gitSupplier = mock(GitSupplier.class);
@@ -576,7 +584,10 @@ class TextAndSecretsSensorTest {
 
     Collection<Issue> issues = context.allIssues();
     assertThat(issues).hasSize(1);
-    assertCorrectLogs(logTester.logs(), 1);
+    assertCorrectLogs(logTester.logs(), 1,
+      "Unable to retrieve git status",
+      "Analyzing only language associated files, make sure to run the analysis " +
+        "inside a git repository to make use of inclusions specified via \"sonar.text.inclusions\"");
   }
 
   @Test

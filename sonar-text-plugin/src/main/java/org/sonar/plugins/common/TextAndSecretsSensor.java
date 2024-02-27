@@ -114,6 +114,7 @@ public class TextAndSecretsSensor implements Sensor {
 
     List<InputFile> inputFiles = getInputFiles(sensorContext, filePredicate);
     if (inputFiles.isEmpty()) {
+      LOG.debug("There are no files to be analyzed");
       return;
     }
 
@@ -157,22 +158,28 @@ public class TextAndSecretsSensor implements Sensor {
   private FilePredicate constructFilePredicate(SensorContext sensorContext, FilePredicate notBinaryFilePredicate, boolean analyzeAllFiles) {
     if (analyzeAllFiles) {
       // if we're in a sonarlint context, we return this predicate as well
+      LOG.debug("Analyzing all except non binary files");
       return notBinaryFilePredicate;
     }
 
     // if the property is inactive, we prevent jgit from being initialized
     if (!isJGitAndInclusionsActive(sensorContext)) {
+      LOG.debug("Analyzing only language associated files, \"{}\" property is deactivated", INCLUSIONS_ACTIVATION_KEY);
       return LANGUAGE_FILE_PREDICATE;
     }
 
     var trackedByGitPredicate = new GitTrackedFilePredicate(getGitSupplier());
     if (!trackedByGitPredicate.isGitStatusSuccessful()) {
+      LOG.debug("Analyzing only language associated files, " +
+        "make sure to run the analysis inside a git repository to make use of inclusions specified via \"{}\"",
+        TEXT_INCLUSIONS_KEY);
       return LANGUAGE_FILE_PREDICATE;
     }
     FilePredicates predicates = sensorContext.fileSystem().predicates();
     // Retrieve list of files to analyse using the right FilePredicate
     var pathPatternPredicate = includedPathPatternsFilePredicate(sensorContext);
 
+    LOG.debug("Analyzing language associated files and files included via \"{}\" that are tracked by git", TEXT_INCLUSIONS_KEY);
     return predicates.and(
       predicates.or(LANGUAGE_FILE_PREDICATE, pathPatternPredicate),
       trackedByGitPredicate);

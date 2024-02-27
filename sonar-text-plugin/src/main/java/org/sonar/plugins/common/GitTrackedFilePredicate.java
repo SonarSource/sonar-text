@@ -45,7 +45,7 @@ public class GitTrackedFilePredicate implements FilePredicate {
     } catch (GitAPIException | IOException | RuntimeException e) {
       this.untrackedFileNames = Set.of();
       isGitStatusSuccessful = false;
-      LOG.debug("Unable to retrieve Git status, won't perform any exclusions", e);
+      LOG.debug("Unable to retrieve git status", e);
     } finally {
       if (this.git != null) {
         this.git.close();

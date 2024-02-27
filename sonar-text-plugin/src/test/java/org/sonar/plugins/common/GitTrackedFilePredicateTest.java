@@ -81,7 +81,7 @@ class GitTrackedFilePredicateTest {
 
     assertThat(predicate.apply(inputFile(Path.of("a.txt")))).isTrue();
     assertThat(predicate.apply(inputFile(Path.of("src", "b.txt")))).isTrue();
-    assertThat(logTester.logs(Level.DEBUG).get(0)).contains("Unable to retrieve Git status, won't perform any exclusions");
+    assertThat(logTester.logs(Level.DEBUG).get(0)).contains("Unable to retrieve git status");
 
     logTester.setLevel(Level.INFO);
   }
@@ -96,7 +96,7 @@ class GitTrackedFilePredicateTest {
 
     assertThat(predicate.apply(inputFile(Path.of("a.txt")))).isTrue();
     assertThat(predicate.apply(inputFile(Path.of("src", "b.txt")))).isTrue();
-    assertThat(logTester.logs(Level.DEBUG).get(0)).contains("Unable to retrieve Git status, won't perform any exclusions");
+    assertThat(logTester.logs(Level.DEBUG).get(0)).contains("Unable to retrieve git status");
 
     logTester.setLevel(Level.INFO);
   }
