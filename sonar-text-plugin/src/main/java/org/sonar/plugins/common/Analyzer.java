@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import javax.annotation.CheckForNull;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.InputFile;
@@ -54,17 +54,20 @@ public final class Analyzer {
 
   public void analyzeFiles(List<InputFile> inputFiles) {
     displayHelpAboutExcludingBinaryFile = true;
-    List<InputFileContext> filesToAnalyze = filterFilesToAnalyze(inputFiles);
+    List<InputFileContext> analyzableFiles = buildInputFileContexts(inputFiles)
+      .filter(Objects::nonNull)
+      .filter(this::shouldBeAnalyzed)
+      .collect(Collectors.toList());
 
-    if (filesToAnalyze.isEmpty()) {
+    if (analyzableFiles.isEmpty()) {
       return;
     }
 
     var cancelled = false;
     var progressReport = new MultiFileProgressReport();
-    progressReport.start(filesToAnalyze.size());
+    progressReport.start(analyzableFiles.size());
     try {
-      for (InputFileContext inputFileContext : filesToAnalyze) {
+      for (InputFileContext inputFileContext : analyzableFiles) {
         if (sensorContext.isCancelled()) {
           cancelled = true;
           break;
@@ -85,12 +88,25 @@ public final class Analyzer {
     }
   }
 
-  private List<InputFileContext> filterFilesToAnalyze(List<InputFile> inputFiles) {
-    return inputFiles.stream()
-      .map(this::buildContext)
-      .filter(Objects::nonNull)
-      .filter(this::shouldBeAnalyzed)
-      .collect(Collectors.toList());
+  private Stream<InputFileContext> buildInputFileContexts(List<InputFile> inputFiles) {
+    var analyzableFiles = new InputFileContext[inputFiles.size()];
+    var currentFileNumber = 0;
+    for (InputFile inputFile : inputFiles) {
+      // preserving the initial order of the files
+      var index = currentFileNumber;
+      currentFileNumber++;
+      parallelizationManager.submit(() -> {
+        try {
+          var inputFileContext = new InputFileContext(sensorContext, inputFile);
+          // will not create race conditions, as every thread is working on a different index
+          analyzableFiles[index] = inputFileContext;
+        } catch (IOException | RuntimeException e) {
+          logAnalysisError(inputFile, e);
+        }
+      });
+    }
+    parallelizationManager.drainThreads();
+    return Stream.of(analyzableFiles);
   }
 
   private boolean shouldBeAnalyzed(InputFileContext inputFileContext) {
@@ -153,16 +169,6 @@ public final class Analyzer {
           TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY);
       }
     }
-  }
-
-  @CheckForNull
-  private InputFileContext buildContext(InputFile inputFile) {
-    try {
-      return new InputFileContext(sensorContext, inputFile);
-    } catch (IOException | RuntimeException e) {
-      logAnalysisError(inputFile, e);
-    }
-    return null;
   }
 
   private void logAnalysisError(InputFile inputFile, Exception e) {
