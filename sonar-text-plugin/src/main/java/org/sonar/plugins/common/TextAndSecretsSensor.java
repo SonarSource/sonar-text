@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonar.api.SonarEdition;
 import org.sonar.api.SonarProduct;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.FilePredicates;
@@ -33,6 +34,9 @@ import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
+import org.sonar.plugins.common.thread.ParallelizationManager;
+import org.sonar.plugins.common.warnings.AnalysisWarningsWrapper;
+import org.sonar.plugins.common.warnings.DefaultAnalysisWarningsWrapper;
 import org.sonar.plugins.secrets.SecretsCheckList;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
@@ -55,6 +59,7 @@ public class TextAndSecretsSensor implements Sensor {
   public static final boolean ANALYZER_ACTIVATION_DEFAULT_VALUE = true;
   public static final String INCLUSIONS_ACTIVATION_KEY = "sonar.text.inclusions.activate";
   public static final boolean INCLUSIONS_ACTIVATION_DEFAULT_VALUE = false;
+  public static final String THREAD_NUMBER_KEY = "sonar.text.threads";
   public static final String TEXT_CATEGORY = "Secrets";
 
   private static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
@@ -65,8 +70,17 @@ public class TextAndSecretsSensor implements Sensor {
 
   protected DurationStatistics durationStatistics;
 
+  private ParallelizationManager parallelizationManager;
+
+  protected final AnalysisWarningsWrapper analysisWarnings;
+
   public TextAndSecretsSensor(CheckFactory checkFactory) {
+    this(checkFactory, DefaultAnalysisWarningsWrapper.NOOP_ANALYSIS_WARNINGS);
+  }
+
+  public TextAndSecretsSensor(CheckFactory checkFactory, AnalysisWarningsWrapper analysisWarnings) {
     this.checkFactory = checkFactory;
+    this.analysisWarnings = analysisWarnings;
   }
 
   @Override
@@ -82,6 +96,8 @@ public class TextAndSecretsSensor implements Sensor {
     if (!isActive(sensorContext)) {
       return;
     }
+
+    initializeParallelizationManager(sensorContext);
 
     // Retrieve list of checks
     List<Check> activeChecks = getActiveChecks();
@@ -104,8 +120,38 @@ public class TextAndSecretsSensor implements Sensor {
     configureRegexEngineTimeout(sensorContext, REGEX_MATCH_TIMEOUT_KEY, ExecutorServiceManager::setTimeoutMs);
     configureRegexEngineTimeout(sensorContext, REGEX_EXECUTION_TIMEOUT_KEY, ExecutorServiceManager::setUninterruptibleTimeoutMs);
 
-    Analyzer.analyzeFiles(sensorContext, activeChecks, notBinaryFilePredicate, analyzeAllFiles, inputFiles);
+    var analyzer = new Analyzer(sensorContext, parallelizationManager, activeChecks, notBinaryFilePredicate, analyzeAllFiles);
+    analyzer.analyzeFiles(inputFiles);
     durationStatistics.log();
+    parallelizationManager.shutdown();
+  }
+
+  private void initializeParallelizationManager(SensorContext sensorContext) {
+    int availableProcessors = Runtime.getRuntime().availableProcessors();
+    Optional<Integer> threadOption = sensorContext.config().getInt(THREAD_NUMBER_KEY);
+    int threads = availableProcessors;
+
+    var logMessageSuffix = "";
+    if (threadOption.isPresent()) {
+      threads = threadOption.get();
+      logMessageSuffix = ", according to the value of \"" + THREAD_NUMBER_KEY + "\" property";
+      if (threads > availableProcessors) {
+        if (isSonarCloudContext(sensorContext)) {
+          threads = availableProcessors;
+          logMessageSuffix = ", \"" + THREAD_NUMBER_KEY + "\" is ignored";
+        } else {
+          logWarningConsoleUI("\"" + THREAD_NUMBER_KEY + "\" property was set to " + threads + ", " +
+            "which is greater than the number of available processors: " + availableProcessors + ".\n" +
+            "It is recommended to let the analyzer detect the number of threads automatically by not setting the property.\n" +
+            "For more information, visit the documentation page.");
+        }
+      }
+    }
+
+    LOG.info("Available processors: {}", availableProcessors);
+    LOG.info("Using {} {} for analysis{}.", threads, (threads != 1 ? "threads" : "thread"), logMessageSuffix);
+
+    parallelizationManager = new ParallelizationManager(threads);
   }
 
   private FilePredicate constructFilePredicate(SensorContext sensorContext, FilePredicate notBinaryFilePredicate, boolean analyzeAllFiles) {
@@ -172,6 +218,10 @@ public class TextAndSecretsSensor implements Sensor {
     return sensorContext.runtime().getProduct() == SonarProduct.SONARLINT;
   }
 
+  private static boolean isSonarCloudContext(SensorContext sensorContext) {
+    return !isSonarLintContext(sensorContext) && sensorContext.runtime().getEdition() == SonarEdition.SONARCLOUD;
+  }
+
   private static boolean analyzeAllFiles(SensorContext sensorContext) {
     return "true".equals(sensorContext.config().get(ANALYZE_ALL_FILES_KEY).orElse("false"));
   }
@@ -217,6 +267,11 @@ public class TextAndSecretsSensor implements Sensor {
       // provided value not in the expected format - do nothing
       LOG.debug("Provided value with key \"{}\" is not parseable as an integer", key, e);
     }
+  }
+
+  private void logWarningConsoleUI(String message) {
+    LOG.warn(message);
+    analysisWarnings.addWarning(message);
   }
 
   protected SpecificationLoader constructSpecificationLoader() {

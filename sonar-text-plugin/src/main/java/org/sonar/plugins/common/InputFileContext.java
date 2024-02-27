@@ -25,6 +25,8 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextPointer;
@@ -36,6 +38,7 @@ import static java.util.Objects.requireNonNull;
 
 public class InputFileContext {
 
+  private static final Logger LOG = LoggerFactory.getLogger(InputFileContext.class);
   private static final char LINE_FEED = '\n';
 
   private final SensorContext sensorContext;
@@ -93,28 +96,31 @@ public class InputFileContext {
   }
 
   public void reportTextIssue(RuleKey ruleKey, int line, String message) {
+    var textRange = inputFile.selectLine(line);
+    createAndSaveIssue(sensorContext, ruleKey, inputFile, textRange, message);
+  }
+
+  public void reportSecretIssue(RuleKey ruleKey, TextRange textRange, String message) {
+    // Validation of overlapping textRange and adding to reportedSecretIssues does not create race-conditions, as we don't run checks in
+    // parallel
+    if (!overlappingSecretAlreadyReported(textRange)) {
+      reportedSecretIssues.add(textRange);
+      createAndSaveIssue(sensorContext, ruleKey, inputFile, textRange, message);
+    } else {
+      LOG.debug("Overlapping secret issue already reported {} on file {} and ruleKey {}", textRange, inputFile, ruleKey);
+    }
+  }
+
+  private static synchronized void createAndSaveIssue(SensorContext sensorContext, RuleKey ruleKey, InputFile inputFile, TextRange textRange, String message) {
+    // saving issues is not multi-thread safe in sonarAPI (all InputFileContext are using the same sensorContext)
     var issue = sensorContext.newIssue();
     issue
       .forRule(ruleKey)
       .at(issue.newLocation()
         .on(inputFile)
-        .at(inputFile.selectLine(line))
+        .at(textRange)
         .message(message))
       .save();
-  }
-
-  public void reportSecretIssue(RuleKey ruleKey, TextRange textRange, String message) {
-    if (!overlappingSecretAlreadyReported(textRange)) {
-      reportedSecretIssues.add(textRange);
-      var issue = sensorContext.newIssue();
-      issue
-        .forRule(ruleKey)
-        .at(issue.newLocation()
-          .on(inputFile)
-          .at(textRange)
-          .message(message))
-        .save();
-    }
   }
 
   public TextRange newTextRangeFromFileOffsets(int startOffset, int endOffset) {

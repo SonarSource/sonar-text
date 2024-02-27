@@ -19,26 +19,20 @@
  */
 package org.sonar.plugins.common;
 
-import org.junit.jupiter.api.Test;
-import org.sonar.api.Plugin;
-import org.sonar.api.SonarEdition;
-import org.sonar.api.SonarQubeSide;
-import org.sonar.api.SonarRuntime;
-import org.sonar.api.internal.SonarRuntimeImpl;
-import org.sonar.api.utils.Version;
+import java.util.ArrayList;
+import java.util.List;
+import org.sonar.plugins.common.warnings.AnalysisWarningsWrapper;
 
-import static org.assertj.core.api.Assertions.assertThat;
+public class TestAnalysisWarningsWrapper implements AnalysisWarningsWrapper {
 
-class TextAndSecretsPluginTest {
+  private List<String> warnings = new ArrayList<>();
 
-  private static final Version VERSION_8_9 = Version.create(8, 9);
+  @Override
+  public void addWarning(String text) {
+    warnings.add(text);
+  }
 
-  @Test
-  void shouldDefineExtensions() {
-    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(VERSION_8_9, SonarQubeSide.SCANNER, SonarEdition.COMMUNITY);
-    Plugin.Context context = new Plugin.Context(runtime);
-    Plugin plugin = new TextAndSecretsPlugin();
-    plugin.define(context);
-    assertThat(context.getExtensions()).hasSize(12);
+  public List<String> getWarnings() {
+    return warnings;
   }
 }

@@ -20,38 +20,62 @@
 package org.sonar.plugins.common;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import javax.annotation.CheckForNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.plugins.common.thread.ParallelizationManager;
 
 public final class Analyzer {
-  private static boolean displayHelpAboutExcludingBinaryFile = true;
   private static final Logger LOG = LoggerFactory.getLogger(Analyzer.class);
+  private final SensorContext sensorContext;
+  private final ParallelizationManager parallelizationManager;
+  private final List<Check> activeChecks;
+  private final NotBinaryFilePredicate notBinaryFilePredicate;
+  private final boolean analyzeAllFilesMode;
+  private boolean displayHelpAboutExcludingBinaryFile = true;
 
-  private Analyzer() {
+  public Analyzer(
+    SensorContext sensorContext,
+    ParallelizationManager parallelizationManager,
+    List<Check> activeChecks,
+    NotBinaryFilePredicate notBinaryFilePredicate,
+    boolean analyzeAllFilesMode) {
+    this.sensorContext = sensorContext;
+    this.parallelizationManager = parallelizationManager;
+    this.activeChecks = activeChecks;
+    this.notBinaryFilePredicate = notBinaryFilePredicate;
+    this.analyzeAllFilesMode = analyzeAllFilesMode;
   }
 
-  public static void analyzeFiles(SensorContext sensorContext, List<Check> activeChecks, NotBinaryFilePredicate notBinaryFilePredicate, boolean analyzeAllFilesMode,
-    Collection<InputFile> inputFiles) {
+  public void analyzeFiles(List<InputFile> inputFiles) {
     displayHelpAboutExcludingBinaryFile = true;
-    var progressReport = new MultiFileProgressReport();
-    progressReport.start(inputFiles.size());
-    var cancelled = false;
+    List<InputFileContext> filesToAnalyze = filterFilesToAnalyze(inputFiles);
 
+    if (filesToAnalyze.isEmpty()) {
+      return;
+    }
+
+    var cancelled = false;
+    var progressReport = new MultiFileProgressReport();
+    progressReport.start(filesToAnalyze.size());
     try {
-      for (InputFile inputFile : inputFiles) {
+      for (InputFileContext inputFileContext : filesToAnalyze) {
         if (sensorContext.isCancelled()) {
           cancelled = true;
           break;
         }
-
-        progressReport.startAnalysisFor(inputFile.toString());
-        analyzeFile(sensorContext, inputFile, analyzeAllFilesMode, notBinaryFilePredicate, activeChecks);
-        progressReport.finishAnalysisFor(inputFile.toString());
+        parallelizationManager.submit(() -> {
+          progressReport.startAnalysisFor(inputFileContext.getInputFile().toString());
+          analyzeAllChecks(inputFileContext);
+          progressReport.finishAnalysisFor(inputFileContext.getInputFile().toString());
+        });
       }
+      parallelizationManager.drainThreads();
     } finally {
       if (cancelled) {
         progressReport.cancel();
@@ -61,17 +85,19 @@ public final class Analyzer {
     }
   }
 
-  private static void analyzeFile(SensorContext sensorContext, InputFile inputFile, boolean analyzeAllFilesMode, NotBinaryFilePredicate notBinaryFilePredicate,
-    List<Check> activeChecks) {
-    try {
-      var inputFileContext = new InputFileContext(sensorContext, inputFile);
-      if (analyzeAllFilesMode) {
-        analyzeFilesInBlacklistMode(notBinaryFilePredicate, inputFileContext, activeChecks);
-      } else {
-        analyzeFilesInWhitelistMode(inputFileContext, activeChecks);
-      }
-    } catch (IOException | RuntimeException e) {
-      logAnalysisError(sensorContext, inputFile, e);
+  private List<InputFileContext> filterFilesToAnalyze(List<InputFile> inputFiles) {
+    return inputFiles.stream()
+      .map(this::buildContext)
+      .filter(Objects::nonNull)
+      .filter(this::shouldBeAnalyzed)
+      .collect(Collectors.toList());
+  }
+
+  private boolean shouldBeAnalyzed(InputFileContext inputFileContext) {
+    if (analyzeAllFilesMode) {
+      return shouldBeAnalyzedBlacklistMode(inputFileContext);
+    } else {
+      return shouldBeAnalyzedWhitelistMode(inputFileContext);
     }
   }
 
@@ -79,36 +105,44 @@ public final class Analyzer {
    * We suppose here that the list of provided files may contain some binary files that we couldn't exclude beforehand.
    * If that happen, we add its extension dynamically in the blacklist to avoid all files with the same extension.
    */
-  private static void analyzeFilesInBlacklistMode(NotBinaryFilePredicate notBinaryFilePredicate, InputFileContext inputFileContext, List<Check> activeChecks) {
+  private boolean shouldBeAnalyzedBlacklistMode(InputFileContext inputFileContext) {
     if (notBinaryFilePredicate.apply(inputFileContext.getInputFile())) {
-      if (inputFileContext.hasNonTextCharacters()) {
-        excludeBinaryFileExtension(notBinaryFilePredicate, inputFileContext.getInputFile());
-      } else {
-        analyzeAllChecks(inputFileContext, activeChecks);
+      boolean hasNonTextCharacters = inputFileContext.hasNonTextCharacters();
+      if (hasNonTextCharacters) {
+        excludeBinaryFileExtension(inputFileContext.getInputFile());
       }
+      return !hasNonTextCharacters;
     }
+    return false;
   }
 
   /**
    * We suppose here that all provided files have been whitelisted, so we don't expected binary files.
    * In case it still happen, we don't add the extension to the blacklist as we consider it to be an exception.
    */
-  private static void analyzeFilesInWhitelistMode(InputFileContext inputFileContext, List<Check> activeChecks) {
-    if (inputFileContext.hasNonTextCharacters()) {
+  private static boolean shouldBeAnalyzedWhitelistMode(InputFileContext inputFileContext) {
+    boolean hasNonTextCharacters = inputFileContext.hasNonTextCharacters();
+    if (hasNonTextCharacters) {
       LOG.warn("The file '{}' contains binary data and will not be analyzed.", inputFileContext.getInputFile());
       LOG.warn("Please check this file and/or remove the extension from the '{}' property.", TextAndSecretsSensor.TEXT_INCLUSIONS_KEY);
-    } else {
-      analyzeAllChecks(inputFileContext, activeChecks);
+    }
+    return !hasNonTextCharacters;
+  }
+
+  private void analyzeAllChecks(InputFileContext inputFileContext) {
+    // Currently not possible and desired to parallelize, as we rely on the sequential and always same order of the checks to achieve
+    // deterministic analysis results
+    // The main reason is because of the calculation of overlapping reported secrets in InputFileContext
+    try {
+      for (Check check : activeChecks) {
+        check.analyze(inputFileContext);
+      }
+    } catch (RuntimeException e) {
+      logAnalysisError(inputFileContext.getInputFile(), e);
     }
   }
 
-  private static void analyzeAllChecks(InputFileContext inputFileContext, List<Check> activeChecks) {
-    for (Check check : activeChecks) {
-      check.analyze(inputFileContext);
-    }
-  }
-
-  private static void excludeBinaryFileExtension(NotBinaryFilePredicate notBinaryFilePredicate, InputFile inputFile) {
+  private void excludeBinaryFileExtension(InputFile inputFile) {
     String extension = NotBinaryFilePredicate.extension(inputFile.filename());
     if (extension != null) {
       notBinaryFilePredicate.addBinaryFileExtension(extension);
@@ -121,7 +155,17 @@ public final class Analyzer {
     }
   }
 
-  private static void logAnalysisError(SensorContext sensorContext, InputFile inputFile, Exception e) {
+  @CheckForNull
+  private InputFileContext buildContext(InputFile inputFile) {
+    try {
+      return new InputFileContext(sensorContext, inputFile);
+    } catch (IOException | RuntimeException e) {
+      logAnalysisError(inputFile, e);
+    }
+    return null;
+  }
+
+  private void logAnalysisError(InputFile inputFile, Exception e) {
     var message = String.format("Unable to analyze file %s: %s", inputFile, e.getMessage());
     sensorContext.newAnalysisError()
       .message(message)

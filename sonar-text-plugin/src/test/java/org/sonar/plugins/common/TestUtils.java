@@ -45,9 +45,7 @@ import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.Version;
 import org.sonar.plugins.secrets.SecretsCheckList;
-import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.text.TextCheckList;
-import org.sonar.plugins.text.TextRuleDefinition;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -57,6 +55,7 @@ public class TestUtils {
   private static final Version VERSION = Version.create(9, 9);
   public static final SonarRuntime SONARLINT_RUNTIME = SonarRuntimeImpl.forSonarLint(VERSION);
   public static final SonarRuntime SONARQUBE_RUNTIME = SonarRuntimeImpl.forSonarQube(VERSION, SonarQubeSide.SERVER, SonarEdition.COMMUNITY);
+  public static final SonarRuntime SONARCLOUD_RUNTIME = SonarRuntimeImpl.forSonarQube(VERSION, SonarQubeSide.SERVER, SonarEdition.SONARCLOUD);
 
   public static List<String> analyze(Check check, String fileContent) throws IOException {
     return analyze(check, inputFile(fileContent));
@@ -166,5 +165,4 @@ public class TestUtils {
       .setRuntime(SONARLINT_RUNTIME)
       .setActiveRules(activeRules(activeRules));
   }
-
 }

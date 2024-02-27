@@ -17,28 +17,29 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.common;
+package org.sonar.plugins.common.warnings;
 
-import org.junit.jupiter.api.Test;
-import org.sonar.api.Plugin;
-import org.sonar.api.SonarEdition;
-import org.sonar.api.SonarQubeSide;
-import org.sonar.api.SonarRuntime;
-import org.sonar.api.internal.SonarRuntimeImpl;
-import org.sonar.api.utils.Version;
+import org.sonar.api.notifications.AnalysisWarnings;
 
-import static org.assertj.core.api.Assertions.assertThat;
+public class DefaultAnalysisWarningsWrapper implements AnalysisWarningsWrapper {
 
-class TextAndSecretsPluginTest {
+  /**
+   * Noop instance which can be used as placeholder when {@link AnalysisWarnings} is not supported
+   */
+  public static final AnalysisWarningsWrapper NOOP_ANALYSIS_WARNINGS = new DefaultAnalysisWarningsWrapper(null) {
+    @Override
+    public void addWarning(String text) {
+      // no operation
+    }
+  };
 
-  private static final Version VERSION_8_9 = Version.create(8, 9);
+  private final AnalysisWarnings analysisWarnings;
 
-  @Test
-  void shouldDefineExtensions() {
-    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(VERSION_8_9, SonarQubeSide.SCANNER, SonarEdition.COMMUNITY);
-    Plugin.Context context = new Plugin.Context(runtime);
-    Plugin plugin = new TextAndSecretsPlugin();
-    plugin.define(context);
-    assertThat(context.getExtensions()).hasSize(12);
+  public DefaultAnalysisWarningsWrapper(AnalysisWarnings analysisWarnings) {
+    this.analysisWarnings = analysisWarnings;
+  }
+
+  public void addWarning(String text) {
+    this.analysisWarnings.addUnique(text);
   }
 }
