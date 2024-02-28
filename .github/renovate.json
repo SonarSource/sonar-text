@@ -11,7 +11,7 @@
     "enabled": true
   },
   "ignorePaths": [
-    "private/its-enterprise/**",
+    "private/its/**",
     "**/test/**"
   ]
 }

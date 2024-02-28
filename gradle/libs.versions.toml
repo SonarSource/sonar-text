@@ -4,7 +4,7 @@ sonar-plugin-api = "10.1.0.809"
 sonarqube = "10.1.0.73491"
 sonar-java = "7.24.0.32100"
 sonar-scanner-gradle = "4.4.1.3373"
-sonar-orchestrator = "3.40.0.183"
+sonar-orchestrator = "4.8.0.1898"
 sonar-license-api = "3.4"
 sonarlint-core = "9.8.0.76914"
 slf4j = "1.7.30"
@@ -27,7 +27,7 @@ sonar-plugin-api-test-fixtures = { module = "org.sonarsource.api.plugin:sonar-pl
 sonar-ws = { module = "org.sonarsource.sonarqube:sonar-ws", version.ref = "sonarqube" }
 sonar-java-checks = { module = "org.sonarsource.java:java-checks", version.ref = "sonar-java" }
 sonar-scanner-gradle = { module = "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin", version.ref = "sonar-scanner-gradle" }
-sonar-orchestrator = { module = "org.sonarsource.orchestrator:sonar-orchestrator", version.ref = "sonar-orchestrator" }
+sonar-orchestrator-junit5 = { module = "org.sonarsource.orchestrator:sonar-orchestrator-junit5", version.ref = "sonar-orchestrator" }
 sonarlint-core = { module = "org.sonarsource.sonarlint.core:sonarlint-core", version.ref = "sonarlint-core" }
 jackson-dataformat-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jackson" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
