@@ -23,7 +23,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
-import org.sonar.plugins.secrets.api.task.ExecutorServiceManager;
+import org.sonar.plugins.secrets.api.task.RegexMatchingManager;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,8 +56,8 @@ class PatternMatcherTest {
 
   @Test
   void patternMatcherShouldTimeoutAndReturnNothingOnCatastrophicBacktracking() {
-    ExecutorServiceManager.setTimeoutMs(100);
-    ExecutorServiceManager.setUninterruptibleTimeoutMs(100);
+    RegexMatchingManager.setTimeoutMs(100);
+    RegexMatchingManager.setUninterruptibleTimeoutMs(100);
     PatternMatcher patternMatcher = new PatternMatcher("(x+x+x+x+x+x+x+x+x+x+)+y");
     List<Match> matches = patternMatcher.findIn("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "<test-rule-id>");
     assertThat(matches).isEmpty();
@@ -67,8 +67,8 @@ class PatternMatcherTest {
 
   @Test
   void patternMatcherShouldTimeoutAndReturnSomeFirstResultOnCatastrophicBacktracking() {
-    ExecutorServiceManager.setTimeoutMs(100);
-    ExecutorServiceManager.setUninterruptibleTimeoutMs(100);
+    RegexMatchingManager.setTimeoutMs(100);
+    RegexMatchingManager.setUninterruptibleTimeoutMs(100);
     PatternMatcher patternMatcher = new PatternMatcher("(\\d+|(x+x+x+x+x+x+x+x+x+x+)+y)");
     List<Match> matches = patternMatcher.findIn("1234xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "<test-rule-id>");
     assertThat(matches).hasSize(1);

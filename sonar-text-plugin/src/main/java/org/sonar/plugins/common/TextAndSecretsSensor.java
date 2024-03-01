@@ -41,7 +41,7 @@ import org.sonar.plugins.secrets.SecretsCheckList;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.api.SpecificationLoader;
-import org.sonar.plugins.secrets.api.task.ExecutorServiceManager;
+import org.sonar.plugins.secrets.api.task.RegexMatchingManager;
 import org.sonar.plugins.text.TextCheckList;
 import org.sonar.plugins.text.TextRuleDefinition;
 
@@ -118,13 +118,14 @@ public class TextAndSecretsSensor implements Sensor {
       return;
     }
 
-    configureRegexEngineTimeout(sensorContext, REGEX_MATCH_TIMEOUT_KEY, ExecutorServiceManager::setTimeoutMs);
-    configureRegexEngineTimeout(sensorContext, REGEX_EXECUTION_TIMEOUT_KEY, ExecutorServiceManager::setUninterruptibleTimeoutMs);
+    configureRegexEngineTimeout(sensorContext, REGEX_MATCH_TIMEOUT_KEY, RegexMatchingManager::setTimeoutMs);
+    configureRegexEngineTimeout(sensorContext, REGEX_EXECUTION_TIMEOUT_KEY, RegexMatchingManager::setUninterruptibleTimeoutMs);
 
     var analyzer = new Analyzer(sensorContext, parallelizationManager, activeChecks, notBinaryFilePredicate, analyzeAllFiles);
     analyzer.analyzeFiles(inputFiles);
     durationStatistics.log();
     parallelizationManager.shutdown();
+    RegexMatchingManager.shutdown();
   }
 
   private void initializeParallelizationManager(SensorContext sensorContext) {
@@ -153,6 +154,7 @@ public class TextAndSecretsSensor implements Sensor {
     LOG.info("Using {} {} for analysis{}.", threads, (threads != 1 ? "threads" : "thread"), logMessageSuffix);
 
     parallelizationManager = new ParallelizationManager(threads);
+    RegexMatchingManager.initialize(threads);
   }
 
   private FilePredicate constructFilePredicate(SensorContext sensorContext, FilePredicate notBinaryFilePredicate, boolean analyzeAllFiles) {

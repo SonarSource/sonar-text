@@ -26,8 +26,8 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonar.plugins.secrets.api.task.ExecutorServiceManager;
 import org.sonar.plugins.secrets.api.task.InterruptibleCharSequence;
+import org.sonar.plugins.secrets.api.task.RegexMatchingManager;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 
@@ -36,7 +36,6 @@ import org.sonar.plugins.secrets.configuration.model.matching.Matching;
  */
 public class PatternMatcher {
   private static final Logger LOG = LoggerFactory.getLogger(PatternMatcher.class);
-  private static final ExecutorServiceManager EXECUTOR = new ExecutorServiceManager();
   private final Pattern pattern;
 
   PatternMatcher(@Nullable String stringPattern) {
@@ -81,7 +80,7 @@ public class PatternMatcher {
     List<Match> matches = new ArrayList<>();
     var matcher = pattern.matcher(new InterruptibleCharSequence(content));
 
-    boolean executedSuccessfully = EXECUTOR.runRegexMatchingWithTimeout(() -> {
+    boolean executedSuccessfully = RegexMatchingManager.runRegexMatchingWithTimeout(() -> {
       while (matcher.find()) {
         var matchResult = matcher.toMatchResult();
         if (matcher.groupCount() == 0) {
@@ -96,8 +95,9 @@ public class PatternMatcher {
       String patternToDisplay = pattern.pattern().replace("\\", "\\\\");
       LOG.warn("Running pattern in rule with id \"{}\" on content of length {} has timed out after {}ms." +
         " Related pattern is \"{}\".",
-        ruleId, content.length(), ExecutorServiceManager.getTimeoutMs(), patternToDisplay);
+        ruleId, content.length(), RegexMatchingManager.getTimeoutMs(), patternToDisplay);
     }
     return matches;
   }
+
 }

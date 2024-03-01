@@ -48,7 +48,7 @@ import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.check.Rule;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
-import org.sonar.plugins.secrets.api.task.ExecutorServiceManager;
+import org.sonar.plugins.secrets.api.task.RegexMatchingManager;
 import org.sonar.plugins.text.api.TextCheck;
 import org.sonar.plugins.text.checks.BIDICharacterCheck;
 
@@ -83,8 +83,8 @@ class TextAndSecretsSensorTest {
   public void cleanUp() {
     int defaultTimeout = 10_000;
     // due to running other tests, this property can be changed. That's why we need to set the default after each test.
-    ExecutorServiceManager.setTimeoutMs(defaultTimeout);
-    ExecutorServiceManager.setUninterruptibleTimeoutMs(defaultTimeout);
+    RegexMatchingManager.setTimeoutMs(defaultTimeout);
+    RegexMatchingManager.setUninterruptibleTimeoutMs(defaultTimeout);
   }
 
   @Test
@@ -600,8 +600,8 @@ class TextAndSecretsSensorTest {
     context.setSettings(mapSettings);
     analyse(sensor(check), context,
       inputFile(Path.of(".txt"), "{}"));
-    assertThat(ExecutorServiceManager.getTimeoutMs()).isEqualTo(1);
-    assertThat(ExecutorServiceManager.getUninterruptibleTimeoutMs()).isEqualTo(2);
+    assertThat(RegexMatchingManager.getTimeoutMs()).isEqualTo(1);
+    assertThat(RegexMatchingManager.getUninterruptibleTimeoutMs()).isEqualTo(2);
   }
 
   @ParameterizedTest
@@ -623,8 +623,8 @@ class TextAndSecretsSensorTest {
     // actual behavior to test
     analyse(sensor(check), context,
       inputFile(Path.of(".txt"), "{}"));
-    assertThat(ExecutorServiceManager.getTimeoutMs()).isEqualTo(defaultTimeout);
-    assertThat(ExecutorServiceManager.getUninterruptibleTimeoutMs()).isEqualTo(defaultTimeout);
+    assertThat(RegexMatchingManager.getTimeoutMs()).isEqualTo(defaultTimeout);
+    assertThat(RegexMatchingManager.getUninterruptibleTimeoutMs()).isEqualTo(defaultTimeout);
   }
 
   @Test

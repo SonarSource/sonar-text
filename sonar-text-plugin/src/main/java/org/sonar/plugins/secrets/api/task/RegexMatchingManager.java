@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
@@ -33,61 +34,73 @@ import org.slf4j.LoggerFactory;
  * It is dedicated to run tasks that are suspected to cause timeout, it will take care to stop them properly and ensure to keep a valid {@link ExecutorService}.
  * The main entrypoint is the {@link #runRegexMatchingWithTimeout} method.
  */
-public class ExecutorServiceManager {
-  private static final Logger LOG = LoggerFactory.getLogger(ExecutorServiceManager.class);
+public class RegexMatchingManager {
+  private static final Logger LOG = LoggerFactory.getLogger(RegexMatchingManager.class);
   /**
-   * The timeout time in millisecond after which the {@link ExecutorServiceManager} will try to interrupt the thread.
+   * The timeout time in millisecond after which the {@link RegexMatchingManager} will try to interrupt the thread.
    */
   private static int timeoutMs = 10_000;
   /**
-   * The timeout time in millisecond after which the {@link ExecutorServiceManager} will stop waiting for the precedent interruption to be effective
-   * and will throw a {@link RuntimeException}.
-   * Currently set to a very long time (16min) as once it's reached it will kill the analyzer.
+   * The timeout time in millisecond after which the {@link RegexMatchingManager} will stop waiting for the precedent interruption to be effective
+   * and will throw a {@link RuntimeException}. Once it's reached it will kill the analysis of this file.
    */
-  private static int uninterruptibleTimeoutMs = 1_000_000;
-  private ExecutorService lastExecutorService;
+  private static int uninterruptibleTimeoutMs = 60_000;
 
-  public ExecutorServiceManager() {
-    lastExecutorService = null;
-  }
+  // This needs to be set to actual number of threads that can run an analysis in parallel
+  private static int threadCount = Runtime.getRuntime().availableProcessors();
+  protected static ExecutorService executorService;
 
-  private ExecutorService getLastExecutorService() {
-    // re-use last executor service if possible, otherwise allocate a new one
-    if (lastExecutorService == null || lastExecutorService.isShutdown()) {
-      lastExecutorService = Executors.newSingleThreadExecutor();
-    }
-    return lastExecutorService;
+  private RegexMatchingManager() {
   }
 
   /**
-   * Execute the provided {@link Runnable} and try to interrupt it once {@link ExecutorServiceManager#timeoutMs} number of milliseconds has elapsed.
+   * Initialize the {@link RegexMatchingManager} with the provided number of threads.
+   * If the provided number is less than 1, the default number of threads will be used.
+   * This method needs to be called before any call to {@link RegexMatchingManager#runRegexMatchingWithTimeout}.
+   *
+   * @param threads the number of threads to be used by the {@link RegexMatchingManager}
+   */
+  public static synchronized void initialize(int threads) {
+    if (threads > 0) {
+      threadCount = threads;
+    }
+    executorService = Executors.newFixedThreadPool(threadCount);
+  }
+
+  /**
+   * Execute the provided {@link Runnable} and try to interrupt it once {@link RegexMatchingManager#timeoutMs} number of milliseconds has elapsed.
    * The {@link Runnable} must handle thread interruption properly, otherwise it will break the ongoing and next calls to this method.
    *
-   * @param run the task to be executed, it must support the interruption mechanism
+   * @param runnable the task to be executed, it must support the interruption mechanism
    * @param pattern the regex pattern which is being matched against, for logging purposes
    * @param ruleId id of the rule the pattern belongs to
    * @return true if the task was executed within the timeout time, false otherwise
    */
-  public boolean runRegexMatchingWithTimeout(Runnable run, String pattern, String ruleId) {
-    var executorService = getLastExecutorService();
-    Future<?> future = executorService.submit(run);
+  public static boolean runRegexMatchingWithTimeout(Runnable runnable, String pattern, String ruleId) {
+    forceInitialization();
+    var semaphore = new Semaphore(0);
+    Future<?> future = submitWithSemaphore(runnable, semaphore);
 
     try {
       if (waitFutureCompletion(future, ruleId, timeoutMs)) {
         return true;
       }
-      executorService.shutdownNow();
-      boolean terminationSuccessFull = executorService.awaitTermination(timeoutMs, TimeUnit.MILLISECONDS);
+      future.cancel(true);
+
+      boolean terminationSuccessFull = semaphore.tryAcquire(timeoutMs, TimeUnit.MILLISECONDS);
       if (terminationSuccessFull) {
         return false;
       }
+
       String patternToDisplay = pattern.replace("\\", "\\\\");
       LOG.warn("Couldn't interrupt secret-matching task of rule with id \"{}\", waiting for it to finish. " +
         "Related pattern is \"{}\"",
         ruleId,
         patternToDisplay);
-      terminationSuccessFull = executorService.awaitTermination(uninterruptibleTimeoutMs, TimeUnit.MILLISECONDS);
+
+      terminationSuccessFull = semaphore.tryAcquire(uninterruptibleTimeoutMs, TimeUnit.MILLISECONDS);
       if (!terminationSuccessFull) {
+        reinitialize();
         throw new RuntimeException(
           String.format("Couldn't interrupt secret-matching task of rule with id \"%s\" after normal timeout(%dms) and interruption timeout(%dms). Related pattern is \"%s\"",
             ruleId,
@@ -101,14 +114,52 @@ public class ExecutorServiceManager {
     return false;
   }
 
+  private static Future<?> submitWithSemaphore(Runnable runnable, Semaphore semaphore) {
+    return executorService.submit(() -> {
+      try {
+        runnable.run();
+      } catch (RuntimeException e) {
+        throw e;
+      } finally {
+        semaphore.release();
+      }
+    });
+  }
+
   private static boolean waitFutureCompletion(Future<?> future, String ruleId, int timeoutMs) throws ExecutionException, InterruptedException {
     try {
       future.get(timeoutMs, TimeUnit.MILLISECONDS);
       return true;
     } catch (TimeoutException e) {
-      LOG.debug(String.format("Timeout secret-matching task of rule with id \"%s\" after %dms.", ruleId, timeoutMs));
+      LOG.debug("Timeout secret-matching task of rule with id \"{}\" after {}ms.", ruleId, timeoutMs);
       return false;
     }
+  }
+
+  /**
+   * Reinitialize the {@link RegexMatchingManager} with the current number of threads.
+   * This method is useful to ensure that the {@link RegexMatchingManager} will be able to work properly after a regex matching timed out.
+   */
+  public static synchronized void reinitialize() {
+    var oldExecutorService = executorService;
+    initialize(threadCount);
+    oldExecutorService.shutdown();
+  }
+
+  /**
+   * Forces an initialization of the {@link RegexMatchingManager} with the current number of threads if the executorService is null.
+   */
+  public static synchronized void forceInitialization() {
+    if (executorService == null || executorService.isShutdown()) {
+      initialize(threadCount);
+    }
+  }
+
+  /**
+   * Shutdown the {@link RegexMatchingManager}.
+   */
+  public static void shutdown() {
+    executorService.shutdown();
   }
 
   public static int getTimeoutMs() {
@@ -117,7 +168,7 @@ public class ExecutorServiceManager {
 
   public static void setTimeoutMs(int timeoutMs) {
     if (timeoutMs > 0) {
-      ExecutorServiceManager.timeoutMs = timeoutMs;
+      RegexMatchingManager.timeoutMs = timeoutMs;
     }
   }
 
@@ -127,7 +178,7 @@ public class ExecutorServiceManager {
 
   public static void setUninterruptibleTimeoutMs(int uninterruptibleTimeoutMs) {
     if (uninterruptibleTimeoutMs > 0) {
-      ExecutorServiceManager.uninterruptibleTimeoutMs = uninterruptibleTimeoutMs;
+      RegexMatchingManager.uninterruptibleTimeoutMs = uninterruptibleTimeoutMs;
     }
   }
 }
