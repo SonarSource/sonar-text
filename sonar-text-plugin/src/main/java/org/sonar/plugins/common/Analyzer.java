@@ -20,6 +20,7 @@
 package org.sonar.plugins.common;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -54,6 +55,10 @@ public final class Analyzer {
 
   public void analyzeFiles(List<InputFile> inputFiles) {
     displayHelpAboutExcludingBinaryFile = true;
+
+    // We want to analyze the files with the highest number of lines first, in order to fully utilize threads
+    inputFiles.sort(Comparator.comparingInt(inputFile -> -inputFile.lines()));
+
     List<InputFileContext> analyzableFiles = buildInputFileContexts(inputFiles)
       .filter(Objects::nonNull)
       .filter(this::shouldBeAnalyzed)
