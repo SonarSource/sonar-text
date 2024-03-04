@@ -88,7 +88,9 @@ public class TextAndSecretsSensor implements Sensor {
     descriptor
       .name("TextAndSecretsSensor")
       .createIssuesForRuleRepositories(TextRuleDefinition.REPOSITORY_KEY, SecretsRulesDefinition.REPOSITORY_KEY)
-      .processesFilesIndependently();
+      .processesFilesIndependently()
+      // Using global because implemented ProjectSensor doesn't work with the LITS Plugin we use in IntegrationTest
+      .global();
   }
 
   @Override
