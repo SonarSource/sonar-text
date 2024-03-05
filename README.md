@@ -24,7 +24,7 @@ This component helps you prevent the leakage of secrets even before you push the
 
 *Prerequisite*
 
-- Java 11
+- Java 17
 
 Simple build skipping integration tests.
 
