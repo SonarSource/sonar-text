@@ -39,12 +39,13 @@ class DurationStatisticsTest {
     var sensorContext = SensorContextTester.create(Paths.get("."));
     sensorContext.settings().setProperty("sonar.text.duration.statistics", "true");
     DurationStatistics durationStatistics = new DurationStatistics(sensorContext.config());
+    durationStatistics.timed("analyze::general", () -> doNothingFor(100));
     durationStatistics.timed("test::total", () -> doNothingFor(100));
     durationStatistics.log();
 
-    assertThat(logTester.logs()).hasSize(2);
-    assertThat(logTester.logs().get(0)).matches(REPORT_PATTERN);
-    assertThat(logTester.logs().get(1)).endsWith("Granular Duration Statistics" + System.lineSeparator());
+    assertThat(logTester.logs()).hasSize(3);
+    assertThat(logTester.logs().get(1)).matches(REPORT_PATTERN);
+    assertThat(logTester.logs().get(2)).endsWith("Granular Secret Matcher Duration Statistics" + System.lineSeparator());
   }
 
   @Test
@@ -59,9 +60,30 @@ class DurationStatisticsTest {
     durationStatistics.timed("test-2::part2", () -> doNothingFor(20));
     durationStatistics.log();
 
-    assertThat(logTester.logs()).hasSize(2);
-    assertThat(logTester.logs().get(0)).matches(REPORT_PATTERN);
+    assertThat(logTester.logs()).hasSize(3);
     assertThat(logTester.logs().get(1)).matches(REPORT_PATTERN);
+    assertThat(logTester.logs().get(2)).matches(REPORT_PATTERN);
+  }
+
+  @Test
+  void shouldRecordMultipleStatisticsWithAggregatedTotals() {
+    var sensorContext = SensorContextTester.create(Paths.get("."));
+    sensorContext.settings().setProperty("sonar.text.duration.statistics", "true");
+    DurationStatistics durationStatistics = new DurationStatistics(sensorContext.config());
+    durationStatistics.timed("test-1::total", () -> doNothingFor(100));
+    durationStatistics.timed("test-1::preFilter", () -> doNothingFor(50));
+    durationStatistics.timed("test-2::preFilter", () -> doNothingFor(30));
+    durationStatistics.timed("test-1::matcher", () -> doNothingFor(20));
+    durationStatistics.timed("test-2::matcher", () -> doNothingFor(40));
+    durationStatistics.timed("test-1::postFilter", () -> doNothingFor(10));
+    durationStatistics.timed("test-2::postFilter", () -> doNothingFor(20));
+    durationStatistics.timed("test-3::postFilter", () -> doNothingFor(10));
+    durationStatistics.log();
+
+    assertThat(logTester.logs()).hasSize(3);
+    assertThat(logTester.logs().get(1)).matches(REPORT_PATTERN);
+    assertThat(logTester.logs().get(1)).contains("preFilter::total", "postFilter::total", "matcher::total");
+    assertThat(logTester.logs().get(2)).matches(REPORT_PATTERN);
   }
 
   private static Object doNothingFor(long millis) {

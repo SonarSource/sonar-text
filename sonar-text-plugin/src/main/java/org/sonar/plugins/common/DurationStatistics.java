@@ -23,6 +23,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.Format;
 import java.text.NumberFormat;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Locale;
 import java.util.Map;
@@ -40,6 +41,7 @@ public class DurationStatistics {
 
   private static final String PROPERTY_KEY = "sonar.text.duration.statistics";
 
+  public static final String SUFFIX_GENERAL = "::general";
   public static final String SUFFIX_TOTAL = "::total";
   public static final String SUFFIX_PRE = "::preFilter";
   public static final String SUFFIX_MATCHER = "::matcher";
@@ -59,6 +61,13 @@ public class DurationStatistics {
     this.format = new DecimalFormat("#,###", symbols);
   }
 
+  public void timed(String id, Runnable runnable) {
+    timed(id, () -> {
+      runnable.run();
+      return null;
+    });
+  }
+
   public <T> T timed(String id, Supplier<T> supplier) {
     if (isRecordingEnabled.get()) {
       long startTime = System.nanoTime();
@@ -76,15 +85,35 @@ public class DurationStatistics {
 
   public void log() {
     if (isRecordingEnabled.get()) {
+      calculateSecretMatcherTotals();
+
       var sbGeneral = new StringBuilder("Duration Statistics")
         .append(System.lineSeparator())
-        .append(formatEntries(format, stats.entrySet().stream().filter(s -> s.getKey().endsWith(SUFFIX_TOTAL))));
+        .append(formatEntries(format, stats.entrySet().stream().filter(s -> s.getKey().endsWith(SUFFIX_GENERAL))));
       LOGGER.info("{}", sbGeneral);
 
-      var sbVerbose = new StringBuilder("Granular Duration Statistics")
+      var sbMatcher = new StringBuilder("Secret Matcher Duration Statistics")
         .append(System.lineSeparator())
-        .append(formatEntries(format, stats.entrySet().stream().filter(s -> !s.getKey().endsWith(SUFFIX_TOTAL))));
-      LOGGER.info("{}", sbVerbose);
+        .append(formatEntries(format, stats.entrySet().stream().filter(s -> s.getKey().endsWith(SUFFIX_TOTAL))));
+      LOGGER.info("{}", sbMatcher);
+
+      var sbMatcherVerbose = new StringBuilder("Granular Secret Matcher Duration Statistics")
+        .append(System.lineSeparator())
+        .append(formatEntries(format,
+          stats.entrySet().stream().filter(s -> !s.getKey().endsWith(SUFFIX_TOTAL) && !s.getKey().endsWith(SUFFIX_GENERAL))));
+      LOGGER.info("{}", sbMatcherVerbose);
+    }
+  }
+
+  private void calculateSecretMatcherTotals() {
+    for (Map.Entry<String, Measurement> entry : Collections.unmodifiableSet(stats.entrySet())) {
+      if (entry.getKey().endsWith(SUFFIX_PRE)) {
+        addRecord("preFilter" + SUFFIX_TOTAL, entry.getValue().total.get());
+      } else if (entry.getKey().endsWith(SUFFIX_MATCHER)) {
+        addRecord("matcher" + SUFFIX_TOTAL, entry.getValue().total.get());
+      } else if (entry.getKey().endsWith(SUFFIX_POST)) {
+        addRecord("postFilter" + SUFFIX_TOTAL, entry.getValue().total.get());
+      }
     }
   }
 

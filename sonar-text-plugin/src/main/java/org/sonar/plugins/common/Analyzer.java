@@ -35,6 +35,7 @@ public final class Analyzer {
   private static final Logger LOG = LoggerFactory.getLogger(Analyzer.class);
   private final SensorContext sensorContext;
   private final ParallelizationManager parallelizationManager;
+  private final DurationStatistics durationStatistics;
   private final List<Check> activeChecks;
   private final NotBinaryFilePredicate notBinaryFilePredicate;
   private final boolean analyzeAllFilesMode;
@@ -43,11 +44,13 @@ public final class Analyzer {
   public Analyzer(
     SensorContext sensorContext,
     ParallelizationManager parallelizationManager,
+    DurationStatistics durationStatistics,
     List<Check> activeChecks,
     NotBinaryFilePredicate notBinaryFilePredicate,
     boolean analyzeAllFilesMode) {
     this.sensorContext = sensorContext;
     this.parallelizationManager = parallelizationManager;
+    this.durationStatistics = durationStatistics;
     this.activeChecks = activeChecks;
     this.notBinaryFilePredicate = notBinaryFilePredicate;
     this.analyzeAllFilesMode = analyzeAllFilesMode;
@@ -59,16 +62,21 @@ public final class Analyzer {
     // We want to analyze the files with the highest number of lines first, in order to fully utilize threads
     inputFiles.sort(Comparator.comparingInt(inputFile -> -inputFile.lines()));
 
-    List<InputFileContext> analyzableFiles = buildInputFileContexts(inputFiles)
-      .filter(Objects::nonNull)
-      .filter(this::shouldBeAnalyzed)
-      .collect(Collectors.toList());
+    List<InputFileContext> analyzableFiles = durationStatistics.timed("preparingInputFiles" + DurationStatistics.SUFFIX_GENERAL,
+      () -> buildInputFileContexts(inputFiles)
+        .filter(Objects::nonNull)
+        .filter(this::shouldBeAnalyzed)
+        .collect(Collectors.toList()));
 
     if (analyzableFiles.isEmpty()) {
       LOG.debug("There are no files to be analyzed");
       return;
     }
 
+    durationStatistics.timed("analyzingAllChecks" + DurationStatistics.SUFFIX_GENERAL, () -> analyzeAllFiles(analyzableFiles));
+  }
+
+  private void analyzeAllFiles(List<InputFileContext> analyzableFiles) {
     var cancelled = false;
     var progressReport = new MultiFileProgressReport();
     progressReport.start(analyzableFiles.size());
@@ -92,6 +100,7 @@ public final class Analyzer {
         progressReport.stop();
       }
     }
+
   }
 
   private Stream<InputFileContext> buildInputFileContexts(List<InputFile> inputFiles) {

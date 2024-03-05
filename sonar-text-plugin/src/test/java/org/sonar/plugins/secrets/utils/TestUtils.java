@@ -20,6 +20,8 @@
 package org.sonar.plugins.secrets.utils;
 
 import java.util.function.Supplier;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.sonar.plugins.common.DurationStatistics;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -30,8 +32,12 @@ import static org.mockito.Mockito.when;
 public class TestUtils {
   public static DurationStatistics mockDurationStatistics() {
     var mock = mock(DurationStatistics.class);
-    when(mock.timed(anyString(), any()))
+    when(mock.timed(anyString(), any(Supplier.class)))
       .then(invocation -> invocation.getArgument(1, Supplier.class).get());
+    Mockito.doAnswer((Answer<Void>) invocation -> {
+      invocation.getArgument(1, Runnable.class).run();
+      return null;
+    }).when(mock).timed(anyString(), any(Runnable.class));
     return mock;
   }
 }

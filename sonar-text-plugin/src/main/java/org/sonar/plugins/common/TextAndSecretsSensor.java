@@ -123,8 +123,8 @@ public class TextAndSecretsSensor implements Sensor {
     configureRegexEngineTimeout(sensorContext, REGEX_MATCH_TIMEOUT_KEY, RegexMatchingManager::setTimeoutMs);
     configureRegexEngineTimeout(sensorContext, REGEX_EXECUTION_TIMEOUT_KEY, RegexMatchingManager::setUninterruptibleTimeoutMs);
 
-    var analyzer = new Analyzer(sensorContext, parallelizationManager, activeChecks, notBinaryFilePredicate, analyzeAllFiles);
-    analyzer.analyzeFiles(inputFiles);
+    var analyzer = new Analyzer(sensorContext, parallelizationManager, durationStatistics, activeChecks, notBinaryFilePredicate, analyzeAllFiles);
+    durationStatistics.timed("analyzerTotal" + DurationStatistics.SUFFIX_GENERAL, () -> analyzer.analyzeFiles(inputFiles));
     durationStatistics.log();
     parallelizationManager.shutdown();
     RegexMatchingManager.shutdown();
@@ -172,7 +172,8 @@ public class TextAndSecretsSensor implements Sensor {
       return LANGUAGE_FILE_PREDICATE;
     }
 
-    var trackedByGitPredicate = new GitTrackedFilePredicate(getGitSupplier());
+    var trackedByGitPredicate = durationStatistics.timed("trackedByGitPredicate" + DurationStatistics.SUFFIX_GENERAL,
+      () -> new GitTrackedFilePredicate(getGitSupplier()));
     if (!trackedByGitPredicate.isGitStatusSuccessful()) {
       LOG.debug("Analyzing only language associated files, " +
         "make sure to run the analysis inside a git repository to make use of inclusions specified via \"{}\"",
@@ -262,12 +263,15 @@ public class TextAndSecretsSensor implements Sensor {
   }
 
   protected void initializeSpecificationBasedChecks(List<Check> checks) {
-    var specificationLoader = constructSpecificationLoader();
-    for (Check activeCheck : checks) {
-      if (activeCheck instanceof SpecificationBasedCheck) {
-        ((SpecificationBasedCheck) activeCheck).initialize(specificationLoader, durationStatistics);
+    var specificationLoader = durationStatistics.timed("deserializingSpecifications" + DurationStatistics.SUFFIX_GENERAL,
+      this::constructSpecificationLoader);
+    durationStatistics.timed("initializingSecretMatchers" + DurationStatistics.SUFFIX_GENERAL, () -> {
+      for (Check activeCheck : checks) {
+        if (activeCheck instanceof SpecificationBasedCheck) {
+          ((SpecificationBasedCheck) activeCheck).initialize(specificationLoader, durationStatistics);
+        }
       }
-    }
+    });
   }
 
   private static void configureRegexEngineTimeout(SensorContext sensorContext, String key, Consumer<Integer> setTimeoutMs) {
