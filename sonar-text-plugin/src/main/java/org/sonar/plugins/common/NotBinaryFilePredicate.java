@@ -19,10 +19,8 @@
  */
 package org.sonar.plugins.common;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -400,22 +398,21 @@ public class NotBinaryFilePredicate implements FilePredicate {
     "zipx",
     "zstd"));
 
-  private static final List<String> DEFAULT_BINARY_SUFFIXES = List.of("cacerts");
+  private static final Set<String> DEFAULT_BINARY_SUFFIXES = Set.of("cacerts");
 
   private static final Pattern HEX_REGEX = Pattern.compile("\\p{XDigit}++");
   private static final double MD5_AND_SHA_MIN_ENTROPY = 3.1;
 
   private final Set<String> binaryFileExtensions;
-  private final List<String> binaryFileSuffixes;
+  private final Set<String> binaryFileSuffixes;
 
   public NotBinaryFilePredicate(String... additionalBinarySuffixes) {
     binaryFileExtensions = new HashSet<>(DEFAULT_BINARY_EXTENSIONS);
-    binaryFileSuffixes = new ArrayList<>(DEFAULT_BINARY_SUFFIXES);
-    List<String> cleanedSuffixes = Arrays.stream(additionalBinarySuffixes)
+    binaryFileSuffixes = new HashSet<>(DEFAULT_BINARY_SUFFIXES);
+    Set<String> cleanedSuffixes = Arrays.stream(additionalBinarySuffixes)
       .map(String::trim)
       .filter(value -> !value.isEmpty())
-      .distinct()
-      .collect(Collectors.toList());
+      .collect(Collectors.toSet());
     for (String suffix : cleanedSuffixes) {
       boolean isExtension = suffix.length() > 1 && suffix.startsWith(".") && suffix.indexOf('.', 1) == -1;
       if (isExtension) {

@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +65,7 @@ public final class Analyzer {
       () -> buildInputFileContexts(inputFiles)
         .filter(Objects::nonNull)
         .filter(this::shouldBeAnalyzed)
-        .collect(Collectors.toList()));
+        .toList());
 
     if (analyzableFiles.isEmpty()) {
       LOG.debug("There are no files to be analyzed");

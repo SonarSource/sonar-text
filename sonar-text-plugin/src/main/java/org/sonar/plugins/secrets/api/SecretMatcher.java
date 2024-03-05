@@ -22,7 +22,6 @@ package org.sonar.plugins.secrets.api;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import org.sonar.plugins.common.DurationStatistics;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.configuration.model.Rule;
@@ -94,7 +93,7 @@ public class SecretMatcher {
       .filter(match -> durationStatistics.timed(
         getRuleId() + DurationStatistics.SUFFIX_POST,
         () -> postFilter.test(match.getText())))
-      .collect(Collectors.toList());
+      .toList();
   }
 
   public String getRuleId() {

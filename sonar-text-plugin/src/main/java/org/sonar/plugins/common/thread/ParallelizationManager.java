@@ -96,8 +96,8 @@ public class ParallelizationManager {
   private void propagatePossibleException() {
     Throwable e = exception.getAndSet(null);
     if (e != null) {
-      if (e instanceof IllegalStateException) {
-        throw (IllegalStateException) e;
+      if (e instanceof IllegalStateException illegalStateException) {
+        throw illegalStateException;
       }
       throw new IllegalStateException(e);
     }

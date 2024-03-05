@@ -21,7 +21,6 @@ package org.sonar.plugins.secrets.api;
 
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.plugins.common.Check;
@@ -63,7 +62,7 @@ public abstract class SpecificationBasedCheck extends Check {
     }
     this.matcher = rulesForKey.stream()
       .map(rule -> SecretMatcher.build(rule, durationStatistics))
-      .collect(Collectors.toList());
+      .toList();
   }
 
   /**

@@ -40,8 +40,8 @@ public class AuxiliaryPatternMatcherFactory {
   }
 
   private static AuxiliaryPatternMatcher constructFrom(Match match) {
-    if (match instanceof BooleanCombination) {
-      return constructFrom((BooleanCombination) match);
+    if (match instanceof BooleanCombination booleanCombination) {
+      return constructFrom(booleanCombination);
     } else {
       return constructFrom((AuxiliaryPattern) match);
     }

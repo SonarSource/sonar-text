@@ -267,8 +267,8 @@ public class TextAndSecretsSensor implements Sensor {
       this::constructSpecificationLoader);
     durationStatistics.timed("initializingSecretMatchers" + DurationStatistics.SUFFIX_GENERAL, () -> {
       for (Check activeCheck : checks) {
-        if (activeCheck instanceof SpecificationBasedCheck) {
-          ((SpecificationBasedCheck) activeCheck).initialize(specificationLoader, durationStatistics);
+        if (activeCheck instanceof SpecificationBasedCheck specificationBasedCheck) {
+          (specificationBasedCheck).initialize(specificationLoader, durationStatistics);
         }
       }
     });
