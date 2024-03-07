@@ -19,7 +19,7 @@
  */
 package org.sonar.plugins.secrets.api;
 
-import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,7 +27,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.plugins.secrets.SecretsCheckList;
-import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 
@@ -84,5 +83,12 @@ class SpecificationLoaderTest {
 
     new SpecificationLoader(specificationLocation, specifications);
     assertThat(logTester.logs()).containsExactly("DeserializationException: Could not load specification from file: unknownFile.yaml");
+  }
+
+  @Test
+  void shouldReturnEmptyMapWhenSpecificationsIsEmpty() {
+    SpecificationLoader specificationLoader = new SpecificationLoader("non-relevant", Collections.emptySet());
+
+    assertThat(specificationLoader.getRulesMappedToKey()).isEqualTo(Collections.emptyMap());
   }
 }

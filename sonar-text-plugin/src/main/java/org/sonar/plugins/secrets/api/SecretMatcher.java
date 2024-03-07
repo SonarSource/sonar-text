@@ -31,20 +31,23 @@ import org.sonar.plugins.secrets.configuration.model.Rule;
  */
 public class SecretMatcher {
 
-  private final Rule rule;
+  private final String ruleId;
+  private final String ruleMessage;
   private final PatternMatcher patternMatcher;
   private final AuxiliaryPatternMatcher auxiliaryPatternMatcher;
   private final Predicate<InputFileContext> preFilter;
   private final Predicate<String> postFilter;
   private final DurationStatistics durationStatistics;
 
-  SecretMatcher(Rule rule,
+  SecretMatcher(String ruleId,
+    String ruleMessage,
     PatternMatcher patternMatcher,
     AuxiliaryPatternMatcher auxiliaryPatternMatcher,
     Predicate<InputFileContext> preFilter,
     Predicate<String> postFilter,
     DurationStatistics durationStatistics) {
-    this.rule = rule;
+    this.ruleId = ruleId;
+    this.ruleMessage = ruleMessage;
     this.patternMatcher = patternMatcher;
     this.auxiliaryPatternMatcher = auxiliaryPatternMatcher;
     this.preFilter = preFilter;
@@ -64,7 +67,7 @@ public class SecretMatcher {
     Predicate<InputFileContext> preFilter = PreFilterFactory.createPredicate(rule.getDetection().getPre());
     Predicate<String> postFilter = PostFilterFactory.createPredicate(rule.getDetection().getPost(), rule.getDetection().getMatching());
     var auxiliaryMatcher = AuxiliaryPatternMatcherFactory.build(rule.getDetection().getMatching());
-    return new SecretMatcher(rule, patternMatcher, auxiliaryMatcher, preFilter, postFilter, durationStatistics);
+    return new SecretMatcher(rule.getId(), rule.getMetadata().getMessage(), patternMatcher, auxiliaryMatcher, preFilter, postFilter, durationStatistics);
   }
 
   /**
@@ -97,11 +100,11 @@ public class SecretMatcher {
   }
 
   public String getRuleId() {
-    return rule.getId();
+    return ruleId;
   }
 
   public String getMessageFromRule() {
-    return rule.getMetadata().getMessage();
+    return ruleMessage;
   }
 
   Predicate<String> getPostFilter() {

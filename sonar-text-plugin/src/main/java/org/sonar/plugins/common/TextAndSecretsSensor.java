@@ -61,18 +61,14 @@ public class TextAndSecretsSensor implements Sensor {
   public static final boolean INCLUSIONS_ACTIVATION_DEFAULT_VALUE = false;
   public static final String THREAD_NUMBER_KEY = "sonar.text.threads";
   public static final String TEXT_CATEGORY = "Secrets";
-
   private static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
 
   protected final CheckFactory checkFactory;
 
-  private final GitSupplier gitSupplier = new GitSupplier();
-
-  protected DurationStatistics durationStatistics;
-
-  private ParallelizationManager parallelizationManager;
-
   protected final AnalysisWarningsWrapper analysisWarnings;
+  private final GitSupplier gitSupplier = new GitSupplier();
+  protected DurationStatistics durationStatistics;
+  private ParallelizationManager parallelizationManager;
 
   public TextAndSecretsSensor(CheckFactory checkFactory) {
     this(checkFactory, DefaultAnalysisWarningsWrapper.NOOP_ANALYSIS_WARNINGS);

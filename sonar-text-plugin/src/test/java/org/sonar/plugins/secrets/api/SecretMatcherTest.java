@@ -52,7 +52,8 @@ class SecretMatcherTest {
 
     PatternMatcher patternMatcher = new PatternMatcher("\\b(rule matching pattern)\\b");
     SecretMatcher expectedMatcher = new SecretMatcher(
-      rule,
+      rule.getId(),
+      rule.getMetadata().getMessage(),
       patternMatcher,
       AuxiliaryPatternMatcher.NO_FILTERING_AUXILIARY_MATCHER,
       file -> true,
@@ -77,7 +78,9 @@ class SecretMatcherTest {
     };
     Predicate<String> statisticalFilter = candidateSecret -> !EntropyChecker.hasLowEntropy(candidateSecret, 4.2f);
     expectedPredicate = expectedPredicate.and(statisticalFilter).and(patternNotFilter);
-    SecretMatcher expectedMatcher = new SecretMatcher(rule,
+    SecretMatcher expectedMatcher = new SecretMatcher(
+      rule.getId(),
+      rule.getMetadata().getMessage(),
       patternMatcher,
       constructReferenceAuxiliaryMatcher(),
       file -> true,
@@ -94,7 +97,9 @@ class SecretMatcherTest {
     Rule rule = ReferenceTestModel.constructMinimumSpecification().getProvider().getRules().get(0);
     rule.getDetection().setMatching(null);
     PatternMatcher patternMatcher = new PatternMatcher(null);
-    SecretMatcher expectedMatcher = new SecretMatcher(rule,
+    SecretMatcher expectedMatcher = new SecretMatcher(
+      rule.getId(),
+      rule.getMetadata().getMessage(),
       patternMatcher,
       AuxiliaryPatternMatcher.NO_FILTERING_AUXILIARY_MATCHER,
       file -> true,

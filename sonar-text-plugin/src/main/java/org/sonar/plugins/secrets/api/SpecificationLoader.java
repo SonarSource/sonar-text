@@ -21,6 +21,7 @@ package org.sonar.plugins.secrets.api;
 
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,10 @@ public class SpecificationLoader {
   }
 
   private static Map<String, List<Rule>> initialize(String specificationLocation, Set<String> specifications) {
+    if (specifications.isEmpty()) {
+      return Collections.emptyMap();
+    }
+
     Map<String, List<Rule>> keyToRule = new HashMap<>();
 
     for (String specificationFileName : specifications) {
