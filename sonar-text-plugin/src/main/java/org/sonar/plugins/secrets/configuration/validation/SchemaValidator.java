@@ -42,7 +42,7 @@ public class SchemaValidator {
   static {
     JsonSchemaFactory schemaFactory = JsonSchemaFactory
       .builder(JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012))
-      .objectMapper(MAPPER)
+      .yamlMapper(MAPPER)
       .build();
     InputStream validationSchema = SchemaValidator.class.getResourceAsStream(FILE_LOCATION + VALIDATION_SCHEMA_FILE);
 

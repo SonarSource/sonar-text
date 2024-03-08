@@ -34,8 +34,9 @@ tasks.test {
     // pass the filename property to SecretsRegexTest
     systemProperty("filename", System.getProperty("filename"))
     testLogging {
+        // log the full stack trace (default is the 1st line of the stack trace)
         exceptionFormat =
-            org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL // log the full stack trace (default is the 1st line of the stack trace)
+            org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
         events("skipped", "failed") // verbose log for failed and skipped tests (by default the name of the tests are not logged)
     }
 }
