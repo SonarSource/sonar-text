@@ -1,0 +1,8 @@
+[submodule "private/its/benchmark/src/integrationTest/resources/sources/checkov"]
+	path = private/its/benchmark/src/integrationTest/resources/sources/checkov
+	url = https://github.com/bridgecrewio/checkov.git
+	ignore = dirty
+[submodule "private/its/benchmark/src/integrationTest/resources/sources/cnaf"]
+	path = private/its/benchmark/src/integrationTest/resources/sources/cnaf
+	url = https://github.com/Wenzel/CNAF.git
+	ignore = dirty
