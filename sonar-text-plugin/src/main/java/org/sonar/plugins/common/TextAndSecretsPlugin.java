@@ -94,7 +94,8 @@ public class TextAndSecretsPlugin implements Plugin {
         .name("List of file path patterns to include")
         .multiValues(true)
         .description("List of file path patterns that should be analyzed with rules targeting text files (ie. Secret rules, BIDI rule), " +
-          "in addition to those associated to a language. This is only applied when the scanner detects a git repository.")
+          "in addition to those associated to a language. This is only applied when the scanner detects a git repository. " +
+          "It's not possible to analyze files or directories starting with a dot on UNIX systems.")
         .subCategory(GENERAL_SUBCATEGORY)
         .onQualifiers(Qualifiers.PROJECT)
         .build());
