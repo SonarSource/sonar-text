@@ -50,6 +50,9 @@ public class AuxiliaryPatternMatcherFactory {
   private static AuxiliaryPatternMatcher constructFrom(BooleanCombination booleanCombination) {
     List<Match> matches = booleanCombination.getMatches();
     AuxiliaryPatternMatcher resultingMatcher = constructFrom(matches.get(0));
+    if (BooleanCombinationType.MATCH_NOT == booleanCombination.getType()) {
+      return resultingMatcher.negate();
+    }
     for (int i = 1; i < matches.size(); i++) {
       AuxiliaryPatternMatcher matcher = constructFrom(matches.get(i));
       if (BooleanCombinationType.MATCH_EACH == booleanCombination.getType()) {

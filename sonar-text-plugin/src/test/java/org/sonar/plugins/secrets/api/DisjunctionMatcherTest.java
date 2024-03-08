@@ -34,7 +34,7 @@ class DisjunctionMatcherTest {
   @ParameterizedTest
   // @ValueSource(strings = {"candidate secret after", "before candidate secret", "before candidate secret after"})
   @ValueSource(strings = {"candidate secret after"})
-  void conjunctionMatcherShouldNotRemoveCandidateSecret(String content) {
+  void disjunctionMatcherShouldNotRemoveCandidateSecret(String content) {
     AuxiliaryMatcher auxiliaryMatcherBefore = new AuxiliaryMatcher(
       AuxiliaryPatternType.PATTERN_BEFORE, new PatternMatcher("\\b(before)\\b"), Integer.MAX_VALUE);
 
@@ -51,7 +51,7 @@ class DisjunctionMatcherTest {
   }
 
   @Test
-  void conjunctionMatcherShouldRemoveCandidateSecret() {
+  void disjunctionMatcherShouldRemoveCandidateSecret() {
     AuxiliaryMatcher auxiliaryMatcherBefore = new AuxiliaryMatcher(
       AuxiliaryPatternType.PATTERN_BEFORE, new PatternMatcher("\\b(before)\\b"), Integer.MAX_VALUE);
 

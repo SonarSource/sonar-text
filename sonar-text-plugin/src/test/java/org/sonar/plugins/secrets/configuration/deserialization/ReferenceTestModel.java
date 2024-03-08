@@ -21,7 +21,6 @@ package org.sonar.plugins.secrets.configuration.deserialization;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.sonar.plugins.secrets.configuration.model.Provider;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.RuleExample;
@@ -158,6 +157,10 @@ public class ReferenceTestModel {
     detection.setPre(constructPreModule());
     detection.setPost(constructPostModule());
 
+    BooleanCombination matchNot = new BooleanCombination();
+    matchNot.setType(BooleanCombinationType.MATCH_NOT);
+    matchNot.setMatches(List.of(constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_BEFORE, "\\b(match-not-before)\\b")));
+
     BooleanCombination matchEach = new BooleanCombination();
     matchEach.setType(BooleanCombinationType.MATCH_EACH);
     matchEach.setMatches(List.of(
@@ -175,6 +178,7 @@ public class ReferenceTestModel {
 
     List<Match> matches = new ArrayList<>();
     matches.add(constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_BEFORE, "\\b(pattern-before)\\b"));
+    matches.add(matchNot);
     matches.add(matchEach);
     matches.add(matchEitherLevelTwo);
 

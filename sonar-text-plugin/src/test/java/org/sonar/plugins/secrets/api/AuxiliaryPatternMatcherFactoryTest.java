@@ -57,6 +57,7 @@ class AuxiliaryPatternMatcherFactoryTest {
   public static AuxiliaryPatternMatcher constructReferenceAuxiliaryMatcher() {
     AuxiliaryPattern patternBefore = ReferenceTestModel.constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_BEFORE, "\\b(pattern" +
       "-before)\\b");
+    AuxiliaryPattern patternBeforeForMatchNot = ReferenceTestModel.constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_BEFORE, "\\b(match-not-before)\\b");
     AuxiliaryPattern patternAfter = ReferenceTestModel.constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AFTER, "\\b(pattern-after)" +
       "\\b");
     AuxiliaryPattern patternAround = ReferenceTestModel.constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AROUND, "\\b(pattern" +
@@ -67,6 +68,7 @@ class AuxiliaryPatternMatcherFactoryTest {
     AuxiliaryPattern patternNot = ReferenceTestModel.constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_NOT, "\\b(pattern-not)\\b");
 
     AuxiliaryPatternMatcher matcherBefore = AuxiliaryMatcher.build(patternBefore);
+    AuxiliaryPatternMatcher matcherNegation = AuxiliaryMatcher.build(patternBeforeForMatchNot);
     AuxiliaryPatternMatcher matcherAfter = AuxiliaryMatcher.build(patternAfter);
     AuxiliaryPatternMatcher matcherAround = AuxiliaryMatcher.build(patternAround);
     AuxiliaryPatternMatcher matcherAroundWithMaxDistance = AuxiliaryMatcher.build(patternAroundWithDistance);
@@ -74,6 +76,6 @@ class AuxiliaryPatternMatcherFactoryTest {
 
     AuxiliaryPatternMatcher eachSecondLevel = matcherAfter.and(matcherAround);
     AuxiliaryPatternMatcher eitherSecondLevel = matcherNot.or(matcherAroundWithMaxDistance);
-    return matcherBefore.or(eachSecondLevel).or(eitherSecondLevel);
+    return matcherBefore.or(matcherNegation.negate()).or(eachSecondLevel).or(eitherSecondLevel);
   }
 }

@@ -56,6 +56,15 @@ public interface AuxiliaryPatternMatcher {
   }
 
   /**
+   * Returns a new {@link AuxiliaryPatternMatcher}, which negates the results of this {@link AuxiliaryPatternMatcher}.
+   *
+   * @return the constructed {@link AuxiliaryPatternMatcher}
+   */
+  default AuxiliaryPatternMatcher negate() {
+    return new NegationMatcher(this);
+  }
+
+  /**
    * Default implementation of the {@link AuxiliaryPatternMatcher} which has no filtering behavior.
    */
   class DefaultAuxiliaryMatcher implements AuxiliaryPatternMatcher {

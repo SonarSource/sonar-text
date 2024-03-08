@@ -45,16 +45,24 @@ public class BooleanCombinationDeserializer extends JsonDeserializer<BooleanComb
 
     List<Match> modules = new ArrayList<>();
 
-    for (JsonNode matchNode : node.getValue()) {
-      JsonParser matchNodeParser = matchNode.traverse();
-      matchNodeParser.setCodec(jsonParser.getCodec());
-      Match match = matchNodeParser.readValueAs(Match.class);
-      modules.add(match);
+    if ("matchNot".equals(node.getKey())) {
+      addMatch(jsonParser, node.getValue(), modules);
+    } else {
+      for (JsonNode matchNode : node.getValue()) {
+        addMatch(jsonParser, matchNode, modules);
+      }
     }
 
     BooleanCombination booleanCombination = new BooleanCombination();
     booleanCombination.setType(BooleanCombinationType.valueOfLabel(node.getKey()));
     booleanCombination.setMatches(modules);
     return booleanCombination;
+  }
+
+  private static void addMatch(JsonParser jsonParser, JsonNode matchNode, List<Match> modules) throws IOException {
+    JsonParser matchNodeParser = matchNode.traverse();
+    matchNodeParser.setCodec(jsonParser.getCodec());
+    Match match = matchNodeParser.readValueAs(Match.class);
+    modules.add(match);
   }
 }

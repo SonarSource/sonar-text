@@ -62,6 +62,8 @@ provider:
           context:
             matchEither:
               - patternBefore: "\\b(pattern-before)\\b"
+              - matchNot:
+                  patternBefore: "\\b(match-not-before)\\b"
               - matchEach:
                   - patternAfter: "\\b(pattern-after)\\b"
                   - patternAround: "\\b(pattern-around)\\b"

@@ -17,25 +17,30 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets.configuration.model.matching;
+package org.sonar.plugins.secrets.api;
 
-public enum BooleanCombinationType {
-  MATCH_EITHER("matchEither"),
-  MATCH_EACH("matchEach"),
-  MATCH_NOT("matchNot");
+import java.util.List;
+import java.util.stream.Collectors;
 
-  private final String label;
+/**
+ * A {@link AuxiliaryPatternMatcher} which negates the matches found by another {@link AuxiliaryPatternMatcher}.
+ */
+public class NegationMatcher implements AuxiliaryPatternMatcher {
+  private final AuxiliaryPatternMatcher matcher;
 
-  BooleanCombinationType(String label) {
-    this.label = label;
+  /**
+   * Creates a new {@link NegationMatcher}.
+   * @param matcher {@link AuxiliaryPatternMatcher} to be negated
+   */
+  public NegationMatcher(AuxiliaryPatternMatcher matcher) {
+    this.matcher = matcher;
   }
 
-  public static BooleanCombinationType valueOfLabel(String label) {
-    for (BooleanCombinationType type : values()) {
-      if (type.label.equals(label)) {
-        return type;
-      }
-    }
-    return null;
+  @Override
+  public List<Match> filter(List<Match> candidateMatches, String content, String ruleId) {
+    List<Match> matches = matcher.filter(candidateMatches, content, ruleId);
+    return candidateMatches.stream()
+      .filter(candidate -> !matches.contains(candidate))
+      .collect(Collectors.toList());
   }
 }
