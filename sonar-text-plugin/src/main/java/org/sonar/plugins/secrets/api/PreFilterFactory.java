@@ -92,10 +92,8 @@ public final class PreFilterFactory {
     if (path.isBlank()) {
       LOG.warn("Parameter <paths> is blank in pre filter, will skip filtering");
       return false;
-    } else if (path.contains("*")) {
-      return ctx.getFileSystem().predicates().matchesPathPattern(path).apply(ctx.getInputFile());
     } else {
-      return ctx.getFileSystem().predicates().hasRelativePath(path).apply(ctx.getInputFile());
+      return ctx.getFileSystem().predicates().matchesPathPattern(path).apply(ctx.getInputFile());
     }
   }
 
