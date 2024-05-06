@@ -1,6 +1,5 @@
 load("github.com/SonarSource/cirrus-modules@v2", "load_features")
-load("cirrus", "env", "fs", "yaml")
-
+load("cirrus", "env", "fs")
 load(".cirrus/modules/helper.star", "merge_dict")
 load("private/.cirrus.star", "private_pipeline_builder")
 
