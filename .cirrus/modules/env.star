@@ -1,5 +1,6 @@
 # SHARED CANDIDATE
 # ARTIFACTORY_DEPLOY_REPO_PRIVATE is added compared to Sonar IaC version: https://github.com/SonarSource/sonar-iac/blob/153aed5008efac5ff1bbb0014672e653194ee79b/.cirrus/modules/env.star#L2
+# The way to fetch the values from the Sonar Vault is different
 def artifactory_env():
     """
     Provides typical environment variables to work with  Artifactory.
@@ -22,9 +23,9 @@ def artifactory_env():
     """
     return {
         "ARTIFACTORY_URL": "VAULT[development/kv/data/repox data.url]",
-        "ARTIFACTORY_PRIVATE_USERNAME": "vault-${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-private-reader",
+        "ARTIFACTORY_PRIVATE_USERNAME": "VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-private-reader username]",
         "ARTIFACTORY_PRIVATE_PASSWORD": "VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-private-reader access_token]",
-        "ARTIFACTORY_DEPLOY_USERNAME": "vault-${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-qa-deployer",
+        "ARTIFACTORY_DEPLOY_USERNAME": "VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-qa-deployer username]",
         "ARTIFACTORY_DEPLOY_PASSWORD": "VAULT[development/artifactory/token/${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}-qa-deployer access_token]",
         "ARTIFACTORY_DEPLOY_REPO": "sonarsource-public-qa",
         "ARTIFACTORY_DEPLOY_REPO_PRIVATE": "sonarsource-private-qa",
