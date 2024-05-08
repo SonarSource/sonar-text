@@ -5,7 +5,7 @@ load("private/.cirrus.star", "private_pipeline_builder")
 
 
 # workaround for BUILD-4413 (build number on public CI)
-def build_4413_workaroound():
+def build_4413_workaround():
     return {
         'env': {
             'CI_BUILD_NUMBER': env.get("CIRRUS_PR", "1")
@@ -24,7 +24,7 @@ def main(ctx):
         if env.get("CIRRUS_USER_PERMISSION") in ["write", "admin"]:
             features = load_features(ctx, features=["build_number"])
         else:
-            features = build_4413_workaroound()
+            features = build_4413_workaround()
 
     conf = dict()
     merge_dict(conf, features)
