@@ -49,9 +49,9 @@ def run_its_script():
     return [
         "if [ \"$INIT_SUBMODULES\" == \"true\" ]; then git submodule update --init --depth 1; fi",
         "source cirrus-env QA",
-        "source .cirrus/use-gradle-wrapper.sh",
         "./gradlew \"${GRADLE_TASK}\" \"-Dsonar.runtimeVersion=${SQ_VERSION}\" --info --build-cache --console plain --no-daemon"
     ]
+
 
 # SHARED CANDIDATE?
 # Almost the same as Sonar IaC but GITHUB_TOKEN is added: https://github.com/SonarSource/sonar-iac/blob/fbff28b4910ea545c1ed036690147cdb8b179302/.cirrus/modules/qa.star#L69
@@ -108,14 +108,6 @@ def qa_benchmark_env():
     }
 
 
-def run_benchmark_script():
-    return [
-        "if [ \"$INIT_SUBMODULES\" == \"true\" ]; then git submodule update --init --depth 1; fi",
-        "source cirrus-env QA",
-        "./gradlew ${GRADLE_COMMON_FLAGS} --info --build-cache -Dsonar.runtimeVersion=${SQ_VERSION} ${GRADLE_TASK}"
-    ]
-
-
 def qa_benchmark_task():
     return {
         "qa_benchmark_task": {
@@ -131,7 +123,7 @@ def qa_benchmark_task():
             "set_orchestrator_home_script": set_orchestrator_home_script(),
             "mkdir_orchestrator_home_script": mkdir_orchestrator_home_script(),
             "orchestrator_cache": orchestrator_cache(),
-            "run_benchmark_script": run_benchmark_script(),
+            "run_benchmark_script": run_its_script(),
             "cleanup_gradle_script": cleanup_gradle_script(),
             "on_failure": on_failure(),
         }
