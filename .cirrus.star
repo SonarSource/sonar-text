@@ -16,7 +16,7 @@ def build_4413_workaround():
 def main(ctx):
     # Manage the case of the private repository
     if env.get("CIRRUS_REPO_FULL_NAME") == 'SonarSource/sonar-text-enterprise':
-        features = load_features(ctx)
+        features = load_features(ctx, only_if=dict())
         doc = private_pipeline_builder()
     # Manage the case of the public repository
     else:
