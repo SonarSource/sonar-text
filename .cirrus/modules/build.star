@@ -33,7 +33,7 @@ def build_script():
     return [
         "source cirrus-env BUILD-PRIVATE",
         "source .cirrus/use-gradle-wrapper.sh",
-        "regular_gradle_build_deploy_analyze"
+        "regular_gradle_build_deploy_analyze ${BUILD_ARGUMENTS}"
     ]
 
 # Different from Sonar IaC from many aspects: on_success, project_version related conf, ...
