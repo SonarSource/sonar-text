@@ -10,7 +10,7 @@ def gradle_cache(
     Gradle cache configuration to assign to a "<your name>_cache" key in the target task.
 
     The following default values are used:
-    - cache folder is ${GRADLE_USER_HOME}.GRADLE_USER_HOME is an environment variable that points to the Gradle user home folder,
+    - cache folder is ${GRADLE_USER_HOME}.The GRADLE_USER_HOME is an environment variable that points to the Gradle user home folder,
     it's defined by the gradle_env() function.
     - fingerprint script is git rev-parse HEAD
     - reupload_on_changes: True
