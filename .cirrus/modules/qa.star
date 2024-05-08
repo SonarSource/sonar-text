@@ -40,8 +40,8 @@ def qa_task(env, memory="10G", cpu="4"):
         "mkdir_orchestrator_home_script": mkdir_orchestrator_home_script(),
         "orchestrator_cache": orchestrator_cache(),
         "run_its_script": run_its_script(),
-        "cleanup_gradle_script": cleanup_gradle_script(),
         "on_failure": on_failure(),
+        "cleanup_gradle_script": cleanup_gradle_script(),
     }
 
 
