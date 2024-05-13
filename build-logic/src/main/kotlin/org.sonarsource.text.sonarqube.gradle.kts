@@ -4,6 +4,7 @@ plugins {
 
 sonar {
     properties {
+        property("sonar.projectName", "SonarSource Text Analyzer")
         property("sonar.projectKey", "org.sonarsource.text:text")
         property("sonar.exclusions", "**/build/**/*")
         property("sonar.links.ci", "https://cirrus-ci.com/github/SonarSource/sonar-text-enterprise")
