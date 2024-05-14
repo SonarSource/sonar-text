@@ -1,5 +1,5 @@
 load("github.com/SonarSource/cirrus-modules@v2", "load_features")
-load("cirrus", "env", "fs")
+load("cirrus", "env", "fs", "yaml")
 load(".cirrus/modules/helper.star", "merge_dict")
 load("private/.cirrus.star", "private_pipeline_builder")
 
@@ -20,7 +20,7 @@ def main(ctx):
         doc = private_pipeline_builder()
     else:
         # Manage the case of the public repository
-        doc = fs.read(".cirrus-public.yml")
+        doc = yaml.loads(fs.read(".cirrus-public.yml"))
         if env.get("CIRRUS_USER_PERMISSION") in ["write", "admin"]:
             features = load_features(ctx, features=["build_number"])
         else:
