@@ -92,27 +92,6 @@ There is also a way of running this check from the command line.
 ./gradlew --rerun-tasks :sonar-text-plugin:test --console plain --tests SecretsRegexTest.shouldValidateSingleFile -Dfilename=google-oauth2.yaml
 ```
 
-### Sonar Text Enterprise to Sonar Text synchronization process
-
-`Sonar Text` repository is a mirror of `Sonar Text Enterprise` repository minus the private parts.
-
-An automation filters out the private parts of the `Sonar Text Enterprise` repository, so the `Sonar Text` repository can be public.
-
-The automation process goes like this:
-- it is implemented with a [Github Actions](https://github.com/SonarSource/sonar-text-enterprise/blob/master/.github/workflows/sync-public-branches.yml) on the `Sonar Text Enterprise` repository when a commit is merged into the master branch
-- it checkouts the automation code from [public-git-sync](https://github.com/SonarSource/public-git-sync/tree/master) repo 
-- it executes the Git sync scripts from `public-git-sync` on `Sonar Text Enterprise`
-- the sync replicates the commit to `Sonar Text` repository, but removes everything that is inside the `private` folder for every replicated commit
-
-#### How to test the synchronization process
-
-When changing the `Sonar Text Enterprise` pipeline, it is important to test that the changes are working in the `Sonar Text` repository. 
-
-To do this, follow these steps:
-- replicate the changes minus the `private` folder into the `Sonar Text` repository in a new branch
-- open a PR from this new branch
-- check the Cirrus CI build status of the PR
-
 ### License
 
 Copyright 2012-2024 SonarSource.
