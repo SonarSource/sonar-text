@@ -1,6 +1,9 @@
 # This file should be in private folder but it's not yet possible load function can not be called in a function
 # See: https://sonarsource.atlassian.net/browse/BUILD-4963
-load(".cirrus/modules/helper.star", "merge_dict")
+load(
+    "github.com/SonarSource/cirrus-modules/cloud-native/helper.star@analysis/master",
+    "merge_dict"
+)
 load(".cirrus/modules/env.star", "env")
 load(".cirrus/modules/build.star", "build_task", "sca_scan_task")
 load(

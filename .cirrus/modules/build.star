@@ -1,6 +1,5 @@
 load(
-    "env.star",
-    "env",
+    "github.com/SonarSource/cirrus-modules/cloud-native/env.star@analysis/master",
     "pgp_signing_env",
     "whitesource_api_env"
 )
@@ -26,6 +25,7 @@ def build_env():
     }
     return env
 
+
 # SHARED CANDIDATE?
 # Sonar Text has two sides, private and public and it seems it introduces some complexity in the build
 # Which in turn makes it hard to share the build script with a standard gradle build like Sonar IaC
@@ -35,6 +35,7 @@ def build_script():
         "source .cirrus/use-gradle-wrapper.sh",
         "regular_gradle_build_deploy_analyze ${BUILD_ARGUMENTS}"
     ]
+
 
 # Different from Sonar IaC from many aspects: on_success, project_version related conf, ...
 def build_task():
