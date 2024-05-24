@@ -1,6 +1,6 @@
-load("platform.star", "base_image_container_builder")
+load("github.com/SonarSource/cirrus-modules/cloud-native/platform.star@analysis/master", "base_image_container_builder")
 load(
-    "cache.star",
+    "github.com/SonarSource/cirrus-modules/cloud-native/cache.star@analysis/master",
     "gradle_cache",
     "cleanup_gradle_script",
     "orchestrator_cache",

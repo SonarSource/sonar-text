@@ -2,8 +2,8 @@ load(
     "github.com/SonarSource/cirrus-modules/cloud-native/env.star@analysis/master",
     "promotion_env"
 )
-load("platform.star", "base_image_container_builder")
-load("cache.star", "gradle_cache")
+load("github.com/SonarSource/cirrus-modules/cloud-native/platform.star@analysis/master", "base_image_container_builder")
+load("github.com/SonarSource/cirrus-modules/cloud-native/cache.star@analysis/master", "gradle_cache")
 
 ARTIFACTS = [
     "org.sonarsource.text:sonar-text-plugin:jar",

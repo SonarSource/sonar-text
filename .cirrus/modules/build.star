@@ -3,15 +3,12 @@ load(
     "pgp_signing_env",
     "whitesource_api_env"
 )
-load("conditions.star", "is_main_branch")
-load("platform.star", "base_image_container_builder")
+load("github.com/SonarSource/cirrus-modules/cloud-native/conditions.star@analysis/master", "is_main_branch")
+load("github.com/SonarSource/cirrus-modules/cloud-native/platform.star@analysis/master", "base_image_container_builder")
 load(
-    "cache.star",
+    "github.com/SonarSource/cirrus-modules/cloud-native/cache.star@analysis/master",
     "gradle_cache",
-    "cleanup_gradle_script",
-    "orchestrator_cache",
-    "set_orchestrator_home_script",
-    "mkdir_orchestrator_home_script",
+    "cleanup_gradle_script"
 )
 
 
@@ -42,8 +39,8 @@ def build_task():
     return {
         "build_task": {
             "env": build_env(),
-            "gradle_cache": gradle_cache(),
             "eks_container": base_image_container_builder(cpu=4, memory="8G"),
+            "gradle_cache": gradle_cache(),
             "build_script": build_script(),
             "cleanup_gradle_script": cleanup_gradle_script(),
         }
