@@ -17,8 +17,7 @@ load(
 def build_env():
     env = pgp_signing_env()
     env |= {
-        "DEPLOY_PULL_REQUEST": "true",
-        "BUILD_ARGUMENTS": "-DtrafficInspection=false --parallel --profile -x test -x sonar"
+        "DEPLOY_PULL_REQUEST": "true"
     }
     return env
 
@@ -30,7 +29,7 @@ def build_script():
     return [
         "source cirrus-env BUILD-PRIVATE",
         "source .cirrus/use-gradle-wrapper.sh",
-        "regular_gradle_build_deploy_analyze ${BUILD_ARGUMENTS}"
+        "regular_gradle_build_deploy_analyze"
     ]
 
 
