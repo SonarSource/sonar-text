@@ -9,14 +9,8 @@ plugins {
 dependencies {
     api(libs.sonar.analyzer.commons)
     api(libs.jackson.dataformat.yaml)
-    api(libs.com.networknt.jsonSchemaValidator) {
-        exclude("org.slf4j", "slf4j-api")
-        because("bundles slf4j 2.x")
-    }
-    api(libs.eclipse.jgit) {
-        exclude("org.slf4j", "slf4j-api")
-        because("bundles slf4j 2.x")
-    }
+    api(libs.com.networknt.jsonSchemaValidator)
+    api(libs.eclipse.jgit)
     compileOnly(libs.sonar.plugin.api)
     compileOnly(libs.slf4j.api)
     testImplementation(libs.junit.jupiter)
@@ -25,6 +19,7 @@ dependencies {
     testImplementation(libs.sonar.plugin.api.impl)
     testImplementation(libs.mockito.core)
     testImplementation(libs.sonar.java.checks)
+    testImplementation(libs.logback.classic)
 }
 
 description = "SonarSource Text Analyzer :: Plugin"

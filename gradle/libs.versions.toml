@@ -8,6 +8,7 @@ sonar-orchestrator = "4.9.0.1920"
 sonar-license-api = "3.4"
 sonarlint-core = "9.8.0.76914"
 slf4j = "2.0.12"
+logback = "1.4.12"
 jackson = "2.16.1"
 json-schema-validator = "1.3.3"
 junit = "5.10.2"
@@ -31,6 +32,7 @@ sonar-orchestrator-junit5 = { module = "org.sonarsource.orchestrator:sonar-orche
 sonarlint-core = { module = "org.sonarsource.sonarlint.core:sonarlint-core", version.ref = "sonarlint-core" }
 jackson-dataformat-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jackson" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 com-networknt-jsonSchemaValidator = { module = "com.networknt:json-schema-validator", version.ref = "json-schema-validator" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
