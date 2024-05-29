@@ -19,16 +19,20 @@
  */
 package org.sonar.plugins.secrets.api;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPatternType;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.sonar.plugins.common.TestUtils.inputFileContext;
+import static org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel.constructAuxiliaryPattern;
 
 class AuxiliaryMatcherTest {
 
@@ -37,13 +41,14 @@ class AuxiliaryMatcherTest {
   @ParameterizedTest
   @MethodSource
   void auxiliaryPatternShouldBeDetectedAndCandidateSecretShouldNotBeRemoved(AuxiliaryPatternType patternType, String content,
-    String auxiliaryPattern) {
-    AuxiliaryMatcher auxiliaryMatcher = new AuxiliaryMatcher(
-      patternType, new PatternMatcher("\\b(" + auxiliaryPattern + ")\\b"), Integer.MAX_VALUE);
+    String auxiliaryPattern) throws IOException {
+    var auxiliaryMatcher = AuxiliaryMatcher.build(constructAuxiliaryPattern(patternType, auxiliaryPattern));
 
     List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
 
-    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content, "<test-rule-id>");
+    InputFileContext inputFileContext = inputFileContext(content);
+
+    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
 
     assertThat(result).containsExactlyElementsOf(candidateSecrets);
   }
@@ -71,13 +76,14 @@ class AuxiliaryMatcherTest {
 
   @ParameterizedTest
   @MethodSource
-  void auxiliaryPatternShouldRemoveCandidateSecrets(AuxiliaryPatternType patternType, String content, String auxiliaryPattern) {
-    AuxiliaryMatcher auxiliaryMatcher = new AuxiliaryMatcher(
-      patternType, new PatternMatcher("\\b(" + auxiliaryPattern + ")\\b"), Integer.MAX_VALUE);
+  void auxiliaryPatternShouldRemoveCandidateSecrets(AuxiliaryPatternType patternType, String content, String auxiliaryPattern) throws IOException {
+    var auxiliaryMatcher = AuxiliaryMatcher.build(constructAuxiliaryPattern(patternType, auxiliaryPattern));
 
     List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
 
-    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content, "<test-rule-id>");
+    InputFileContext inputFileContext = inputFileContext(content);
+
+    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
 
     assertThat(result).isEmpty();
   }
@@ -95,41 +101,93 @@ class AuxiliaryMatcherTest {
   }
 
   @Test
-  void auxiliaryPatternShouldNotRemoveCandidateSecretsBecauseAuxPatternIsInDistance() {
-    AuxiliaryMatcher auxiliaryMatcher = new AuxiliaryMatcher(
-      AuxiliaryPatternType.PATTERN_AFTER, new PatternMatcher("\\b(auxPattern)\\b"), 200);
+  void auxiliaryPatternShouldNotRemoveCandidateSecretsBecauseAuxPatternIsInCharacterDistance() throws IOException {
+    var auxiliaryPattern = constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AFTER, "auxPattern");
+    auxiliaryPattern.setMaxCharacterDistance(200);
+    var auxiliaryMatcher = AuxiliaryMatcher.build(auxiliaryPattern);
 
     String content = "candidate secret and candidate secret and auxPattern";
     List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
 
-    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content, "<test-rule-id>");
+    InputFileContext inputFileContext = inputFileContext(content);
+    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
 
     assertThat(result).containsExactlyElementsOf(candidateSecrets);
   }
 
   @Test
-  void auxiliaryPatternShouldRemoveCandidateSecretsBecauseAuxPatternIsOutOfDistance() {
-    AuxiliaryMatcher auxiliaryMatcher = new AuxiliaryMatcher(
-      AuxiliaryPatternType.PATTERN_AFTER, new PatternMatcher("\\b(auxPattern)\\b"), 2);
+  void auxiliaryPatternShouldRemoveCandidateSecretsBecauseAuxPatternIsOutOfCharacterDistance() throws IOException {
+    var auxiliaryPattern = constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AFTER, "auxPattern");
+    auxiliaryPattern.setMaxCharacterDistance(2);
+    var auxiliaryMatcher = AuxiliaryMatcher.build(auxiliaryPattern);
 
     String content = "candidate secret and candidate secret and auxPattern";
     List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
 
-    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content, "<test-rule-id>");
+    InputFileContext inputFileContext = inputFileContext(content);
+    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
 
     assertThat(result).isEmpty();
   }
 
   @Test
-  void auxiliaryPatternShouldRemoveOneCandidateSecretsBecauseItIsOutOfDistance() {
-    AuxiliaryMatcher auxiliaryMatcher = new AuxiliaryMatcher(
-      AuxiliaryPatternType.PATTERN_AFTER, new PatternMatcher("\\b(auxPattern)\\b"), 10);
+  void auxiliaryPatternShouldRemoveOneCandidateSecretsBecauseItIsOutOfCharacterDistance() throws IOException {
+    var auxiliaryPattern = constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AFTER, "auxPattern");
+    auxiliaryPattern.setMaxCharacterDistance(10);
+    var auxiliaryMatcher = AuxiliaryMatcher.build(auxiliaryPattern);
 
     String content = "candidate secret and candidate secret and auxPattern";
     List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
 
-    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, content, "<test-rule-id>");
+    InputFileContext inputFileContext = inputFileContext(content);
+    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
 
     assertThat(result).containsExactly(candidateSecrets.get(1));
   }
+
+  @Test
+  void auxiliaryPatternShouldNotRemoveCandidateSecretsBecauseAuxPatternIsInLineDistance() throws IOException {
+    var auxiliaryPattern = constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AFTER, "auxPattern");
+    auxiliaryPattern.setMaxLineDistance(0);
+    var auxiliaryMatcher = AuxiliaryMatcher.build(auxiliaryPattern);
+
+    String content = "candidate secret and candidate secret and auxPattern";
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
+
+    InputFileContext inputFileContext = inputFileContext(content);
+    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
+
+    assertThat(result).containsExactlyElementsOf(candidateSecrets);
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "0,0",
+    "1,0",
+    "2,1",
+    "3,1",
+    "4,2",
+    "5,2"
+  })
+  void auxiliaryPatternShouldFilterCandidateSecretsAccordingToLineDistance(int maxLineDistance, int expectedMatches) throws IOException {
+    var auxiliaryPattern = constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AFTER, "auxPattern");
+    auxiliaryPattern.setMaxLineDistance(maxLineDistance);
+    var auxiliaryMatcher = AuxiliaryMatcher.build(auxiliaryPattern);
+
+    String content = """
+      content
+       candidate secret
+       and
+       candidate secret
+       and filler
+       and auxPattern""";
+
+    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
+
+    InputFileContext inputFileContext = inputFileContext(content);
+    List<Match> result = auxiliaryMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
+
+    assertThat(result).hasSize(expectedMatches);
+  }
+
 }

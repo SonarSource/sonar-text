@@ -24,17 +24,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.fs.TextPointer;
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.rule.RuleKey;
-
-import static java.util.Objects.requireNonNull;
 
 public class InputFileContext {
 
@@ -49,6 +49,12 @@ public class InputFileContext {
 
   private final List<String> lines;
 
+  // sorted set of the start offset of each line
+  private final TreeSet<Integer> lineStartOffsets;
+
+  // maps the start offset of a line to the line number
+  private final Map<Integer, Integer> offsetToLine;
+
   private final String normalizedContent;
 
   // Used to verify, that we don't raise more than one secret issue for any overlapping text range, regardless of the secret
@@ -57,8 +63,10 @@ public class InputFileContext {
   public InputFileContext(SensorContext sensorContext, InputFile inputFile) throws IOException {
     this.sensorContext = sensorContext;
     this.inputFile = inputFile;
-    boolean checkNonTextCharacters = inputFile.language() == null;
+    this.lineStartOffsets = new TreeSet<>();
+    this.offsetToLine = new HashMap<>();
     List<String> contentLines = new ArrayList<>();
+    boolean checkNonTextCharacters = inputFile.language() == null;
     try (var in = inputFile.inputStream()) {
       var reader = new BufferedReader(new InputStreamReader(in, inputFile.charset()));
       String line = reader.readLine();
@@ -75,24 +83,23 @@ public class InputFileContext {
     }
     hasNonTextCharacters = false;
     lines = contentLines;
-    normalizedContent = String.join("\n", contentLines);
+    normalizedContent = buildNormalizedContentAndCalculateOffsets();
   }
 
-  public boolean hasNonTextCharacters() {
-    return hasNonTextCharacters;
-  }
+  private String buildNormalizedContentAndCalculateOffsets() {
+    var stringBuilder = new StringBuilder();
+    for (var i = 0; i < lines.size(); i++) {
+      int lineStartOffset = stringBuilder.length();
+      int lineNumber = i + 1;
+      lineStartOffsets.add(lineStartOffset);
+      offsetToLine.put(lineStartOffset, lineNumber);
 
-  public String content() {
-    return normalizedContent;
-  }
-
-  public List<String> lines() {
-    return lines;
-  }
-
-  @Override
-  public String toString() {
-    return inputFile.toString();
+      stringBuilder.append(lines.get(i));
+      if (i < lines.size() - 1) {
+        stringBuilder.append(LINE_FEED);
+      }
+    }
+    return stringBuilder.toString();
   }
 
   public void reportTextIssue(RuleKey ruleKey, int line, String message) {
@@ -124,35 +131,64 @@ public class InputFileContext {
   }
 
   public TextRange newTextRangeFromFileOffsets(int startOffset, int endOffset) {
-    var lineNumber = 1;
-    TextPointer startPointer = null;
-    var currentLineStartOffset = 0;
-    var charOffset = 0;
-    for (; charOffset < normalizedContent.length(); charOffset++) {
-      if (charOffset == startOffset) {
-        startPointer = inputFile.newPointer(lineNumber, startOffset - currentLineStartOffset);
-      }
-      if (charOffset == endOffset) {
-        TextPointer endPointer = inputFile.newPointer(lineNumber, endOffset - currentLineStartOffset);
-        return inputFile.newRange(requireNonNull(startPointer), endPointer);
-      }
+    var lineStartOfStartOffset = lineStartOffSet(startOffset);
+    var lineStartOfEndOffset = lineStartOffSet(endOffset);
 
-      if (normalizedContent.charAt(charOffset) == LINE_FEED) {
-        lineNumber++;
-        currentLineStartOffset = charOffset + 1;
-      }
+    var startOffSetLineNumber = offsetToLine.get(lineStartOfStartOffset);
+    var endOffSetLineNumber = offsetToLine.get(lineStartOfEndOffset);
+
+    try {
+      var startPointer = inputFile.newPointer(startOffSetLineNumber, startOffset - lineStartOfStartOffset);
+      var endPointer = inputFile.newPointer(endOffSetLineNumber, endOffset - lineStartOfEndOffset);
+      return inputFile.newRange(startPointer, endPointer);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalStateException("Invalid offsets: startOffset=" + startOffset + ", endOffset=" + endOffset, e);
     }
-    // check again in case the end offset is after the last character
-    if (startPointer != null && charOffset == endOffset) {
-      TextPointer endPointer = inputFile.newPointer(lineNumber, endOffset - currentLineStartOffset);
-      return inputFile.newRange(requireNonNull(startPointer), endPointer);
+  }
+
+  /**
+   * Returns the start offset of the line containing the given offset
+   * @param offset the offset
+   * @return the start offset of the line containing the given offset
+   * @throws IllegalStateException if the offset is invalid, most likely because it is negative
+   */
+  public int lineStartOffSet(int offset) {
+    Integer floor = lineStartOffsets.floor(offset);
+    if (floor == null) {
+      throw new IllegalStateException("Invalid offset: offset=" + offset);
     }
-    // should not happen as input parameters are supposed to be valid offsets
-    throw new IllegalStateException("Invalid offsets: startOffset=" + startOffset + ", endOffset=" + endOffset);
+    return floor;
+  }
+
+  /**
+   * Returns the line number of the line containing the given offset
+   * @param offset the offset
+   * @return the line number of the line containing the given offset
+   */
+  public int offsetToLineNumber(int offset) {
+    Integer floor = lineStartOffSet(offset);
+    return offsetToLine.get(floor);
   }
 
   public boolean overlappingSecretAlreadyReported(TextRange textRange) {
     return reportedSecretIssues.stream().anyMatch(textRange::overlap);
+  }
+
+  public boolean hasNonTextCharacters() {
+    return hasNonTextCharacters;
+  }
+
+  public String content() {
+    return normalizedContent;
+  }
+
+  public List<String> lines() {
+    return lines;
+  }
+
+  @Override
+  public String toString() {
+    return inputFile.toString();
   }
 
   public InputFile getInputFile() {

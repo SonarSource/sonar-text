@@ -63,7 +63,10 @@ provider:
             matchEither:
               - patternBefore: "\\b(pattern-before)\\b"
               - matchNot:
-                  patternBefore: "\\b(match-not-before)\\b"
+                  patternBefore:
+                    pattern: "\\b(match-not-before)\\b"
+                    maxCharDistance: 100
+                    maxLineDistance: 50
               - matchEach:
                   - patternAfter: "\\b(pattern-after)\\b"
                   - patternAround: "\\b(pattern-around)\\b"
@@ -71,7 +74,7 @@ provider:
                   - patternNot: "\\b(pattern-not)\\b"
                   - patternAround:
                       pattern: "\\b(pattern-around-with-maxDistance)\\b"
-                      maxDistance: 100
+                      maxCharDistance: 100
         post:
           statisticalFilter:
             threshold: 4.2

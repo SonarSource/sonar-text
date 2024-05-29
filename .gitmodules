@@ -6,3 +6,7 @@
 	path = private/its/benchmark/src/integrationTest/resources/sources/cnaf
 	url = https://github.com/Wenzel/CNAF.git
 	ignore = dirty
+[submodule "private/its/benchmark/src/integrationTest/resources/sources/cloudCustodian"]
+	path = private/its/benchmark/src/integrationTest/resources/sources/cloudCustodian
+	url = https://github.com/cloud-custodian/cloud-custodian.git
+	ignore = dirty

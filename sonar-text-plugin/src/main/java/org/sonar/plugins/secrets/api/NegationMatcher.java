@@ -21,6 +21,7 @@ package org.sonar.plugins.secrets.api;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.sonar.plugins.common.InputFileContext;
 
 /**
  * A {@link AuxiliaryPatternMatcher} which negates the matches found by another {@link AuxiliaryPatternMatcher}.
@@ -37,8 +38,8 @@ public class NegationMatcher implements AuxiliaryPatternMatcher {
   }
 
   @Override
-  public List<Match> filter(List<Match> candidateMatches, String content, String ruleId) {
-    List<Match> matches = matcher.filter(candidateMatches, content, ruleId);
+  public List<Match> filter(List<Match> candidateMatches, InputFileContext inputFileContext, String ruleId) {
+    List<Match> matches = matcher.filter(candidateMatches, inputFileContext, ruleId);
     return candidateMatches.stream()
       .filter(candidate -> !matches.contains(candidate))
       .collect(Collectors.toList());

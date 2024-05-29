@@ -25,6 +25,8 @@ import java.nio.file.Path;
 import java.util.Collection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
@@ -80,6 +82,24 @@ class InputFileContextTest {
     assertThat(range.start().line()).isEqualTo(4);
     assertThat(range.start().lineOffset()).isZero();
     assertThat(range.end().line()).isEqualTo(4);
+    assertThat(range.end().lineOffset()).isEqualTo(6);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+    "\n",
+    "\r\n",
+    "\r",
+  })
+  void lineSeparatorsShouldBeNormalized(String separator) throws IOException {
+    InputFileContext ctx = inputFileContext("first" + separator + "second");
+
+    TextRange range = ctx.newTextRangeFromFileOffsets(0, 12);
+
+    assertThat(ctx.lines()).hasSize(2);
+    assertThat(range.start().line()).isEqualTo(1);
+    assertThat(range.start().lineOffset()).isZero();
+    assertThat(range.end().line()).isEqualTo(2);
     assertThat(range.end().lineOffset()).isEqualTo(6);
   }
 

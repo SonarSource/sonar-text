@@ -30,6 +30,8 @@ public class AuxiliaryPattern implements Match {
   private String pattern;
   @Nullable
   private Integer maxCharacterDistance;
+  @Nullable
+  private Integer maxLineDistance;
 
   public AuxiliaryPatternType getType() {
     return type;
@@ -54,5 +56,14 @@ public class AuxiliaryPattern implements Match {
 
   public void setMaxCharacterDistance(@Nullable Integer maxCharacterDistance) {
     this.maxCharacterDistance = maxCharacterDistance;
+  }
+
+  @Nullable
+  public Integer getMaxLineDistance() {
+    return maxLineDistance;
+  }
+
+  public void setMaxLineDistance(@Nullable Integer maxLineDistance) {
+    this.maxLineDistance = maxLineDistance;
   }
 }

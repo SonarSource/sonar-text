@@ -20,6 +20,7 @@
 package org.sonar.plugins.secrets.api;
 
 import java.util.List;
+import org.sonar.plugins.common.InputFileContext;
 
 /**
  * A {@link AuxiliaryPatternMatcher} which conjuncts both filtering results of the provided {@link AuxiliaryPatternMatcher}.
@@ -40,9 +41,9 @@ public class ConjunctionMatcher implements AuxiliaryPatternMatcher {
   }
 
   @Override
-  public List<Match> filter(List<Match> regexMatch, String content, String ruleId) {
-    List<Match> matchesLeft = matcherLeft.filter(regexMatch, content, ruleId);
-    List<Match> matchesRight = matcherRight.filter(regexMatch, content, ruleId);
+  public List<Match> filter(List<Match> regexMatch, InputFileContext inputFileContext, String ruleId) {
+    List<Match> matchesLeft = matcherLeft.filter(regexMatch, inputFileContext, ruleId);
+    List<Match> matchesRight = matcherRight.filter(regexMatch, inputFileContext, ruleId);
     matchesRight.retainAll(matchesLeft);
     return matchesRight;
   }

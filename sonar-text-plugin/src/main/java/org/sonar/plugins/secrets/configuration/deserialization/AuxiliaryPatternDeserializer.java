@@ -25,11 +25,10 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
-
-import com.fasterxml.jackson.databind.node.TextNode;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPatternType;
 
@@ -48,9 +47,19 @@ public class AuxiliaryPatternDeserializer extends JsonDeserializer<AuxiliaryPatt
     if (node.getValue() instanceof TextNode) {
       auxiliaryPattern.setPattern(node.getValue().asText());
     } else {
-      auxiliaryPattern.setPattern(node.getValue().get("pattern").asText());
-      auxiliaryPattern.setMaxCharacterDistance(node.getValue().get("maxDistance").asInt());
+      JsonNode value = node.getValue();
+      auxiliaryPattern.setPattern(value.get("pattern").asText());
+      auxiliaryPattern.setMaxLineDistance(getOrNull(value, "maxLineDistance"));
+      auxiliaryPattern.setMaxCharacterDistance(getOrNull(value, "maxCharDistance"));
     }
     return auxiliaryPattern;
+  }
+
+  private static Integer getOrNull(JsonNode node, String fieldName) {
+    JsonNode childNode = node.get(fieldName);
+    if (childNode != null) {
+      return childNode.asInt();
+    }
+    return null;
   }
 }

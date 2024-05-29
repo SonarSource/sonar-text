@@ -20,6 +20,7 @@
 package org.sonar.plugins.secrets.api;
 
 import java.util.List;
+import org.sonar.plugins.common.InputFileContext;
 
 /**
  * Interface for all auxiliary matcher.
@@ -31,11 +32,11 @@ public interface AuxiliaryPatternMatcher {
   /**
    * Filters the list of {@link Match candidateMatches} based on the content. The actual filtering behavior is dependent on the actual implementation.
    * @param candidateMatches matches to be filtered
-   * @param content content where the matches where found
+   * @param inputFileContext inputFileContext containing the content where the matches where found
    * @param ruleId id of the rule this matcher stems from. Useful for logging.
    * @return list of filtered matches
    */
-  List<Match> filter(List<Match> candidateMatches, String content, String ruleId);
+  List<Match> filter(List<Match> candidateMatches, InputFileContext inputFileContext, String ruleId);
 
   /**
    * Returns a new {@link AuxiliaryPatternMatcher}, which conjuncts the results of this {@link AuxiliaryPatternMatcher} and the provided secondMatcher.
@@ -70,7 +71,7 @@ public interface AuxiliaryPatternMatcher {
   class DefaultAuxiliaryMatcher implements AuxiliaryPatternMatcher {
 
     @Override
-    public List<Match> filter(List<Match> candidateMatches, String content, String ruleId) {
+    public List<Match> filter(List<Match> candidateMatches, InputFileContext inputFileContext, String ruleId) {
       return candidateMatches;
     }
   }

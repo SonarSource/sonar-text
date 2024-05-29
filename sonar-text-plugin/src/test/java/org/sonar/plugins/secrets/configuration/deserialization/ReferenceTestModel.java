@@ -159,7 +159,10 @@ public class ReferenceTestModel {
 
     BooleanCombination matchNot = new BooleanCombination();
     matchNot.setType(BooleanCombinationType.MATCH_NOT);
-    matchNot.setMatches(List.of(constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_BEFORE, "\\b(match-not-before)\\b")));
+    AuxiliaryPattern patternBeforeInMatchNot = constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_BEFORE, "\\b(match-not-before)\\b");
+    patternBeforeInMatchNot.setMaxLineDistance(50);
+    patternBeforeInMatchNot.setMaxCharacterDistance(100);
+    matchNot.setMatches(List.of(patternBeforeInMatchNot));
 
     BooleanCombination matchEach = new BooleanCombination();
     matchEach.setType(BooleanCombinationType.MATCH_EACH);

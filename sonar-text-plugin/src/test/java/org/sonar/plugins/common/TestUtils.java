@@ -140,6 +140,10 @@ public class TestUtils {
       .toArray(String[]::new);
   }
 
+  public static InputFileContext inputFileContext(String fileContent) throws IOException {
+    return inputFileContext(inputFile(fileContent));
+  }
+
   public static InputFileContext inputFileContext(InputFile inputFile) throws IOException {
     var sensorContext = SensorContextTester.create(Paths.get("."));
     return new InputFileContext(sensorContext, inputFile);

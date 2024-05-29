@@ -58,6 +58,8 @@ class AuxiliaryPatternMatcherFactoryTest {
     AuxiliaryPattern patternBefore = ReferenceTestModel.constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_BEFORE, "\\b(pattern" +
       "-before)\\b");
     AuxiliaryPattern patternBeforeForMatchNot = ReferenceTestModel.constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_BEFORE, "\\b(match-not-before)\\b");
+    patternBeforeForMatchNot.setMaxCharacterDistance(100);
+    patternBeforeForMatchNot.setMaxLineDistance(50);
     AuxiliaryPattern patternAfter = ReferenceTestModel.constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AFTER, "\\b(pattern-after)" +
       "\\b");
     AuxiliaryPattern patternAround = ReferenceTestModel.constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AROUND, "\\b(pattern" +
