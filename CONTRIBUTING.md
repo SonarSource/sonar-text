@@ -178,9 +178,9 @@ patternNot:
   - "`+[^`]*`+"
   # JS Template strings ${...}, Python template strings {...}
   - ^\$?\{[^}]++}$
-  # Bash substitutions $...
-  - ^\$[\w]$
-  - "^\\$[a-z_]+pass(word)?$"
+  # Bash substitutions $..., $$... when it is escaped (in docker compose file for example)
+  - ^\${1,2}[\w]$
+  - "^\\${1,2}[a-z_]+pass(word)?$"
   # Ruby String Interpolation #{...}, #{...}#
   - ^#\{[^}]++}#?$
   #  $(...)
