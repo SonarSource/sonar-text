@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIf;
 import org.sonar.api.internal.apachecommons.io.FileUtils;
@@ -127,14 +125,14 @@ class SecretsRegexTest {
     return specificationLoader.getRulesMappedToKey().entrySet().stream()
       .map(this::toPatternLocation)
       .flatMap(Collection::stream)
-      .collect(Collectors.toList());
+      .toList();
   }
 
   private List<PatternLocation> toPatternLocation(Map.Entry<String, List<Rule>> entry) {
     return entry.getValue().stream()
       .map(this::ruleToRegexes)
       .flatMap(Collection::stream)
-      .collect(Collectors.toList());
+      .toList();
   }
 
   private List<PatternLocation> ruleToRegexes(Rule rule) {
@@ -150,8 +148,8 @@ class SecretsRegexTest {
         rule.getDetection().getMatching().getPattern().replace("\\", "\\\\")));
     }
 
-    Match context = rule.getDetection().getMatching().getContext();
-    addMatchToRegexes(context, patternLocations, rspecKey, secretRuleId);
+    Match matchContext = rule.getDetection().getMatching().getContext();
+    addMatchToRegexes(matchContext, patternLocations, rspecKey, secretRuleId);
 
     if (rule.getDetection().getPost() != null && rule.getDetection().getPost().getPatternNot() != null) {
       rule.getDetection().getPost().getPatternNot().stream()
@@ -164,13 +162,11 @@ class SecretsRegexTest {
   }
 
   private void addMatchToRegexes(Match match, List<PatternLocation> regexes, String rspecKey, String secretRuleId) {
-    if (match instanceof AuxiliaryPattern) {
-      AuxiliaryPattern auxiliaryPattern = (AuxiliaryPattern) match;
+    if (match instanceof AuxiliaryPattern auxiliaryPattern) {
       var p = new PatternLocation(rspecKey, secretRuleId, "auxiliary-" + auxiliaryPattern.getType().toString(), auxiliaryPattern.getPattern());
       regexes.add(p);
     }
-    if (match instanceof BooleanCombination) {
-      BooleanCombination booleanCombination = (BooleanCombination) match;
+    if (match instanceof BooleanCombination booleanCombination) {
       booleanCombination.getMatches().forEach(m -> addMatchToRegexes(m, regexes, rspecKey, secretRuleId));
     }
   }

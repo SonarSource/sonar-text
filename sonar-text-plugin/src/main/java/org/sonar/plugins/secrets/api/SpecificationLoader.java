@@ -40,17 +40,31 @@ public class SpecificationLoader {
   private static final Logger LOG = LoggerFactory.getLogger(SpecificationLoader.class);
 
   public static final String DEFAULT_SPECIFICATION_LOCATION = "org/sonar/plugins/secrets/configuration/";
+  public static final ExceptionHandler DEFAULT_EXCEPTION_HANDLER = (e, specificationFileName) -> LOG.warn("{}: Could not load specification from file: {}",
+    e.getClass().getSimpleName(), specificationFileName);
   private final Map<String, List<Rule>> rulesMappedToKey;
+  private final ExceptionHandler exceptionHandler;
 
   public SpecificationLoader() {
-    this(DEFAULT_SPECIFICATION_LOCATION, existingSecretSpecifications());
+    this(DEFAULT_SPECIFICATION_LOCATION, existingSecretSpecifications(), DEFAULT_EXCEPTION_HANDLER);
   }
 
   public SpecificationLoader(String specificationLocation, Set<String> specifications) {
+    this(specificationLocation, specifications, DEFAULT_EXCEPTION_HANDLER);
+  }
+
+  /**
+   * Create a new SpecificationLoader.
+   * @param specificationLocation Directory containing the specification files.
+   * @param specifications Set of specification file names.
+   * @param exceptionHandler Handler for exceptions that occur during specification loading.
+   */
+  public SpecificationLoader(String specificationLocation, Set<String> specifications, ExceptionHandler exceptionHandler) {
+    this.exceptionHandler = exceptionHandler;
     rulesMappedToKey = initialize(specificationLocation, specifications);
   }
 
-  private static Map<String, List<Rule>> initialize(String specificationLocation, Set<String> specifications) {
+  private Map<String, List<Rule>> initialize(String specificationLocation, Set<String> specifications) {
     if (specifications.isEmpty()) {
       return Collections.emptyMap();
     }
@@ -62,7 +76,7 @@ public class SpecificationLoader {
       try {
         specification = loadSpecification(specificationLocation, specificationFileName);
       } catch (DeserializationException | SchemaValidationException e) {
-        LOG.warn("{}: Could not load specification from file: {}", e.getClass().getSimpleName(), specificationFileName);
+        exceptionHandler.handle(e, specificationFileName);
         continue;
       }
 
@@ -85,5 +99,17 @@ public class SpecificationLoader {
 
   public Map<String, List<Rule>> getRulesMappedToKey() {
     return rulesMappedToKey;
+  }
+
+  /**
+   * A functional interface representing a handler for exceptions that occur during specification loading.
+   */
+  public interface ExceptionHandler {
+    /**
+     * Handle an exception that occurred during specification loading.
+     * @param throwable The exception that occurred.
+     * @param specificationFileName The name of the specification file that was being loaded.
+     */
+    void handle(Throwable throwable, String specificationFileName);
   }
 }

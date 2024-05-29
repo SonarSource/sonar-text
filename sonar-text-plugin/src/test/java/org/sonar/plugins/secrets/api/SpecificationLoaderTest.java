@@ -20,9 +20,11 @@
 package org.sonar.plugins.secrets.api;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
@@ -31,7 +33,10 @@ import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestMode
 import org.sonar.plugins.secrets.configuration.model.Rule;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.sonar.plugins.secrets.SecretsSpecificationFilesDefinition.existingSecretSpecifications;
+import static org.sonar.plugins.secrets.api.SpecificationLoader.DEFAULT_SPECIFICATION_LOCATION;
 
+@Order(1)
 class SpecificationLoaderTest {
 
   @RegisterExtension
@@ -39,8 +44,15 @@ class SpecificationLoaderTest {
 
   @Test
   void shouldLoadRulesWithoutErrors() {
-    SpecificationLoader specificationLoader = new SpecificationLoader();
+    var errors = new HashSet<Throwable>();
+    SpecificationLoader specificationLoader = new SpecificationLoader(
+      DEFAULT_SPECIFICATION_LOCATION, existingSecretSpecifications(),
+      (e, specificationFileName) -> errors.add(e));
     Map<String, List<Rule>> rulesMappedToKey = specificationLoader.getRulesMappedToKey();
+
+    assertThat(errors)
+      .as("No errors are expected during loading of specifications")
+      .isEmpty();
 
     assertThat(rulesMappedToKey.values()).hasSize(new SecretsCheckList().checks().size());
     assertThat(logTester.getLogs()).isEmpty();

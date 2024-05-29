@@ -1,3 +1,7 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
+import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
+
 plugins {
     id("org.sonarsource.text.java-conventions")
     id("org.sonarsource.text.artifactory-configuration")
@@ -30,9 +34,9 @@ tasks.test {
     systemProperty("filename", System.getProperty("filename"))
     testLogging {
         // log the full stack trace (default is the 1st line of the stack trace)
-        exceptionFormat =
-            org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-        events("skipped", "failed") // verbose log for failed and skipped tests (by default the name of the tests are not logged)
+        exceptionFormat = TestExceptionFormat.FULL
+        // verbose log for failed and skipped tests (by default the name of the tests are not logged)
+        events(SKIPPED, FAILED)
     }
 }
 

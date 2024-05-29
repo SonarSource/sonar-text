@@ -23,6 +23,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -30,6 +31,7 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.extension.TestInstantiationException;
 import org.junit.jupiter.api.function.Executable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
+import static org.sonar.plugins.secrets.SecretsSpecificationFilesDefinition.existingSecretSpecifications;
 import static org.sonar.plugins.secrets.utils.TestUtils.mockDurationStatistics;
 
 public abstract class AbstractRuleExampleTest {
@@ -56,14 +59,24 @@ public abstract class AbstractRuleExampleTest {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractRuleExampleTest.class);
   private static SpecificationLoader specificationLoader;
   private final SpecificationBasedCheck check;
+  private final Collection<Throwable> loaderExceptions = new HashSet<>();
 
   protected AbstractRuleExampleTest(SpecificationBasedCheck check) {
     if (specificationLoader == null) {
-      specificationLoader = new SpecificationLoader();
+      specificationLoader = new SpecificationLoader(
+        SpecificationLoader.DEFAULT_SPECIFICATION_LOCATION, existingSecretSpecifications(),
+        (e, ignored) -> loaderExceptions.add(e));
     }
 
     this.check = check;
     check.initialize(specificationLoader, mockDurationStatistics());
+
+    if (!loaderExceptions.isEmpty()) {
+      for (Throwable e : loaderExceptions) {
+        LOG.error("Exception loading specification", e);
+      }
+      throw new TestInstantiationException("Failed to load specification", loaderExceptions.iterator().next());
+    }
   }
 
   @TestFactory
