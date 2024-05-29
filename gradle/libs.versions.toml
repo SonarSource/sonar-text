@@ -19,6 +19,7 @@ spotless-gradle = "6.25.0"
 blowdryer-gradle = "1.7.1"
 yguard = "4.1.0"
 eclipse-jgit = "6.8.0.202311291450-r"
+commons-io = "2.16.1"
 
 [libraries]
 sonar-analyzer-commons = { module = "org.sonarsource.analyzer-commons:sonar-analyzer-commons", version.ref = "sonar-commons" }
@@ -43,3 +44,4 @@ diffplug-blowdryer = { module = "com.diffplug:blowdryer", version.ref = "blowdry
 sonar-license-api = { module = "com.sonarsource.license:license-api", version.ref = "sonar-license-api" }
 yguard = { module = "com.yworks:yguard", version.ref = "yguard"}
 eclipse-jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "eclipse-jgit" }
+commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }

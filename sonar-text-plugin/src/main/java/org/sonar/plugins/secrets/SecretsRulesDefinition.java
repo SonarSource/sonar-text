@@ -41,6 +41,8 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
 
   @Override
   public List<Class<?>> checks() {
+    // The list now is generated dynamically, the generation logic can be found in
+    // org.sonarsource.text.check-list-generator.gradle.kts
     return new SecretsCheckList().checks();
   }
 }

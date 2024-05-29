@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -100,10 +99,7 @@ class UpdatingSpecificationFilesGenerator {
       newCheckNames.add(checkName);
     }
 
-    Set<String> checkNamesNotUsedAnymore = keysNotUsedAnymore.stream().map(existingKeysMappedToFileName::get).collect(Collectors.toSet());
-
     removeUnusedChecks(keysNotUsedAnymore, existingKeysMappedToFileName);
-    writeUpdatedRulesDefinition(newCheckNames, checkNamesNotUsedAnymore);
     constructFileForRulesAPI(keysToImplementChecksFor);
   }
 
@@ -226,51 +222,6 @@ class UpdatingSpecificationFilesGenerator {
     LOG.info("Successfully removed Check \"{}\" with rspecKey %s", checkName);
   }
 
-  private void writeUpdatedRulesDefinition(List<String> checkNames, Set<String> checkNamesNotUsedAnymore) {
-    Set<String> uniqueCheckNames = new SecretsCheckList().checks().stream().map(Class::getSimpleName).collect(Collectors.toSet());
-    uniqueCheckNames.addAll(checkNames);
-    uniqueCheckNames.removeAll(checkNamesNotUsedAnymore);
-
-    List<String> updatedCheckNames = new ArrayList<>(uniqueCheckNames);
-
-    Collections.sort(updatedCheckNames);
-
-    Path checkTestTemplatePath = Path.of(TEMPLATE_PATH_PREFIX, "SecretsCheckListTemplate.java");
-    Path rulesDefPath = Path.of(SECRETS_MODULE_PATH_PREFIX, "SecretsCheckList.java");
-    try {
-      Files.copy(checkTestTemplatePath, rulesDefPath, StandardCopyOption.REPLACE_EXISTING);
-
-      String content = Files.readString(rulesDefPath, charset);
-      content = content.replace("//<REPLACE-WITH-IMPORTS-OF-ALL-CHECKS>", generateImportsFor(updatedCheckNames));
-      content = content.replace("//<REPLACE-WITH-LIST-OF-CHECKS>", generateChecksMethodFor(updatedCheckNames));
-      Files.write(rulesDefPath, content.getBytes(charset));
-    } catch (IOException e) {
-      LOG.error("Error when updating SecretRulesDefinition.java, please fix manually", e);
-      throw new RuntimeException(e);
-    }
-
-    LOG.info("Successfully updated SecretRulesDefinition.java");
-  }
-
-  private String generateChecksMethodFor(List<String> checkNames) {
-    StringBuilder sb = new StringBuilder();
-
-    sb.append("private static final List<Class<?>> SECRET_CHECKS = List.of(");
-    sb.append(System.lineSeparator());
-    for (int i = 0; i < checkNames.size(); i++) {
-      sb.append("  ");
-      sb.append(checkNames.get(i));
-      sb.append(".class");
-      if (i == checkNames.size() - 1) {
-        sb.append(");");
-      } else {
-        sb.append(",");
-        sb.append(System.lineSeparator());
-      }
-    }
-    return sb.toString();
-  }
-
   private String generateSpecificationDefinitionSet(List<String> fileNames) {
     StringBuilder sb = new StringBuilder();
 
@@ -288,18 +239,6 @@ class UpdatingSpecificationFilesGenerator {
       sb.append(System.lineSeparator());
     }
     sb.append("  }");
-    return sb.toString();
-  }
-
-  private String generateImportsFor(List<String> checkNames) {
-    StringBuilder sb = new StringBuilder();
-
-    for (String checkName : checkNames) {
-      sb.append("import org.sonar.plugins.secrets.checks.");
-      sb.append(checkName);
-      sb.append(";");
-      sb.append(System.lineSeparator());
-    }
     return sb.toString();
   }
 

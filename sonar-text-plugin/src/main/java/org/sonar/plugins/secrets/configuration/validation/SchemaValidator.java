@@ -24,12 +24,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SchemaValidatorsConfig;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
 import java.io.InputStream;
+import java.util.Locale;
 import java.util.Set;
 
-public class SchemaValidator {
+public final class SchemaValidator {
 
   private static final String FILE_LOCATION = "/org/sonar/plugins/secrets/configuration/specifications/";
   private static final String VALIDATION_SCHEMA_FILE = "specification-json-schema.json";
@@ -37,6 +39,7 @@ public class SchemaValidator {
   private static final JsonSchema SPECIFICATION_VALIDATION_SCHEMA;
 
   private SchemaValidator() {
+    // Utility class
   }
 
   static {
@@ -46,13 +49,15 @@ public class SchemaValidator {
       .build();
     InputStream validationSchema = SchemaValidator.class.getResourceAsStream(FILE_LOCATION + VALIDATION_SCHEMA_FILE);
 
-    SPECIFICATION_VALIDATION_SCHEMA = schemaFactory.getSchema(validationSchema);
+    var config = new SchemaValidatorsConfig();
+    config.setLocale(Locale.ENGLISH);
+    SPECIFICATION_VALIDATION_SCHEMA = schemaFactory.getSchema(validationSchema, config);
   }
 
   public static void validateSpecification(JsonNode specification, String fileName) {
     Set<ValidationMessage> validate = validate(specification);
     if (!validate.isEmpty()) {
-      String errorMessage = String.format("Specification file \"%s\" failed the schema validation", fileName);
+      var errorMessage = "Specification file \"%s\" failed the schema validation".formatted(fileName);
       throw new SchemaValidationException(errorMessage);
     }
   }

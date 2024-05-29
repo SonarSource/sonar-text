@@ -7,4 +7,5 @@ dependencies {
     implementation(libs.sonar.scanner.gradle)
     implementation(libs.diffplug.spotless)
     implementation(libs.diffplug.blowdryer)
+    implementation(libs.commons.io)
 }

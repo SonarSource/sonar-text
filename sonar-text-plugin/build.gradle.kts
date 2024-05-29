@@ -6,6 +6,7 @@ plugins {
     id("org.sonarsource.text.java-conventions")
     id("org.sonarsource.text.artifactory-configuration")
     id("org.sonarsource.text.code-style-convention")
+    id("org.sonarsource.text.check-list-generator")
     jacoco
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
@@ -27,6 +28,18 @@ dependencies {
 }
 
 description = "SonarSource Text Analyzer :: Plugin"
+
+sourceSets {
+    main {
+        java {
+            srcDir(tasks["generateSecretsCheckList"].outputs.files)
+        }
+    }
+}
+
+tasks.compileJava {
+    dependsOn(tasks["generateSecretsCheckList"])
+}
 
 tasks.test {
     useJUnitPlatform()
