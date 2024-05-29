@@ -64,20 +64,21 @@ class AuxiliaryPatternMatcherFactoryTest {
       "\\b");
     AuxiliaryPattern patternAround = ReferenceTestModel.constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AROUND, "\\b(pattern" +
       "-around)\\b");
-    AuxiliaryPattern patternAroundWithDistance = ReferenceTestModel.constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AROUND, "\\b(pattern" +
-      "-around-with-maxDistance)\\b");
-    patternAroundWithDistance.setMaxCharacterDistance(100);
-    AuxiliaryPattern patternNot = ReferenceTestModel.constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_NOT, "\\b(pattern-not)\\b");
+    AuxiliaryPattern patternAroundCharDistance = ReferenceTestModel.constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AROUND, "\\b(pattern" +
+      "-maxCharDistance-around)\\b");
+    patternAroundCharDistance.setMaxCharacterDistance(100);
+    AuxiliaryPattern patternAroundLineDistance = ReferenceTestModel.constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_AROUND, "\\b(pattern-maxLineDistance-around)\\b");
+    patternAroundLineDistance.setMaxLineDistance(5);
 
     AuxiliaryPatternMatcher matcherBefore = AuxiliaryMatcher.build(patternBefore);
     AuxiliaryPatternMatcher matcherNegation = AuxiliaryMatcher.build(patternBeforeForMatchNot);
     AuxiliaryPatternMatcher matcherAfter = AuxiliaryMatcher.build(patternAfter);
     AuxiliaryPatternMatcher matcherAround = AuxiliaryMatcher.build(patternAround);
-    AuxiliaryPatternMatcher matcherAroundWithMaxDistance = AuxiliaryMatcher.build(patternAroundWithDistance);
-    AuxiliaryPatternMatcher matcherNot = AuxiliaryMatcher.build(patternNot);
+    AuxiliaryPatternMatcher matcherAroundCharDistance = AuxiliaryMatcher.build(patternAroundCharDistance);
+    AuxiliaryPatternMatcher matcherAroundLineDistance = AuxiliaryMatcher.build(patternAroundLineDistance);
 
     AuxiliaryPatternMatcher eachSecondLevel = matcherAfter.and(matcherAround);
-    AuxiliaryPatternMatcher eitherSecondLevel = matcherNot.or(matcherAroundWithMaxDistance);
+    AuxiliaryPatternMatcher eitherSecondLevel = matcherAroundLineDistance.or(matcherAroundCharDistance);
     return matcherBefore.or(matcherNegation.negate()).or(eachSecondLevel).or(eitherSecondLevel);
   }
 }

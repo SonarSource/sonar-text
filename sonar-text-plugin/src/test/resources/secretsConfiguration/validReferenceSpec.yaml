@@ -71,9 +71,11 @@ provider:
                   - patternAfter: "\\b(pattern-after)\\b"
                   - patternAround: "\\b(pattern-around)\\b"
               - matchEither:
-                  - patternNot: "\\b(pattern-not)\\b"
                   - patternAround:
-                      pattern: "\\b(pattern-around-with-maxDistance)\\b"
+                      pattern: "\\b(pattern-maxLineDistance-around)\\b"
+                      maxLineDistance: 5
+                  - patternAround:
+                      pattern: "\\b(pattern-maxCharDistance-around)\\b"
                       maxCharDistance: 100
         post:
           statisticalFilter:

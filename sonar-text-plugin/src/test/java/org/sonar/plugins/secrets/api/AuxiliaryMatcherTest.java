@@ -53,7 +53,7 @@ class AuxiliaryMatcherTest {
     assertThat(result).containsExactlyElementsOf(candidateSecrets);
   }
 
-  private static Stream<Arguments> auxiliaryPatternShouldBeDetectedAndCandidateSecretShouldNotBeRemoved() {
+  static Stream<Arguments> auxiliaryPatternShouldBeDetectedAndCandidateSecretShouldNotBeRemoved() {
     return Stream.of(
       Arguments.of(AuxiliaryPatternType.PATTERN_BEFORE, "auxiliaryPattern and candidate secret", "auxiliaryPattern"),
       Arguments.of(AuxiliaryPatternType.PATTERN_BEFORE, "auxiliaryPattern and candidate secret and auxiliaryPattern", "auxiliaryPattern"),
@@ -67,11 +67,7 @@ class AuxiliaryMatcherTest {
       Arguments.of(AuxiliaryPatternType.PATTERN_AROUND, "auxiliaryPattern and candidate secret", "auxiliaryPattern"),
       Arguments.of(AuxiliaryPatternType.PATTERN_AROUND, "auxiliaryPattern, auxiliaryPattern and candidate secret", "auxiliaryPattern"),
       Arguments.of(AuxiliaryPatternType.PATTERN_AROUND, "candidate secret and auxiliaryPattern", "auxiliaryPattern"),
-      Arguments.of(AuxiliaryPatternType.PATTERN_AROUND, "candidate secret and auxiliaryPattern, auxiliaryPattern", "auxiliaryPattern"),
-
-      // PATTERN_NOT is not supported so we don't expect differences
-      Arguments.of(AuxiliaryPatternType.PATTERN_NOT, "candidate secret and auxiliaryPattern", "auxiliaryPattern"),
-      Arguments.of(AuxiliaryPatternType.PATTERN_NOT, "candidate secret", "auxiliaryPattern"));
+      Arguments.of(AuxiliaryPatternType.PATTERN_AROUND, "candidate secret and auxiliaryPattern, auxiliaryPattern", "auxiliaryPattern"));
   }
 
   @ParameterizedTest
@@ -88,7 +84,7 @@ class AuxiliaryMatcherTest {
     assertThat(result).isEmpty();
   }
 
-  private static Stream<Arguments> auxiliaryPatternShouldRemoveCandidateSecrets() {
+  static Stream<Arguments> auxiliaryPatternShouldRemoveCandidateSecrets() {
     return Stream.of(
       Arguments.of(AuxiliaryPatternType.PATTERN_BEFORE, "otherWord and candidate secret", "auxiliaryPattern"),
       Arguments.of(AuxiliaryPatternType.PATTERN_BEFORE, "word and candidate secret", "didat"),

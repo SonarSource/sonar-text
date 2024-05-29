@@ -5,6 +5,7 @@ import org.apache.commons.io.filefilter.FileFilterUtils
 
 private val checksLocation = "org/sonar/plugins/secrets/checks"
 private val checksPackage = "org.sonar.plugins.secrets.checks."
+private val lineSeparator = "\n"
 private val template =
     """
     //<LICENSE_HEADER>
@@ -62,7 +63,7 @@ tasks.register("generateSecretsCheckList") {
         val dir = File("$buildDir/generated/sources/secrets/java/main/org/sonar/plugins/secrets")
         dir.mkdirs()
         val file = File(dir, "SecretsCheckList.java")
-        file.writeText(result + System.lineSeparator())
+        file.writeText(result + lineSeparator)
     }
 }
 
@@ -72,7 +73,7 @@ fun generateImportsFor(checkNames: List<String>): String {
         sb.append("import org.sonar.plugins.secrets.checks.")
         sb.append(checkName)
         sb.append(";")
-        sb.append(System.lineSeparator())
+        sb.append(lineSeparator)
     }
     return sb.toString()
 }
@@ -80,7 +81,7 @@ fun generateImportsFor(checkNames: List<String>): String {
 fun generateChecksMethodFor(checkNames: List<String>): String {
     val sb = StringBuilder()
     sb.append("private static final List<Class<?>> SECRET_CHECKS = List.of(")
-    sb.append(System.lineSeparator())
+    sb.append(lineSeparator)
     for (i in checkNames.indices) {
         sb.append("    ")
         sb.append(checkNames[i])
@@ -89,7 +90,7 @@ fun generateChecksMethodFor(checkNames: List<String>): String {
             sb.append(");")
         } else {
             sb.append(",")
-            sb.append(System.lineSeparator())
+            sb.append(lineSeparator)
         }
     }
     return sb.toString()

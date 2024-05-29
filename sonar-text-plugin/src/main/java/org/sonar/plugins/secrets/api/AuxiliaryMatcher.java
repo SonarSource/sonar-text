@@ -53,12 +53,6 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
 
   @Override
   public List<Match> filter(List<Match> candidateMatches, InputFileContext inputFileContext, String ruleId) {
-    if (AuxiliaryPatternType.PATTERN_NOT == auxiliaryPattern.getType()) {
-      // Not supported at the moment, so we don't filter anything
-      // SONARTEXT-54: Implement missing features of detection logic
-      return candidateMatches;
-    }
-
     List<Match> auxiliaryMatches = auxiliaryPatternMatcher.findIn(inputFileContext.content(), ruleId);
     if (auxiliaryMatches.isEmpty()) {
       return new ArrayList<>();
