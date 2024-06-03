@@ -1,0 +1,16 @@
+acceptedIssues:
+  - secretRuleKey: S0001
+    secretRuleId: example-rule-id
+    location: matching
+    regexText: "^a|b|c$"
+    issueRuleKey: S5850
+    message: Group parts of the regex together to make the intended operator precedence explicit.
+    details: "Location: 0:7 text: ^a|b|c$"
+issuesToVerify:
+  - secretRuleKey: S0002
+    secretRuleId: example-rule-id
+    location: matching
+    regexText: "^a|b|c$"
+    issueRuleKey: S5850
+    message: Group parts of the regex together to make the intended operator precedence explicit.
+    details: "Location: 0:7 text: ^a|b|c$"

@@ -19,9 +19,15 @@
  */
 package org.sonar.plugins.secrets.utils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.sonar.api.batch.fs.InputComponent;
 import org.sonar.api.batch.fs.InputFile;
@@ -44,25 +50,65 @@ public class TestRegexScannerContext implements JavaFileScannerContext, RegexSca
   private final List<Issue> issues = new ArrayList<>();
   private SecretsRegexTest.PatternLocation patternLocation;
 
-  public void verify() {
-    if (!issues.isEmpty()) {
-      StringBuilder message = new StringBuilder(String.format("Found following issues in Regexes (%s):\n", issues.size()));
-      for (Issue issue : issues) {
-        var msg = String.format("%s, id: %s, \n\tLocation: %s, \n\tRegex: `%s` \n\tViolating rule %s: %s\n",
-          issue.secretRuleKey,
-          issue.secretRuleId,
-          issue.location,
-          issue.regexText,
-          issue.issueRuleKey,
-          issue.message);
-        message.append(msg);
-        if (!issue.details.isBlank()) {
-          message.append(String.format("\t\t%s", issue.details));
-        }
-        message.append("\n");
-      }
-      throw new AssertionError(message.toString());
+  private SecretsRegexBaseline baseline;
+
+  public TestRegexScannerContext() {
+    try {
+      var mapper = new ObjectMapper(new YAMLFactory());
+      var file = new File("src/test/resources/SecretsRegexTest/baseline.yaml");
+      var treeNode = mapper.readTree(file);
+      baseline = mapper.treeToValue(treeNode, SecretsRegexBaseline.class);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
+  }
+
+  public void verify(boolean shouldWarnAboutUnusedIssuesInBaseline) {
+    StringBuilder message = new StringBuilder();
+    var numberOfNewIssues = 0;
+    var issuesInUse = new HashSet<>();
+    if (!issues.isEmpty()) {
+      for (Issue issue : issues) {
+        if (baseline.acceptedIssues().contains(issue)) {
+          issuesInUse.add(issue);
+          System.out.println("Found issue in baseline in acceptedIssues, ignored: " + issue);
+        } else if (baseline.issuesToVerify().contains(issue)) {
+          issuesInUse.add(issue);
+          System.out.println("Found issue in baseline in issuesToVerify, ignored: " + issue);
+        } else {
+          var msg = toIssueMessage(issue);
+          numberOfNewIssues++;
+          message.append(msg);
+          message.append("\n");
+        }
+      }
+    }
+
+    if (shouldWarnAboutUnusedIssuesInBaseline && baseline.acceptedIssues().size() + baseline.issuesToVerify().size() != issuesInUse.size()) {
+      var unusedIssues = Stream.concat(baseline.acceptedIssues().stream(), baseline.issuesToVerify().stream())
+        .filter(issue -> !issuesInUse.contains(issue))
+        .map(TestRegexScannerContext::toIssueMessage)
+        .collect(Collectors.joining("\n"));
+      System.out.println("Found outdated issues in baseline (SecretsRegexTest/baseline.yaml), please clean up them! Outdated issues:\n" + unusedIssues);
+    }
+    if (numberOfNewIssues != 0) {
+      var text = ("Found following issues in Regexes (%s):%n" +
+        "Please fix them or suppress in SecretsRegexTest/baseline.yaml:%n%s")
+          .formatted(numberOfNewIssues, message);
+      throw new AssertionError(text);
+    }
+  }
+
+  private static String toIssueMessage(Issue issue) {
+    return ("  - secretRuleKey: %s%n    secretRuleId: %s%n    location: %s%n    regexText: \"%s\"%n" +
+      "    issueRuleKey: %s%n    message: %s%n    details: \"%s\"%n").formatted(
+        issue.secretRuleKey,
+        issue.secretRuleId,
+        issue.location,
+        issue.regexText,
+        issue.issueRuleKey,
+        issue.message,
+        issue.details);
   }
 
   public void setPatternLocation(SecretsRegexTest.PatternLocation patternLocation) {
@@ -216,23 +262,12 @@ public class TestRegexScannerContext implements JavaFileScannerContext, RegexSca
     return null;
   }
 
-  static class Issue {
-    String secretRuleKey;
-    String secretRuleId;
-    String location;
-    String issueRuleKey;
-    String regexText;
-    String message;
-    String details;
-
-    public Issue(String secretRuleKey, String secretRuleId, String location, String issueRuleKey, String regexText, String message, String details) {
-      this.secretRuleKey = secretRuleKey;
-      this.secretRuleId = secretRuleId;
-      this.location = location;
-      this.issueRuleKey = issueRuleKey;
-      this.regexText = regexText;
-      this.message = message;
-      this.details = details;
-    }
+  record Issue(String secretRuleKey,
+    String secretRuleId,
+    String location,
+    String issueRuleKey,
+    String regexText,
+    String message,
+    String details) {
   }
 }

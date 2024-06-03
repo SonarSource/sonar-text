@@ -33,6 +33,7 @@ import org.sonar.api.internal.apachecommons.io.FileUtils;
 import org.sonar.java.ast.parser.ArgumentListTreeImpl;
 import org.sonar.java.checks.regex.AbstractRegexCheck;
 import org.sonar.java.checks.regex.AnchorPrecedenceCheck;
+import org.sonar.java.checks.regex.CanonEqFlagInRegexCheck;
 import org.sonar.java.checks.regex.DuplicatesInCharacterClassCheck;
 import org.sonar.java.checks.regex.EmptyLineRegexCheck;
 import org.sonar.java.checks.regex.EmptyRegexGroupCheck;
@@ -90,7 +91,7 @@ class SecretsRegexTest {
 
     patternLocations.forEach(this::checkRegex);
 
-    context.verify();
+    context.verify(true);
   }
 
   boolean disableValidateSingleFile() {
@@ -98,14 +99,14 @@ class SecretsRegexTest {
   }
 
   @Test
-  @DisabledIf(value = "disableValidateSingleFile", disabledReason = "For simple run on single YAML file. It can be run from Maven, see Readme.")
+  @DisabledIf(value = "disableValidateSingleFile", disabledReason = "For simple run on single YAML file. It can be run from Gradle, see Readme.")
   void shouldValidateSingleFile() {
     var filename = System.getProperty("filename", "some-default-for-local-testing.yaml");
     List<PatternLocation> patternLocations = convertToPatternLocations(filename);
 
     patternLocations.forEach(this::checkRegex);
 
-    context.verify();
+    context.verify(false);
   }
 
   private static Set<String> listOfYamlFiles() {
@@ -156,8 +157,6 @@ class SecretsRegexTest {
         .map(pattern -> new PatternLocation(rspecKey, secretRuleId, "post", pattern.replace("\\", "\\\\")))
         .forEach(patternLocations::add);
     }
-
-    // TODO this method needs to be extended when implementing SONARTEXT-71 Implement negation for auxiliary patterns
     return patternLocations;
   }
 
@@ -196,12 +195,15 @@ class SecretsRegexTest {
   }
 
   private List<AbstractRegexCheck> regexChecks() {
-    // Disabled S4248 RegexPatternsNeedlesslyCheck Regex patterns should not be created needlessly
-    // Disabled S5361 StringReplaceCheck "String#replace" should be preferred to "String#replaceAll"
-    // Disabled S5854 CanonEqFlagInRegexCheck Regexes containing characters subject to normalization should use the CANON_EQ flag
-    // Disabled S5867 UnicodeAwareCharClassesCheck Unicode-aware versions of character classes should be preferred
+    // * Disabled S4248 RegexPatternsNeedlesslyCheck Regex patterns should not be created needlessly - as patterns in sonar-text are
+    // compiled once
+    // * Disabled S5361 StringReplaceCheck "String#replace" should be preferred to "String#replaceAll" - doesn't make sense here as
+    // Regexes are not used here to call replaceAll() method
+    // * Disabled S5867 UnicodeAwareCharClassesCheck Unicode-aware versions of character classes should be preferred - is mostly
+    // going to cause FPs and should not be enabled for secrets.
     return List.of(
       new AnchorPrecedenceCheck(),
+      new CanonEqFlagInRegexCheck(),
       new DuplicatesInCharacterClassCheck(),
       new EmptyLineRegexCheck(),
       new EmptyRegexGroupCheck(),
