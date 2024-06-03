@@ -6,7 +6,13 @@
   "schedule": [
     "before 4am on Monday"
   ],
-  "enabledManagers": ["gradle", "github-actions", "regex", "dockerfile"],
+  "enabledManagers": [
+    "gradle",
+    "gradle-wrapper",
+    "github-actions",
+    "regex",
+    "dockerfile"
+  ],
   "gradle": {
     "enabled": true
   },
