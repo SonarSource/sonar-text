@@ -17,17 +17,23 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets;
+package org.sonarsource.text
 
-import org.junit.jupiter.api.Test;
+import java.time.LocalDate
+import org.gradle.api.Project
 
-import static org.assertj.core.api.Assertions.assertThat;
+const val GENERATED_SOURCES_DIR = "generated/sources/secrets/java/main"
+const val lineSeparator = "\n"
 
-class SecretsSpecificationFilesDefinitionTest {
+fun Project.loadLicenseHeader() =
+    rootProject.file("LICENSE_HEADER").readText(Charsets.UTF_8)
+        .replace("\$YEAR", LocalDate.now().year.toString())
+        .trimEnd()
 
-  @Test
-  void secretSpecificationsShouldBeCounted() {
-    assertThat(SecretsSpecificationFilesDefinition.existingSecretSpecifications())
-      .hasSizeGreaterThanOrEqualTo(55);
-  }
+fun Project.writeToFile(content: String, relativePath: String) {
+    val directory = relativePath.substringBeforeLast('/')
+    val filename = relativePath.substringAfterLast('/')
+    val dir = layout.buildDirectory.dir("$GENERATED_SOURCES_DIR/$directory").get().asFile
+    dir.mkdirs()
+    file(dir.resolve(filename)).writeText(content + lineSeparator)
 }

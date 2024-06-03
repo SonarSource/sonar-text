@@ -1,12 +1,14 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
+import org.sonarsource.text.GENERATED_SOURCES_DIR
 
 plugins {
     id("org.sonarsource.text.java-conventions")
     id("org.sonarsource.text.artifactory-configuration")
     id("org.sonarsource.text.code-style-convention")
     id("org.sonarsource.text.check-list-generator")
+    id("org.sonarsource.text.specification-files-list-generator")
     jacoco
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
@@ -29,16 +31,17 @@ dependencies {
 
 description = "SonarSource Text Analyzer :: Plugin"
 
+val generateJavaCode by tasks.registering {
+    inputs.files(tasks["generateSecretsCheckList"], tasks["generateSecretsSpecFilesList"])
+    outputs.dir("build/$GENERATED_SOURCES_DIR")
+}
+
 sourceSets {
     main {
         java {
-            srcDir(tasks["generateSecretsCheckList"].outputs.files)
+            srcDirs(generateJavaCode)
         }
     }
-}
-
-tasks.compileJava {
-    dependsOn(tasks["generateSecretsCheckList"])
 }
 
 tasks.test {

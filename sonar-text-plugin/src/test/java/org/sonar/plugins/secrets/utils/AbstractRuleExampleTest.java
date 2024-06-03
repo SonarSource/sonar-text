@@ -19,14 +19,11 @@
  */
 package org.sonar.plugins.secrets.utils;
 
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DynamicTest;
@@ -122,7 +119,7 @@ public abstract class AbstractRuleExampleTest {
     matching.setPattern("(" + Pattern.quote(ruleExample.getMatch().stripTrailing()) + ")");
     PatternMatcher matcher = PatternMatcher.build(matching);
     List<Match> matches = matcher.findIn(ruleExample.getText(), ruleId);
-    return matches.stream().map(m -> ctx.newTextRangeFromFileOffsets(m.getFileStartOffset(), m.getFileEndOffset())).collect(Collectors.toList());
+    return matches.stream().map(m -> ctx.newTextRangeFromFileOffsets(m.getFileStartOffset(), m.getFileEndOffset())).toList();
   }
 
   private String displayName(Rule rule, RuleExample example) {
