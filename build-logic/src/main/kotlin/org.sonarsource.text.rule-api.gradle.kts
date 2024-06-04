@@ -7,8 +7,8 @@ repositories {
             credentials {
                 val artifactoryUsername: String? by project
                 val artifactoryPassword: String? by project
-                username = artifactoryUsername
-                password = artifactoryPassword
+                username = System.getenv("ARTIFACTORY_PRIVATE_USERNAME") ?: artifactoryUsername
+                password = System.getenv("ARTIFACTORY_PRIVATE_PASSWORD") ?: artifactoryPassword
             }
         }
     }

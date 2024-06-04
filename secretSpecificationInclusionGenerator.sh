@@ -1,4 +1,6 @@
 #!/bin/bash
+# Exit immediately if a command fail
+set -e
 
 # Assume the script is located in the root of the sonar-text repository
 PROJECT_ROOT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
