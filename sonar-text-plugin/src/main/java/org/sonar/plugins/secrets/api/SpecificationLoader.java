@@ -21,7 +21,6 @@ package org.sonar.plugins.secrets.api;
 
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +41,8 @@ public class SpecificationLoader {
   public static final String DEFAULT_SPECIFICATION_LOCATION = "org/sonar/plugins/secrets/configuration/";
   public static final ExceptionHandler DEFAULT_EXCEPTION_HANDLER = (e, specificationFileName) -> LOG.warn("{}: Could not load specification from file: {}",
     e.getClass().getSimpleName(), specificationFileName);
-  private final Map<String, List<Rule>> rulesMappedToKey;
+  private final Map<String, List<Rule>> rulesMappedToKey = new HashMap<>();
+  private final Map<String, List<String>> keyMappedToFiles = new HashMap<>();
   private final ExceptionHandler exceptionHandler;
 
   public SpecificationLoader() {
@@ -61,16 +61,16 @@ public class SpecificationLoader {
    */
   public SpecificationLoader(String specificationLocation, Set<String> specifications, ExceptionHandler exceptionHandler) {
     this.exceptionHandler = exceptionHandler;
-    rulesMappedToKey = initialize(specificationLocation, specifications);
+
+    loadSpecifications(specificationLocation, specifications);
   }
 
-  private Map<String, List<Rule>> initialize(String specificationLocation, Set<String> specifications) {
-    if (specifications.isEmpty()) {
-      return Collections.emptyMap();
-    }
-
-    Map<String, List<Rule>> keyToRule = new HashMap<>();
-
+  /**
+   * Load a list of specifications.
+   * For each loaded {@link Specification} object, the specification object and the name of the file it was loaded from
+   * will be stored in the {@link #rulesMappedToKey} and {@link #keyMappedToFiles} maps.
+   */
+  private void loadSpecifications(String specificationLocation, Set<String> specifications) {
     for (String specificationFileName : specifications) {
       Specification specification;
       try {
@@ -79,12 +79,11 @@ public class SpecificationLoader {
         exceptionHandler.handle(e, specificationFileName);
         continue;
       }
-
       for (Rule rule : specification.getProvider().getRules()) {
-        keyToRule.computeIfAbsent(rule.getRspecKey(), k -> new ArrayList<>()).add(rule);
+        this.rulesMappedToKey.computeIfAbsent(rule.getRspecKey(), k -> new ArrayList<>()).add(rule);
+        this.keyMappedToFiles.computeIfAbsent(rule.getRspecKey(), k -> new ArrayList<>()).add(specificationFileName);
       }
     }
-    return keyToRule;
   }
 
   private static Specification loadSpecification(String specificationLocation, String fileName) {
@@ -95,6 +94,15 @@ public class SpecificationLoader {
 
   public List<Rule> getRulesForKey(String key) {
     return rulesMappedToKey.getOrDefault(key, new ArrayList<>());
+  }
+
+  /**
+   * Provide the list of specification filenames associated to a given key.
+   * @param key Key to look for, with format SXXXX.
+   * @return The list of filename that were used to load specifications related to the key.
+   */
+  public List<String> getSpecificationFilesForKey(String key) {
+    return keyMappedToFiles.getOrDefault(key, new ArrayList<>());
   }
 
   public Map<String, List<Rule>> getRulesMappedToKey() {

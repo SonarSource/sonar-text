@@ -19,14 +19,23 @@
  */
 package org.sonar.plugins.secrets.utils;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.networknt.schema.ValidationMessage;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.extension.TestInstantiationException;
 import org.junit.jupiter.api.function.Executable;
@@ -43,6 +52,7 @@ import org.sonar.plugins.secrets.api.SpecificationLoader;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.RuleExample;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
+import org.sonar.plugins.secrets.configuration.validation.SchemaValidator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.asString;
@@ -85,6 +95,31 @@ public abstract class AbstractRuleExampleTest {
         // for easier debugging of specific rules uncomment the line below
         // .filter(example -> "<id-of-your-rule>".equals(rule.getId()))
         .map(example -> DynamicTest.dynamicTest(displayName(rule, example), analyzeExample(rule, example))));
+  }
+
+  @Test
+  void testSpecificationFileValidity() throws IOException {
+    ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
+    List<String> fileNames = specificationLoader.getSpecificationFilesForKey(check.getRuleKey().rule());
+    for (String fileName : fileNames) {
+      InputStream specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("org/sonar/plugins/secrets/configuration/" + fileName);
+      JsonNode specification = MAPPER.readTree(specificationStream);
+
+      Set<ValidationMessage> validationMessages = SchemaValidator.validate(specification);
+      assertThat(validationMessages)
+        .as(validationMessageReport(fileName, validationMessages))
+        .isEmpty();
+    }
+  }
+
+  Supplier<String> validationMessageReport(String fileName, Set<ValidationMessage> validationMessages) {
+    return () -> {
+      StringBuilder sb = new StringBuilder("file '%s' has %d validation errors:".formatted(fileName, validationMessages.size()));
+      for (ValidationMessage validationMessage : validationMessages) {
+        sb.append("\n- ").append(validationMessage.getMessage());
+      }
+      return sb.toString();
+    };
   }
 
   private Executable analyzeExample(Rule rule, RuleExample ruleExample) {

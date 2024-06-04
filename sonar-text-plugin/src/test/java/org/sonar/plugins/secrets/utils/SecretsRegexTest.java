@@ -19,14 +19,6 @@
  */
 package org.sonar.plugins.secrets.utils;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIf;
 import org.sonar.api.internal.apachecommons.io.FileUtils;
@@ -76,6 +68,15 @@ import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombination
 import org.sonar.plugins.secrets.configuration.model.matching.Match;
 import org.sonarsource.analyzer.commons.regex.RegexParser;
 import org.sonarsource.analyzer.commons.regex.ast.FlagSet;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 class SecretsRegexTest {
 
