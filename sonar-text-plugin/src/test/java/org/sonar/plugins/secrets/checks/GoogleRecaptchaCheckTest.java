@@ -21,8 +21,8 @@ package org.sonar.plugins.secrets.checks;
 
 import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
 
-class GenericpublickeycryptographyCheckTest extends AbstractRuleExampleTest {
-  GenericpublickeycryptographyCheckTest() {
-    super(new GenericpublickeycryptographyCheck());
+class GoogleRecaptchaCheckTest extends AbstractRuleExampleTest {
+  GoogleRecaptchaCheckTest() {
+    super(new GoogleRecaptchaCheck());
   }
 }

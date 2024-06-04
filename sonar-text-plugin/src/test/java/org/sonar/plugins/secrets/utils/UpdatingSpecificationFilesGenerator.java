@@ -26,7 +26,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +41,7 @@ import org.sonar.api.testfixtures.log.LogAndArguments;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.secrets.SecretsCheckList;
+import org.sonar.plugins.secrets.SecretsSpecificationFilesDefinition;
 import org.sonar.plugins.secrets.api.SpecificationLoader;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 
@@ -49,14 +49,17 @@ import org.sonar.plugins.secrets.configuration.model.Rule;
 @SuppressWarnings("java:S3577")
 class UpdatingSpecificationFilesGenerator {
 
-  private final static String CHECK_TESTS_PATH_PREFIX = String.join(File.separator, "src", "test", "java", "org", "sonar", "plugins", "secrets", "checks");
+  public final static String CHECK_TESTS_PATH_PREFIX = String.join(File.separator, "src", "test", "java", "org", "sonar", "plugins", "secrets", "checks");
   private final static String SECRETS_MODULE_PATH_PREFIX = String.join(File.separator, "src", "main", "java", "org", "sonar", "plugins", "secrets");
   private final static String SECRETS_MODULE_RESOURCE_PATH_PREFIX = String.join(File.separator, "src", "main", "resources", "org", "sonar");
-  private final static String CHECK_PATH_PREFIX = String.join(File.separator, SECRETS_MODULE_PATH_PREFIX, "checks");
-  private final static String TEMPLATE_PATH_PREFIX = String.join(File.separator, "src", "test", "resources", "templates");
+  public final static String CHECK_PATH_PREFIX = String.join(File.separator, SECRETS_MODULE_PATH_PREFIX, "checks");
+  public final static String TEMPLATE_PATH_PREFIX = String.join(File.separator, "src", "test", "resources", "templates");
   private final static String RSPEC_FILES_PATH_PREFIX = String.join(File.separator, SECRETS_MODULE_RESOURCE_PATH_PREFIX, "l10n", "secrets", "rules", "secrets");
-  private final Charset charset = StandardCharsets.UTF_8;
   private static final Logger LOG = LoggerFactory.getLogger(UpdatingSpecificationFilesGenerator.class);
+  private final Charset charset = StandardCharsets.UTF_8;
+  private final String lineSeparator = "\n";
+
+  private final TestingEnvironment testingEnvironment = new TestingEnvironment();
 
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
@@ -65,11 +68,17 @@ class UpdatingSpecificationFilesGenerator {
   @EnabledIfEnvironmentVariable(named = "GENERATION_ENABLED", matches = "true", disabledReason = "This test should not be executed during a normal test run")
   void secondStep() {
     testDeserializationOfSpecificationFiles();
-    SpecificationLoader specificationLoader = new SpecificationLoader();
+
+    Set<String> specificationsToLoad = new HashSet<>(SecretsSpecificationFilesDefinition.existingSecretSpecifications());
+
+    if (testingEnvironment.testingEnabled) {
+      specificationsToLoad.addAll(testingEnvironment.additionalSpecificationFilenames);
+    }
+
+    SpecificationLoader specificationLoader = new SpecificationLoader(SpecificationLoader.DEFAULT_SPECIFICATION_LOCATION, specificationsToLoad);
+    Map<String, List<Rule>> rulesMappedToKey = specificationLoader.getRulesMappedToKey();
 
     Map<String, String> existingKeysMappedToFileName = retrieveAlreadyExistingKeys();
-
-    Map<String, List<Rule>> rulesMappedToKey = specificationLoader.getRulesMappedToKey();
 
     Set<String> keysToImplementChecksFor = new HashSet<>(rulesMappedToKey.keySet());
     keysToImplementChecksFor.removeAll(existingKeysMappedToFileName.keySet());
@@ -77,13 +86,11 @@ class UpdatingSpecificationFilesGenerator {
     Set<String> keysNotUsedAnymore = new HashSet<>(existingKeysMappedToFileName.keySet());
     keysNotUsedAnymore.removeAll(rulesMappedToKey.keySet());
 
-    List<String> newCheckNames = new ArrayList<>();
     for (String rspecKey : keysToImplementChecksFor) {
       String checkName = rulesMappedToKey.get(rspecKey).get(0).getProvider().getMetadata().getName();
       checkName = sanitizeCheckName(checkName, rspecKey, existingKeysMappedToFileName);
       writeCheckFile(checkName, rspecKey);
       writeCheckTestFile(checkName);
-      newCheckNames.add(checkName);
     }
 
     removeUnusedChecks(keysNotUsedAnymore, existingKeysMappedToFileName);
@@ -124,12 +131,10 @@ class UpdatingSpecificationFilesGenerator {
     Path checkPath = Path.of(CHECK_PATH_PREFIX, checkName + ".java");
     Path checkTemplatePath = Path.of(TEMPLATE_PATH_PREFIX, "GenericCheckTemplate.java");
     try {
-      Files.copy(checkTemplatePath, checkPath);
-
-      String content = Files.readString(checkPath, charset);
+      String content = Files.readString(checkTemplatePath, charset);
       content = content.replace("GenericCheckTemplate", checkName);
       content = content.replace("<RSPEC-KEY>", rspecKey);
-      Files.write(checkPath, content.getBytes(charset));
+      writeFile(checkPath, content);
     } catch (IOException e) {
       LOG.error("Error while writing Check file with name \"{}.java\", please fix manually", checkName, e);
       throw new RuntimeException(e);
@@ -142,12 +147,10 @@ class UpdatingSpecificationFilesGenerator {
     Path checkTestPath = Path.of(CHECK_TESTS_PATH_PREFIX, checkName + "Test.java");
     Path checkTestTemplatePath = Path.of(TEMPLATE_PATH_PREFIX, "GenericCheckTestTemplate.java");
     try {
-      Files.copy(checkTestTemplatePath, checkTestPath);
-
-      String content = Files.readString(checkTestPath, charset);
+      String content = Files.readString(checkTestTemplatePath, charset);
       content = content.replace("GenericCheckTemplate", checkName);
       content = content.replace("GenericCheckTemplateTest", checkName + "Test");
-      Files.write(checkTestPath, content.getBytes(charset));
+      writeFile(checkTestPath, content);
     } catch (IOException e) {
       LOG.error("Error while writing Check Test file with name \"{}Test.java\", please fix manually", checkName, e);
       throw new RuntimeException(e);
@@ -190,7 +193,7 @@ class UpdatingSpecificationFilesGenerator {
     String content = generateContentForRulesAPIUpdateFile(keysToUpdateRuleAPIFor);
 
     try {
-      Files.write(pathToWriteUpdateFileTo, content.getBytes(charset));
+      writeFile(pathToWriteUpdateFileTo, content);
     } catch (IOException e) {
       LOG.error("Error when trying to write update file ruleAPI, please fix manually", e);
       throw new RuntimeException(e);
@@ -204,7 +207,7 @@ class UpdatingSpecificationFilesGenerator {
 
     for (String key : keysToUpdateRuleAPIFor) {
       sb.append(key);
-      sb.append(System.lineSeparator());
+      sb.append(lineSeparator);
     }
     return sb.toString();
   }
@@ -220,12 +223,32 @@ class UpdatingSpecificationFilesGenerator {
   private String failMessage(List<LogAndArguments> errorLogs) {
     StringBuilder sb = new StringBuilder();
     sb.append("Generation process failed because of: ");
-    sb.append(System.lineSeparator());
+    sb.append(lineSeparator);
     for (LogAndArguments errorLog : errorLogs) {
       sb.append("- ");
       sb.append(errorLog.getFormattedMsg());
-      sb.append(System.lineSeparator());
+      sb.append(lineSeparator);
     }
     return sb.toString();
+  }
+
+  private void writeFile(Path path, String content) throws IOException {
+    if (testingEnvironment.testingEnabled) {
+      path = Path.of(testingEnvironment.outputFolder.getAbsolutePath(), path.toString());
+      Files.createDirectories(path.getParent());
+    }
+    Files.write(path, content.getBytes(charset));
+  }
+
+  public void setTestMode(File outputFolder, Set<String> additionalSpecificationFilenames) {
+    testingEnvironment.testingEnabled = true;
+    testingEnvironment.outputFolder = outputFolder;
+    testingEnvironment.additionalSpecificationFilenames.addAll(additionalSpecificationFilenames);
+  }
+
+  private class TestingEnvironment {
+    public boolean testingEnabled = false;
+    public File outputFolder;
+    public final Set<String> additionalSpecificationFilenames = new HashSet<>();
   }
 }

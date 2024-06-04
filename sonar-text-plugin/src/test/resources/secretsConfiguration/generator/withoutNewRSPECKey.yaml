@@ -1,0 +1,22 @@
+provider:
+  metadata:
+    name: GeneratorTestOne
+    category: GeneratorTest
+    message: Message
+  detection:
+    pre:
+      scopes:
+        - main
+  rules:
+    - rspecKey: S6733 # Already existing RSPEC key in airtable.yaml
+      id: generatorTestOne
+      metadata:
+        name: dummyMetadataName
+      detection:
+        matching:
+          pattern: "dummy pattern"
+      examples:
+        - text: |
+            Some default text with the dummy pattern inside to be detected
+          containsSecret: true
+          match: "dummy pattern"

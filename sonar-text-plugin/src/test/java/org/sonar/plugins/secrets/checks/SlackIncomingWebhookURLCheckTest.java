@@ -21,8 +21,8 @@ package org.sonar.plugins.secrets.checks;
 
 import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
 
-class SlackCheckTest extends AbstractRuleExampleTest {
-  SlackCheckTest() {
-    super(new SlackCheck());
+class SlackIncomingWebhookURLCheckTest extends AbstractRuleExampleTest {
+  SlackIncomingWebhookURLCheckTest() {
+    super(new SlackIncomingWebhookURLCheck());
   }
 }

@@ -19,9 +19,10 @@
  */
 package org.sonar.plugins.secrets.checks;
 
-import org.sonar.check.Rule;
-import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
+import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
 
-@Rule(key = "S6706")
-public class GenericpublickeycryptographyCheck extends SpecificationBasedCheck {
+class GenericPublicKeyCryptographyCheckTest extends AbstractRuleExampleTest {
+  GenericPublicKeyCryptographyCheckTest() {
+    super(new GenericPublicKeyCryptographyCheck());
+  }
 }

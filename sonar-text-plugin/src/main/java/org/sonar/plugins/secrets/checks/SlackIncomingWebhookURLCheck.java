@@ -19,10 +19,9 @@
  */
 package org.sonar.plugins.secrets.checks;
 
-import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
+import org.sonar.check.Rule;
+import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 
-class SlackWebhookURLUniqueNameCheckTest extends AbstractRuleExampleTest {
-  SlackWebhookURLUniqueNameCheckTest() {
-    super(new SlackWebhookURLUniqueNameCheck());
-  }
+@Rule(key = "S6713")
+public class SlackIncomingWebhookURLCheck extends SpecificationBasedCheck {
 }

@@ -19,9 +19,10 @@
  */
 package org.sonar.plugins.secrets.checks;
 
-import org.sonar.check.Rule;
-import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
+import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
 
-@Rule(key = "S6732")
-public class StripeWebhookSecretUniqueNameCheck extends SpecificationBasedCheck {
+class StripeApiKeyCheckTest extends AbstractRuleExampleTest {
+  StripeApiKeyCheckTest() {
+    super(new StripeApiKeyCheck());
+  }
 }

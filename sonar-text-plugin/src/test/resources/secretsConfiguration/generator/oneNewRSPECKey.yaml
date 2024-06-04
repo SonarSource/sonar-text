@@ -1,0 +1,22 @@
+provider:
+  metadata:
+    name: GeneratorTestOneNewRSPECKey
+    category: GeneratorTest
+    message: Message
+  detection:
+    pre:
+      scopes:
+        - main
+  rules:
+    - rspecKey: S9999
+      id: generatorTestTwo
+      metadata:
+        name: dummyMetadataName
+      detection:
+        matching:
+          pattern: "dummy pattern"
+      examples:
+        - text: |
+            Some default text with the dummy pattern inside to be detected
+          containsSecret: true
+          match: "dummy pattern"

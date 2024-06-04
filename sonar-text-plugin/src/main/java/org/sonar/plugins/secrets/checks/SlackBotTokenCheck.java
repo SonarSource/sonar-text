@@ -19,10 +19,9 @@
  */
 package org.sonar.plugins.secrets.checks;
 
-import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
+import org.sonar.check.Rule;
+import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 
-class GoogleUniqueNameCheckTest extends AbstractRuleExampleTest {
-  GoogleUniqueNameCheckTest() {
-    super(new GoogleUniqueNameCheck());
-  }
+@Rule(key = "S6731")
+public class SlackBotTokenCheck extends SpecificationBasedCheck {
 }

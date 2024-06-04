@@ -22,6 +22,6 @@ package org.sonar.plugins.secrets.checks;
 import org.sonar.check.Rule;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 
-@Rule(key = "S6713")
-public class SlackWebhookURLUniqueNameCheck extends SpecificationBasedCheck {
+@Rule(key = "S6706")
+public class GenericPublicKeyCryptographyCheck extends SpecificationBasedCheck {
 }

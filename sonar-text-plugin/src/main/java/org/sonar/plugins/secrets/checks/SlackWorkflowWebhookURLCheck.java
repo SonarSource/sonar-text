@@ -22,6 +22,6 @@ package org.sonar.plugins.secrets.checks;
 import org.sonar.check.Rule;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 
-@Rule(key = "S6731")
-public class SlackCheck extends SpecificationBasedCheck {
+@Rule(key = "S6717")
+public class SlackWorkflowWebhookURLCheck extends SpecificationBasedCheck {
 }
