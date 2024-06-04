@@ -26,22 +26,18 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
-import org.sonar.api.internal.apachecommons.io.FileUtils;
 import org.sonar.api.testfixtures.log.LogAndArguments;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.plugins.common.Check;
@@ -56,7 +52,6 @@ class UpdatingSpecificationFilesGenerator {
   private final static String CHECK_TESTS_PATH_PREFIX = String.join(File.separator, "src", "test", "java", "org", "sonar", "plugins", "secrets", "checks");
   private final static String SECRETS_MODULE_PATH_PREFIX = String.join(File.separator, "src", "main", "java", "org", "sonar", "plugins", "secrets");
   private final static String SECRETS_MODULE_RESOURCE_PATH_PREFIX = String.join(File.separator, "src", "main", "resources", "org", "sonar");
-  private final static String SPECIFICATION_FILES_PATH = String.join(File.separator, SECRETS_MODULE_RESOURCE_PATH_PREFIX, "plugins", "secrets");
   private final static String CHECK_PATH_PREFIX = String.join(File.separator, SECRETS_MODULE_PATH_PREFIX, "checks");
   private final static String TEMPLATE_PATH_PREFIX = String.join(File.separator, "src", "test", "resources", "templates");
   private final static String RSPEC_FILES_PATH_PREFIX = String.join(File.separator, SECRETS_MODULE_RESOURCE_PATH_PREFIX, "l10n", "secrets", "rules", "secrets");
@@ -65,14 +60,6 @@ class UpdatingSpecificationFilesGenerator {
 
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
-
-  // Suppress warning, as there are no assertions inside here
-  @Test
-  @EnabledIfEnvironmentVariable(named = "GENERATION_ENABLED", matches = "true", disabledReason = "This test should not be executed during a normal test run")
-  @SuppressWarnings("java:S2699")
-  void firstStep() {
-    writeSpecificationFileDefinition();
-  }
 
   @Test
   @EnabledIfEnvironmentVariable(named = "GENERATION_ENABLED", matches = "true", disabledReason = "This test should not be executed during a normal test run")
@@ -144,7 +131,7 @@ class UpdatingSpecificationFilesGenerator {
       content = content.replace("<RSPEC-KEY>", rspecKey);
       Files.write(checkPath, content.getBytes(charset));
     } catch (IOException e) {
-      LOG.error("Error while writing Check file with name \"" + checkName + ".java\", please fix manually", e);
+      LOG.error("Error while writing Check file with name \"{}.java\", please fix manually", checkName, e);
       throw new RuntimeException(e);
     }
 
@@ -162,35 +149,11 @@ class UpdatingSpecificationFilesGenerator {
       content = content.replace("GenericCheckTemplateTest", checkName + "Test");
       Files.write(checkTestPath, content.getBytes(charset));
     } catch (IOException e) {
-      LOG.error("Error while writing Check Test file with name \"" + checkName + "Test.java\", please fix manually", e);
+      LOG.error("Error while writing Check Test file with name \"{}Test.java\", please fix manually", checkName, e);
       throw new RuntimeException(e);
     }
 
     LOG.info("Successfully generated Check \"{}Test.java\"", checkName);
-  }
-
-  private void writeSpecificationFileDefinition() {
-    Path specificationsDirectory = Path.of(SPECIFICATION_FILES_PATH, "configuration");
-    String[] extensionsToSearchFor = new String[] {"yaml"};
-    Collection<File> files = FileUtils.listFiles(new File(specificationsDirectory.toUri()), extensionsToSearchFor, false);
-
-    List<String> listOfFileNames = files.stream().map(File::getName).sorted().collect(Collectors.toList());
-
-    Path specificationDefinitionPath = Path.of(SECRETS_MODULE_PATH_PREFIX, "SecretsSpecificationFilesDefinition.java");
-    Path specificationDefinitionTemplatePath = Path.of(TEMPLATE_PATH_PREFIX, "SecretsSpecificationFilesDefinitionTemplate.java");
-
-    try {
-      Files.copy(specificationDefinitionTemplatePath, specificationDefinitionPath, StandardCopyOption.REPLACE_EXISTING);
-
-      String content = Files.readString(specificationDefinitionPath, charset);
-      content = content.replace("//<REPLACE-WITH-SET-OF-FILENAMES>", generateSpecificationDefinitionSet(listOfFileNames));
-      Files.write(specificationDefinitionPath, content.getBytes(charset));
-    } catch (IOException e) {
-      LOG.error("Error while writing SecretsSpecificationFilesDefinition", e);
-      throw new RuntimeException(e);
-    }
-
-    LOG.info("Successfully generated SecretsSpecificationFilesDefinition");
   }
 
   private void removeUnusedChecks(Set<String> keysNotUsedAnymore, Map<String, String> rspecKeysMappedToCheckNames) {
@@ -215,31 +178,11 @@ class UpdatingSpecificationFilesGenerator {
       Files.deleteIfExists(rspecJson);
       Files.deleteIfExists(rspecHtml);
     } catch (IOException e) {
-      LOG.error("Error while deleting Check with name \"" + checkName + "\", please fix manually", e);
+      LOG.error("Error while deleting Check with name \"{}\", please fix manually", checkName, e);
       throw new RuntimeException(e);
     }
 
     LOG.info("Successfully removed Check \"{}\" with rspecKey %s", checkName);
-  }
-
-  private String generateSpecificationDefinitionSet(List<String> fileNames) {
-    StringBuilder sb = new StringBuilder();
-
-    sb.append("public static Set<String> existingSecretSpecifications() {");
-    sb.append(System.lineSeparator());
-    sb.append("    return Set.of(");
-    sb.append(System.lineSeparator());
-    for (int i = 0; i < fileNames.size(); i++) {
-      sb.append("      \"" + fileNames.get(i) + "\"");
-      if (i == fileNames.size() - 1) {
-        sb.append(");");
-      } else {
-        sb.append(",");
-      }
-      sb.append(System.lineSeparator());
-    }
-    sb.append("  }");
-    return sb.toString();
   }
 
   private void constructFileForRulesAPI(Set<String> keysToUpdateRuleAPIFor) {
