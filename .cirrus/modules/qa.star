@@ -30,7 +30,7 @@ def on_failure():
 # Plugin
 #
 
-def qa_task(env, memory="10G", cpu="4"):
+def qa_task(env, memory="11G", cpu="4"):
     return {
         "depends_on": "build",
         "eks_container": base_image_container_builder(memory=memory, cpu=cpu),
