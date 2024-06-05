@@ -29,8 +29,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import org.opentest4j.AssertionFailedError;
+import org.sonar.api.SonarProduct;
 import org.sonar.api.batch.fs.InputComponent;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.check.Rule;
@@ -271,6 +273,12 @@ public class TestRegexScannerContext implements JavaFileScannerContext, RegexSca
 
   @Override
   public String getModuleKey() {
+    return null;
+  }
+
+  @CheckForNull
+  @Override
+  public SonarProduct sonarProduct() {
     return null;
   }
 
