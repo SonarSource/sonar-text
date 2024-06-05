@@ -19,6 +19,9 @@
  */
 package org.sonar.plugins.secrets.configuration.model.metadata;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -27,8 +30,8 @@ public abstract class Metadata {
   private String name;
   @Nullable
   private String message;
-  @Nullable
-  private List<Reference> references;
+  @JsonSetter(nulls = Nulls.SKIP)
+  private List<Reference> references = Collections.emptyList();
   @Nullable
   private String impact;
   @Nullable
@@ -50,12 +53,11 @@ public abstract class Metadata {
     this.message = message;
   }
 
-  @Nullable
   public List<Reference> getReferences() {
     return references;
   }
 
-  public void setReferences(@Nullable List<Reference> references) {
+  public void setReferences(List<Reference> references) {
     this.references = references;
   }
 

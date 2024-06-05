@@ -19,6 +19,9 @@
  */
 package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.sonar.plugins.secrets.configuration.model.RuleScope;
@@ -29,8 +32,12 @@ public class PreModule {
   private FileFilter include;
   @Nullable
   private FileFilter reject;
-  @Nullable
-  private List<RuleScope> scopes;
+  @JsonSetter(nulls = Nulls.SKIP)
+  private List<RuleScope> scopes = Collections.emptyList();
+
+  public PreModule() {
+    // Default constructor for deserializing with Jackson
+  }
 
   @Nullable
   public FileFilter getInclude() {
@@ -50,12 +57,11 @@ public class PreModule {
     this.reject = reject;
   }
 
-  @Nullable
   public List<RuleScope> getScopes() {
     return scopes;
   }
 
-  public void setScopes(@Nullable List<RuleScope> scopes) {
+  public void setScopes(List<RuleScope> scopes) {
     this.scopes = scopes;
   }
 }

@@ -65,7 +65,7 @@ public final class PreFilterFactory {
 
   private static Predicate<InputFileContext> scopeBasedFilePredicate(PreModule pre) {
     var scopes = pre.getScopes();
-    if (scopes == null || scopes.isEmpty() || scopes.size() == RuleScope.values().length) {
+    if (scopes.isEmpty() || scopes.size() == RuleScope.values().length) {
       return INCLUDE_ALL_FILES;
     }
 
@@ -81,10 +81,7 @@ public final class PreFilterFactory {
       anyMatch(filter.getContent(), PreFilterFactory::matchesContent, ctx);
   }
 
-  private static boolean anyMatch(@Nullable List<String> filterElements, BiPredicate<String, InputFileContext> filterFunction, InputFileContext ctx) {
-    if (filterElements == null) {
-      return false;
-    }
+  private static boolean anyMatch(List<String> filterElements, BiPredicate<String, InputFileContext> filterFunction, InputFileContext ctx) {
     return filterElements.stream().anyMatch(filterElement -> filterFunction.test(filterElement, ctx));
   }
 

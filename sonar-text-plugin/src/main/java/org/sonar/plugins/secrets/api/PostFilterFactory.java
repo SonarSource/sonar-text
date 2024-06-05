@@ -21,7 +21,6 @@ package org.sonar.plugins.secrets.api;
 
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
@@ -29,18 +28,27 @@ import org.sonar.plugins.secrets.configuration.model.matching.filter.HeuristicsF
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.StatisticalFilter;
 
-public class PostFilterFactory {
+/**
+ * Factory class to create a predicate based on the post module configuration.
+ */
+public final class PostFilterFactory {
 
   private PostFilterFactory() {
   }
 
+  /**
+   * Entry method of this class to create a predicate based on the post module configuration.
+   * @param post deserialized post module configuration
+   * @param matching deserialized matching configuration
+   * @return a predicate to filter out potential secrets based on the post module configuration
+   */
   public static Predicate<String> createPredicate(@Nullable PostModule post, @Nullable Matching matching) {
     Predicate<String> postFilter = s -> true;
     if (post != null) {
       if (post.getStatisticalFilter() != null) {
         postFilter = postFilter.and(filterForStatisticalFilter(post.getStatisticalFilter(), matching));
       }
-      if (post.getPatternNot() != null) {
+      if (!post.getPatternNot().isEmpty()) {
         postFilter = postFilter.and(filterForPatternNot(post.getPatternNot()));
       }
       if (post.getHeuristicFilter() != null) {
@@ -54,7 +62,7 @@ public class PostFilterFactory {
     String pipedPatterns = pipePatternNot(patternNot);
     var compiledPatternNot = Pattern.compile(pipedPatterns);
 
-    return candidateSecret -> {
+    return (String candidateSecret) -> {
       var matcher = compiledPatternNot.matcher(candidateSecret);
       return !matcher.find();
     };
@@ -74,8 +82,8 @@ public class PostFilterFactory {
   }
 
   static Predicate<String> filterForStatisticalFilter(StatisticalFilter statisticalFilter, @Nullable Matching matching) {
-    return candidateSecret -> {
-      String entropyInputString = candidateSecret;
+    return (String candidateSecret) -> {
+      var entropyInputString = candidateSecret;
       if (statisticalFilter.getInputString() != null && matching != null) {
         entropyInputString = calculateEntropyInputBasedOnNamedGroup(statisticalFilter.getInputString(), candidateSecret, matching);
       }
@@ -84,7 +92,7 @@ public class PostFilterFactory {
   }
 
   static String calculateEntropyInputBasedOnNamedGroup(String groupName, String candidateSecret, Matching matching) {
-    Matcher matcher = Pattern.compile(matching.getPattern()).matcher(candidateSecret);
+    var matcher = Pattern.compile(matching.getPattern()).matcher(candidateSecret);
     if (matcher.find()) {
       try {
         return matcher.group(groupName);

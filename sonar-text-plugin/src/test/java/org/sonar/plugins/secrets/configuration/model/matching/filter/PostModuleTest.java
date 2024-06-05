@@ -19,40 +19,28 @@
  */
 package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
-import com.fasterxml.jackson.annotation.JsonSetter;
-import com.fasterxml.jackson.annotation.Nulls;
-import java.util.Collections;
-import java.util.List;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.junit.jupiter.api.Test;
 
-public class FileFilter {
-  @JsonSetter(nulls = Nulls.SKIP)
-  private List<String> paths = Collections.emptyList();
-  @JsonSetter(nulls = Nulls.SKIP)
-  private List<String> ext = Collections.emptyList();
-  @JsonSetter(nulls = Nulls.SKIP)
-  private List<String> content = Collections.emptyList();
+import static org.assertj.core.api.Assertions.assertThat;
 
-  public List<String> getPaths() {
-    return paths;
+class PostModuleTest {
+
+  private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
+
+  @Test
+  void shouldDeserializeToEmptyCollection() throws JsonProcessingException {
+    String input = """
+      statisticalFilter:
+        threshold: 4
+      """;
+    PostModule postModule = MAPPER.readValue(input, PostModule.class);
+
+    assertThat(postModule.getPatternNot()).isEmpty();
+    assertThat(postModule.getHeuristicFilter()).isNull();
+    assertThat(postModule.getStatisticalFilter().getThreshold()).isEqualTo(4);
   }
 
-  public void setPaths(List<String> paths) {
-    this.paths = paths;
-  }
-
-  public List<String> getExt() {
-    return ext;
-  }
-
-  public void setExt(List<String> ext) {
-    this.ext = ext;
-  }
-
-  public List<String> getContent() {
-    return content;
-  }
-
-  public void setContent(List<String> content) {
-    this.content = content;
-  }
 }
