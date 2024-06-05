@@ -1,16 +1,40 @@
-acceptedIssues:
-  - secretRuleKey: S0001
-    secretRuleId: example-rule-id
-    location: matching
-    regexText: "^a|b|c$"
-    issueRuleKey: S5850
-    message: Group parts of the regex together to make the intended operator precedence explicit.
-    details: "Location: 0:7 text: ^a|b|c$"
 issuesToVerify:
-  - secretRuleKey: S0002
-    secretRuleId: example-rule-id
+  - secretRuleKey: S6334
+    secretRuleId: google-api-keys
+    location: auxiliary-PATTERN_AROUND
+    regexText: "(?i)com\\.google\\.android\\.(?:maps\\.v2|geo)\\.API_KEY|google[_\\W]?maps?|maps?[_\\W]?(?:api[_\\W]?)?key|https://www\\.google\\.com/maps/embed/v1/place"
+    issueRuleKey: S5843
+    message: Simplify this regular expression to reduce its complexity from 23 to the 20 allowed.
+    details: "text: (?i)com\\.google\\.android\\.(?:maps\\.v2|geo)\\.API_KEY|google[_\\W]?maps?|maps?[_\\W]?(?:api[_\\W]?)?key|https://www\\.google\\.com/maps/embed/v1/place"
+
+  - secretRuleKey: S6691
+    secretRuleId: google-oauth-secret-no-prefix-client-id-after
     location: matching
-    regexText: "^a|b|c$"
-    issueRuleKey: S5850
-    message: Group parts of the regex together to make the intended operator precedence explicit.
-    details: "Location: 0:7 text: ^a|b|c$"
+    regexText: "(?i)secret(?:[^})\\\\r\\\\n]*+\\\\r?\\\\n)?[^})\\\\r\\\\n]{0,50}\\\\b([\\\\w\\\\-]{24})\\\\b(?:[^})\\\\r\\\\n]*+\\\\r?\\\\n){0,3}[^})\\\\r\\\\n]{0,300}\\\\.apps\\\\.googleusercontent\\\\.com\\\\b(?!(?:[^})\\\\r\\\\n]*+\\\\r?\\\\n)?[^})\\\\r\\\\n]{0,30}secret)"
+    issueRuleKey: S5843
+    message: Simplify this regular expression to reduce its complexity from 32 to the 20 allowed.
+    details: "text: (?i)secret(?:[^})\\\\r\\\\n]*+\\\\r?\\\\n)?[^})\\\\r\\\\n]{0,50}\\\\b([\\\\w\\\\-]{24})\\\\b(?:[^})\\\\r\\\\n]*+\\\\r?\\\\n){0,3}[^})\\\\r\\\\n]{0,300}\\\\.apps\\\\.googleusercontent\\\\.com\\\\b(?!(?:[^})\\\\r\\\\n]*+\\\\r?\\\\n)?[^})\\\\r\\\\n]{0,30}secret)"
+
+  - secretRuleKey: S6290
+    secretRuleId: aws-session-tokens
+    location: matching
+    regexText: "(?i)session_?token(?:\"?\\\\s*[=:]\\\\s*\"?|>\\\\s*)([0-9a-z/+\"\\\\s=]{50,})(?:\\\\s*<|\\\\s*$|\"[;,]?|$)"
+    issueRuleKey: S5843
+    message: Simplify this regular expression to reduce its complexity from 26 to the 20 allowed.
+    details: "text: (?i)session_?token(?:\"?\\\\s*[=:]\\\\s*\"?|>\\\\s*)([0-9a-z/+\"\\\\s=]{50,})(?:\\\\s*<|\\\\s*$|\"[;,]?|$)"
+
+  - secretRuleKey: S6335
+    secretRuleId: google-service-account-keys
+    location: matching
+    regexText: "(-----BEGIN PRIVATE KEY-----(?:\\\\s|\\\\\\\\{1,2}n)++(?:[0-9A-Za-z/+]{80,}|(?:[0-9A-Za-z/+]{40,}(?:\\\\s|\\\\\\\\{1,2}n)++)+[0-9A-Za-z/+=]+)={0,2}(?:\\\\s|\\\\\\\\{1,2}n)++-----END PRIVATE KEY-----(?:\\\\s|\\\\\\\\{1,2}n)?)"
+    issueRuleKey: S5843
+    message: Simplify this regular expression to reduce its complexity from 44 to the 20 allowed.
+    details: "text: (-----BEGIN PRIVATE KEY-----(?:\\\\s|\\\\\\\\{1,2}n)++(?:[0-9A-Za-z/+]{80,}|(?:[0-9A-Za-z/+]{40,}(?:\\\\s|\\\\\\\\{1,2}n)++)+[0-9A-Za-z/+=]+)={0,2}(?:\\\\s|\\\\\\\\{1,2}n)++-----END PRIVATE KEY-----(?:\\\\s|\\\\\\\\{1,2}n)?)"
+
+  - secretRuleKey: S6687
+    secretRuleId: settings.py-secret-key-env-default
+    location: matching
+    regexText: "\\\\bSECRET_KEY(?:_FALLBACKS)?\\\\s*=\\\\s*(?:os\\\\.getenv|env(?:\\\\.str)?)\\\\(\\\\s*['\"][^'\"\\\\r\\\\n]+['\"]\\\\s*,\\\\s*(?:default\\\\s*=\\\\s*)?['\"]([^'\"\\\\r\\\\n]+)"
+    issueRuleKey: S5843
+    message: Simplify this regular expression to reduce its complexity from 21 to the 20 allowed.
+    details: "text: \\\\bSECRET_KEY(?:_FALLBACKS)?\\\\s*=\\\\s*(?:os\\\\.getenv|env(?:\\\\.str)?)\\\\(\\\\s*['\"][^'\"\\\\r\\\\n]+['\"]\\\\s*,\\\\s*(?:default\\\\s*=\\\\s*)?['\"]([^'\"\\\\r\\\\n]+)"

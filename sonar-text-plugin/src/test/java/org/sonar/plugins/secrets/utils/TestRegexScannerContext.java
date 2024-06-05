@@ -24,14 +24,17 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import org.opentest4j.AssertionFailedError;
 import org.sonar.api.batch.fs.InputComponent;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.check.Rule;
+import org.sonar.java.regex.JavaAnalyzerRegexSource;
 import org.sonar.java.regex.RegexCheck;
 import org.sonar.java.regex.RegexScannerContext;
 import org.sonar.plugins.java.api.JavaCheck;
@@ -42,6 +45,7 @@ import org.sonar.plugins.java.api.tree.CompilationUnitTree;
 import org.sonar.plugins.java.api.tree.LiteralTree;
 import org.sonar.plugins.java.api.tree.Tree;
 import org.sonarsource.analyzer.commons.regex.RegexParseResult;
+import org.sonarsource.analyzer.commons.regex.RegexParser;
 import org.sonarsource.analyzer.commons.regex.ast.FlagSet;
 import org.sonarsource.analyzer.commons.regex.ast.RegexSyntaxElement;
 
@@ -95,7 +99,7 @@ public class TestRegexScannerContext implements JavaFileScannerContext, RegexSca
       var text = ("Found following issues in Regexes (%s):%n" +
         "Please fix them or suppress in SecretsRegexTest/baseline.yaml:%n%s")
           .formatted(numberOfNewIssues, message);
-      throw new AssertionError(text);
+      throw new AssertionFailedError(text);
     }
   }
 
@@ -105,10 +109,10 @@ public class TestRegexScannerContext implements JavaFileScannerContext, RegexSca
         issue.secretRuleKey,
         issue.secretRuleId,
         issue.location,
-        issue.regexText,
+        issue.regexText.replace("\\\\", "\\\\\\\\").replace("\"", "\\\""),
         issue.issueRuleKey,
         issue.message,
-        issue.details);
+        issue.details.replace("\\\\", "\\\\\\\\").replace("\"", "\\\""));
   }
 
   public void setPatternLocation(SecretsRegexTest.PatternLocation patternLocation) {
@@ -129,8 +133,14 @@ public class TestRegexScannerContext implements JavaFileScannerContext, RegexSca
     var ruleKey = readRuleKey(regexCheck);
     var start = regexSyntaxElement.getRange().getBeginningOffset();
     var end = regexSyntaxElement.getRange().getEndingOffset();
-    var part = regexText.substring(start, Math.min(end, regexText.length()));
-    String details = String.format("Location: %s:%s text: %s", start, end, part);
+    String details;
+    if (start >= 0 && end >= 0) {
+      var part = regexText.substring(start, Math.min(end, regexText.length()));
+      details = String.format("Location: %s:%s text: %s", start, end, part);
+    } else {
+      // Some checks (e.g. RegexComplexityCheck) report on a strange range: opening quote only, with invalid indices. This is a quick workaround.
+      details = "text: %s".formatted(regexText);
+    }
 
     issues.add(new Issue(patternLocation.secretRspecKey, patternLocation.secretRuleId, patternLocation.location, ruleKey, regexText, message, details));
   }
@@ -143,7 +153,9 @@ public class TestRegexScannerContext implements JavaFileScannerContext, RegexSca
 
   @Override
   public RegexParseResult regexForLiterals(FlagSet initialFlags, LiteralTree... stringLiterals) {
-    throw new RuntimeException("not expected to be called");
+    var regexTree = new JavaAnalyzerRegexSource(Arrays.asList(stringLiterals));
+    var regexParser = new RegexParser(regexTree, new FlagSet());
+    return regexParser.parse();
   }
 
   @Override

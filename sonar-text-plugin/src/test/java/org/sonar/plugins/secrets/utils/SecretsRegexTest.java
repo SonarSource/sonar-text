@@ -19,8 +19,17 @@
  */
 package org.sonar.plugins.secrets.utils;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIf;
+import org.opentest4j.AssertionFailedError;
 import org.sonar.api.internal.apachecommons.io.FileUtils;
 import org.sonar.java.ast.parser.ArgumentListTreeImpl;
 import org.sonar.java.checks.regex.AbstractRegexCheck;
@@ -69,14 +78,7 @@ import org.sonar.plugins.secrets.configuration.model.matching.Match;
 import org.sonarsource.analyzer.commons.regex.RegexParser;
 import org.sonarsource.analyzer.commons.regex.ast.FlagSet;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SecretsRegexTest {
 
@@ -108,6 +110,21 @@ class SecretsRegexTest {
     patternLocations.forEach(this::checkRegex);
 
     context.verify(false);
+  }
+
+  @Test
+  void shouldReportIssuesOnTestFile() {
+    var specificationLoader = new SpecificationLoader("regex/", Set.of("specWithBadRegexes.yaml"));
+
+    var patternLocations = specificationLoader.getRulesMappedToKey().entrySet().stream()
+      .map(this::toPatternLocation)
+      .flatMap(Collection::stream)
+      .toList();
+
+    patternLocations.forEach(this::checkRegex);
+
+    assertThatThrownBy(() -> context.verify(false))
+      .isInstanceOf(AssertionFailedError.class);
   }
 
   private static Set<String> listOfYamlFiles() {
@@ -158,6 +175,7 @@ class SecretsRegexTest {
         .map(pattern -> new PatternLocation(rspecKey, secretRuleId, "post", pattern.replace("\\", "\\\\")))
         .forEach(patternLocations::add);
     }
+
     return patternLocations;
   }
 
@@ -192,6 +210,7 @@ class SecretsRegexTest {
       arguments.add(stringLiteral);
       MethodInvocationTree mit = new MethodInvocationTreeImpl(methodSelect, null, arguments);
       check.checkRegex(parseResult, mit);
+      check.leaveFile(context);
     }
   }
 

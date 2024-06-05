@@ -19,7 +19,11 @@
  */
 package org.sonar.plugins.secrets.utils;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import java.util.List;
 
-public record SecretsRegexBaseline(List<TestRegexScannerContext.Issue> acceptedIssues, List<TestRegexScannerContext.Issue> issuesToVerify) {
+public record SecretsRegexBaseline(
+  @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestRegexScannerContext.Issue> acceptedIssues,
+  @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestRegexScannerContext.Issue> issuesToVerify) {
 }

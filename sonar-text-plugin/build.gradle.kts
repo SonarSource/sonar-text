@@ -46,8 +46,8 @@ sourceSets {
 
 tasks.test {
     useJUnitPlatform()
-    // pass the filename property to SecretsRegexTest
-    systemProperty("filename", System.getProperty("filename"))
+    // pass the filename property to SecretsRegexTest if it is set
+    System.getProperty("filename")?.let { systemProperty("filename", it) }
     testLogging {
         // log the full stack trace (default is the 1st line of the stack trace)
         exceptionFormat = TestExceptionFormat.FULL

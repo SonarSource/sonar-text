@@ -1,0 +1,18 @@
+provider:
+  metadata:
+    name: example
+    category: Cloud provider
+  rules:
+    - id: exampleId1
+      rspecKey: google-oauth-secret-no-prefix-client-id-before
+      detection:
+        matching:
+          pattern: "(?i)(?:\\.apps\\.googleusercontent\\.com\\b(?:[^})\r\n]*+\r?\n){0,5}[^})\r\n]{0,300})(?:secret(?:[^})\r\n]*+\r?\n)?[^})\r\n]{0,50})\\b([\\w\\-]{24})\\b"
+    - id: exampleId2
+      rspecKey: mongo-url
+      detection:
+        matching:
+          pattern: "^(\\$[a-z_]*)?(db|my)?_?pass(word|wd)?"
+          context:
+            matchNot:
+              patternBefore: "^(\\$[a-z_]*)?(db|my)?_?pass(word|wd)?"
