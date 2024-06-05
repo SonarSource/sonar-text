@@ -1,4 +1,4 @@
-load("github.com/SonarSource/cirrus-modules/cloud-native/platform.star@analysis/master", "base_image_container_builder")
+load("github.com/SonarSource/cirrus-modules/cloud-native/platform.star@analysis/master", "base_image_container_builder", "ec2_instance_builder")
 load(
     "github.com/SonarSource/cirrus-modules/cloud-native/cache.star@analysis/master",
     "gradle_cache",
@@ -124,6 +124,38 @@ def qa_benchmark_task():
             "mkdir_orchestrator_home_script": mkdir_orchestrator_home_script(),
             "orchestrator_cache": orchestrator_cache(),
             "run_benchmark_script": run_its_script(),
+            "cleanup_gradle_script": cleanup_gradle_script(),
+            "on_failure": on_failure(),
+        }
+    }
+
+def qa_win_condition():
+    return "$CIRRUS_PR_LABELS =~ \".*qa-win.*\" || $CIRRUS_BRANCH == $CIRRUS_DEFAULT_BRANCH || $CIRRUS_BRANCH =~ \"branch-.*\""
+
+def qa_win_env():
+    return {
+        "SQ_VERSION": QA_QUBE_LATEST_RELEASE,
+        "GITHUB_TOKEN": "VAULT[development/github/token/licenses-ro token]",
+    }
+
+def qa_win_script():
+    return [
+        "source cirrus-env CI",
+        "./gradlew ${GRADLE_COMMON_FLAGS} --info --build-cache test integrationTest -x :private:its:benchmark:integrationTest",
+    ]
+
+def qa_os_win_task():
+    return {
+        "qa_os_win_task": {
+            "depends_on": "build",
+            "only_if": qa_win_condition(),
+            "env": qa_win_env(),
+            "ec2_instance": ec2_instance_builder(),
+            "gradle_cache": gradle_cache(),
+            "set_orchestrator_home_script": set_orchestrator_home_script(),
+            "mkdir_orchestrator_home_script": mkdir_orchestrator_home_script(),
+            "orchestrator_cache": orchestrator_cache(),
+            "build_script": qa_win_script(),
             "cleanup_gradle_script": cleanup_gradle_script(),
             "on_failure": on_failure(),
         }

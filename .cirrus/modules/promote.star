@@ -44,6 +44,7 @@ def promote_task():
                 "build",
                 "qa_plugin",
                 "sca_scan",
+                "qa_os_win",
             ],
             "env": promote_env(),
             "gradle_cache": gradle_cache(),
