@@ -7,6 +7,7 @@ plugins {
 spotless {
     encoding(Charsets.UTF_8)
     java {
+        targetExclude("build/generated/sources/**")
         // point to immutable specific commit of sonar-formater.xml version 23
         eclipse("4.22")
             .configFile(
