@@ -44,3 +44,6 @@ Desktop.ini
 
 # ---- RSPEC
 *rule-api*
+
+# ---- Orchestrator cache on CI
+/orchestrator/

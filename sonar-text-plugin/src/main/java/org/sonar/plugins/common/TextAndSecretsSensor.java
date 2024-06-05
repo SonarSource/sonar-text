@@ -34,6 +34,8 @@ import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
+import org.sonar.plugins.common.git.GitService;
+import org.sonar.plugins.common.git.GitTrackedFilePredicate;
 import org.sonar.plugins.common.thread.ParallelizationManager;
 import org.sonar.plugins.common.warnings.AnalysisWarningsWrapper;
 import org.sonar.plugins.common.warnings.DefaultAnalysisWarningsWrapper;
@@ -68,7 +70,6 @@ public class TextAndSecretsSensor implements Sensor {
   protected final CheckFactory checkFactory;
 
   protected final AnalysisWarningsWrapper analysisWarnings;
-  private final GitSupplier gitSupplier = new GitSupplier();
   protected DurationStatistics durationStatistics;
   private ParallelizationManager parallelizationManager;
 
@@ -171,7 +172,7 @@ public class TextAndSecretsSensor implements Sensor {
     }
 
     var trackedByGitPredicate = durationStatistics.timed("trackedByGitPredicate" + DurationStatistics.SUFFIX_GENERAL,
-      () -> new GitTrackedFilePredicate(getGitSupplier()));
+      () -> new GitTrackedFilePredicate(getGitService()));
     if (!trackedByGitPredicate.isGitStatusSuccessful()) {
       LOG.debug("Analyzing only language associated files, " +
         "make sure to run the analysis inside a git repository to make use of inclusions specified via \"{}\"",
@@ -291,7 +292,7 @@ public class TextAndSecretsSensor implements Sensor {
     return new SpecificationLoader();
   }
 
-  public GitSupplier getGitSupplier() {
-    return gitSupplier;
+  public GitService getGitService() {
+    return new GitService();
   }
 }

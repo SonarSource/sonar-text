@@ -17,13 +17,11 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.common;
+package org.sonar.plugins.common.git;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Set;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.FilePredicate;
@@ -31,32 +29,17 @@ import org.sonar.api.batch.fs.InputFile;
 
 public class GitTrackedFilePredicate implements FilePredicate {
   private static final Logger LOG = LoggerFactory.getLogger(GitTrackedFilePredicate.class);
-  private Set<String> untrackedFileNames;
-  private Git git;
-  private boolean isGitStatusSuccessful;
-  private Path projectRootPath;
+  private final Set<String> untrackedFileNames;
+  private final boolean isGitStatusSuccessful;
+  private final Path projectRootPath;
 
-  public GitTrackedFilePredicate(GitSupplier gitSupplier) {
-    try {
-      this.git = gitSupplier.getGit();
-      var status = git.status().call();
-      this.untrackedFileNames = status.getUntracked();
-      isGitStatusSuccessful = true;
-    } catch (GitAPIException | IOException | RuntimeException e) {
-      this.untrackedFileNames = Set.of();
-      isGitStatusSuccessful = false;
-      LOG.debug("Unable to retrieve git status", e);
-    } finally {
-      if (this.git != null) {
-        this.git.close();
-      }
-    }
-    this.projectRootPath = Path.of(".").toAbsolutePath();
-    try {
-      projectRootPath = projectRootPath.toRealPath();
-    } catch (IOException e) {
-      var message = String.format("Unable to resolve real path of project for %s", projectRootPath);
-      LOG.debug(message, e);
+  public GitTrackedFilePredicate(GitService gitService) {
+    var gitResult = gitService.retrieveUntrackedFileNames();
+    this.untrackedFileNames = gitResult.untrackedFileNames();
+    this.isGitStatusSuccessful = gitResult.isGitStatusSuccessful();
+    this.projectRootPath = resolveProjectRootPath();
+    if (!isGitStatusSuccessful) {
+      LOG.debug("Unable to retrieve git status");
     }
   }
 
@@ -73,5 +56,15 @@ public class GitTrackedFilePredicate implements FilePredicate {
 
   public boolean isGitStatusSuccessful() {
     return isGitStatusSuccessful;
+  }
+
+  private static Path resolveProjectRootPath() {
+    var projectRootPath = Path.of(".").toAbsolutePath();
+    try {
+      projectRootPath = projectRootPath.toRealPath();
+    } catch (IOException e) {
+      LOG.debug("Unable to resolve real path of project for {}", projectRootPath, e);
+    }
+    return projectRootPath;
   }
 }

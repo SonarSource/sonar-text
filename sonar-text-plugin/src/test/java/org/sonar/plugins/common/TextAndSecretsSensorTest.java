@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -47,6 +46,7 @@ import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.check.Rule;
+import org.sonar.plugins.common.git.GitService;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.api.task.RegexMatchingManager;
 import org.sonar.plugins.text.api.TextCheck;
@@ -59,7 +59,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.sonar.plugins.common.GitTrackedFilePredicateTest.setupGitMock;
 import static org.sonar.plugins.common.TestUtils.SONARCLOUD_RUNTIME;
 import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME;
 import static org.sonar.plugins.common.TestUtils.activeRules;
@@ -140,7 +139,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Rule(key = "IssueAtLineOne")
-  class ReportIssueAtLineOneCheck extends TextCheck {
+  static class ReportIssueAtLineOneCheck extends TextCheck {
     public void analyze(InputFileContext ctx) {
       ctx.reportTextIssue(getRuleKey(), 1, "testIssue");
     }
@@ -207,7 +206,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Rule(key = "Boom")
-  class BoomCheck extends TextCheck {
+  static class BoomCheck extends TextCheck {
     public void analyze(InputFileContext ctx) {
       throw new IllegalStateException("Should not occurs because there are only binary files");
     }
@@ -485,7 +484,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void shouldNotAnalyzeUntrackedFiles() throws IOException, GitAPIException {
+  void shouldNotAnalyzeUntrackedFiles() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     MapSettings mapSettings = new MapSettings();
@@ -494,12 +493,11 @@ class TextAndSecretsSensorTest {
     context.setRuntime(SONARQUBE_RUNTIME);
     var sensor = sensor(check);
     var sensorSpy = Mockito.spy(sensor);
-    var gitSupplier = mock(GitSupplier.class);
     Path fooJavaPath = Path.of("src", "foo.java");
     String relativePathFooJava = "src" + fooJavaPath.getFileSystem().getSeparator() + "foo.java";
-    var gitMock = setupGitMock(Set.of("a.txt", relativePathFooJava));
-    when(gitSupplier.getGit()).thenReturn(gitMock);
-    when(sensorSpy.getGitSupplier()).thenReturn(gitSupplier);
+    var gitService = mock(GitService.class);
+    when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.Result(true, Set.of("a.txt", relativePathFooJava)));
+    when(sensorSpy.getGitService()).thenReturn(gitService);
 
     analyse(sensorSpy, context,
       inputFile(Path.of("a.txt"), "{}", "secrets"),
@@ -515,15 +513,13 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void shouldNotCallGitFilePredicateInSonarlintContext() throws IOException, GitAPIException {
+  void shouldNotCallGitFilePredicateInSonarlintContext() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     var sensor = sensor(check);
     var sensorSpy = Mockito.spy(sensor);
-    var gitSupplier = mock(GitSupplier.class);
-    var gitMock = setupGitMock(Set.of("a.txt"));
-    when(gitSupplier.getGit()).thenReturn(gitMock);
-    when(sensorSpy.getGitSupplier()).thenReturn(gitSupplier);
+    var gitService = mock(GitService.class);
+    when(sensorSpy.getGitService()).thenReturn(gitService);
 
     analyse(sensorSpy, context,
       inputFile(Path.of("a.txt"), "{}"),
@@ -532,22 +528,21 @@ class TextAndSecretsSensorTest {
     Collection<Issue> issues = context.allIssues();
     assertThat(issues).hasSize(2);
     assertCorrectLogs(logTester.logs(), 2);
-    verify(gitSupplier, times(0)).getGit();
-    verify(sensorSpy, times(0)).getGitSupplier();
+    verify(gitService, times(0)).retrieveUntrackedFileNames();
+    verify(sensorSpy, times(0)).getGitService();
   }
 
   @Test
-  void shouldNotCallGitFilePredicateOnDefault() throws IOException, GitAPIException {
+  void shouldNotCallGitFilePredicateOnDefault() {
     logTester.setLevel(Level.DEBUG);
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     context.setRuntime(SONARQUBE_RUNTIME);
     var sensor = sensor(check);
     var sensorSpy = Mockito.spy(sensor);
-    var gitSupplier = mock(GitSupplier.class);
-    var gitMock = setupGitMock(Set.of("a.txt"));
-    when(gitSupplier.getGit()).thenReturn(gitMock);
-    when(sensorSpy.getGitSupplier()).thenReturn(gitSupplier);
+    var gitService = mock(GitService.class);
+    when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.Result(true, Set.of("a.txt")));
+    when(sensorSpy.getGitService()).thenReturn(gitService);
 
     analyse(sensorSpy, context,
       inputFile(Path.of("a.txt"), "{}", "secrets"),
@@ -557,12 +552,12 @@ class TextAndSecretsSensorTest {
     assertThat(issues).hasSize(2);
     assertCorrectLogs(logTester.logs(), 2,
       "Analyzing only language associated files, \"sonar.text.inclusions.activate\" property is deactivated");
-    verify(gitSupplier, times(0)).getGit();
-    verify(sensorSpy, times(0)).getGitSupplier();
+    verify(gitService, times(0)).retrieveUntrackedFileNames();
+    verify(sensorSpy, times(0)).getGitService();
   }
 
   @Test
-  void shouldOnlyAnalyzeFilesBelongingToALanguageNoGitRepositoryIsFoundEvenIfInclusionsKeySet() throws IOException {
+  void shouldOnlyAnalyzeFilesBelongingToALanguageNoGitRepositoryIsFoundEvenIfInclusionsKeySet() {
     logTester.setLevel(Level.DEBUG);
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
@@ -573,10 +568,9 @@ class TextAndSecretsSensorTest {
     context.setSettings(mapSettings);
     var sensor = sensor(check);
     var sensorSpy = Mockito.spy(sensor);
-    var gitSupplier = mock(GitSupplier.class);
-    // GitTrackedFilePredicate.isGitStatusSuccessful will return false
-    when(gitSupplier.getGit()).thenThrow(RuntimeException.class);
-    when(sensorSpy.getGitSupplier()).thenReturn(gitSupplier);
+    var gitService = mock(GitService.class);
+    when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.Result(false, Set.of()));
+    when(sensorSpy.getGitService()).thenReturn(gitService);
 
     analyse(sensorSpy, context,
       inputFile(Path.of("a.txt"), "{}", "secrets"),

@@ -17,27 +17,5 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.common;
-
-import java.io.IOException;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.RepositoryBuilder;
-
-public class GitSupplier {
-
-  /**
-   * This method will try to resolve Git on the file system.
-   * @return detected {@link Git}
-   * @throws IOException
-   * @throws RuntimeException when there is no git working-folder available
-   */
-  public Git getGit() throws IOException {
-    var repository = new RepositoryBuilder()
-      // scan environment GIT_* variables
-      .readEnvironment()
-      // scan up the file system tree
-      .findGitDir()
-      .build();
-    return new Git(repository);
-  }
-}
+@javax.annotation.ParametersAreNonnullByDefault
+package org.sonar.plugins.common.git;
