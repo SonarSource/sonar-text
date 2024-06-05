@@ -22,7 +22,6 @@ package org.sonar.plugins.secrets.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
@@ -35,9 +34,12 @@ import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultFileSystem;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.plugins.common.InputFileContext;
+import org.sonar.plugins.secrets.configuration.model.RuleScope;
 import org.sonar.plugins.secrets.configuration.model.matching.Detection;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -72,7 +74,7 @@ class PreFilterFactoryTest {
     "**/file.cpp, project/src/file.cpp, true",
     "'', project/src/file.cpp, false",
   })
-  void testMatchesPath(String pathPattern, String filePath, boolean shouldMatch) throws URISyntaxException {
+  void testMatchesPath(String pathPattern, String filePath, boolean shouldMatch) {
     InputFileContext ctx = mock(InputFileContext.class);
     when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder(
       "testProject", filePath).build());
@@ -97,7 +99,7 @@ class PreFilterFactoryTest {
   void testFiltersFromYamlFragments(String input, String filename, boolean shouldMatch) throws IOException {
     Detection detection = MAPPER.readValue(input, Detection.class);
 
-    Predicate<InputFileContext> predicate = PreFilterFactory.createPredicate(detection.getPre());
+    Predicate<InputFileContext> predicate = PreFilterFactory.createPredicate(detection.getPre(), new SpecificationConfiguration("src/tests"));
 
     InputFileContext ctx = mock(InputFileContext.class);
     when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder(
@@ -112,49 +114,134 @@ class PreFilterFactoryTest {
     return Stream.of(
       Arguments.of("pre:", ".env", true),
       Arguments.of(
-        "pre:\n" +
-          "  include:\n" +
-          "    paths:\n" +
-          "      - \"**/.env\"",
+        """
+          pre:
+            include:
+              paths:
+                - "**/.env\"""",
         ".env",
         true),
       Arguments.of(
-        "pre:\n" +
-          "  reject:\n" +
-          "    paths:\n" +
-          "      - \"**/.env\"",
+        """
+          pre:
+            reject:
+              paths:
+                - "**/.env\"""",
         ".env",
         false),
       Arguments.of(
-        "pre:\n" +
-          "  include:\n" +
-          "    paths:\n" +
-          "      - \"**/.env\"\n" +
-          "  reject:\n" +
-          "    paths:\n" +
-          "      - \"**/.env\"",
+        """
+          pre:
+            include:
+              paths:
+                - "**/.env"
+            reject:
+              paths:
+                - "**/.env\"""",
         ".env",
         false),
       Arguments.of(
-        "pre:\n" +
-          "  include:\n" +
-          "    ext:\n" +
-          "      - \".java\"",
+        """
+          pre:
+            include:
+              ext:
+                - ".java\"""",
         "Foo.java",
         true),
       Arguments.of(
-        "pre:\n" +
-          "  include:\n" +
-          "    ext:\n" +
-          "      - \".java\"",
+        """
+          pre:
+            include:
+              ext:
+                - ".java\"""",
         "Foo.cpp",
         false),
       Arguments.of(
-        "pre:\n" +
-          "  reject:\n" +
-          "    ext:\n" +
-          "      - \".class\"",
+        """
+          pre:
+            reject:
+              ext:
+                - ".class\"""",
         "Foo.class",
         false));
+  }
+
+  @ParameterizedTest
+  @MethodSource("inputsForTestingMainScopeAndSonarTest")
+  void shouldTestMainScopeWhenSonarTestIsNotSet(String filePath, boolean shouldMatch) {
+    var preModule = new PreModule();
+    preModule.setScopes(List.of(RuleScope.MAIN));
+    var ctx = mock(InputFileContext.class);
+    when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder(
+      "testProject", filePath).build());
+
+    var predicate = PreFilterFactory.createPredicate(preModule, new SpecificationConfiguration(""));
+
+    assertThat(predicate.test(ctx)).isEqualTo(shouldMatch);
+  }
+
+  @ParameterizedTest
+  @MethodSource("inputsForTestingMainScopeAndSonarTest")
+  void shouldTestMainScopeWhenSonarTestIsSet(String filePath, boolean ignored) {
+    var preModule = new PreModule();
+    preModule.setScopes(List.of(RuleScope.MAIN));
+    var ctx = mock(InputFileContext.class);
+    when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder(
+      "testProject", filePath).build());
+
+    var predicate = PreFilterFactory.createPredicate(preModule, new SpecificationConfiguration("/src/tests"));
+
+    assertThat(predicate.test(ctx)).isTrue();
+  }
+
+  @ParameterizedTest
+  @MethodSource("inputsForTestingMainScopeAndSonarTest")
+  void shouldTestMainScopeWhenSonarTestIsNotSetAndScopeTest(String filePath, boolean ignored) {
+    var preModule = new PreModule();
+    preModule.setScopes(List.of(RuleScope.TEST));
+    var ctx = mock(InputFileContext.class);
+    when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder(
+      "testProject", filePath).build());
+
+    var predicate = PreFilterFactory.createPredicate(preModule, new SpecificationConfiguration(""));
+
+    assertThat(predicate.test(ctx)).isFalse();
+  }
+
+  static Stream<Arguments> inputsForTestingMainScopeAndSonarTest() {
+    return Stream.of(
+      arguments("testutils.go", false),
+      arguments("Testutils.go", false),
+      arguments("test_example.py", false),
+      arguments("Someutils.go", true),
+      arguments("src/main/ExampleFilterTest.java", false),
+      arguments("src/main/examplefiltertest.java", false),
+      arguments("src/main/ExampleFilterTestt.java", true),
+      arguments("docker-compose-api-test.yaml", false),
+      arguments("conftest.py", false),
+      arguments("example_test.go", false),
+      arguments("appsettings.Test.json", false),
+      arguments("docker-compose-tests.yaml", false),
+      arguments("docker-compose-Tests.yaml", false),
+      arguments("docker-compose-Testss.yaml", true),
+      arguments("doc/examples/Example.java", false),
+      arguments("doc/examples/example.go", false),
+      arguments("documentation/examples/example.go", true),
+      arguments("examples/docs/example.go", false),
+      arguments("examples/docs/example.go", false),
+      arguments("examples/docs/src/main/example.go", false),
+      arguments("src/test/java/org/sonar/appsettings.json", false),
+      arguments("src/Test/java/org/sonar/appsettings.json", false),
+      arguments("tests/appsettings.json", false),
+      arguments("a/b/c/tests/appsettings.json", false),
+      arguments("a/b/c/doc", true), // doc is a filename here
+      arguments("libraries/kotlin.test/js/it/js/jest-reporter.js", false),
+      arguments("libraries/kotlin.Test/js/it/js/jest-reporter.js", false),
+      arguments("native/native.tests/driver/testData/driver0.kt", false),
+      arguments("native/native.Tests/driver/testData/driver0.kt", false),
+      arguments("latestnews.html", true),
+      arguments("abc/latestnews.html", true),
+      arguments("contestresults.js", true),
+      arguments("Protester.java", true));
   }
 }

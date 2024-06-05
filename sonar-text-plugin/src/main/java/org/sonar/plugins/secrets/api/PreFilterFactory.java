@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.secrets.api;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.BiPredicate;
@@ -26,6 +27,7 @@ import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.configuration.model.RuleScope;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.FileFilter;
@@ -43,15 +45,17 @@ public final class PreFilterFactory {
 
   /**
    * Produce a predicate from {@link PreModule}.
-   * @param pre the input {@link PreModule}
+   *
+   * @param pre                        the input {@link PreModule}
+   * @param specificationConfiguration the configuration
    * @return a predicate
    */
-  public static Predicate<InputFileContext> createPredicate(@Nullable PreModule pre) {
+  public static Predicate<InputFileContext> createPredicate(@Nullable PreModule pre, SpecificationConfiguration specificationConfiguration) {
     if (pre == null) {
       return INCLUDE_ALL_FILES;
     }
 
-    Predicate<InputFileContext> predicate = scopeBasedFilePredicate(pre);
+    Predicate<InputFileContext> predicate = scopeBasedFilePredicate(pre, specificationConfiguration);
     FileFilter include = pre.getInclude();
     FileFilter reject = pre.getReject();
     if (reject != null) {
@@ -63,7 +67,7 @@ public final class PreFilterFactory {
     return predicate;
   }
 
-  private static Predicate<InputFileContext> scopeBasedFilePredicate(PreModule pre) {
+  private static Predicate<InputFileContext> scopeBasedFilePredicate(PreModule pre, SpecificationConfiguration specificationConfiguration) {
     var scopes = pre.getScopes();
     if (scopes.isEmpty() || scopes.size() == RuleScope.values().length) {
       return INCLUDE_ALL_FILES;
@@ -71,8 +75,42 @@ public final class PreFilterFactory {
 
     return (InputFileContext inputFileContext) -> {
       var type = inputFileContext.getInputFile().type();
-      return scopes.contains(RuleScope.valueOf(type.toString().toUpperCase(Locale.ROOT)));
+      if (!scopes.contains(RuleScope.TEST) && specificationConfiguration.sonarTests().isBlank() && type == InputFile.Type.MAIN) {
+        return !isFilenameTest(inputFileContext) && !isFileInDocOrTestDirectory(inputFileContext);
+      }
+      var ruleScope = RuleScope.valueOf(type.toString().toUpperCase(Locale.ROOT));
+      return scopes.contains(ruleScope);
     };
+  }
+
+  private static boolean isFilenameTest(InputFileContext inputFileContext) {
+    var filename = inputFileContext.getInputFile().filename().toLowerCase(Locale.ROOT);
+    return filename.startsWith("test") || filename.contains("test.") || filename.contains("tests.");
+  }
+
+  private static boolean isFileInDocOrTestDirectory(InputFileContext inputFileContext) {
+    var path = inputFileContext.getInputFile().toString().toLowerCase(Locale.ROOT);
+    var pathElements = Arrays.asList(path.split("/"));
+    var pathElementsWithoutFilename = pathElements.subList(0, pathElements.size() - 1);
+    return isDocDirectory(pathElementsWithoutFilename) || isTestDirectory(pathElementsWithoutFilename)
+      || hasEnding(pathElementsWithoutFilename, "test") || hasEnding(pathElementsWithoutFilename, "tests");
+  }
+
+  private static boolean isDocDirectory(List<String> pathElements) {
+    return pathElements.contains("doc") || pathElements.contains("docs");
+  }
+
+  private static boolean isTestDirectory(List<String> pathElements) {
+    return pathElements.contains("test") || pathElements.contains("tests");
+  }
+
+  private static boolean hasEnding(List<String> pathElements, String text) {
+    for (String pathElement : pathElements) {
+      if (pathElement.endsWith(text)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean matches(FileFilter filter, InputFileContext ctx) {

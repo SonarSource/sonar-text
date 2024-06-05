@@ -42,6 +42,7 @@ import org.sonar.plugins.common.warnings.DefaultAnalysisWarningsWrapper;
 import org.sonar.plugins.secrets.SecretsCheckList;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
+import org.sonar.plugins.secrets.api.SpecificationConfiguration;
 import org.sonar.plugins.secrets.api.SpecificationLoader;
 import org.sonar.plugins.secrets.api.task.RegexMatchingManager;
 import org.sonar.plugins.text.TextCheckList;
@@ -65,6 +66,7 @@ public class TextAndSecretsSensor implements Sensor {
   public static final boolean INCLUSIONS_ACTIVATION_DEFAULT_VALUE = false;
   public static final String THREAD_NUMBER_KEY = "sonar.text.threads";
   public static final String TEXT_CATEGORY = "Secrets";
+  private static final String SONAR_TESTS_KEY = "sonar.tests";
   private static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
 
   protected final CheckFactory checkFactory;
@@ -103,7 +105,7 @@ public class TextAndSecretsSensor implements Sensor {
     // Retrieve list of checks
     List<Check> activeChecks = getActiveChecks();
     durationStatistics = new DurationStatistics(sensorContext.config());
-    initializeSpecificationBasedChecks(activeChecks);
+    initializeSpecificationBasedChecks(activeChecks, sensorContext);
     if (activeChecks.isEmpty()) {
       return;
     }
@@ -237,6 +239,10 @@ public class TextAndSecretsSensor implements Sensor {
     return "true".equals(sensorContext.config().get(ANALYZE_ALL_FILES_KEY).orElse("false"));
   }
 
+  private static String sonarTests(SensorContext sensorContext) {
+    return sensorContext.config().get(SONAR_TESTS_KEY).orElse("");
+  }
+
   /**
    * In SonarLint context we want to analyze all non-binary input files, even when they are not analyzed or assigned to a language.
    * To avoid analyzing all non-binary files to reduce time and memory consumption in a non SonarLint context only files assigned to a
@@ -261,13 +267,15 @@ public class TextAndSecretsSensor implements Sensor {
     return checks;
   }
 
-  protected void initializeSpecificationBasedChecks(List<Check> checks) {
+  protected void initializeSpecificationBasedChecks(List<Check> checks, SensorContext sensorContext) {
     var specificationLoader = durationStatistics.timed("deserializingSpecifications" + DurationStatistics.SUFFIX_GENERAL,
       this::constructSpecificationLoader);
+
+    var specificationConfiguration = new SpecificationConfiguration(sonarTests(sensorContext));
     durationStatistics.timed("initializingSecretMatchers" + DurationStatistics.SUFFIX_GENERAL, () -> {
       for (Check activeCheck : checks) {
         if (activeCheck instanceof SpecificationBasedCheck specificationBasedCheck) {
-          (specificationBasedCheck).initialize(specificationLoader, durationStatistics);
+          (specificationBasedCheck).initialize(specificationLoader, durationStatistics, specificationConfiguration);
         }
       }
     });

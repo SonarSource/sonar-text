@@ -201,7 +201,7 @@ class TextAndSecretsSensorTest {
     InputFile inputFile = inputFile("foo");
     analyse(sensor(check), context, inputFile);
 
-    verify(check).initialize(any(), any());
+    verify(check).initialize(any(), any(), any());
     assertThat(logTester.logs()).contains("Found no rule specification for rule with key: SecretKey");
   }
 

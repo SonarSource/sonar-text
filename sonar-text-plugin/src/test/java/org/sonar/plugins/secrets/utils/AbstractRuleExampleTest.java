@@ -48,6 +48,7 @@ import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.api.Match;
 import org.sonar.plugins.secrets.api.PatternMatcher;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
+import org.sonar.plugins.secrets.api.SpecificationConfiguration;
 import org.sonar.plugins.secrets.api.SpecificationLoader;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.RuleExample;
@@ -76,7 +77,7 @@ public abstract class AbstractRuleExampleTest {
     }
 
     this.check = check;
-    check.initialize(specificationLoader, mockDurationStatistics());
+    check.initialize(specificationLoader, mockDurationStatistics(), new SpecificationConfiguration(""));
 
     if (!loaderExceptions.isEmpty()) {
       for (Throwable e : loaderExceptions) {

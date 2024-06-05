@@ -58,13 +58,14 @@ public class SecretMatcher {
   /**
    * Creates a new SecretMatcher from provided Rule
    *
-   * @param rule               rule to extract matcher logic from
-   * @param durationStatistics instance to collect performance statistics
+   * @param rule                       rule to extract matcher logic from
+   * @param durationStatistics         instance to collect performance statistics
+   * @param specificationConfiguration configuration of specification
    * @return a new SecretMatcher
    */
-  public static SecretMatcher build(Rule rule, DurationStatistics durationStatistics) {
+  public static SecretMatcher build(Rule rule, DurationStatistics durationStatistics, SpecificationConfiguration specificationConfiguration) {
     var patternMatcher = PatternMatcher.build(rule.getDetection().getMatching());
-    Predicate<InputFileContext> preFilter = PreFilterFactory.createPredicate(rule.getDetection().getPre());
+    Predicate<InputFileContext> preFilter = PreFilterFactory.createPredicate(rule.getDetection().getPre(), specificationConfiguration);
     Predicate<String> postFilter = PostFilterFactory.createPredicate(rule.getDetection().getPost(), rule.getDetection().getMatching());
     var auxiliaryMatcher = AuxiliaryPatternMatcherFactory.build(rule.getDetection().getMatching());
     return new SecretMatcher(rule.getId(), rule.getMetadata().getMessage(), patternMatcher, auxiliaryMatcher, preFilter, postFilter, durationStatistics);

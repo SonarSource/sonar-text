@@ -50,10 +50,11 @@ public abstract class SpecificationBasedCheck extends Check {
   /**
    * Initialize this check by loading rule definitions
    *
-   * @param loader               SpecificationLoader that will provide specification files
-   * @param durationStatistics   an instance to record performance statistics
+   * @param loader                     SpecificationLoader that will provide specification files
+   * @param durationStatistics         an instance to record performance statistics
+   * @param specificationConfiguration configuration of specification
    */
-  public void initialize(SpecificationLoader loader, DurationStatistics durationStatistics) {
+  public void initialize(SpecificationLoader loader, DurationStatistics durationStatistics, SpecificationConfiguration specificationConfiguration) {
     this.durationStatistics = durationStatistics;
     String ruleId = getRuleKey().rule();
     List<Rule> rulesForKey = retrieveRules(loader, ruleId);
@@ -61,7 +62,7 @@ public abstract class SpecificationBasedCheck extends Check {
       LOG.warn("Found no rule specification for rule with key: {}", ruleId);
     }
     this.matcher = rulesForKey.stream()
-      .map(rule -> SecretMatcher.build(rule, durationStatistics))
+      .map(rule -> SecretMatcher.build(rule, durationStatistics, specificationConfiguration))
       .toList();
   }
 
