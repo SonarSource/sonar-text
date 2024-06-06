@@ -66,7 +66,7 @@ public class TextAndSecretsSensor implements Sensor {
   public static final boolean INCLUSIONS_ACTIVATION_DEFAULT_VALUE = false;
   public static final String THREAD_NUMBER_KEY = "sonar.text.threads";
   public static final String TEXT_CATEGORY = "Secrets";
-  private static final String SONAR_TESTS_KEY = "sonar.tests";
+  public static final String SONAR_TESTS_KEY = "sonar.tests";
   private static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
 
   protected final CheckFactory checkFactory;
@@ -240,7 +240,18 @@ public class TextAndSecretsSensor implements Sensor {
   }
 
   private static String sonarTests(SensorContext sensorContext) {
-    return sensorContext.config().get(SONAR_TESTS_KEY).orElse("");
+    var value = sensorContext.config().get(SONAR_TESTS_KEY).orElse("");
+    if (value.isBlank()) {
+      var message = """
+        The property "%s" is not set. To improve the analysis accuracy, we categorize a file as a test file if any of the following is true:
+          * The filename starts with "test"
+          * The filename contains "test." or "tests."
+          * Any directory in the file path is named: "doc", "docs", "test" or "tests"
+          * Any directory in the file path has a name ending in "test" or "tests"
+        """.formatted(SONAR_TESTS_KEY);
+      LOG.info(message);
+    }
+    return value;
   }
 
   /**

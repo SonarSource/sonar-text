@@ -66,6 +66,7 @@ import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.defaultSensorContext;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
+import static org.sonar.plugins.common.TextAndSecretsSensor.SONAR_TESTS_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.TEXT_INCLUSIONS_DEFAULT_VALUE;
 
 class TextAndSecretsSensorTest {
@@ -74,6 +75,14 @@ class TextAndSecretsSensorTest {
   private static final int AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();
   private static final String EXPECTED_PROCESSOR_LOG_LINE = "Available processors: " + AVAILABLE_PROCESSORS;
   private static final String DEFAULT_THREAD_USAGE_LOG_LINE = "Using " + AVAILABLE_PROCESSORS + " threads for analysis.";
+
+  private static final String EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE = """
+    The property "sonar.tests" is not set. To improve the analysis accuracy, we categorize a file as a test file if any of the following is true:
+      * The filename starts with "test"
+      * The filename contains "test." or "tests."
+      * Any directory in the file path is named: "doc", "docs", "test" or "tests"
+      * Any directory in the file path has a name ending in "test" or "tests"
+    """;
 
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
@@ -167,6 +176,7 @@ class TextAndSecretsSensorTest {
     assertThat(logTester.logs()).containsExactly(
       EXPECTED_PROCESSOR_LOG_LINE,
       DEFAULT_THREAD_USAGE_LOG_LINE,
+      EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE,
       "1 source file to be analyzed");
   }
 
@@ -651,7 +661,8 @@ class TextAndSecretsSensorTest {
       "Available processors: " + Runtime.getRuntime().availableProcessors(),
       "Using 1 thread for analysis, according to the value of \"sonar.text.threads\" property.",
       "3 source files to be analyzed",
-      "3/3 source files have been analyzed");
+      "3/3 source files have been analyzed",
+      EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
   }
 
   @Test
@@ -674,7 +685,8 @@ class TextAndSecretsSensorTest {
         "It is recommended to let the analyzer detect the number of threads automatically by not setting the property.\n" +
         "For more information, visit the documentation page.",
       "3 source files to be analyzed",
-      "3/3 source files have been analyzed");
+      "3/3 source files have been analyzed",
+      EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
   }
 
   @Test
@@ -694,24 +706,44 @@ class TextAndSecretsSensorTest {
       "Available processors: " + availableProcessors,
       "Using " + availableProcessors + " threads for analysis, \"sonar.text.threads\" is ignored.",
       "3 source files to be analyzed",
-      "3/3 source files have been analyzed");
+      "3/3 source files have been analyzed",
+      EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
+  }
+
+  @Test
+  void shouldLogMessageWhenSonarTestIsNotSet() {
+    SensorContextTester context = defaultSensorContext();
+    var settings = new MapSettings().setProperty(SONAR_TESTS_KEY, "");
+    context.setSettings(settings);
+    analyse(sensor(context), context, inputFile(""));
+    assertThat(logTester.logs(Level.INFO)).contains(EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
+  }
+
+  @Test
+  void shouldNotLogMessageWhenSonarTestIsSet() {
+    SensorContextTester context = defaultSensorContext();
+    var settings = new MapSettings().setProperty(SONAR_TESTS_KEY, "src/test");
+    context.setSettings(settings);
+    analyse(sensor(context), context, inputFile(""));
+    assertThat(logTester.logs(Level.INFO)).doesNotContain(EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
   }
 
   private void assertCorrectLogs(List<String> logs, int numberOfAnalyzedFiles, String... additionalLogs) {
     assertThat(logs).contains(
       EXPECTED_PROCESSOR_LOG_LINE,
-      DEFAULT_THREAD_USAGE_LOG_LINE);
+      DEFAULT_THREAD_USAGE_LOG_LINE,
+      EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
     assertThat(logs).containsAll(Arrays.asList(additionalLogs));
 
     if (numberOfAnalyzedFiles == 0) {
-      assertThat(logs).hasSize(additionalLogs.length + 2);
+      assertThat(logs).hasSize(additionalLogs.length + 3);
     } else if (numberOfAnalyzedFiles == 1) {
-      assertThat(logs).hasSize(additionalLogs.length + 4);
+      assertThat(logs).hasSize(additionalLogs.length + 5);
       assertThat(logs).contains(
         "1 source file to be analyzed",
         "1/1 source file has been analyzed");
     } else {
-      assertThat(logs).hasSize(additionalLogs.length + 4);
+      assertThat(logs).hasSize(additionalLogs.length + 5);
       assertThat(logs).contains(
         numberOfAnalyzedFiles + " source files to be analyzed",
         numberOfAnalyzedFiles + "/" + numberOfAnalyzedFiles + " source files have been analyzed");
