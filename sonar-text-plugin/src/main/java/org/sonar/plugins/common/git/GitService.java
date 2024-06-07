@@ -68,9 +68,7 @@ public class GitService {
 
     var pbw = getGitProcessBuilder(List.of("--version"));
     try {
-      var status = pbw.execute((String line) -> {
-        // ignore output
-      });
+      var status = pbw.execute((String line) -> LOG.debug("git --version returned: {}", line));
       return status == ProcessBuilderWrapper.Status.SUCCESS;
     } catch (IOException e) {
       LOG.debug("Not using Git CLI, `git --version` failed: {}", e.getMessage());

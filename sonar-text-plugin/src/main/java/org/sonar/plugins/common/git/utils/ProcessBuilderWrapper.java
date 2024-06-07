@@ -33,7 +33,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class ProcessBuilderWrapper {
   private static final Logger LOG = LoggerFactory.getLogger(ProcessBuilderWrapper.class);
-  private static final long TIMEOUT_MILLIS = 10_000;
+  private static final long TIMEOUT_MILLIS = 30_000;
   private final List<String> command;
 
   public ProcessBuilderWrapper(List<String> command) {
