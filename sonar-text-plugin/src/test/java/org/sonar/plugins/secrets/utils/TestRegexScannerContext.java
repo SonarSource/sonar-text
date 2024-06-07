@@ -36,6 +36,7 @@ import org.sonar.api.SonarProduct;
 import org.sonar.api.batch.fs.InputComponent;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.check.Rule;
+import org.sonar.java.model.JavaVersionImpl;
 import org.sonar.java.regex.JavaAnalyzerRegexSource;
 import org.sonar.java.regex.RegexCheck;
 import org.sonar.java.regex.RegexScannerContext;
@@ -253,7 +254,7 @@ public class TestRegexScannerContext implements JavaFileScannerContext, RegexSca
 
   @Override
   public JavaVersion getJavaVersion() {
-    return null;
+    return new JavaVersionImpl(17);
   }
 
   @Override

@@ -32,7 +32,10 @@ import org.junit.jupiter.api.condition.DisabledIf;
 import org.opentest4j.AssertionFailedError;
 import org.sonar.api.internal.apachecommons.io.FileUtils;
 import org.sonar.java.ast.parser.ArgumentListTreeImpl;
+import org.sonar.java.ast.parser.FormalParametersListTreeImpl;
+import org.sonar.java.ast.parser.QualifiedIdentifierListTreeImpl;
 import org.sonar.java.checks.regex.AbstractRegexCheck;
+import org.sonar.java.checks.regex.AbstractRegexCheckTrackingMatchers;
 import org.sonar.java.checks.regex.AnchorPrecedenceCheck;
 import org.sonar.java.checks.regex.CanonEqFlagInRegexCheck;
 import org.sonar.java.checks.regex.DuplicatesInCharacterClassCheck;
@@ -58,18 +61,29 @@ import org.sonar.java.checks.regex.SingleCharacterAlternationCheck;
 import org.sonar.java.checks.regex.SuperfluousCurlyBraceCheck;
 import org.sonar.java.checks.regex.UnicodeCaseCheck;
 import org.sonar.java.checks.regex.UnquantifiedNonCapturingGroupCheck;
-import org.sonar.java.checks.regex.UnusedGroupNamesCheck;
 import org.sonar.java.checks.regex.VerboseRegexCheck;
 import org.sonar.java.model.InternalSyntaxToken;
+import org.sonar.java.model.JavaTree;
+import org.sonar.java.model.declaration.ClassTreeImpl;
+import org.sonar.java.model.declaration.MethodTreeImpl;
+import org.sonar.java.model.declaration.ModifiersTreeImpl;
+import org.sonar.java.model.declaration.VariableTreeImpl;
 import org.sonar.java.model.expression.IdentifierTreeImpl;
 import org.sonar.java.model.expression.LiteralTreeImpl;
 import org.sonar.java.model.expression.MemberSelectExpressionTreeImpl;
 import org.sonar.java.model.expression.MethodInvocationTreeImpl;
+import org.sonar.java.model.statement.BlockTreeImpl;
+import org.sonar.java.model.statement.IfStatementTreeImpl;
 import org.sonar.java.regex.JavaAnalyzerRegexSource;
+import org.sonar.plugins.java.api.tree.BlockTree;
+import org.sonar.plugins.java.api.tree.CompilationUnitTree;
 import org.sonar.plugins.java.api.tree.ExpressionTree;
+import org.sonar.plugins.java.api.tree.IdentifierTree;
 import org.sonar.plugins.java.api.tree.LiteralTree;
 import org.sonar.plugins.java.api.tree.MethodInvocationTree;
+import org.sonar.plugins.java.api.tree.StatementTree;
 import org.sonar.plugins.java.api.tree.Tree;
+import org.sonar.plugins.java.api.tree.VariableTree;
 import org.sonar.plugins.secrets.api.SpecificationLoader;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
@@ -201,15 +215,14 @@ class SecretsRegexTest {
       context.setPatternLocation(patternLocation);
       check.setContext(context);
 
-      ExpressionTree expr = new IdentifierTreeImpl(new InternalSyntaxToken(0, 0, "java.util.regex.Pattern", List.of(), false));
-      ExpressionTree methodSelect = new MemberSelectExpressionTreeImpl(expr,
-        new InternalSyntaxToken(0, 0, ".", List.of(), false),
-        new IdentifierTreeImpl(new InternalSyntaxToken(0, 0, "compile", List.of(), false)));
-
-      ArgumentListTreeImpl arguments = ArgumentListTreeImpl.emptyList();
-      arguments.add(stringLiteral);
-      MethodInvocationTree mit = new MethodInvocationTreeImpl(methodSelect, null, arguments);
-      check.checkRegex(parseResult, mit);
+      MethodInvocationTree mit = methodInvocation(identifier("java.util.regex.Pattern"), identifier("compile"), List.of(stringLiteral));
+      if (check instanceof AbstractRegexCheckTrackingMatchers) {
+        // These checks raise issues after analyzing usages of regexes as well. That's why we need a more complex code snippet.
+        check.checkRegex(parseResult, mit);
+        check.leaveNode(buildJavaTree(patternLocation.regex));
+      } else {
+        check.checkRegex(parseResult, mit);
+      }
       check.leaveFile(context);
     }
   }
@@ -221,6 +234,7 @@ class SecretsRegexTest {
     // Regexes are not used here to call replaceAll() method
     // * Disabled S5867 UnicodeAwareCharClassesCheck Unicode-aware versions of character classes should be preferred - is mostly
     // going to cause FPs and should not be enabled for secrets.
+    // * Disabled S5860 UnusedGroupNamesCheck because named groups in secret specifications can exist for clarity.
     return List.of(
       new AnchorPrecedenceCheck(),
       new CanonEqFlagInRegexCheck(),
@@ -247,8 +261,84 @@ class SecretsRegexTest {
       new SuperfluousCurlyBraceCheck(),
       new UnicodeCaseCheck(),
       new UnquantifiedNonCapturingGroupCheck(),
-      new UnusedGroupNamesCheck(),
       new VerboseRegexCheck());
+  }
+
+  /**
+   * Build an AST for the following code snippet:
+   * <pre>
+   *   <code>class Example {
+   *     void example(String input) {
+   *       Pattern pattern = Pattern.compile([regex text]);
+   *       Matcher matcher = pattern.matcher(input);
+   *       if (matcher.matches()) {
+   *       // EMPTY
+   *       }
+   *       if (matcher.find()) {
+   *       // EMPTY
+   *       }
+   *     }
+   *   }</code>
+   * </pre>
+   */
+  private static CompilationUnitTree buildJavaTree(String regex) {
+    var patternInitializer = methodInvocation(
+      identifier("java.util.regex.Pattern"),
+      identifier("compile"),
+      List.of(new LiteralTreeImpl(Tree.Kind.STRING_LITERAL, internalSyntaxToken("\"" + regex + "\""))));
+    var patternVariable = variableTree("pattern", patternInitializer);
+
+    var matcherInitializer = methodInvocation(
+      identifier("pattern"),
+      identifier("matcher"),
+      List.of(identifier("input")));
+    var matcherVariable = variableTree("matcher", matcherInitializer);
+
+    var matchesIfStatement = new IfStatementTreeImpl(internalSyntaxToken("if"), internalSyntaxToken("("),
+      methodInvocation(identifier("matcher"), identifier("matches"), ArgumentListTreeImpl.emptyList()),
+      internalSyntaxToken(")"), blockTree(List.of()), null, null);
+
+    var findIfStatement = new IfStatementTreeImpl(internalSyntaxToken("if"), internalSyntaxToken("("),
+      methodInvocation(identifier("matcher"), identifier("find"), ArgumentListTreeImpl.emptyList()),
+      internalSyntaxToken(")"), blockTree(List.of()), null, null);
+
+    var block = blockTree(List.of(patternVariable, matcherVariable, matchesIfStatement, findIfStatement));
+    var methodTree = new MethodTreeImpl(
+      new JavaTree.PrimitiveTypeTreeImpl(internalSyntaxToken("void")),
+      identifier("example"),
+      new FormalParametersListTreeImpl(internalSyntaxToken("("), internalSyntaxToken(")")),
+      null,
+      QualifiedIdentifierListTreeImpl.emptyList(),
+      block,
+      internalSyntaxToken(";"));
+
+    var classTree = new ClassTreeImpl(Tree.Kind.CLASS, internalSyntaxToken("{"), List.of(methodTree), internalSyntaxToken("}"));
+    return new JavaTree.CompilationUnitTreeImpl(null, List.of(), List.of(classTree), null, new InternalSyntaxToken(0, 0, "", List.of(), true));
+  }
+
+  private static InternalSyntaxToken internalSyntaxToken(String text) {
+    return new InternalSyntaxToken(0, 0, text, List.of(), false);
+  }
+
+  private static IdentifierTree identifier(String text) {
+    return new IdentifierTreeImpl(new InternalSyntaxToken(0, 0, text, List.of(), false));
+  }
+
+  private static VariableTree variableTree(String name, ExpressionTree initializer) {
+    return new VariableTreeImpl(ModifiersTreeImpl.emptyModifiers(), identifier(name), initializer);
+  }
+
+  private static MethodInvocationTree methodInvocation(IdentifierTree receiver, IdentifierTree method, List<ExpressionTree> arguments) {
+    var dot = new InternalSyntaxToken(0, 0, ".", List.of(), false);
+    var argumentsTree = ArgumentListTreeImpl.emptyList();
+    argumentsTree.addAll(arguments);
+    return new MethodInvocationTreeImpl(
+      new MemberSelectExpressionTreeImpl(receiver, dot, method),
+      null, argumentsTree);
+  }
+
+  private static BlockTree blockTree(List<StatementTree> statements) {
+    return new BlockTreeImpl(internalSyntaxToken("{"), statements, internalSyntaxToken("}"));
   }
 
   static class PatternLocation {
