@@ -134,7 +134,7 @@ public class GitServiceTest {
       var gitResult = gitService.retrieveUntrackedFileNames();
       assertThat(gitResult.isGitStatusSuccessful()).isTrue();
       assertThat(gitResult.untrackedFileNames())
-        .isEqualTo(Set.of("untracked.txt", "untracked2"));
+        .containsOnly("untracked.txt", "untracked2");
     } else {
       throw new TestAbortedException("Git CLI is not available in the test environment");
     }

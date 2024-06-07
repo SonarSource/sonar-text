@@ -21,12 +21,12 @@ package org.sonar.plugins.common.git;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,7 +77,7 @@ public class GitService {
   }
 
   private Result getUntrackedFilesFromGitCli() throws IOException {
-    var untrackedFiles = new HashSet<String>();
+    Set<String> untrackedFiles = ConcurrentHashMap.newKeySet();
 
     var wrapper = getGitProcessBuilder(List.of("status", "--untracked-files=all", "--porcelain"));
     try {

@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.common.git.utils;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ProcessBuilderWrapperTest {
@@ -37,19 +39,26 @@ class ProcessBuilderWrapperTest {
     var process = mock(Process.class);
     when(wrapper.startProcess()).thenReturn(process);
     when(process.waitFor(anyLong(), any())).thenReturn(false);
+    when(process.getInputStream()).thenAnswer(invocation -> {
+      Thread.sleep(1000);
+      return new ByteArrayInputStream(new byte[0]);
+    });
 
     var status = wrapper.execute((String line) -> {
     });
 
     assertEquals(ProcessBuilderWrapper.Status.FAILURE, status);
+    verify(process).destroy();
   }
 
   @Test
-  void shouldReturnFailureIfProcessReturnsNonZero() throws IOException {
+  void shouldReturnFailureIfProcessReturnsNonZero() throws IOException, InterruptedException {
     var wrapper = spy(new ProcessBuilderWrapper(List.of("sleep", "1000")));
     var process = mock(Process.class);
     when(wrapper.startProcess()).thenReturn(process);
+    when(process.waitFor(anyLong(), any())).thenReturn(true);
     when(process.exitValue()).thenReturn(1);
+    when(process.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
 
     var status = wrapper.execute((String line) -> {
     });
@@ -63,6 +72,7 @@ class ProcessBuilderWrapperTest {
     var process = mock(Process.class);
     when(wrapper.startProcess()).thenReturn(process);
     when(process.waitFor(anyLong(), any())).thenThrow(new InterruptedException());
+    when(process.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
 
     var status = wrapper.execute((String line) -> {
     });

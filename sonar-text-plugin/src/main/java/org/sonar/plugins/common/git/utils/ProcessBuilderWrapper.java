@@ -19,12 +19,15 @@
  */
 package org.sonar.plugins.common.git.utils;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.Scanner;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +38,7 @@ public class ProcessBuilderWrapper {
   private static final Logger LOG = LoggerFactory.getLogger(ProcessBuilderWrapper.class);
   private static final long TIMEOUT_MILLIS = 30_000;
   private final List<String> command;
+  private final ExecutorService processMonitor = Executors.newSingleThreadExecutor();
 
   public ProcessBuilderWrapper(List<String> command) {
     this.command = Collections.unmodifiableList(command);
@@ -42,28 +46,22 @@ public class ProcessBuilderWrapper {
 
   public Status execute(Consumer<String> lineConsumer) throws IOException {
     var process = startProcess();
+    var readerFuture = processMonitor.submit(() -> readProcessOutput(process, lineConsumer));
+
     try {
       var exited = process.waitFor(TIMEOUT_MILLIS, MILLISECONDS);
-
       if (!exited) {
         LOG.debug("Process {} did not exit within {} ms", command, TIMEOUT_MILLIS);
         return Status.FAILURE;
       }
 
-      var exitCode = process.exitValue();
-      if (exitCode != 0) {
-        LOG.debug("Process {} exited with code {}", command, exitCode);
+      if (process.exitValue() != 0) {
+        LOG.debug("Process {} exited with code {}", command, process.exitValue());
         return Status.FAILURE;
       }
-
-      try (var reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
-        String line;
-        while ((line = reader.readLine()) != null) {
-          lineConsumer.accept(line);
-        }
-      }
+      readerFuture.get();
       return Status.SUCCESS;
-    } catch (InterruptedException e) {
+    } catch (InterruptedException | ExecutionException e) {
       LOG.debug("Error while executing process {}", command, e);
       return Status.FAILURE;
     } finally {
@@ -74,6 +72,14 @@ public class ProcessBuilderWrapper {
   Process startProcess() throws IOException {
     var processBuilder = new ProcessBuilder(command);
     return processBuilder.start();
+  }
+
+  private static void readProcessOutput(Process process, Consumer<String> lineConsumer) {
+    try (var scanner = new Scanner(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+      while (scanner.hasNextLine()) {
+        lineConsumer.accept(scanner.nextLine());
+      }
+    }
   }
 
   public enum Status {
