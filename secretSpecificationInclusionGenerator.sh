@@ -24,11 +24,11 @@ do
   echo ""
   if [ -z "$1" ]
   then
-    echo "--------- Generating rspec files for '$line' from branch: '$1' ---------"
-    ./gradlew ruleApiGenerateRuleSecrets -Prule="$line" -Pbranch="$1"
-  else
   	echo "--------- Generating rspec files for '$line' from branch: 'master' ---------"
     ./gradlew ruleApiGenerateRuleSecrets -Prule="$line"
+  else
+    echo "--------- Generating rspec files for '$line' from branch: '$1' ---------"
+    ./gradlew ruleApiGenerateRuleSecrets -Prule="$line" -Pbranch="$1"
   fi
 	echo ""
 done < "$input"
