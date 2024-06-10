@@ -245,7 +245,7 @@ class TextAndSecretsSensorTest {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
-    context.setSettings(new MapSettings().setProperty("sonar.text.analyzeAllFiles", true));
+    context.setSettings(context.settings().setProperty("sonar.text.analyzeAllFiles", true));
     analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, null));
     assertCorrectLogs(logTester.logs(), 0,
       "'java' was added to the binary file filter because the file 'Foo.java' is a binary file.",
@@ -266,10 +266,6 @@ class TextAndSecretsSensorTest {
   void shouldExecuteChecksOnIncludedTextFileNames() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    MapSettings mapSettings = new MapSettings();
-    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt");
-    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
-    context.setSettings(mapSettings);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), "abc", null));
     assertCorrectLogs(logTester.logs(), 1);
@@ -279,12 +275,8 @@ class TextAndSecretsSensorTest {
   void shouldNotExecuteChecksOnNonIncludedTextFileNames() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    MapSettings mapSettings = new MapSettings();
-    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.csv");
-    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
-    context.setSettings(mapSettings);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
-    analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), "abc", null));
+    analyse(sensor(check), context, inputFile(Path.of("Foo.csv"), "abc", null));
     assertCorrectLogs(logTester.logs(), 0);
   }
 
@@ -292,9 +284,8 @@ class TextAndSecretsSensorTest {
   void shouldExecuteChecksOnMultipleIncludedTextFileNames() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    MapSettings mapSettings = new MapSettings();
+    MapSettings mapSettings = context.settings();
     mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt,*.csv");
-    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
     context.setSettings(mapSettings);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
@@ -312,9 +303,8 @@ class TextAndSecretsSensorTest {
   void shouldNotExecuteChecksOnMultipleIncludedTextFileNamesWithoutAstrix() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    MapSettings mapSettings = new MapSettings();
+    MapSettings mapSettings = context.settings();
     mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, ".txt,.csv");
-    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
     context.setSettings(mapSettings);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
@@ -328,9 +318,8 @@ class TextAndSecretsSensorTest {
   void shouldExecuteChecksOnDotEnvFile() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    MapSettings mapSettings = new MapSettings();
+    MapSettings mapSettings = context.settings();
     mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, ".env");
-    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
     context.setSettings(mapSettings);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
@@ -347,9 +336,8 @@ class TextAndSecretsSensorTest {
   void shouldExecuteChecksOnDotAwsConfig() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    MapSettings mapSettings = new MapSettings();
+    MapSettings mapSettings = context.settings();
     mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, ".aws/config");
-    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
     context.setSettings(mapSettings);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
@@ -366,10 +354,9 @@ class TextAndSecretsSensorTest {
   void shouldExecuteChecksOnDefaults() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    MapSettings mapSettings = new MapSettings();
+    MapSettings mapSettings = context.settings();
     // INCLUDED_FILE_SUFFIXES_KEY is set to default value
     mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, TEXT_INCLUSIONS_DEFAULT_VALUE);
-    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
     context.setSettings(mapSettings);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
@@ -405,11 +392,6 @@ class TextAndSecretsSensorTest {
   void shouldExecuteChecksOnIncludedTextFileNamesWithBinaryData() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    MapSettings mapSettings = new MapSettings();
-    // INCLUDED_FILE_SUFFIXES_KEY is set to default value
-    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt");
-    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
-    context.setSettings(mapSettings);
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null));
     assertCorrectLogs(logTester.logs(), 0,
@@ -434,10 +416,6 @@ class TextAndSecretsSensorTest {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = defaultSensorContext();
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
-    MapSettings mapSettings = new MapSettings();
-    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt");
-    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
-    context.setSettings(mapSettings);
     analyse(sensor(check), context,
       inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null),
       inputFile(Path.of("FileWithoutExtension"), SENSITIVE_BIDI_CHARS, null));
@@ -497,9 +475,6 @@ class TextAndSecretsSensorTest {
   void shouldNotAnalyzeUntrackedFiles() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    MapSettings mapSettings = new MapSettings();
-    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
-    context.setSettings(mapSettings);
     context.setRuntime(SONARQUBE_RUNTIME);
     var sensor = sensor(check);
     var sensorSpy = Mockito.spy(sensor);
@@ -543,10 +518,34 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void shouldNotCallGitFilePredicateOnDefault() {
+  void shouldCallGitFilePredicateOnDefault() {
     logTester.setLevel(Level.DEBUG);
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
+    context.setRuntime(SONARQUBE_RUNTIME);
+    var sensor = sensor(check);
+    var sensorSpy = Mockito.spy(sensor);
+    var gitService = mock(GitService.class);
+    when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.Result(true, Set.of("a.txt")));
+    when(sensorSpy.getGitService()).thenReturn(gitService);
+
+    analyse(sensorSpy, context,
+      inputFile(Path.of("a.txt"), "{}"),
+      inputFile(Path.of("b.txt"), "{}"));
+
+    Collection<Issue> issues = context.allIssues();
+    assertThat(issues).hasSize(1);
+    assertCorrectLogs(logTester.logs(), 1,
+      "Analyzing language associated files and files included via \"sonar.text.inclusions\" that are tracked by git");
+  }
+
+  @Test
+  void shouldNotCallGitFilePredicate() {
+    logTester.setLevel(Level.DEBUG);
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    MapSettings settings = context.settings();
+    settings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "false");
     context.setRuntime(SONARQUBE_RUNTIME);
     var sensor = sensor(check);
     var sensorSpy = Mockito.spy(sensor);
@@ -572,10 +571,6 @@ class TextAndSecretsSensorTest {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     context.setRuntime(SONARQUBE_RUNTIME);
-    MapSettings mapSettings = new MapSettings();
-    mapSettings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "true");
-    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt");
-    context.setSettings(mapSettings);
     var sensor = sensor(check);
     var sensorSpy = Mockito.spy(sensor);
     var gitService = mock(GitService.class);
@@ -598,7 +593,7 @@ class TextAndSecretsSensorTest {
   void shouldUsePropertyDefinedTimeoutValues() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    MapSettings mapSettings = new MapSettings();
+    MapSettings mapSettings = context.settings();
     mapSettings.setProperty(TextAndSecretsSensor.REGEX_MATCH_TIMEOUT_KEY, "1");
     mapSettings.setProperty(TextAndSecretsSensor.REGEX_EXECUTION_TIMEOUT_KEY, "2");
     context.setSettings(mapSettings);
@@ -620,7 +615,7 @@ class TextAndSecretsSensorTest {
     int defaultTimeout = 10_000;
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    MapSettings mapSettings = new MapSettings();
+    MapSettings mapSettings = context.settings();
     mapSettings.setProperty(TextAndSecretsSensor.REGEX_MATCH_TIMEOUT_KEY, propertyValue);
     mapSettings.setProperty(TextAndSecretsSensor.REGEX_EXECUTION_TIMEOUT_KEY, propertyValue);
     context.setSettings(mapSettings);
@@ -637,7 +632,7 @@ class TextAndSecretsSensorTest {
     InputFile inputFile = inputFile("foo");
 
     SensorContextTester context = sensorContext(check);
-    MapSettings mapSettings = new MapSettings();
+    MapSettings mapSettings = context.settings();
     mapSettings.setProperty(TextAndSecretsSensor.ANALYZER_ACTIVATION_KEY, "false");
     context.setSettings(mapSettings);
     analyse(sensor(check), context, inputFile);
@@ -650,7 +645,7 @@ class TextAndSecretsSensorTest {
   void shouldExecuteAnalysisWithOneThread() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    MapSettings mapSettings = new MapSettings();
+    MapSettings mapSettings = context.settings();
     mapSettings.setProperty(TextAndSecretsSensor.THREAD_NUMBER_KEY, "1");
     context.setSettings(mapSettings);
     analyse(sensor(check), context,
@@ -671,7 +666,7 @@ class TextAndSecretsSensorTest {
     String usedThreads = String.valueOf(availableProcessors + 1);
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    MapSettings mapSettings = new MapSettings();
+    MapSettings mapSettings = context.settings();
     mapSettings.setProperty(TextAndSecretsSensor.THREAD_NUMBER_KEY, usedThreads);
     context.setSettings(mapSettings);
     analyse(sensor(check), context,
@@ -694,7 +689,7 @@ class TextAndSecretsSensorTest {
     int availableProcessors = Runtime.getRuntime().availableProcessors();
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    MapSettings mapSettings = new MapSettings();
+    MapSettings mapSettings = context.settings();
     mapSettings.setProperty(TextAndSecretsSensor.THREAD_NUMBER_KEY, String.valueOf(availableProcessors + 1));
     context.setSettings(mapSettings);
     context.setRuntime(SONARCLOUD_RUNTIME);
@@ -713,7 +708,7 @@ class TextAndSecretsSensorTest {
   @Test
   void shouldLogMessageWhenSonarTestIsNotSet() {
     SensorContextTester context = defaultSensorContext();
-    var settings = new MapSettings().setProperty(SONAR_TESTS_KEY, "");
+    var settings = context.settings().setProperty(SONAR_TESTS_KEY, "");
     context.setSettings(settings);
     analyse(sensor(context), context, inputFile(""));
     assertThat(logTester.logs(Level.INFO)).contains(EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
@@ -722,7 +717,7 @@ class TextAndSecretsSensorTest {
   @Test
   void shouldNotLogMessageWhenSonarTestIsSet() {
     SensorContextTester context = defaultSensorContext();
-    var settings = new MapSettings().setProperty(SONAR_TESTS_KEY, "src/test");
+    var settings = context.settings().setProperty(SONAR_TESTS_KEY, "src/test");
     context.setSettings(settings);
     analyse(sensor(context), context, inputFile(""));
     assertThat(logTester.logs(Level.INFO)).doesNotContain(EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);

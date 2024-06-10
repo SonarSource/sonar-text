@@ -21,9 +21,9 @@ package org.sonar.plugins.common.git;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
@@ -31,6 +31,7 @@ import org.eclipse.jgit.api.StatusCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.NoWorkTreeException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -45,7 +46,8 @@ import org.sonar.plugins.common.git.utils.ProcessBuilderWrapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -70,7 +72,7 @@ public class GitServiceTest {
     var git = setupGitMock(untrackedFiles);
     var jgitSupplier = mock(JgitSupplier.class);
     when(jgitSupplier.getGit()).thenReturn(git);
-    var gitService = spy(new GitService(jgitSupplier));
+    var gitService = spy(new GitService(jgitSupplier, new ProcessBuilderWrapper()));
     when(gitService.isGitCliAvailable()).thenReturn(false);
 
     var gitResult = gitService.retrieveUntrackedFileNames();
@@ -95,7 +97,7 @@ public class GitServiceTest {
     var expectedException = new JgitSupplier.JgitInitializationException(mock(exceptionClass));
     var jgitSupplier = mock(JgitSupplier.class);
     when(jgitSupplier.getGit()).thenThrow(expectedException);
-    var gitService = spy(new GitService(jgitSupplier));
+    var gitService = spy(new GitService(jgitSupplier, new ProcessBuilderWrapper()));
     when(gitService.isGitCliAvailable()).thenReturn(false);
 
     var gitResult = gitService.retrieveUntrackedFileNames();
@@ -122,30 +124,27 @@ public class GitServiceTest {
     }
   }
 
+  @DisabledOnOs(OS.WINDOWS)
   @Test
   void shouldRetrieveUntrackedFromCli() throws IOException {
-    var gitService = spy(new GitService());
-    if (gitService.isGitCliAvailable()) {
-      when(gitService.getGitProcessBuilder(Arrays.asList("status", "--untracked-files=all", "--porcelain")))
-        .thenReturn(new ProcessBuilderWrapper(List.of("echo", """
-          M staged.txt
-          ?? untracked.txt
-          ?? untracked2""")));
-      var gitResult = gitService.retrieveUntrackedFileNames();
-      assertThat(gitResult.isGitStatusSuccessful()).isTrue();
-      assertThat(gitResult.untrackedFileNames())
-        .containsOnly("untracked.txt", "untracked2");
-    } else {
-      throw new TestAbortedException("Git CLI is not available in the test environment");
-    }
+    var processBuilderWrapper = spy(new ProcessBuilderWrapper());
+    var gitService = spy(new GitService(null, processBuilderWrapper));
+    doAnswer(invocation -> processBuilderWrapper.execute(List.of("echo", """
+      M staged.txt
+      ?? untracked.txt
+      ?? untracked2"""), invocation.getArgument(1)))
+      .when(gitService).execute(eq(List.of("git", "status", "--untracked-files=all", "--porcelain")), any());
+    var gitResult = gitService.retrieveUntrackedFileNames();
+    assertThat(gitResult.isGitStatusSuccessful()).isTrue();
+    assertThat(gitResult.untrackedFileNames())
+      .containsOnly("untracked.txt", "untracked2");
   }
 
   @Test
   void shouldNotUseWhenGitVersionFails() throws IOException {
-    var gitService = spy(new GitService());
     var wrapper = mock(ProcessBuilderWrapper.class);
-    when(wrapper.execute(any())).thenReturn(ProcessBuilderWrapper.Status.FAILURE);
-    when(gitService.getGitProcessBuilder(List.of("--version"))).thenReturn(wrapper);
+    var gitService = spy(new GitService(null, wrapper));
+    when(wrapper.execute(any(), any())).thenReturn(ProcessBuilderWrapper.Status.FAILURE);
 
     assertThat(gitService.isGitCliAvailable()).isFalse();
     assertThat(logTester.logs(Level.DEBUG)).isEmpty();
@@ -153,10 +152,9 @@ public class GitServiceTest {
 
   @Test
   void shouldNotUseWhenGitVersionCrashes() throws IOException {
-    var gitService = spy(new GitService());
     var wrapper = mock(ProcessBuilderWrapper.class);
-    when(wrapper.execute(any())).thenThrow(new IOException("boom"));
-    when(gitService.getGitProcessBuilder(List.of("--version"))).thenReturn(wrapper);
+    var gitService = spy(new GitService(null, wrapper));
+    when(gitService.execute(eq(List.of("--version")), any())).thenThrow(new IOException("boom"));
 
     assertThat(gitService.isGitCliAvailable()).isFalse();
     assertThat(logTester.logs(Level.DEBUG)).isEmpty();
@@ -164,11 +162,15 @@ public class GitServiceTest {
 
   @Test
   void shouldReturnFalseWhenGitStatusFails() throws IOException {
-    var gitService = spy(new GitService());
     var wrapper = mock(ProcessBuilderWrapper.class);
-    when(wrapper.execute(any())).thenReturn(ProcessBuilderWrapper.Status.SUCCESS, ProcessBuilderWrapper.Status.FAILURE);
-    when(gitService.getGitProcessBuilder(anyList())).thenReturn(wrapper);
+    var gitService = spy(new GitService(new JgitSupplier(), wrapper));
 
+    if (GitService.isWindows()) {
+      when(gitService.execute(any(), any())).thenReturn(
+        ProcessBuilderWrapper.Status.SUCCESS, ProcessBuilderWrapper.Status.SUCCESS, ProcessBuilderWrapper.Status.FAILURE);
+    } else {
+      when(gitService.execute(any(), any())).thenReturn(ProcessBuilderWrapper.Status.SUCCESS, ProcessBuilderWrapper.Status.FAILURE);
+    }
     var result = gitService.retrieveUntrackedFileNames();
 
     assertThat(result.isGitStatusSuccessful()).isFalse();
@@ -178,11 +180,14 @@ public class GitServiceTest {
 
   @Test
   void shouldReturnFalseWhenGitStatusCrashes() throws IOException {
-    var gitService = spy(new GitService());
     var wrapper = mock(ProcessBuilderWrapper.class);
-    when(wrapper.execute(any())).thenReturn(ProcessBuilderWrapper.Status.SUCCESS)
-      .thenThrow(new IOException("boom"));
-    when(gitService.getGitProcessBuilder(anyList())).thenReturn(wrapper);
+    var gitService = spy(new GitService(new JgitSupplier(), wrapper));
+    if (GitService.isWindows()) {
+      when(gitService.execute(any(), any())).thenReturn(
+        ProcessBuilderWrapper.Status.SUCCESS, ProcessBuilderWrapper.Status.SUCCESS).thenThrow(new IOException("boom"));
+    } else {
+      when(gitService.execute(any(), any())).thenReturn(ProcessBuilderWrapper.Status.SUCCESS).thenThrow(new IOException("boom"));
+    }
 
     var result = gitService.retrieveUntrackedFileNames();
 
@@ -191,10 +196,25 @@ public class GitServiceTest {
     assertThat(logTester.logs(Level.DEBUG)).isEmpty();
   }
 
+  @Test
+  void shouldLocateGitOnWindowsWithMockedCall() throws IOException {
+    ProcessBuilderWrapper mockedWrapper = mock(ProcessBuilderWrapper.class);
+    when(mockedWrapper.execute(any(), any())).thenAnswer(invocationOnMock -> {
+      Consumer<String> consumer = invocationOnMock.getArgument(1, Consumer.class);
+      consumer.accept("C:\\path\\to\\git.exe");
+      return ProcessBuilderWrapper.Status.SUCCESS;
+    });
+
+    GitService gitService = new GitService(null, mockedWrapper);
+    var gitCommand = gitService.locateGitOnWindows();
+
+    assertThat(gitCommand).endsWith("\\git.exe");
+  }
+
   @EnabledOnOs(OS.WINDOWS)
   @Test
   void shouldLocateGitOnWindows() throws IOException {
-    var gitCommand = GitService.locateGitOnWindows();
+    var gitCommand = new GitService().locateGitOnWindows();
 
     assertThat(gitCommand).endsWith("\\git.exe");
   }
@@ -212,4 +232,5 @@ public class GitServiceTest {
     when(statusMock.getUntracked()).thenReturn(untrackedFiles);
     return git;
   }
+
 }

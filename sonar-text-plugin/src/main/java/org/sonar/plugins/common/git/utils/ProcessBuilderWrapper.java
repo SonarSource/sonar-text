@@ -22,7 +22,6 @@ package org.sonar.plugins.common.git.utils;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
@@ -37,16 +36,11 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class ProcessBuilderWrapper {
   private static final Logger LOG = LoggerFactory.getLogger(ProcessBuilderWrapper.class);
   private static final long TIMEOUT_MILLIS = 30_000;
-  private final List<String> command;
-  private final ExecutorService processMonitor = Executors.newSingleThreadExecutor();
+  private static final ExecutorService PROCESS_MONITOR = Executors.newSingleThreadExecutor();
 
-  public ProcessBuilderWrapper(List<String> command) {
-    this.command = Collections.unmodifiableList(command);
-  }
-
-  public Status execute(Consumer<String> lineConsumer) throws IOException {
-    var process = startProcess();
-    var readerFuture = processMonitor.submit(() -> readProcessOutput(process, lineConsumer));
+  public Status execute(List<String> command, Consumer<String> lineConsumer) throws IOException {
+    var process = startProcess(command);
+    var readerFuture = PROCESS_MONITOR.submit(() -> readProcessOutput(process, lineConsumer));
 
     try {
       var exited = process.waitFor(TIMEOUT_MILLIS, MILLISECONDS);
@@ -69,7 +63,7 @@ public class ProcessBuilderWrapper {
     }
   }
 
-  Process startProcess() throws IOException {
+  Process startProcess(List<String> command) throws IOException {
     var processBuilder = new ProcessBuilder(command);
     return processBuilder.start();
   }

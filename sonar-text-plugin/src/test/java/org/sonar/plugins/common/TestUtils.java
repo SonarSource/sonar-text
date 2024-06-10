@@ -26,7 +26,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.sonar.api.SonarEdition;
@@ -41,6 +40,7 @@ import org.sonar.api.batch.rule.internal.NewActiveRule;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.api.batch.sensor.issue.IssueLocation;
+import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.Version;
@@ -69,7 +69,7 @@ public class TestUtils {
   }
 
   public static List<String> asString(Collection<Issue> issues) {
-    return issues.stream().map(TestUtils::asString).collect(Collectors.toList());
+    return issues.stream().map(TestUtils::asString).toList();
   }
 
   public static String asString(Issue issue) {
@@ -167,6 +167,13 @@ public class TestUtils {
   public static SensorContextTester sensorContext(File baseDir, String... activeRules) {
     return SensorContextTester.create(baseDir)
       .setRuntime(SONARLINT_RUNTIME)
-      .setActiveRules(activeRules(activeRules));
+      .setActiveRules(activeRules(activeRules))
+      .setSettings(createDefaultSettings());
+  }
+
+  private static MapSettings createDefaultSettings() {
+    var mapSettings = new MapSettings();
+    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt");
+    return mapSettings;
   }
 }

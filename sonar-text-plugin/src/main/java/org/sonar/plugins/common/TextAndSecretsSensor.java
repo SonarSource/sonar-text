@@ -63,7 +63,7 @@ public class TextAndSecretsSensor implements Sensor {
   public static final String ANALYZER_ACTIVATION_KEY = "sonar.text.activate";
   public static final boolean ANALYZER_ACTIVATION_DEFAULT_VALUE = true;
   public static final String INCLUSIONS_ACTIVATION_KEY = "sonar.text.inclusions.activate";
-  public static final boolean INCLUSIONS_ACTIVATION_DEFAULT_VALUE = false;
+  public static final boolean INCLUSIONS_ACTIVATION_DEFAULT_VALUE = true;
   public static final String THREAD_NUMBER_KEY = "sonar.text.threads";
   public static final String TEXT_CATEGORY = "Secrets";
   public static final String SONAR_TESTS_KEY = "sonar.tests";
