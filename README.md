@@ -1,8 +1,8 @@
 # SonarText: detect BIDI Characters Vulnerabilities and Leaking Secrets
 
 [![Build Status](https://api.cirrus-ci.com/github/SonarSource/sonar-text.svg?branch=master)](https://cirrus-ci.com/github/SonarSource/sonar-text)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=SonarSource_sonar-text&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=SonarSource_sonar-text)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=SonarSource_sonar-text&metric=coverage)](https://sonarcloud.io/summary/new_code?id=SonarSource_sonar-text)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=org.sonarsource.text%3Atext&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=org.sonarsource.text%3Atext)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=org.sonarsource.text%3Atext&metric=coverage)](https://sonarcloud.io/summary/new_code?id=org.sonarsource.text%3Atext)
 
 This SonarSource project is a static code analyzer made to detect:
 
