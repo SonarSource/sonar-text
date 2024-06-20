@@ -1,7 +1,7 @@
 provider:
   metadata:
     name: example
-    category: Cloud Provider
+    category: Cloud provider
   rules:
     - id: exampleId1
       rspecKey: google-oauth-secret-no-prefix-client-id-before

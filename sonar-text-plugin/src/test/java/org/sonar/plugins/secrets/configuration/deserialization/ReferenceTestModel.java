@@ -66,7 +66,7 @@ public class ReferenceTestModel {
   private static ProviderMetadata constructProviderMetadata() {
     ProviderMetadata providerMetadata = new ProviderMetadata();
     providerMetadata.setMessage("provider message");
-    providerMetadata.setCategory("Cloud Provider");
+    providerMetadata.setCategory("Cloud provider");
     providerMetadata.setName("provider name");
     return providerMetadata;
   }
