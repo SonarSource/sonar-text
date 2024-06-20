@@ -21,6 +21,7 @@ package org.sonar.plugins.common.git;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -51,17 +52,21 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
+import static org.sonar.plugins.common.TestUtils.inputFile;
 
 public class GitServiceTest {
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
+
+  // Workaround to get the base directory of the project
+  private static final Path BASE_DIR = inputFile(Paths.get("")).path();
 
   @Test
   void shouldRetrieveUntrackedFromRealJgit() throws IOException {
     var gitService = spy(new GitService());
     when(gitService.isGitCliAvailable()).thenReturn(false);
 
-    var gitResult = gitService.retrieveUntrackedFileNames();
+    var gitResult = gitService.retrieveUntrackedFileNames(BASE_DIR);
     assertThat(gitResult.isGitStatusSuccessful()).isTrue();
     assertThat(gitResult.untrackedFileNames()).isEmpty();
   }
@@ -71,11 +76,11 @@ public class GitServiceTest {
   void shouldRetrieveUntrackedFromJgit(Set<String> untrackedFiles) throws JgitSupplier.JgitInitializationException, IOException {
     var git = setupGitMock(untrackedFiles);
     var jgitSupplier = mock(JgitSupplier.class);
-    when(jgitSupplier.getGit()).thenReturn(git);
+    when(jgitSupplier.getGit(any())).thenReturn(git);
     var gitService = spy(new GitService(jgitSupplier, new ProcessBuilderWrapper()));
     when(gitService.isGitCliAvailable()).thenReturn(false);
 
-    var gitResult = gitService.retrieveUntrackedFileNames();
+    var gitResult = gitService.retrieveUntrackedFileNames(BASE_DIR);
     assertThat(gitResult.isGitStatusSuccessful()).isTrue();
     assertThat(gitResult.untrackedFileNames()).isEqualTo(untrackedFiles);
   }
@@ -92,29 +97,26 @@ public class GitServiceTest {
   @ParameterizedTest
   @ValueSource(classes = {NoWorkTreeException.class, RuntimeException.class})
   void shouldReturnFalseWhenJgitException(Class<? extends Exception> exceptionClass) throws JgitSupplier.JgitInitializationException, IOException {
-    logTester.setLevel(Level.DEBUG);
 
     var expectedException = new JgitSupplier.JgitInitializationException(mock(exceptionClass));
     var jgitSupplier = mock(JgitSupplier.class);
-    when(jgitSupplier.getGit()).thenThrow(expectedException);
+    when(jgitSupplier.getGit(any())).thenThrow(expectedException);
     var gitService = spy(new GitService(jgitSupplier, new ProcessBuilderWrapper()));
     when(gitService.isGitCliAvailable()).thenReturn(false);
 
-    var gitResult = gitService.retrieveUntrackedFileNames();
+    var gitResult = gitService.retrieveUntrackedFileNames(BASE_DIR);
 
     assertThat(gitResult.isGitStatusSuccessful()).isFalse();
-    assertThat(logTester.logs(Level.DEBUG))
+    assertThat(logTester.logs())
       .anyMatch(l -> l.contains("Using JGit to retrieve untracked files"))
       .anyMatch(l -> l.contains("Unable to retrieve git status"));
-
-    logTester.setLevel(Level.INFO);
   }
 
   @Test
   void shouldRetrieveNoUntrackedFromCli() throws IOException {
     var gitService = spy(new GitService());
     if (gitService.isGitCliAvailable()) {
-      var gitResult = gitService.retrieveUntrackedFileNames();
+      var gitResult = gitService.retrieveUntrackedFileNames(BASE_DIR);
       assertThat(gitResult.isGitStatusSuccessful()).isTrue();
       assertThat(gitResult.untrackedFileNames())
         .as("No untracked files are expected in the test environment")
@@ -134,7 +136,7 @@ public class GitServiceTest {
       ?? untracked.txt
       ?? untracked2"""), invocation.getArgument(1)))
       .when(gitService).execute(eq(List.of("git", "status", "--untracked-files=all", "--porcelain")), any());
-    var gitResult = gitService.retrieveUntrackedFileNames();
+    var gitResult = gitService.retrieveUntrackedFileNames(BASE_DIR);
     assertThat(gitResult.isGitStatusSuccessful()).isTrue();
     assertThat(gitResult.untrackedFileNames())
       .containsOnly("untracked.txt", "untracked2");
@@ -171,7 +173,7 @@ public class GitServiceTest {
     } else {
       when(gitService.execute(any(), any())).thenReturn(ProcessBuilderWrapper.Status.SUCCESS, ProcessBuilderWrapper.Status.FAILURE);
     }
-    var result = gitService.retrieveUntrackedFileNames();
+    var result = gitService.retrieveUntrackedFileNames(BASE_DIR);
 
     assertThat(result.isGitStatusSuccessful()).isFalse();
     assertThat(result.untrackedFileNames()).isEmpty();
@@ -189,7 +191,7 @@ public class GitServiceTest {
       when(gitService.execute(any(), any())).thenReturn(ProcessBuilderWrapper.Status.SUCCESS).thenThrow(new IOException("boom"));
     }
 
-    var result = gitService.retrieveUntrackedFileNames();
+    var result = gitService.retrieveUntrackedFileNames(BASE_DIR);
 
     assertThat(result.isGitStatusSuccessful()).isFalse();
     assertThat(result.untrackedFileNames()).isEmpty();

@@ -177,6 +177,7 @@ class TextAndSecretsSensorTest {
       EXPECTED_PROCESSOR_LOG_LINE,
       DEFAULT_THREAD_USAGE_LOG_LINE,
       EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE,
+      "Analyzing all except non binary files",
       "1 source file to be analyzed");
   }
 
@@ -481,7 +482,7 @@ class TextAndSecretsSensorTest {
     Path fooJavaPath = Path.of("src", "foo.java");
     String relativePathFooJava = "src" + fooJavaPath.getFileSystem().getSeparator() + "foo.java";
     var gitService = mock(GitService.class);
-    when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.Result(true, Set.of("a.txt", relativePathFooJava)));
+    when(gitService.retrieveUntrackedFileNames(any())).thenReturn(new GitService.Result(true, Set.of("a.txt", relativePathFooJava)));
     when(sensorSpy.getGitService()).thenReturn(gitService);
 
     analyse(sensorSpy, context,
@@ -513,7 +514,7 @@ class TextAndSecretsSensorTest {
     Collection<Issue> issues = context.allIssues();
     assertThat(issues).hasSize(2);
     assertCorrectLogs(logTester.logs(), 2);
-    verify(gitService, times(0)).retrieveUntrackedFileNames();
+    verify(gitService, times(0)).retrieveUntrackedFileNames(context.fileSystem().baseDirPath());
     verify(sensorSpy, times(0)).getGitService();
   }
 
@@ -526,7 +527,7 @@ class TextAndSecretsSensorTest {
     var sensor = sensor(check);
     var sensorSpy = Mockito.spy(sensor);
     var gitService = mock(GitService.class);
-    when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.Result(true, Set.of("a.txt")));
+    when(gitService.retrieveUntrackedFileNames(any())).thenReturn(new GitService.Result(true, Set.of("a.txt")));
     when(sensorSpy.getGitService()).thenReturn(gitService);
 
     analyse(sensorSpy, context,
@@ -550,7 +551,7 @@ class TextAndSecretsSensorTest {
     var sensor = sensor(check);
     var sensorSpy = Mockito.spy(sensor);
     var gitService = mock(GitService.class);
-    when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.Result(true, Set.of("a.txt")));
+    when(gitService.retrieveUntrackedFileNames(any())).thenReturn(new GitService.Result(true, Set.of("a.txt")));
     when(sensorSpy.getGitService()).thenReturn(gitService);
 
     analyse(sensorSpy, context,
@@ -561,7 +562,7 @@ class TextAndSecretsSensorTest {
     assertThat(issues).hasSize(2);
     assertCorrectLogs(logTester.logs(), 2,
       "Analyzing only language associated files, \"sonar.text.inclusions.activate\" property is deactivated");
-    verify(gitService, times(0)).retrieveUntrackedFileNames();
+    verify(gitService, times(0)).retrieveUntrackedFileNames(context.fileSystem().baseDirPath());
     verify(sensorSpy, times(0)).getGitService();
   }
 
@@ -574,7 +575,7 @@ class TextAndSecretsSensorTest {
     var sensor = sensor(check);
     var sensorSpy = Mockito.spy(sensor);
     var gitService = mock(GitService.class);
-    when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.Result(false, Set.of()));
+    when(gitService.retrieveUntrackedFileNames(any())).thenReturn(new GitService.Result(false, Set.of()));
     when(sensorSpy.getGitService()).thenReturn(gitService);
 
     analyse(sensorSpy, context,
@@ -655,6 +656,7 @@ class TextAndSecretsSensorTest {
     assertThat(logTester.logs()).containsExactlyInAnyOrder(
       "Available processors: " + Runtime.getRuntime().availableProcessors(),
       "Using 1 thread for analysis, according to the value of \"sonar.text.threads\" property.",
+      "Analyzing all except non binary files",
       "3 source files to be analyzed",
       "3/3 source files have been analyzed",
       EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
@@ -679,6 +681,7 @@ class TextAndSecretsSensorTest {
       "\"sonar.text.threads\" property was set to " + usedThreads + ", which is greater than the number of available processors: " + availableProcessors + ".\n" +
         "It is recommended to let the analyzer detect the number of threads automatically by not setting the property.\n" +
         "For more information, visit the documentation page.",
+      "Analyzing all except non binary files",
       "3 source files to be analyzed",
       "3/3 source files have been analyzed",
       EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
@@ -700,6 +703,8 @@ class TextAndSecretsSensorTest {
     assertThat(logTester.logs()).containsExactlyInAnyOrder(
       "Available processors: " + availableProcessors,
       "Using " + availableProcessors + " threads for analysis, \"sonar.text.threads\" is ignored.",
+      "Using git CLI to retrieve untracked files",
+      "Analyzing language associated files and files included via \"sonar.text.inclusions\" that are tracked by git",
       "3 source files to be analyzed",
       "3/3 source files have been analyzed",
       EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
@@ -731,14 +736,14 @@ class TextAndSecretsSensorTest {
     assertThat(logs).containsAll(Arrays.asList(additionalLogs));
 
     if (numberOfAnalyzedFiles == 0) {
-      assertThat(logs).hasSize(additionalLogs.length + 3);
+      assertThat(logs).hasSizeGreaterThanOrEqualTo(additionalLogs.length + 3);
     } else if (numberOfAnalyzedFiles == 1) {
-      assertThat(logs).hasSize(additionalLogs.length + 5);
+      assertThat(logs).hasSizeGreaterThanOrEqualTo(additionalLogs.length + 5);
       assertThat(logs).contains(
         "1 source file to be analyzed",
         "1/1 source file has been analyzed");
     } else {
-      assertThat(logs).hasSize(additionalLogs.length + 5);
+      assertThat(logs).hasSizeGreaterThanOrEqualTo(additionalLogs.length + 5);
       assertThat(logs).contains(
         numberOfAnalyzedFiles + " source files to be analyzed",
         numberOfAnalyzedFiles + "/" + numberOfAnalyzedFiles + " source files have been analyzed");

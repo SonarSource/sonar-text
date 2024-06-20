@@ -20,6 +20,7 @@
 package org.sonar.plugins.common.git;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -31,6 +32,7 @@ import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonar.plugins.common.TestUtils.inputFile;
@@ -39,12 +41,15 @@ class GitTrackedFilePredicateTest {
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
+  // Workaround to get the base directory of the project
+  private static final Path BASE_DIR = inputFile(Paths.get("")).path();
+
   @ParameterizedTest
   @MethodSource
   void shouldMatchSomeFilesWhenSomeUntracked(boolean isGitStatusSuccessful, Set<String> untrackedFiles, Map<String, Boolean> fileToExpectedMatch) {
     var gitService = mock(GitService.class);
-    when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.Result(isGitStatusSuccessful, untrackedFiles));
-    FilePredicate predicate = new GitTrackedFilePredicate(gitService);
+    when(gitService.retrieveUntrackedFileNames(any())).thenReturn(new GitService.Result(isGitStatusSuccessful, untrackedFiles));
+    FilePredicate predicate = new GitTrackedFilePredicate(BASE_DIR, gitService);
 
     for (Map.Entry<String, Boolean> entry : fileToExpectedMatch.entrySet()) {
       String file = entry.getKey();

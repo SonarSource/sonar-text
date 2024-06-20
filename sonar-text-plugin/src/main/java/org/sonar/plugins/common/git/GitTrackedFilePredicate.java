@@ -19,7 +19,6 @@
  */
 package org.sonar.plugins.common.git;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -33,11 +32,11 @@ public class GitTrackedFilePredicate implements FilePredicate {
   private final boolean isGitStatusSuccessful;
   private final Path projectRootPath;
 
-  public GitTrackedFilePredicate(GitService gitService) {
-    var gitResult = gitService.retrieveUntrackedFileNames();
+  public GitTrackedFilePredicate(Path baseDir, GitService gitService) {
+    var gitResult = gitService.retrieveUntrackedFileNames(baseDir);
     this.untrackedFileNames = gitResult.untrackedFileNames();
     this.isGitStatusSuccessful = gitResult.isGitStatusSuccessful();
-    this.projectRootPath = resolveProjectRootPath();
+    this.projectRootPath = baseDir;
     if (!isGitStatusSuccessful) {
       LOG.debug("Unable to retrieve git status");
     }
@@ -56,15 +55,5 @@ public class GitTrackedFilePredicate implements FilePredicate {
 
   public boolean isGitStatusSuccessful() {
     return isGitStatusSuccessful;
-  }
-
-  private static Path resolveProjectRootPath() {
-    var projectRootPath = Path.of(".").toAbsolutePath();
-    try {
-      projectRootPath = projectRootPath.toRealPath();
-    } catch (IOException e) {
-      LOG.debug("Unable to resolve real path of project for {}", projectRootPath, e);
-    }
-    return projectRootPath;
   }
 }

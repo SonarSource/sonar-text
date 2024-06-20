@@ -20,6 +20,7 @@
 package org.sonar.plugins.common.git;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -49,17 +50,17 @@ public class GitService {
     this.processBuilderWrapper = processBuilderWrapper;
   }
 
-  public Result retrieveUntrackedFileNames() {
+  public Result retrieveUntrackedFileNames(Path baseDir) {
     try {
       if (isGitCliAvailable()) {
-        LOG.debug("Using git CLI to retrieve untracked files");
+        LOG.info("Using git CLI to retrieve untracked files");
         return getUntrackedFilesFromGitCli();
       } else {
-        LOG.debug("Using JGit to retrieve untracked files");
-        return getUntrackedFilesFromJgit(jgitSupplier);
+        LOG.info("Using JGit to retrieve untracked files");
+        return getUntrackedFilesFromJgit(jgitSupplier, baseDir);
       }
     } catch (JgitSupplier.JgitInitializationException | GitAPIException | IOException e) {
-      LOG.debug("Unable to retrieve git status", e);
+      LOG.warn("Unable to retrieve git status", e);
       return new Result(false, Set.of());
     }
   }
@@ -116,8 +117,8 @@ public class GitService {
     return null;
   }
 
-  private static Result getUntrackedFilesFromJgit(JgitSupplier jgitSupplier) throws GitAPIException {
-    try (var git = jgitSupplier.getGit()) {
+  private static Result getUntrackedFilesFromJgit(JgitSupplier jgitSupplier, Path baseDir) throws GitAPIException {
+    try (var git = jgitSupplier.getGit(baseDir)) {
       var status = git.status().call();
       return new Result(true, status.getUntracked());
     }

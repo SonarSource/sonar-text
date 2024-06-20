@@ -163,20 +163,20 @@ public class TextAndSecretsSensor implements Sensor {
   private FilePredicate constructFilePredicate(SensorContext sensorContext, FilePredicate notBinaryFilePredicate, boolean analyzeAllFiles) {
     if (analyzeAllFiles) {
       // if we're in a sonarlint context, we return this predicate as well
-      LOG.debug("Analyzing all except non binary files");
+      LOG.info("Analyzing all except non binary files");
       return notBinaryFilePredicate;
     }
 
     // if the property is inactive, we prevent jgit from being initialized
     if (!isJGitAndInclusionsActive(sensorContext)) {
-      LOG.debug("Analyzing only language associated files, \"{}\" property is deactivated", INCLUSIONS_ACTIVATION_KEY);
+      LOG.info("Analyzing only language associated files, \"{}\" property is deactivated", INCLUSIONS_ACTIVATION_KEY);
       return LANGUAGE_FILE_PREDICATE;
     }
 
     var trackedByGitPredicate = durationStatistics.timed("trackedByGitPredicate" + DurationStatistics.SUFFIX_GENERAL,
-      () -> new GitTrackedFilePredicate(getGitService()));
+      () -> new GitTrackedFilePredicate(sensorContext.fileSystem().baseDir().toPath(), getGitService()));
     if (!trackedByGitPredicate.isGitStatusSuccessful()) {
-      LOG.debug("Analyzing only language associated files, " +
+      LOG.warn("Analyzing only language associated files, " +
         "make sure to run the analysis inside a git repository to make use of inclusions specified via \"{}\"",
         TEXT_INCLUSIONS_KEY);
       return LANGUAGE_FILE_PREDICATE;
@@ -185,7 +185,7 @@ public class TextAndSecretsSensor implements Sensor {
     // Retrieve list of files to analyse using the right FilePredicate
     var pathPatternPredicate = includedPathPatternsFilePredicate(sensorContext);
 
-    LOG.debug("Analyzing language associated files and files included via \"{}\" that are tracked by git", TEXT_INCLUSIONS_KEY);
+    LOG.info("Analyzing language associated files and files included via \"{}\" that are tracked by git", TEXT_INCLUSIONS_KEY);
     return predicates.and(
       predicates.or(LANGUAGE_FILE_PREDICATE, pathPatternPredicate),
       trackedByGitPredicate);
