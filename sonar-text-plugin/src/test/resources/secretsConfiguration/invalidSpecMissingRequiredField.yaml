@@ -1,7 +1,7 @@
 provider:  
   metadata:
       name: AWS
-      category: Cloud provider
+      category: Cloud Provider
   rules:
     - id: exampleId
       rspecKey: aws-access-key

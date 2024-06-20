@@ -1,7 +1,8 @@
 provider:
   metadata:
     name: provider name
-    category: Cloud Provider
+    category: ForbiddenCategory
+    message: provider message
   rules:
     - id: exampleId
       rspecKey: exampleKey
@@ -14,6 +15,4 @@ provider:
         - text: >
             example
             text
-          containsSecret: 100
-
-
+          containsSecret: true

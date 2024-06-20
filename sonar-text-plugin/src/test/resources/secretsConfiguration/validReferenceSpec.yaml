@@ -1,7 +1,7 @@
 provider:  
   metadata:
       name: provider name
-      category: Cloud provider
+      category: Cloud Provider
       references:
         - description: Reference 1
           link: https://docs.aws.amazon.com/IAM/...
