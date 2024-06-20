@@ -46,7 +46,8 @@ class SchemaValidatorTest {
   @ParameterizedTest
   @ValueSource(strings = {"invalidEmptySpec.yaml", "invalidSpecMissingRequiredField.yaml",
     "invalidSpecWithUnexpectedFieldFailsDuringValidation.yaml",
-    "invalidSpecWithWrongType.yaml"})
+    "invalidSpecWithWrongType.yaml",
+    "invalidSpecForbiddenCategory.yaml"})
   void testSpecificationFilesAreInValid(String specificationFileName) throws IOException {
     InputStream specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + specificationFileName);
     JsonNode specification = MAPPER.readTree(specificationStream);
