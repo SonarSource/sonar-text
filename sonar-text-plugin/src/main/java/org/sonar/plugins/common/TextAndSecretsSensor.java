@@ -67,7 +67,7 @@ public class TextAndSecretsSensor implements Sensor {
   public static final String THREAD_NUMBER_KEY = "sonar.text.threads";
   public static final String TEXT_CATEGORY = "Secrets";
   public static final String SONAR_TESTS_KEY = "sonar.tests";
-  private static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
+  public static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
 
   protected final CheckFactory checkFactory;
 

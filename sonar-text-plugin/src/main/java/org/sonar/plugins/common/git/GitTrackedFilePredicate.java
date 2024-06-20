@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.InputFile;
+import org.sonar.plugins.common.TextAndSecretsSensor;
 
 public class GitTrackedFilePredicate implements FilePredicate {
   private static final Logger LOG = LoggerFactory.getLogger(GitTrackedFilePredicate.class);
@@ -46,7 +47,13 @@ public class GitTrackedFilePredicate implements FilePredicate {
   public boolean apply(InputFile inputFile) {
     if (isGitStatusSuccessful) {
       var filePath = Path.of(inputFile.uri()).toAbsolutePath();
-      var relativePath = projectRootPath.relativize(filePath).toString();
+      String relativePath;
+      try {
+        relativePath = projectRootPath.relativize(filePath).toString();
+      } catch (IllegalArgumentException e) {
+        LOG.debug("Unable to resolve git status for {}, falling back to analyzing the file if it's associated with a language", inputFile, e);
+        return TextAndSecretsSensor.LANGUAGE_FILE_PREDICATE.apply(inputFile);
+      }
       return !untrackedFileNames.contains(relativePath);
     } else {
       return true;
