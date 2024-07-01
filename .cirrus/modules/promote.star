@@ -3,7 +3,8 @@ load(
     "promotion_env"
 )
 load("github.com/SonarSource/cirrus-modules/cloud-native/platform.star@analysis/master", "base_image_container_builder")
-load("github.com/SonarSource/cirrus-modules/cloud-native/cache.star@analysis/master", "gradle_cache")
+load("github.com/SonarSource/cirrus-modules/cloud-native/cache.star@analysis/master", "project_version_cache")
+load("github.com/SonarSource/cirrus-modules/cloud-native/conditions.star@analysis/master", "is_branch_qa_eligible")
 
 ARTIFACTS = [
     "org.sonarsource.text:sonar-text-plugin:jar",
@@ -29,6 +30,8 @@ def promote_script():
     return [
         "source cirrus-env PROMOTE",
         "cirrus_jfrog_promote multi",
+        "source ${PROJECT_VERSION_CACHE_DIR}/evaluated_project_version.txt",
+        "github-notify-promotion",
         "burgr-notify-promotion"
     ]
 
@@ -40,6 +43,7 @@ def promote_script():
 def promote_task():
     return {
         "promote_task": {
+            "only_if": is_branch_qa_eligible(),
             "depends_on": [
                 "build",
                 "qa_plugin",
@@ -47,8 +51,8 @@ def promote_task():
                 "qa_os_win",
             ],
             "env": promote_env(),
-            "gradle_cache": gradle_cache(),
             "eks_container": base_image_container_builder(cpu=1, memory="4G"),
+            "project_version_cache": project_version_cache(),
             "script": promote_script()
         }
     }

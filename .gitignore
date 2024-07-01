@@ -47,3 +47,6 @@ Desktop.ini
 
 # ---- Orchestrator cache on CI
 /orchestrator/
+
+# ---- A file generated on CI
+project-version/evaluated_project_version.txt
