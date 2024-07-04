@@ -23,8 +23,6 @@ def promote_env(artefacts=ARTIFACTS):
 
 # SHARED CANDIDATE???
 # Not sure how generic this is but it could be shared
-# Sonar IaC has a similar script but call a github notification in addition to Burgr: https://github.com/SonarSource/sonar-iac/blob/153aed5008efac5ff1bbb0014672e653194ee79b/.cirrus/modules/promote.star#L21
-# In any case, parameterizing the script would be a good idea to make it more reusable
 # It seems there is a core and options (notifications, ...)
 def promote_script():
     return [
@@ -32,7 +30,6 @@ def promote_script():
         "cirrus_jfrog_promote multi",
         "source ${PROJECT_VERSION_CACHE_DIR}/evaluated_project_version.txt",
         "github-notify-promotion",
-        "burgr-notify-promotion"
     ]
 
 
