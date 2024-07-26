@@ -6,20 +6,6 @@ load("github.com/SonarSource/cirrus-modules/cloud-native/platform.star@analysis/
 load("github.com/SonarSource/cirrus-modules/cloud-native/cache.star@analysis/master", "project_version_cache")
 load("github.com/SonarSource/cirrus-modules/cloud-native/conditions.star@analysis/master", "is_branch_qa_eligible")
 
-ARTIFACTS = [
-    "org.sonarsource.text:sonar-text-plugin:jar",
-    "com.sonarsource.text:sonar-text-enterprise-plugin:jar",
-    "com.sonarsource.text:sonar-text-enterprise-plugin:yguard:xml",
-]
-
-
-# SHARED CANDIDATE???
-# It's not clear what is using ARTIFACTS env variable but could be generic enough to be shared
-def promote_env(artefacts=ARTIFACTS):
-    env = promotion_env()
-    env |= {"ARTIFACTS": ",".join(artefacts)}
-    return env
-
 
 # SHARED CANDIDATE???
 # Not sure how generic this is but it could be shared
@@ -47,7 +33,7 @@ def promote_task():
                 "sca_scan",
                 "qa_os_win",
             ],
-            "env": promote_env(),
+            "env": promotion_env(),
             "eks_container": base_image_container_builder(cpu=1, memory="4G"),
             "project_version_cache": project_version_cache(),
             "script": promote_script()
