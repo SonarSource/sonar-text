@@ -146,6 +146,10 @@ publishing {
     }
 }
 
+codeStyleConvention {
+    licenseHeaderFile.set(rootProject.file("LICENSE_HEADER"))
+}
+
 fun enforceJarSize(
     file: File,
     minSize: Long,

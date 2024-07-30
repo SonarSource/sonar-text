@@ -1,3 +1,5 @@
+import org.sonarsource.text.registerRuleApiTasks
+
 plugins {
     id("com.diffplug.spotless") version libs.versions.spotless.gradle.get()
     id("org.sonarsource.text.artifactory-configuration")
@@ -14,4 +16,11 @@ spotless {
     }
 }
 
-tasks.artifactoryPublish { skip = true }
+registerRuleApiTasks("Secrets", file("$projectDir/sonarpedia-secrets"))
+registerRuleApiTasks("Text", file("$projectDir/sonarpedia-text"))
+
+tasks.register("ruleApiUpdate") {
+    description = "Update ALL rules description"
+    group = "Rule API"
+    dependsOn("ruleApiUpdateSecrets", "ruleApiUpdateText")
+}

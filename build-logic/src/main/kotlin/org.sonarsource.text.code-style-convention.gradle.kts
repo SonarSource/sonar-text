@@ -1,8 +1,11 @@
 import com.diffplug.blowdryer.Blowdryer
+import org.sonarsource.text.CodeStyleConvention
 
 plugins {
     id("com.diffplug.spotless")
 }
+
+val codeStyleConvention = extensions.create<CodeStyleConvention>("codeStyleConvention")
 
 spotless {
     encoding(Charsets.UTF_8)
@@ -16,15 +19,16 @@ spotless {
                         "540ef32ba22c301f6d05a5305f4e1dbd204839f3/eclipse/sonar-formatter.xml"
                 )
             )
-        licenseHeaderFile(rootProject.file("LICENSE_HEADER")).updateYearWithLatest(true)
+        licenseHeaderFile(codeStyleConvention.licenseHeaderFile).updateYearWithLatest(true)
     }
     kotlinGradle {
         ktlint().setEditorConfigPath("$rootDir/.editorconfig")
     }
     format("javaMisc") {
         target("src/**/package-info.java")
-        licenseHeaderFile(rootProject.file("LICENSE_HEADER"), "@javax.annotation").updateYearWithLatest(true)
+        licenseHeaderFile(codeStyleConvention.licenseHeaderFile, "@javax.annotation").updateYearWithLatest(true)
     }
+    codeStyleConvention.spotless?.invoke(this)
 }
 
 tasks.check { dependsOn("spotlessCheck") }
