@@ -95,7 +95,7 @@ def qa_ruling_task():
 
 
 def qa_benchmark_condition():
-    return "$CIRRUS_PR_LABELS !=~ \".*qa-bench.*\" || $CIRRUS_BRANCH == $CIRRUS_DEFAULT_BRANCH || $CIRRUS_BRANCH =~ \"branch-.*\""
+    return "$CIRRUS_PR_LABELS !=~ \".*qa-bench.*\""
 
 
 def qa_benchmark_env():
