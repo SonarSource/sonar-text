@@ -1,5 +1,5 @@
 [versions]
-sonar-commons = "2.11.0.2861"
+sonar-commons = "2.12.0.2964"
 sonar-plugin-api = "10.10.0.2391"
 sonarqube = "10.6.0.92116"
 sonar-java = "7.35.0.36271"
