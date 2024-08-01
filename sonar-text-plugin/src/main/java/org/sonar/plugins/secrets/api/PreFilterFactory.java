@@ -89,7 +89,7 @@ public final class PreFilterFactory {
   }
 
   private static boolean isFileInDocOrTestDirectory(InputFileContext inputFileContext) {
-    var path = inputFileContext.getInputFile().toString().toLowerCase(Locale.ROOT);
+    var path = inputFileContext.getInputFile().uri().getPath().toLowerCase(Locale.ROOT);
     var pathElements = Arrays.asList(path.split("/"));
     var pathElementsWithoutFilename = pathElements.subList(0, pathElements.size() - 1);
     return isDocDirectory(pathElementsWithoutFilename) || isTestDirectory(pathElementsWithoutFilename)
