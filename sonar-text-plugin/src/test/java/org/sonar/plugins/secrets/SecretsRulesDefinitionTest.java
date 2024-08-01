@@ -55,6 +55,8 @@ class SecretsRulesDefinitionTest {
     assertThat(ruleS6290.name()).isEqualTo("Amazon Web Services credentials should not be disclosed");
     assertThat(ruleS6290.activatedByDefault()).isTrue();
     assertThat(ruleS6290.type()).isEqualTo(RuleType.VULNERABILITY);
+
+    assertThat(rulesDefinition.packagePrefix()).isEqualTo("org");
   }
 
   @Test

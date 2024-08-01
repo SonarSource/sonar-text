@@ -37,13 +37,16 @@ public class DefaultQualityProfileDefinition implements BuiltInQualityProfilesDe
 
   public void define(BuiltInQualityProfilesDefinition.Context context) {
     BuiltInQualityProfilesDefinition.NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(NAME, languageKey);
-    BuiltInQualityProfileJsonLoader.load(profile, repositoryKey, profilePath(repositoryKey, languageKey));
+    BuiltInQualityProfileJsonLoader.load(profile, repositoryKey, profilePath(packagePrefix(), repositoryKey, languageKey));
     profile.setDefault(true);
     profile.done();
   }
 
-  public static String profilePath(String repository, String language) {
-    return CommonRulesDefinition.resourcePath(repository, language) + "/" + FILE_NAME;
+  public static String profilePath(String packagePrefix, String repository, String language) {
+    return CommonRulesDefinition.resourcePath(packagePrefix, repository, language) + "/" + FILE_NAME;
   }
 
+  public String packagePrefix() {
+    return "org";
+  }
 }

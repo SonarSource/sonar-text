@@ -27,7 +27,7 @@ import org.sonarsource.analyzer.commons.RuleMetadataLoader;
 
 public class CommonRulesDefinition implements RulesDefinition {
 
-  private static final String RESOURCE_FOLDER_FORMAT = "/org/sonar/l10n/%s/rules/%s";
+  private static final String RESOURCE_FOLDER_FORMAT = "/%s/sonar/l10n/%s/rules/%s";
 
   private final SonarRuntime sonarRuntime;
   public final String repositoryKey;
@@ -55,14 +55,17 @@ public class CommonRulesDefinition implements RulesDefinition {
   }
 
   public void loadRepository(NewRepository repository) {
-    String resourcePath = resourcePath(repositoryKey, languageKey);
-    String defaultProfilePath = DefaultQualityProfileDefinition.profilePath(repositoryKey, languageKey);
+    String resourcePath = resourcePath(packagePrefix(), repositoryKey, languageKey);
+    String defaultProfilePath = DefaultQualityProfileDefinition.profilePath(packagePrefix(), repositoryKey, languageKey);
     RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(resourcePath, defaultProfilePath, sonarRuntime);
     ruleMetadataLoader.addRulesByAnnotatedClass(repository, checks());
   }
 
-  public static String resourcePath(String repository, String language) {
-    return String.format(RESOURCE_FOLDER_FORMAT, repository, language);
+  public static String resourcePath(String packagePrefix, String repository, String language) {
+    return String.format(RESOURCE_FOLDER_FORMAT, packagePrefix, repository, language);
   }
 
+  public String packagePrefix() {
+    return "org";
+  }
 }

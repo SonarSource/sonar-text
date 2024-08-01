@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TextRuleDefinitionTest {
 
   @Test
-  void define_rules() {
+  void shouldDefineRules() {
     SonarRuntime sonarRuntime = SonarRuntimeImpl.forSonarLint(Version.parse("7.2.1.58118"));
     TextRuleDefinition rulesDefinition = new TextRuleDefinition(sonarRuntime);
     RulesDefinition.Context context = new RulesDefinition.Context();
@@ -46,10 +46,12 @@ class TextRuleDefinitionTest {
     assertThat(repository.name()).isEqualTo("Sonar");
     assertThat(repository.language()).isEqualTo("text");
     assertThat(repository.rules()).hasSize(1);
+
+    assertThat(rulesDefinition.packagePrefix()).isEqualTo("org");
   }
 
   @Test
-  void define_sonar_way_profile() {
+  void shouldDefineSonarWayProfile() {
     BuiltInQualityProfilesDefinition.Context context = new BuiltInQualityProfilesDefinition.Context();
     BuiltInQualityProfilesDefinition profileDefinition = new TextRuleDefinition.DefaultQualityProfile();
     profileDefinition.define(context);
@@ -60,7 +62,7 @@ class TextRuleDefinitionTest {
   }
 
   @Test
-  void each_check_should_be_declared_in_the_check_list() throws IOException {
+  void eachCheckShouldBeDeclaredInTheCheckList() throws IOException {
     SonarRuntime sonarRuntime = SonarRuntimeImpl.forSonarLint(Version.parse("7.2.1.58118"));
     TextRuleDefinition rulesDefinition = new TextRuleDefinition(sonarRuntime);
     Path checksPackage = Path.of("src", "main", "java", "org", "sonar", "plugins", "text", "checks");
