@@ -75,4 +75,13 @@ class PatternMatcherTest {
     assertThat(logTester.logs()).containsExactly(
       "Running pattern in rule with id \"<test-rule-id>\" on content of length 44 has timed out after 100ms. Related pattern is \"(\\\\d+|(x+x+x+x+x+x+x+x+x+x+)+y)\".");
   }
+
+  @Test
+  void testCreationFromPattern() {
+    var patternMatcher = PatternMatcher.build("pattern");
+
+    var matches = patternMatcher.findIn("line with pattern", "<test-rule-id>");
+
+    assertThat(matches).hasSize(1);
+  }
 }

@@ -19,8 +19,18 @@
  */
 package org.sonar.plugins.secrets.api;
 
+import java.util.List;
+import org.sonar.plugins.common.InputFileContext;
+
 /**
- * A base interface for all classes capable of loading specifications.
+ * A base interface for all matchers that will be used to find matches in the input file.
  */
-public interface SpecificationLoader {
+public interface Matcher {
+  /**
+   * Returns a list of {@link Match matches} found in {@link InputFileContext}.
+   *
+   * @param fileContext the file that will be scanned.
+   * @return list of matches.
+   */
+  List<Match> findIn(InputFileContext fileContext);
 }

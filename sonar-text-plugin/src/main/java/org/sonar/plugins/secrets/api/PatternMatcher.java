@@ -59,6 +59,15 @@ public class PatternMatcher {
   }
 
   /**
+   * Builds a {@link PatternMatcher} from a pattern as a string.
+   * @param pattern input pattern as a string
+   * @return Constructed {@link PatternMatcher}
+   */
+  public static PatternMatcher build(String pattern) {
+    return new PatternMatcher(pattern);
+  }
+
+  /**
    * Builds a {@link PatternMatcher} from a {@link AuxiliaryPattern} object.
    * @param auxiliaryPattern input {@link AuxiliaryPattern}
    * @return Constructed {@link PatternMatcher}

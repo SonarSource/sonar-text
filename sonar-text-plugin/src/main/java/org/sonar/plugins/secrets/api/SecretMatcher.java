@@ -29,7 +29,7 @@ import org.sonar.plugins.secrets.configuration.model.Rule;
 /**
  * Checks if the file contains some secrets.
  */
-public class SecretMatcher {
+public class SecretMatcher implements Matcher {
 
   private final String ruleId;
   private final String ruleMessage;
@@ -71,12 +71,7 @@ public class SecretMatcher {
     return new SecretMatcher(rule.getId(), rule.getMetadata().getMessage(), patternMatcher, auxiliaryMatcher, preFilter, postFilter, durationStatistics);
   }
 
-  /**
-   * Returns a list of {@link Match matches} found in {@link InputFileContext}.
-   *
-   * @param fileContext the file that will be scanned.
-   * @return list of matches.
-   */
+  @Override
   public List<Match> findIn(InputFileContext fileContext) {
     boolean isRejectedOnPreFilter = durationStatistics.timed(
       getRuleId() + DurationStatistics.SUFFIX_PRE,

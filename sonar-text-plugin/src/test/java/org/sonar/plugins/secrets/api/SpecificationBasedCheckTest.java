@@ -35,7 +35,7 @@ class SpecificationBasedCheckTest {
   void checkShouldRaiseIssueOnBasicDetection() throws IOException {
     String specificationLocation = "secretsConfiguration/";
     Set<String> specifications = Set.of("validMinSpec.yaml");
-    SpecificationLoader specificationLoader = new SpecificationLoader(specificationLocation, specifications);
+    var specificationLoader = new SecretsSpecificationLoader(specificationLocation, specifications);
 
     String fileContent = "The content contains the rule matching pattern and various other characters.";
     ExampleCheck exampleCheck = new ExampleCheck();
@@ -49,7 +49,7 @@ class SpecificationBasedCheckTest {
   void checkShouldNotRaiseIssueWithPostFilterBecauseOfLowEntropy() throws IOException {
     String specificationLocation = "secretsConfiguration/";
     Set<String> specifications = Set.of("validReferenceSpec.yaml");
-    SpecificationLoader specificationLoader = new SpecificationLoader(specificationLocation, specifications);
+    var specificationLoader = new SecretsSpecificationLoader(specificationLocation, specifications);
 
     String fileContent = "rule matching pattern with low entropy";
     ExampleCheck exampleCheck = new ExampleCheck();
@@ -62,7 +62,7 @@ class SpecificationBasedCheckTest {
   void checkShouldRaiseIssueWhenFilterHasLowEntropyThreshold() throws IOException {
     String specificationLocation = "secretsConfiguration/postFilter/";
     Set<String> specifications = Set.of("postFilterSpec.yaml");
-    SpecificationLoader specificationLoader = new SpecificationLoader(specificationLocation, specifications);
+    var specificationLoader = new SecretsSpecificationLoader(specificationLocation, specifications);
     specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().getStatisticalFilter().setThreshold(3f);
 
     String fileContent = "rule matching pattern and post filter has low entropy";
@@ -77,7 +77,7 @@ class SpecificationBasedCheckTest {
   void checkShouldNotRaiseIssueWithPostFilterBecauseOfPatternNot() throws IOException {
     String specificationLocation = "secretsConfiguration/postFilter/";
     Set<String> specifications = Set.of("postFilterSpec.yaml");
-    SpecificationLoader specificationLoader = new SpecificationLoader(specificationLocation, specifications);
+    var specificationLoader = new SecretsSpecificationLoader(specificationLocation, specifications);
     specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().setPatternNot(List.of("matching"));
     specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().getStatisticalFilter().setThreshold(3f);
 

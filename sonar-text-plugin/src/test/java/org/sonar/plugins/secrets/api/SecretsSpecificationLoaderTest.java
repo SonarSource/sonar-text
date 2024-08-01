@@ -34,10 +34,10 @@ import org.sonar.plugins.secrets.configuration.model.Rule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.secrets.SecretsSpecificationFilesDefinition.existingSecretSpecifications;
-import static org.sonar.plugins.secrets.api.SpecificationLoader.DEFAULT_SPECIFICATION_LOCATION;
+import static org.sonar.plugins.secrets.api.SecretsSpecificationLoader.DEFAULT_SPECIFICATION_LOCATION;
 
 @Order(1)
-class SpecificationLoaderTest {
+class SecretsSpecificationLoaderTest {
 
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
@@ -45,7 +45,7 @@ class SpecificationLoaderTest {
   @Test
   void shouldLoadRulesWithoutErrors() {
     var errors = new HashSet<Throwable>();
-    SpecificationLoader specificationLoader = new SpecificationLoader(
+    var specificationLoader = new SecretsSpecificationLoader(
       DEFAULT_SPECIFICATION_LOCATION, existingSecretSpecifications(),
       (e, specificationFileName) -> errors.add(e));
     Map<String, List<Rule>> rulesMappedToKey = specificationLoader.getRulesMappedToKey();
@@ -64,7 +64,7 @@ class SpecificationLoaderTest {
     Set<String> specifications = Set.of("validMinSpec.yaml");
     Rule expectedRule = ReferenceTestModel.constructMinimumSpecification().getProvider().getRules().get(0);
 
-    Rule rule = new SpecificationLoader(specificationLocation, specifications).getRulesForKey("exampleKey").get(0);
+    Rule rule = new SecretsSpecificationLoader(specificationLocation, specifications).getRulesForKey("exampleKey").get(0);
 
     assertThat(rule).usingRecursiveComparison().isEqualTo(expectedRule);
   }
@@ -74,7 +74,7 @@ class SpecificationLoaderTest {
     String specificationLocation = "secretsConfiguration/";
     Set<String> specifications = Set.of("validMinSpec.yaml");
 
-    List<Rule> rulesForKey = new SpecificationLoader(specificationLocation, specifications).getRulesForKey("notPresent");
+    List<Rule> rulesForKey = new SecretsSpecificationLoader(specificationLocation, specifications).getRulesForKey("notPresent");
 
     assertThat(rulesForKey).isEmpty();
   }
@@ -83,7 +83,7 @@ class SpecificationLoaderTest {
   void duplicateKeyInRulesShouldThrowError() {
     String specificationLocation = "secretsConfiguration/";
     Set<String> specifications = Set.of("validSpecWithDuplicateRuleKeys.yaml");
-    List<Rule> rulesForKey = new SpecificationLoader(specificationLocation, specifications).getRulesForKey("exampleKey");
+    List<Rule> rulesForKey = new SecretsSpecificationLoader(specificationLocation, specifications).getRulesForKey("exampleKey");
 
     assertThat(rulesForKey).hasSize(2);
   }
@@ -93,13 +93,13 @@ class SpecificationLoaderTest {
     String specificationLocation = "secretsConfiguration/";
     Set<String> specifications = Set.of("unknownFile.yaml");
 
-    new SpecificationLoader(specificationLocation, specifications);
+    new SecretsSpecificationLoader(specificationLocation, specifications);
     assertThat(logTester.logs()).containsExactly("DeserializationException: Could not load specification from file: unknownFile.yaml");
   }
 
   @Test
   void shouldReturnEmptyMapWhenSpecificationsIsEmpty() {
-    SpecificationLoader specificationLoader = new SpecificationLoader("non-relevant", Collections.emptySet());
+    var specificationLoader = new SecretsSpecificationLoader("non-relevant", Collections.emptySet());
 
     assertThat(specificationLoader.getRulesMappedToKey()).isEqualTo(Collections.emptyMap());
   }

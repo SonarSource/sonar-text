@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.DurationStatistics;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
@@ -32,11 +31,9 @@ import org.sonar.plugins.secrets.configuration.model.Rule;
 /**
  * A base Check class for all checks that are configured by YAML specification.
  */
-public abstract class SpecificationBasedCheck extends Check {
+public abstract class SpecificationBasedCheck extends AbstractSpecificationBasedCheck<SecretsSpecificationLoader, SecretMatcher> {
 
   private static final Logger LOG = LoggerFactory.getLogger(SpecificationBasedCheck.class);
-  private List<SecretMatcher> matcher;
-  private DurationStatistics durationStatistics;
 
   protected SpecificationBasedCheck() {
     super();
@@ -48,52 +45,18 @@ public abstract class SpecificationBasedCheck extends Check {
   }
 
   /**
-   * Initialize this check by loading rule definitions
-   *
-   * @param loader                     SpecificationLoader that will provide specification files
-   * @param durationStatistics         an instance to record performance statistics
-   * @param specificationConfiguration configuration of specification
-   */
-  public void initialize(SpecificationLoader loader, DurationStatistics durationStatistics, SpecificationConfiguration specificationConfiguration) {
-    this.durationStatistics = durationStatistics;
-    String ruleId = getRuleKey().rule();
-    List<Rule> rulesForKey = retrieveRules(loader, ruleId);
-    if (rulesForKey.isEmpty()) {
-      LOG.warn("Found no rule specification for rule with key: {}", ruleId);
-    }
-    this.matcher = rulesForKey.stream()
-      .map(rule -> SecretMatcher.build(rule, durationStatistics, specificationConfiguration))
-      .toList();
-  }
-
-  /**
    * Loads rules.
    *
-   * @param loader  the {@link SpecificationLoader loader} of the rules
+   * @param loader  the {@link SecretsSpecificationLoader loader} of the rules
    * @param ruleKey the Rule Key
    * @return list of {@link Rule rules}
    */
-  public List<Rule> retrieveRules(SpecificationLoader loader, String ruleKey) {
+  public List<Rule> retrieveRules(SecretsSpecificationLoader loader, String ruleKey) {
     return loader.getRulesForKey(ruleKey);
   }
 
-  @Override
-  public void analyze(InputFileContext ctx) {
-    analyze(ctx, checkId -> true);
-  }
-
-  /**
-   * Analyses a specific rule.
-   *
-   * @param ctx    the {@link InputFileContext input file context}
-   * @param ruleId the Rule ID
-   */
-  public void analyze(InputFileContext ctx, String ruleId) {
-    analyze(ctx, checkId -> checkId.equals(ruleId));
-  }
-
   protected void analyze(InputFileContext ctx, Predicate<String> ruleFilter) {
-    for (SecretMatcher secretMatcher : matcher) {
+    for (SecretMatcher secretMatcher : matchers) {
       if (ruleFilter.test(secretMatcher.getRuleId())) {
         durationStatistics.timed(secretMatcher.getRuleId() + DurationStatistics.SUFFIX_TOTAL, () -> secretMatcher.findIn(ctx))
           .stream()
@@ -101,5 +64,16 @@ public abstract class SpecificationBasedCheck extends Check {
           .forEach(textRange -> ctx.reportSecretIssue(getRuleKey(), textRange, secretMatcher.getMessageFromRule()));
       }
     }
+  }
+
+  @Override
+  protected List<SecretMatcher> initializeMatchers(SecretsSpecificationLoader loader, String ruleId, SpecificationConfiguration specificationConfiguration) {
+    List<Rule> rulesForKey = retrieveRules(loader, ruleId);
+    if (rulesForKey.isEmpty()) {
+      LOG.warn("Found no rule specification for rule with key: {}", ruleId);
+    }
+    return rulesForKey.stream()
+      .map(rule -> SecretMatcher.build(rule, durationStatistics, specificationConfiguration))
+      .toList();
   }
 }

@@ -84,7 +84,7 @@ import org.sonar.plugins.java.api.tree.MethodInvocationTree;
 import org.sonar.plugins.java.api.tree.StatementTree;
 import org.sonar.plugins.java.api.tree.Tree;
 import org.sonar.plugins.java.api.tree.VariableTree;
-import org.sonar.plugins.secrets.api.SpecificationLoader;
+import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
 import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombination;
@@ -128,7 +128,7 @@ class SecretsRegexTest {
 
   @Test
   void shouldReportIssuesOnTestFile() {
-    var specificationLoader = new SpecificationLoader("regex/", Set.of("specWithBadRegexes.yaml"));
+    var specificationLoader = new SecretsSpecificationLoader("regex/", Set.of("specWithBadRegexes.yaml"));
 
     var patternLocations = specificationLoader.getRulesMappedToKey().entrySet().stream()
       .map(this::toPatternLocation)
@@ -153,7 +153,7 @@ class SecretsRegexTest {
   }
 
   private List<PatternLocation> convertToPatternLocations(Set<String> listOfFileNames) {
-    var specificationLoader = new SpecificationLoader(SpecificationLoader.DEFAULT_SPECIFICATION_LOCATION, listOfFileNames);
+    var specificationLoader = new SecretsSpecificationLoader(SecretsSpecificationLoader.DEFAULT_SPECIFICATION_LOCATION, listOfFileNames);
 
     return specificationLoader.getRulesMappedToKey().entrySet().stream()
       .map(this::toPatternLocation)

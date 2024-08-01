@@ -41,9 +41,9 @@ import org.sonar.plugins.common.warnings.AnalysisWarningsWrapper;
 import org.sonar.plugins.common.warnings.DefaultAnalysisWarningsWrapper;
 import org.sonar.plugins.secrets.SecretsCheckList;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
+import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.api.SpecificationConfiguration;
-import org.sonar.plugins.secrets.api.SpecificationLoader;
 import org.sonar.plugins.secrets.api.task.RegexMatchingManager;
 import org.sonar.plugins.text.TextCheckList;
 import org.sonar.plugins.text.TextRuleDefinition;
@@ -307,8 +307,8 @@ public class TextAndSecretsSensor implements Sensor {
     analysisWarnings.addWarning(message);
   }
 
-  protected SpecificationLoader constructSpecificationLoader() {
-    return new SpecificationLoader();
+  protected SecretsSpecificationLoader constructSpecificationLoader() {
+    return new SecretsSpecificationLoader();
   }
 
   public GitService getGitService() {

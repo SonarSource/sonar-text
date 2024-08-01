@@ -47,9 +47,9 @@ import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.api.Match;
 import org.sonar.plugins.secrets.api.PatternMatcher;
+import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.api.SpecificationConfiguration;
-import org.sonar.plugins.secrets.api.SpecificationLoader;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.RuleExample;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
@@ -65,14 +65,14 @@ import static org.sonar.plugins.secrets.utils.TestUtils.mockDurationStatistics;
 public abstract class AbstractRuleExampleTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractRuleExampleTest.class);
-  private static SpecificationLoader specificationLoader;
+  private static SecretsSpecificationLoader specificationLoader;
   private final SpecificationBasedCheck check;
   private final Collection<Throwable> loaderExceptions = new HashSet<>();
 
   protected AbstractRuleExampleTest(SpecificationBasedCheck check) {
     if (specificationLoader == null) {
-      specificationLoader = new SpecificationLoader(
-        SpecificationLoader.DEFAULT_SPECIFICATION_LOCATION, existingSecretSpecifications(),
+      specificationLoader = new SecretsSpecificationLoader(
+        SecretsSpecificationLoader.DEFAULT_SPECIFICATION_LOCATION, existingSecretSpecifications(),
         (e, ignored) -> loaderExceptions.add(e));
     }
 

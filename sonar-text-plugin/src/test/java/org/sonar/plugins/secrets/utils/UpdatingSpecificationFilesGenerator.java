@@ -42,19 +42,19 @@ import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.secrets.SecretsCheckList;
 import org.sonar.plugins.secrets.SecretsSpecificationFilesDefinition;
-import org.sonar.plugins.secrets.api.SpecificationLoader;
+import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 
 // This name is intentionally not ending in "Test" to not get picked up automatically by maven
 @SuppressWarnings("java:S3577")
 class UpdatingSpecificationFilesGenerator {
 
-  public final static String CHECK_TESTS_PATH_PREFIX = String.join(File.separator, "src", "test", "java", "org", "sonar", "plugins", "secrets", "checks");
-  private final static String SECRETS_MODULE_PATH_PREFIX = String.join(File.separator, "src", "main", "java", "org", "sonar", "plugins", "secrets");
-  private final static String SECRETS_MODULE_RESOURCE_PATH_PREFIX = String.join(File.separator, "src", "main", "resources", "org", "sonar");
-  public final static String CHECK_PATH_PREFIX = String.join(File.separator, SECRETS_MODULE_PATH_PREFIX, "checks");
-  public final static String TEMPLATE_PATH_PREFIX = String.join(File.separator, "src", "test", "resources", "templates");
-  private final static String RSPEC_FILES_PATH_PREFIX = String.join(File.separator, SECRETS_MODULE_RESOURCE_PATH_PREFIX, "l10n", "secrets", "rules", "secrets");
+  public static final String CHECK_TESTS_PATH_PREFIX = String.join(File.separator, "src", "test", "java", "org", "sonar", "plugins", "secrets", "checks");
+  private static final String SECRETS_MODULE_PATH_PREFIX = String.join(File.separator, "src", "main", "java", "org", "sonar", "plugins", "secrets");
+  private static final String SECRETS_MODULE_RESOURCE_PATH_PREFIX = String.join(File.separator, "src", "main", "resources", "org", "sonar");
+  public static final String CHECK_PATH_PREFIX = String.join(File.separator, SECRETS_MODULE_PATH_PREFIX, "checks");
+  public static final String TEMPLATE_PATH_PREFIX = String.join(File.separator, "src", "test", "resources", "templates");
+  private static final String RSPEC_FILES_PATH_PREFIX = String.join(File.separator, SECRETS_MODULE_RESOURCE_PATH_PREFIX, "l10n", "secrets", "rules", "secrets");
   private static final Logger LOG = LoggerFactory.getLogger(UpdatingSpecificationFilesGenerator.class);
   private final Charset charset = StandardCharsets.UTF_8;
   private final String lineSeparator = "\n";
@@ -75,7 +75,7 @@ class UpdatingSpecificationFilesGenerator {
       specificationsToLoad.addAll(testingEnvironment.additionalSpecificationFilenames);
     }
 
-    SpecificationLoader specificationLoader = new SpecificationLoader(SpecificationLoader.DEFAULT_SPECIFICATION_LOCATION, specificationsToLoad);
+    var specificationLoader = new SecretsSpecificationLoader(SecretsSpecificationLoader.DEFAULT_SPECIFICATION_LOCATION, specificationsToLoad);
     Map<String, List<Rule>> rulesMappedToKey = specificationLoader.getRulesMappedToKey();
 
     Map<String, String> existingKeysMappedToFileName = retrieveAlreadyExistingKeys();
@@ -213,7 +213,7 @@ class UpdatingSpecificationFilesGenerator {
   }
 
   private void testDeserializationOfSpecificationFiles() {
-    new SpecificationLoader();
+    new SecretsSpecificationLoader();
     List<LogAndArguments> errorLogs = logTester.getLogs(Level.ERROR);
     if (!errorLogs.isEmpty()) {
       throw new RuntimeException(failMessage(errorLogs));
