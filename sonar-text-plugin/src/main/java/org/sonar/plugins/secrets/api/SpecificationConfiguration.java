@@ -24,4 +24,6 @@ package org.sonar.plugins.secrets.api;
  * @param sonarTests the value of "sonar.tests" flag.
  */
 public record SpecificationConfiguration(String sonarTests) {
+
+  public static final SpecificationConfiguration NO_CONFIGURATION = new SpecificationConfiguration("");
 }

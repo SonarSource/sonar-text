@@ -57,8 +57,8 @@ public class InputFileContext {
 
   private final String normalizedContent;
 
-  // Used to verify, that we don't raise more than one secret issue for any overlapping text range, regardless of the secret
-  private final List<TextRange> reportedSecretIssues = new ArrayList<>();
+  // Used to verify, that we don't raise more than one issue for any overlapping text range, regardless of the rule
+  private final List<TextRange> reportedIssues = new ArrayList<>();
 
   public InputFileContext(SensorContext sensorContext, InputFile inputFile) throws IOException {
     this.sensorContext = sensorContext;
@@ -107,14 +107,14 @@ public class InputFileContext {
     createAndSaveIssue(sensorContext, ruleKey, inputFile, textRange, message);
   }
 
-  public void reportSecretIssue(RuleKey ruleKey, TextRange textRange, String message) {
-    // Validation of overlapping textRange and adding to reportedSecretIssues does not create race-conditions, as we don't run checks in
+  public void reportIssueOnTextRange(RuleKey ruleKey, TextRange textRange, String message) {
+    // Validation of overlapping textRange and adding to reportedIssues does not create race-conditions, as we don't run checks in
     // parallel
-    if (!overlappingSecretAlreadyReported(textRange)) {
-      reportedSecretIssues.add(textRange);
+    if (!overlappingIssueAlreadyReported(textRange)) {
+      reportedIssues.add(textRange);
       createAndSaveIssue(sensorContext, ruleKey, inputFile, textRange, message);
     } else {
-      LOG.debug("Overlapping secret issue already reported {} on file {} and ruleKey {}", textRange, inputFile, ruleKey);
+      LOG.debug("Overlapping issue already reported {} on file {} and ruleKey {}", textRange, inputFile, ruleKey);
     }
   }
 
@@ -170,8 +170,8 @@ public class InputFileContext {
     return offsetToLine.get(floor);
   }
 
-  public boolean overlappingSecretAlreadyReported(TextRange textRange) {
-    return reportedSecretIssues.stream().anyMatch(textRange::overlap);
+  public boolean overlappingIssueAlreadyReported(TextRange textRange) {
+    return reportedIssues.stream().anyMatch(textRange::overlap);
   }
 
   public boolean hasNonTextCharacters() {

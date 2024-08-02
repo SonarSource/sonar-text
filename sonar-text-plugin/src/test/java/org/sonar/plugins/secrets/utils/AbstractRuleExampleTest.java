@@ -77,7 +77,7 @@ public abstract class AbstractRuleExampleTest {
     }
 
     this.check = check;
-    check.initialize(specificationLoader, mockDurationStatistics(), new SpecificationConfiguration(""));
+    check.initialize(specificationLoader, mockDurationStatistics(), SpecificationConfiguration.NO_CONFIGURATION);
 
     if (!loaderExceptions.isEmpty()) {
       for (Throwable e : loaderExceptions) {

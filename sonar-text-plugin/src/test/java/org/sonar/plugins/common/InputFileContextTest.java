@@ -150,10 +150,10 @@ class InputFileContextTest {
     InputFileContext ctx = inputFileContext("{some content inside this file}");
     TextRange range1 = ctx.newTextRangeFromFileOffsets(2, 6);
 
-    ctx.reportSecretIssue(RuleKey.parse("s:42"), range1, "report secret issue 1");
-    ctx.reportSecretIssue(RuleKey.parse("s:1337"), ctx.newTextRangeFromFileOffsets(0, 4), "overlapping secret");
-    ctx.reportSecretIssue(RuleKey.parse("s:1337"), ctx.newTextRangeFromFileOffsets(4, 8), "overlapping secret");
-    ctx.reportSecretIssue(RuleKey.parse("s:1337"), ctx.newTextRangeFromFileOffsets(3, 5), "overlapping secret");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:42"), range1, "report secret issue 1");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:1337"), ctx.newTextRangeFromFileOffsets(0, 4), "overlapping secret");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:1337"), ctx.newTextRangeFromFileOffsets(4, 8), "overlapping secret");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:1337"), ctx.newTextRangeFromFileOffsets(3, 5), "overlapping secret");
 
     Collection<Issue> actual = sensorContext.allIssues();
 

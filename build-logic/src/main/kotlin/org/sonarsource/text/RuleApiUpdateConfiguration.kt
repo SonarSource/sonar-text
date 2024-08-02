@@ -25,7 +25,7 @@ fun Project.registerRuleApiTasks(suffix: String, sonarpediaLocation: File) {
                 add("com.sonarsource.ruleapi.Main")
                 add("generate")
                 add("-rule")
-                add(rule.orElse(""))
+                add(rule.getOrElse(""))
                 if (branch.isPresent) {
                     add("-branch")
                     add(branch.get())

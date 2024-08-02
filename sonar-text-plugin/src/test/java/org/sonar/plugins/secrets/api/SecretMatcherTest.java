@@ -60,7 +60,7 @@ class SecretMatcherTest {
       s -> true,
       mockDurationStatistics());
 
-    SecretMatcher actualMatcher = SecretMatcher.build(rule, mockDurationStatistics(), new SpecificationConfiguration(""));
+    SecretMatcher actualMatcher = SecretMatcher.build(rule, mockDurationStatistics(), SpecificationConfiguration.NO_CONFIGURATION);
 
     assertThat(actualMatcher).behavesLike(expectedMatcher);
   }
@@ -87,7 +87,7 @@ class SecretMatcherTest {
       expectedPredicate,
       mockDurationStatistics());
 
-    SecretMatcher actualMatcher = SecretMatcher.build(rule, mockDurationStatistics(), new SpecificationConfiguration(""));
+    SecretMatcher actualMatcher = SecretMatcher.build(rule, mockDurationStatistics(), SpecificationConfiguration.NO_CONFIGURATION);
 
     assertThat(actualMatcher).behavesLike(expectedMatcher);
   }
@@ -106,7 +106,7 @@ class SecretMatcherTest {
       s -> true,
       mockDurationStatistics());
 
-    SecretMatcher actualMatcher = SecretMatcher.build(rule, mockDurationStatistics(), new SpecificationConfiguration(""));
+    SecretMatcher actualMatcher = SecretMatcher.build(rule, mockDurationStatistics(), SpecificationConfiguration.NO_CONFIGURATION);
 
     assertThat(actualMatcher).behavesLike(expectedMatcher);
   }
@@ -132,7 +132,7 @@ class SecretMatcherTest {
     var preModule = new PreModule();
     preModule.setScopes(scopesInSpec);
     detection.setPre(preModule);
-    SecretMatcher actualMatcher = SecretMatcher.build(rule, mockDurationStatistics(), new SpecificationConfiguration(""));
+    SecretMatcher actualMatcher = SecretMatcher.build(rule, mockDurationStatistics(), SpecificationConfiguration.NO_CONFIGURATION);
     var inputFile = inputFile(Path.of(".env"), "rule matching pattern", null, type);
     var fileContext = inputFileContext(inputFile);
 

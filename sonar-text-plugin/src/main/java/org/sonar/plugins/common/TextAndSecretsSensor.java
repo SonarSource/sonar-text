@@ -239,7 +239,7 @@ public class TextAndSecretsSensor implements Sensor {
     return "true".equals(sensorContext.config().get(ANALYZE_ALL_FILES_KEY).orElse("false"));
   }
 
-  private static String sonarTests(SensorContext sensorContext) {
+  protected static String sonarTests(SensorContext sensorContext) {
     var value = sensorContext.config().get(SONAR_TESTS_KEY).orElse("");
     if (value.isBlank()) {
       var message = """

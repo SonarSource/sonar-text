@@ -175,7 +175,7 @@ class PreFilterFactoryTest {
     when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder(
       "testProject", filePath).build());
 
-    var predicate = PreFilterFactory.createPredicate(preModule, new SpecificationConfiguration(""));
+    var predicate = PreFilterFactory.createPredicate(preModule, SpecificationConfiguration.NO_CONFIGURATION);
 
     assertThat(predicate.test(ctx)).isEqualTo(shouldMatch);
   }
@@ -203,7 +203,7 @@ class PreFilterFactoryTest {
     when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder(
       "testProject", filePath).build());
 
-    var predicate = PreFilterFactory.createPredicate(preModule, new SpecificationConfiguration(""));
+    var predicate = PreFilterFactory.createPredicate(preModule, SpecificationConfiguration.NO_CONFIGURATION);
 
     assertThat(predicate.test(ctx)).isFalse();
   }
