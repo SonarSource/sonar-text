@@ -17,27 +17,22 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.secrets.utils;
+package org.sonar.plugins.secrets;
 
-import java.util.function.Supplier;
-import org.mockito.Mockito;
-import org.mockito.stubbing.Answer;
-import org.sonar.plugins.common.DurationStatistics;
+import java.nio.file.Path;
+import java.util.List;
+import org.sonar.plugins.common.AbstractCheckListTest;
+import org.sonar.plugins.common.TestUtils;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+public class SecretsCheckListTest extends AbstractCheckListTest {
 
-public class TestUtils {
-  public static DurationStatistics mockDurationStatistics() {
-    var mock = mock(DurationStatistics.class);
-    when(mock.timed(anyString(), any(Supplier.class)))
-      .then(invocation -> invocation.getArgument(1, Supplier.class).get());
-    Mockito.doAnswer((Answer<Void>) invocation -> {
-      invocation.getArgument(1, Runnable.class).run();
-      return null;
-    }).when(mock).timed(anyString(), any(Runnable.class));
-    return mock;
+  @Override
+  protected Path checksPackage() {
+    return Path.of("src", "main", "java", "org", "sonar", "plugins", "secrets", "checks");
+  }
+
+  @Override
+  protected List<Class<?>> checkClassList() {
+    return new SecretsRulesDefinition(TestUtils.SONARLINT_RUNTIME).checks();
   }
 }

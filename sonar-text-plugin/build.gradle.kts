@@ -11,6 +11,8 @@ plugins {
     id("org.sonarsource.text.specification-files-list-generator")
     jacoco
     id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("java-library")
+    id("java-test-fixtures")
 }
 
 dependencies {
@@ -27,6 +29,12 @@ dependencies {
     testImplementation(libs.mockito.core)
     testImplementation(libs.sonar.java.checks)
     testImplementation(libs.logback.classic)
+
+    testFixturesImplementation(libs.junit.jupiter)
+    testFixturesImplementation(libs.assertj.core)
+    testFixturesImplementation(libs.sonar.plugin.api.test.fixtures)
+    testFixturesImplementation(libs.sonar.plugin.api.impl)
+    testFixturesImplementation(libs.mockito.core)
 }
 
 description = "SonarSource Text Analyzer :: Plugin"

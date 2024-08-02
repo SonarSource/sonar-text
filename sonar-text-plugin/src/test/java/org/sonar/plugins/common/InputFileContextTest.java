@@ -37,7 +37,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
-import static org.sonar.plugins.common.TestUtils.defaultSensorContext;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 
 class InputFileContextTest {
@@ -46,7 +45,7 @@ class InputFileContextTest {
 
   @BeforeEach
   void beforeEach() {
-    sensorContext = defaultSensorContext();
+    sensorContext = new TestUtils().defaultSensorContext();
   }
 
   @Test
@@ -120,7 +119,7 @@ class InputFileContextTest {
   @Test
   void shouldFailToLoadContentIfFileDoesNotExist() {
     InputFile inputFile = inputFile(Path.of("invalid-path.txt"));
-    assertThatThrownBy(() -> new InputFileContext(defaultSensorContext(), inputFile))
+    assertThatThrownBy(() -> new InputFileContext(sensorContext, inputFile))
       .isInstanceOf(NoSuchFileException.class)
       .hasMessageContaining("invalid-path");
   }
@@ -129,7 +128,7 @@ class InputFileContextTest {
   void shouldFailToLoadContentIfCorruptedFile() throws IOException {
     InputFile inputFile = spy(inputFile("{}"));
     when(inputFile.inputStream()).thenThrow(new IOException("Fail to read file input stream"));
-    assertThatThrownBy(() -> new InputFileContext(defaultSensorContext(), inputFile))
+    assertThatThrownBy(() -> new InputFileContext(sensorContext, inputFile))
       .isInstanceOf(IOException.class)
       .hasMessageContaining("Fail to read file input stream");
   }
@@ -138,7 +137,7 @@ class InputFileContextTest {
   void shouldIdentifyBinaryFile() throws IOException {
     Path binaryFile = Path.of("build", "classes", "java", "test", "org", "sonar", "plugins", "common", "InputFileContextTest.class");
     InputFile inputFile = inputFile(binaryFile);
-    InputFileContext ctx = new InputFileContext(defaultSensorContext(), inputFile);
+    InputFileContext ctx = new InputFileContext(sensorContext, inputFile);
     assertThat(ctx.hasNonTextCharacters()).isTrue();
     assertThat(ctx.lines()).isEmpty();
     assertThat(ctx.content()).isEmpty();

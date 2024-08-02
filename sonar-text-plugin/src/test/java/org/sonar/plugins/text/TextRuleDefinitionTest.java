@@ -19,57 +19,45 @@
  */
 package org.sonar.plugins.text;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.stream.Stream;
-import org.junit.jupiter.api.Test;
 import org.sonar.api.SonarRuntime;
-import org.sonar.api.internal.SonarRuntimeImpl;
+import org.sonar.api.rules.RuleType;
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
 import org.sonar.api.server.rule.RulesDefinition;
-import org.sonar.api.utils.Version;
+import org.sonar.plugins.common.AbstractRuleDefinitionTest;
+import org.sonar.plugins.common.CommonRulesDefinition;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TextRuleDefinitionTest {
+class TextRuleDefinitionTest extends AbstractRuleDefinitionTest {
 
-  @Test
-  void shouldDefineRules() {
-    SonarRuntime sonarRuntime = SonarRuntimeImpl.forSonarLint(Version.parse("7.2.1.58118"));
-    TextRuleDefinition rulesDefinition = new TextRuleDefinition(sonarRuntime);
-    RulesDefinition.Context context = new RulesDefinition.Context();
-    rulesDefinition.define(context);
+  @Override
+  protected CommonRulesDefinition getRuleDefinition(SonarRuntime sonarRuntime) {
+    return new TextRuleDefinition(sonarRuntime);
+  }
 
-    RulesDefinition.Repository repository = context.repository("text");
-    assertThat(repository).isNotNull();
-    assertThat(repository.name()).isEqualTo("Sonar");
-    assertThat(repository.language()).isEqualTo("text");
-    assertThat(repository.rules()).hasSize(1);
+  @Override
+  protected BuiltInQualityProfilesDefinition getQualityProfile() {
+    return new TextRuleDefinition.DefaultQualityProfile();
+  }
 
+  @Override
+  protected String getRepositoryKey() {
+    return TextRuleDefinition.REPOSITORY_KEY;
+  }
+
+  @Override
+  protected String getRepositoryName() {
+    return TextRuleDefinition.REPOSITORY_NAME;
+  }
+
+  @Override
+  protected void customRepositoryAssertions(RulesDefinition.Repository repository, CommonRulesDefinition rulesDefinition) {
     assertThat(rulesDefinition.packagePrefix()).isEqualTo("org");
-  }
 
-  @Test
-  void shouldDefineSonarWayProfile() {
-    BuiltInQualityProfilesDefinition.Context context = new BuiltInQualityProfilesDefinition.Context();
-    BuiltInQualityProfilesDefinition profileDefinition = new TextRuleDefinition.DefaultQualityProfile();
-    profileDefinition.define(context);
-    BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile("text", "Sonar way");
-    assertThat(profile.language()).isEqualTo("text");
-    assertThat(profile.name()).isEqualTo("Sonar way");
-    assertThat(profile.rules()).hasSize(1);
+    RulesDefinition.Rule ruleS6389 = repository.rule("S6389");
+    assertThat(ruleS6389).isNotNull();
+    assertThat(ruleS6389.name()).isEqualTo("Using bidirectional characters is security-sensitive");
+    assertThat(ruleS6389.activatedByDefault()).isTrue();
+    assertThat(ruleS6389.type()).isEqualTo(RuleType.SECURITY_HOTSPOT);
   }
-
-  @Test
-  void eachCheckShouldBeDeclaredInTheCheckList() throws IOException {
-    SonarRuntime sonarRuntime = SonarRuntimeImpl.forSonarLint(Version.parse("7.2.1.58118"));
-    TextRuleDefinition rulesDefinition = new TextRuleDefinition(sonarRuntime);
-    Path checksPackage = Path.of("src", "main", "java", "org", "sonar", "plugins", "text", "checks");
-    try (Stream<Path> list = Files.list(checksPackage)) {
-      int expectedCount = (int) list.filter(file -> file.toString().endsWith("Check.java")).count();
-      assertThat(rulesDefinition.checks()).hasSize(expectedCount);
-    }
-  }
-
 }

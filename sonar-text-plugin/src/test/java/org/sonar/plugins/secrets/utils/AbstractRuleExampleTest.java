@@ -58,9 +58,9 @@ import org.sonar.plugins.secrets.configuration.validation.SchemaValidator;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.inputFile;
+import static org.sonar.plugins.common.TestUtils.mockDurationStatistics;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
 import static org.sonar.plugins.secrets.SecretsSpecificationFilesDefinition.existingSecretSpecifications;
-import static org.sonar.plugins.secrets.utils.TestUtils.mockDurationStatistics;
 
 public abstract class AbstractRuleExampleTest {
 

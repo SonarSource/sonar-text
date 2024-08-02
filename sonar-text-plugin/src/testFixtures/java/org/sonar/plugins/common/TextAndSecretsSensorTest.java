@@ -47,6 +47,7 @@ import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.check.Rule;
 import org.sonar.plugins.common.git.GitService;
+import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.api.task.RegexMatchingManager;
 import org.sonar.plugins.text.api.TextCheck;
@@ -63,14 +64,14 @@ import static org.sonar.plugins.common.TestUtils.SONARCLOUD_RUNTIME;
 import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME;
 import static org.sonar.plugins.common.TestUtils.activeRules;
 import static org.sonar.plugins.common.TestUtils.asString;
-import static org.sonar.plugins.common.TestUtils.defaultSensorContext;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
 import static org.sonar.plugins.common.TextAndSecretsSensor.SONAR_TESTS_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.TEXT_INCLUSIONS_DEFAULT_VALUE;
 
-class TextAndSecretsSensorTest {
+public class TextAndSecretsSensorTest {
 
+  private static final TestUtils TEST_UTILS = new TestUtils();
   private static final String SENSITIVE_BIDI_CHARS = "\u0002\u0004";
   private static final int AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();
   private static final String EXPECTED_PROCESSOR_LOG_LINE = "Available processors: " + AVAILABLE_PROCESSORS;
@@ -85,7 +86,7 @@ class TextAndSecretsSensorTest {
     """;
 
   @RegisterExtension
-  LogTesterJUnit5 logTester = new LogTesterJUnit5();
+  protected LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
   @AfterEach
   public void cleanUp() {
@@ -96,9 +97,9 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void shouldDescribeWithoutErrors() {
+  public void shouldDescribeWithoutErrors() {
     DefaultSensorDescriptor descriptor = new DefaultSensorDescriptor();
-    sensor(defaultSensorContext()).describe(descriptor);
+    sensor(testUtils().defaultSensorContext()).describe(descriptor);
 
     assertThat(descriptor.name()).isEqualTo("TextAndSecretsSensor");
     assertThat(descriptor.languages()).isEmpty();
@@ -121,7 +122,7 @@ class TextAndSecretsSensorTest {
 
   @Test
   void shouldNotStartAnalysisWhenNoFileToAnalyze() {
-    SensorContextTester context = defaultSensorContext();
+    SensorContextTester context = testUtils().defaultSensorContext();
     sensor(context).execute(context);
 
     assertThat(context.allIssues()).isEmpty();
@@ -130,7 +131,7 @@ class TextAndSecretsSensorTest {
 
   @Test
   void shouldNotRaiseAnIssueOrErrorWhenTheInputFileDoesNotExist() {
-    SensorContextTester context = defaultSensorContext();
+    SensorContextTester context = testUtils().defaultSensorContext();
     context.fileSystem().add(inputFile(Path.of("invalid-path.txt")));
 
     sensor(context).execute(context);
@@ -141,14 +142,14 @@ class TextAndSecretsSensorTest {
 
   @Test
   void emptyFileShouldRaiseNoIssue() {
-    SensorContextTester context = defaultSensorContext();
+    SensorContextTester context = testUtils().defaultSensorContext();
     analyse(sensor(context), context, inputFile(""));
     assertThat(context.allIssues()).isEmpty();
     assertCorrectLogs(logTester.logs(), 1);
   }
 
   @Rule(key = "IssueAtLineOne")
-  static class ReportIssueAtLineOneCheck extends TextCheck {
+  public static class ReportIssueAtLineOneCheck extends TextCheck {
     public void analyze(InputFileContext ctx) {
       ctx.reportTextIssue(getRuleKey(), 1, "testIssue");
     }
@@ -158,7 +159,7 @@ class TextAndSecretsSensorTest {
   void validCheckOnValidFileShouldRaiseIssue() {
     Check check = new ReportIssueAtLineOneCheck();
     InputFile inputFile = inputFile("foo");
-    SensorContextTester context = defaultSensorContext();
+    SensorContextTester context = testUtils().defaultSensorContext();
     analyse(sensor(check), context, inputFile);
 
     assertThat(asString(context.allIssues())).containsExactly(
@@ -184,12 +185,16 @@ class TextAndSecretsSensorTest {
   @Test
   void analysisErrorShouldBeRaisedOnFailureInCheck() {
     @Rule(key = "Crash")
-    class CrashCheck extends TextCheck {
+    class CrashCheck extends Check {
+      protected String repositoryKey() {
+        return SecretsRulesDefinition.REPOSITORY_KEY;
+      }
+
       public void analyze(InputFileContext ctx) {
         throw new IllegalStateException("Crash");
       }
     }
-    TextCheck check = new CrashCheck();
+    Check check = new CrashCheck();
     SensorContextTester context = sensorContext(check);
     InputFile inputFile = inputFile("foo");
     analyse(sensor(check), context, inputFile);
@@ -403,7 +408,7 @@ class TextAndSecretsSensorTest {
   @Test
   void shouldNotExcludeBinaryFileContentIfLanguageIsNotNull() {
     Check check = new ReportIssueAtLineOneCheck();
-    SensorContextTester context = defaultSensorContext();
+    SensorContextTester context = testUtils().defaultSensorContext();
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, "java"));
 
@@ -415,7 +420,7 @@ class TextAndSecretsSensorTest {
   @Test
   void shouldNotExcludeBinaryFileContentIfLanguageIsNullAndExtensionIncludedWithSonarqube() {
     Check check = new ReportIssueAtLineOneCheck();
-    SensorContextTester context = defaultSensorContext();
+    SensorContextTester context = testUtils().defaultSensorContext();
     context.setRuntime(TestUtils.SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
       inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null),
@@ -429,7 +434,7 @@ class TextAndSecretsSensorTest {
   @Test
   void shouldExcludeBinaryFileContentIfLanguageIsNullWithSonarlint() {
     Check check = new ReportIssueAtLineOneCheck();
-    SensorContextTester context = defaultSensorContext();
+    SensorContextTester context = testUtils().defaultSensorContext();
     analyse(sensor(check), context,
       inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null),
       inputFile(Path.of("FileWithoutExtension"), SENSITIVE_BIDI_CHARS, null));
@@ -441,7 +446,7 @@ class TextAndSecretsSensorTest {
   }
 
   @Test
-  void shouldExcludeBinaryFileExtensionDynamically() throws IOException {
+  public void shouldExcludeBinaryFileExtensionDynamically() throws IOException {
     Check check = new BoomCheck();
     SensorContextTester context = sensorContext(check);
     analyseDirectory(sensor(check), context, Path.of("src", "test", "resources", "binary-files"));
@@ -712,7 +717,7 @@ class TextAndSecretsSensorTest {
 
   @Test
   void shouldLogMessageWhenSonarTestIsNotSet() {
-    SensorContextTester context = defaultSensorContext();
+    SensorContextTester context = testUtils().defaultSensorContext();
     var settings = context.settings().setProperty(SONAR_TESTS_KEY, "");
     context.setSettings(settings);
     analyse(sensor(context), context, inputFile(""));
@@ -721,14 +726,14 @@ class TextAndSecretsSensorTest {
 
   @Test
   void shouldNotLogMessageWhenSonarTestIsSet() {
-    SensorContextTester context = defaultSensorContext();
+    SensorContextTester context = testUtils().defaultSensorContext();
     var settings = context.settings().setProperty(SONAR_TESTS_KEY, "src/test");
     context.setSettings(settings);
     analyse(sensor(context), context, inputFile(""));
     assertThat(logTester.logs(Level.INFO)).doesNotContain(EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
   }
 
-  private void assertCorrectLogs(List<String> logs, int numberOfAnalyzedFiles, String... additionalLogs) {
+  protected void assertCorrectLogs(List<String> logs, int numberOfAnalyzedFiles, String... additionalLogs) {
     assertThat(logs).contains(
       EXPECTED_PROCESSOR_LOG_LINE,
       DEFAULT_THREAD_USAGE_LOG_LINE,
@@ -758,14 +763,14 @@ class TextAndSecretsSensorTest {
     sensor.execute(context);
   }
 
-  private void analyse(Sensor sensor, SensorContextTester context, InputFile... inputFiles) {
+  protected void analyse(Sensor sensor, SensorContextTester context, InputFile... inputFiles) {
     for (InputFile inputFile : inputFiles) {
       context.fileSystem().add(inputFile);
     }
     sensor.execute(context);
   }
 
-  private TextAndSecretsSensor sensor(Check check) {
+  protected TextAndSecretsSensor sensor(Check check) {
     CheckFactory checkFactory = new CheckFactory(activeRules(check.getRuleKey().toString()));
     return new TextAndSecretsSensor(checkFactory) {
       @Override
@@ -775,7 +780,11 @@ class TextAndSecretsSensorTest {
     };
   }
 
-  private static TextAndSecretsSensor sensor(SensorContext sensorContext) {
+  protected TextAndSecretsSensor sensor(SensorContext sensorContext) {
     return new TextAndSecretsSensor(new CheckFactory(sensorContext.activeRules()));
+  }
+
+  protected TestUtils testUtils() {
+    return TEST_UTILS;
   }
 }

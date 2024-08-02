@@ -26,8 +26,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.sonar.api.SonarEdition;
 import org.sonar.api.SonarQubeSide;
 import org.sonar.api.SonarRuntime;
@@ -44,18 +47,22 @@ import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.Version;
+import org.sonar.plugins.common.warnings.AnalysisWarningsWrapper;
 import org.sonar.plugins.secrets.SecretsCheckList;
 import org.sonar.plugins.text.TextCheckList;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class TestUtils {
 
-  private static final SecretsCheckList secretsCheckList = new SecretsCheckList();
-  private static final Version VERSION = Version.create(9, 9);
-  public static final SonarRuntime SONARLINT_RUNTIME = SonarRuntimeImpl.forSonarLint(VERSION);
-  public static final SonarRuntime SONARQUBE_RUNTIME = SonarRuntimeImpl.forSonarQube(VERSION, SonarQubeSide.SERVER, SonarEdition.COMMUNITY);
-  public static final SonarRuntime SONARCLOUD_RUNTIME = SonarRuntimeImpl.forSonarQube(VERSION, SonarQubeSide.SERVER, SonarEdition.SONARCLOUD);
+  public static final Version LATEST_SQ_VERSION = Version.create(10, 6);
+  public static final SonarRuntime SONARLINT_RUNTIME = SonarRuntimeImpl.forSonarLint(LATEST_SQ_VERSION);
+  public static final SonarRuntime SONARQUBE_RUNTIME = SonarRuntimeImpl.forSonarQube(LATEST_SQ_VERSION, SonarQubeSide.SERVER, SonarEdition.ENTERPRISE);
+  public static final SonarRuntime SONARCLOUD_RUNTIME = SonarRuntimeImpl.forSonarQube(LATEST_SQ_VERSION, SonarQubeSide.SERVER, SonarEdition.SONARCLOUD);
 
   public static List<String> analyze(Check check, String fileContent) throws IOException {
     return analyze(check, inputFile(fileContent));
@@ -127,8 +134,8 @@ public class TestUtils {
     return builder.build();
   }
 
-  public static String[] allRuleKeys() {
-    return Stream.of(secretsCheckList.checks(), new TextCheckList().checks())
+  private String[] allRuleKeys() {
+    return Stream.of(secretCheckClassList(), textCheckClassList())
       .flatMap(Collection::stream)
       .map(checkClass -> {
         try {
@@ -153,7 +160,7 @@ public class TestUtils {
     return sensorContext(check.getRuleKey().toString());
   }
 
-  public static SensorContextTester defaultSensorContext() {
+  public SensorContextTester defaultSensorContext() {
     return sensorContext(allRuleKeys());
   }
 
@@ -175,5 +182,28 @@ public class TestUtils {
     var mapSettings = new MapSettings();
     mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt");
     return mapSettings;
+  }
+
+  public static DurationStatistics mockDurationStatistics() {
+    var mock = mock(DurationStatistics.class);
+    when(mock.timed(anyString(), any(Supplier.class)))
+      .then(invocation -> invocation.getArgument(1, Supplier.class).get());
+    Mockito.doAnswer((Answer<Void>) invocation -> {
+      invocation.getArgument(1, Runnable.class).run();
+      return null;
+    }).when(mock).timed(anyString(), any(Runnable.class));
+    return mock;
+  }
+
+  public static AnalysisWarningsWrapper mockAnalysisWarning() {
+    return new TestAnalysisWarningsWrapper();
+  }
+
+  public List<Class<?>> secretCheckClassList() {
+    return new SecretsCheckList().checks();
+  }
+
+  public List<Class<?>> textCheckClassList() {
+    return new TextCheckList().checks();
   }
 }

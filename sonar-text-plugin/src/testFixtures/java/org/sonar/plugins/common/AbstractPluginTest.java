@@ -19,17 +19,23 @@
  */
 package org.sonar.plugins.common;
 
+import org.junit.jupiter.api.Test;
 import org.sonar.api.Plugin;
 
-class TextAndSecretsPluginTest extends AbstractPluginTest {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME;
 
-  @Override
-  protected Plugin getPlugin() {
-    return new TextAndSecretsPlugin();
+public abstract class AbstractPluginTest {
+
+  @Test
+  void shouldDefineExtensions() {
+    Plugin.Context context = new Plugin.Context(SONARQUBE_RUNTIME);
+    Plugin plugin = getPlugin();
+    plugin.define(context);
+    assertThat(context.getExtensions()).hasSize(getExpectedExtensionCount());
   }
 
-  @Override
-  protected int getExpectedExtensionCount() {
-    return 12;
-  }
+  protected abstract Plugin getPlugin();
+
+  protected abstract int getExpectedExtensionCount();
 }

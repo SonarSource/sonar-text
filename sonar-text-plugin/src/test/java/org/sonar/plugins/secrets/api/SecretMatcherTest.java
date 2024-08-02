@@ -38,11 +38,11 @@ import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.inputFileContext;
+import static org.sonar.plugins.common.TestUtils.mockDurationStatistics;
 import static org.sonar.plugins.secrets.api.AuxiliaryPatternMatcherFactoryTest.constructReferenceAuxiliaryMatcher;
 import static org.sonar.plugins.secrets.api.SecretMatcherAssert.assertThat;
 import static org.sonar.plugins.secrets.configuration.model.RuleScope.MAIN;
 import static org.sonar.plugins.secrets.configuration.model.RuleScope.TEST;
-import static org.sonar.plugins.secrets.utils.TestUtils.mockDurationStatistics;
 
 class SecretMatcherTest {
 

@@ -29,7 +29,7 @@ import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPatternType;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.sonar.plugins.secrets.utils.TestUtils.mockDurationStatistics;
+import static org.sonar.plugins.common.TestUtils.mockDurationStatistics;
 
 class AuxiliaryPatternMatcherFactoryTest {
 

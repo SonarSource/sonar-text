@@ -19,65 +19,45 @@
  */
 package org.sonar.plugins.secrets;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.stream.Stream;
-import org.junit.jupiter.api.Test;
 import org.sonar.api.SonarRuntime;
-import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.rules.RuleType;
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
 import org.sonar.api.server.rule.RulesDefinition;
-import org.sonar.api.utils.Version;
+import org.sonar.plugins.common.AbstractRuleDefinitionTest;
+import org.sonar.plugins.common.CommonRulesDefinition;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.sonar.plugins.secrets.SecretsRulesDefinition.REPOSITORY_KEY;
 
-class SecretsRulesDefinitionTest {
+class SecretsRulesDefinitionTest extends AbstractRuleDefinitionTest {
 
-  private static final SonarRuntime sonarRuntime = SonarRuntimeImpl.forSonarLint(Version.create(8, 9));
+  @Override
+  protected CommonRulesDefinition getRuleDefinition(SonarRuntime sonarRuntime) {
+    return new SecretsRulesDefinition(sonarRuntime);
+  }
 
-  @Test
-  void shouldDefineRules() {
-    SecretsRulesDefinition rulesDefinition = new SecretsRulesDefinition(sonarRuntime);
-    RulesDefinition.Context context = new RulesDefinition.Context();
-    rulesDefinition.define(context);
+  @Override
+  protected BuiltInQualityProfilesDefinition getQualityProfile() {
+    return new SecretsRulesDefinition.DefaultQualityProfile();
+  }
 
-    assertThat(context.repositories()).hasSize(1);
-    RulesDefinition.Repository repository = context.repository(REPOSITORY_KEY);
-    assertThat(repository).isNotNull();
-    assertThat(repository.rules()).hasSize(rulesDefinition.checks().size());
-    assertThat(repository.name()).isEqualTo("Sonar Secrets Analyzer");
+  @Override
+  protected String getRepositoryKey() {
+    return SecretsRulesDefinition.REPOSITORY_KEY;
+  }
+
+  @Override
+  protected String getRepositoryName() {
+    return SecretsRulesDefinition.REPOSITORY_NAME;
+  }
+
+  @Override
+  protected void customRepositoryAssertions(RulesDefinition.Repository repository, CommonRulesDefinition rulesDefinition) {
+    assertThat(rulesDefinition.packagePrefix()).isEqualTo("org");
 
     RulesDefinition.Rule ruleS6290 = repository.rule("S6290");
     assertThat(ruleS6290).isNotNull();
     assertThat(ruleS6290.name()).isEqualTo("Amazon Web Services credentials should not be disclosed");
     assertThat(ruleS6290.activatedByDefault()).isTrue();
     assertThat(ruleS6290.type()).isEqualTo(RuleType.VULNERABILITY);
-
-    assertThat(rulesDefinition.packagePrefix()).isEqualTo("org");
-  }
-
-  @Test
-  void shouldDefineSonarWayProfile() {
-    SecretsRulesDefinition rulesDefinition = new SecretsRulesDefinition(sonarRuntime);
-    BuiltInQualityProfilesDefinition.Context context = new BuiltInQualityProfilesDefinition.Context();
-    BuiltInQualityProfilesDefinition profileDefinition = new SecretsRulesDefinition.DefaultQualityProfile();
-    profileDefinition.define(context);
-    BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile("secrets", "Sonar way");
-    assertThat(profile.language()).isEqualTo("secrets");
-    assertThat(profile.name()).isEqualTo("Sonar way");
-    assertThat(profile.rules()).hasSize(rulesDefinition.checks().size());
-  }
-
-  @Test
-  void eachCheckShouldBeDeclaredInTheCheckList() throws IOException {
-    SecretsRulesDefinition rulesDefinition = new SecretsRulesDefinition(sonarRuntime);
-    Path checksPackage = Path.of("src", "main", "java", "org", "sonar", "plugins", "secrets", "checks");
-    try (Stream<Path> list = Files.walk(checksPackage)) {
-      int expectedCount = (int) list.filter(file -> file.toString().endsWith("Check.java")).count();
-      assertThat(rulesDefinition.checks()).hasSize(expectedCount);
-    }
   }
 }

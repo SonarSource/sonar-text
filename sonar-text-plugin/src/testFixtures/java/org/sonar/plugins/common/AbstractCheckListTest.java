@@ -19,17 +19,29 @@
  */
 package org.sonar.plugins.common;
 
-import org.sonar.api.Plugin;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
 
-class TextAndSecretsPluginTest extends AbstractPluginTest {
+import static org.assertj.core.api.Assertions.assertThat;
 
-  @Override
-  protected Plugin getPlugin() {
-    return new TextAndSecretsPlugin();
+public abstract class AbstractCheckListTest {
+
+  @Test
+  void eachCheckShouldBeDeclaredInTheCheckList() throws IOException {
+    Path checksPackage = checksPackage();
+    try (Stream<Path> list = Files.walk(checksPackage)) {
+      int expectedCount = (int) list.filter(file -> file.toString().endsWith("Check.java")).count();
+      List<Class<?>> checkClassList = checkClassList();
+      assertThat(checkClassList).hasSize(expectedCount);
+    }
   }
 
-  @Override
-  protected int getExpectedExtensionCount() {
-    return 12;
-  }
+  protected abstract Path checksPackage();
+
+  protected abstract List<Class<?>> checkClassList();
+
 }

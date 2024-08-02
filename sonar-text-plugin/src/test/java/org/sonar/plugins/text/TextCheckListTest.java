@@ -17,19 +17,21 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package org.sonar.plugins.common;
+package org.sonar.plugins.text;
 
-import org.sonar.api.Plugin;
+import java.nio.file.Path;
+import java.util.List;
+import org.sonar.plugins.common.AbstractCheckListTest;
 
-class TextAndSecretsPluginTest extends AbstractPluginTest {
+class TextCheckListTest extends AbstractCheckListTest {
 
   @Override
-  protected Plugin getPlugin() {
-    return new TextAndSecretsPlugin();
+  protected Path checksPackage() {
+    return Path.of("src", "main", "java", "org", "sonar", "plugins", "text", "checks");
   }
 
   @Override
-  protected int getExpectedExtensionCount() {
-    return 12;
+  protected List<Class<?>> checkClassList() {
+    return TextCheckList.TEXT_CHECKS;
   }
 }

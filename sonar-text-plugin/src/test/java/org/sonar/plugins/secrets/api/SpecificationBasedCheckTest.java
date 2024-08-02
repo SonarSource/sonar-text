@@ -27,7 +27,7 @@ import org.sonar.check.Rule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.analyze;
-import static org.sonar.plugins.secrets.utils.TestUtils.mockDurationStatistics;
+import static org.sonar.plugins.common.TestUtils.mockDurationStatistics;
 
 class SpecificationBasedCheckTest {
 
