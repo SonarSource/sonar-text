@@ -16,7 +16,7 @@ This component helps you prevent the leakage of secrets even before you push the
 
 # Features
 
-* 110+ secret patterns supported and detected by [60+](https://rules.sonarsource.com/secrets/) rules
+* 140+ secret patterns supported and detected by [90+](https://rules.sonarsource.com/secrets/) rules
 * detection of [BIDI characters](https://rules.sonarsource.com/text/) that could lead to attacks
 * detection of secrets in all files indexed by Sonar products
 
