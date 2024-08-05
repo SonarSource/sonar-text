@@ -24,9 +24,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.PathType;
 import com.networknt.schema.SchemaValidatorsConfig;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
+import com.networknt.schema.serialization.DefaultJsonNodeReader;
 import java.io.InputStream;
 import java.util.Locale;
 import java.util.Set;
@@ -46,12 +48,14 @@ public final class SchemaValidator {
     JsonSchemaFactory schemaFactory = JsonSchemaFactory
       .builder(JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012))
       .schemaLoaders(loaders -> loaders.add(new ResourceSchemaLoader(FILE_LOCATION)))
-      .yamlMapper(MAPPER)
+      .jsonNodeReader(DefaultJsonNodeReader.builder().yamlMapper(MAPPER).build())
       .build();
     InputStream validationSchema = SchemaValidator.class.getResourceAsStream(FILE_LOCATION + VALIDATION_SCHEMA_FILE);
 
-    var config = new SchemaValidatorsConfig();
-    config.setLocale(Locale.ENGLISH);
+    var config = SchemaValidatorsConfig.builder()
+      .pathType(PathType.JSON_PATH)
+      .locale(Locale.ENGLISH)
+      .build();
     SPECIFICATION_VALIDATION_SCHEMA = schemaFactory.getSchema(validationSchema, config);
   }
 
@@ -64,6 +68,6 @@ public final class SchemaValidator {
   }
 
   public static Set<ValidationMessage> validate(JsonNode specification) {
-    return SPECIFICATION_VALIDATION_SCHEMA.validate(specification);
+    return SPECIFICATION_VALIDATION_SCHEMA.validate(specification, context -> context.getExecutionConfig().setDebugEnabled(false));
   }
 }
