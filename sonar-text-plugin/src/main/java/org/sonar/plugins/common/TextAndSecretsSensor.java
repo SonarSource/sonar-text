@@ -126,7 +126,7 @@ public class TextAndSecretsSensor implements Sensor {
 
     var analyzer = new Analyzer(sensorContext, parallelizationManager, durationStatistics, activeChecks, notBinaryFilePredicate, analyzeAllFiles);
     durationStatistics.timed("analyzerTotal" + DurationStatistics.SUFFIX_GENERAL, () -> analyzer.analyzeFiles(inputFiles));
-    durationStatistics.log();
+    logStatistics(activeChecks);
     parallelizationManager.shutdown();
     RegexMatchingManager.shutdown();
   }
@@ -313,5 +313,9 @@ public class TextAndSecretsSensor implements Sensor {
 
   public GitService getGitService() {
     return new GitService();
+  }
+
+  protected void logStatistics(List<Check> activeChecks) {
+    durationStatistics.log();
   }
 }
