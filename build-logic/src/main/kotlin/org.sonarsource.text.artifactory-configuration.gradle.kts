@@ -82,9 +82,9 @@ project.afterEvaluate {
         publish {
             if (artifactoryConfiguration.repoKeyEnv.isPresent) {
                 repository {
-                    setRepoKey(System.getenv(artifactoryConfiguration.repoKeyEnv.get()))
-                    setUsername(System.getenv(artifactoryConfiguration.usernameEnv.get()))
-                    setPassword(System.getenv(artifactoryConfiguration.passwordEnv.get()))
+                    repoKey = System.getenv(artifactoryConfiguration.repoKeyEnv.get())
+                    username = System.getenv(artifactoryConfiguration.usernameEnv.get())
+                    password = System.getenv(artifactoryConfiguration.passwordEnv.get())
                 }
             }
             defaults {
