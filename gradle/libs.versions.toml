@@ -47,3 +47,6 @@ yguard = { module = "com.yworks:yguard", version.ref = "yguard"}
 eclipse-jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "eclipse-jgit" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
 google-re2j = { module = "com.google.re2j:re2j", version.ref = "re2j" }
+
+[plugins]
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless-gradle" }

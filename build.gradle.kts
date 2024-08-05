@@ -1,11 +1,17 @@
 import org.sonarsource.text.registerRuleApiTasks
 
 plugins {
-    id("com.diffplug.spotless") version libs.versions.spotless.gradle.get()
+    alias(libs.plugins.spotless)
     id("org.sonarsource.text.artifactory-configuration")
     id("org.sonarsource.text.rule-api")
     id("org.sonarsource.text.sonarqube")
     id("com.diffplug.blowdryer")
+}
+
+artifactoryConfiguration {
+    repoKeyEnv = "ARTIFACTORY_DEPLOY_REPO"
+    usernameEnv = "ARTIFACTORY_DEPLOY_USERNAME"
+    passwordEnv = "ARTIFACTORY_DEPLOY_PASSWORD"
 }
 
 spotless {

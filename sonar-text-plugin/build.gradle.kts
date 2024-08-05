@@ -2,6 +2,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
 import org.sonarsource.text.GENERATED_SOURCES_DIR
+import org.sonarsource.text.enforceJarSize
 
 plugins {
     id("org.sonarsource.text.java-conventions")
@@ -154,19 +155,19 @@ publishing {
     }
 }
 
-codeStyleConvention {
-    licenseHeaderFile.set(rootProject.file("LICENSE_HEADER"))
+artifactoryConfiguration {
+    license {
+        name.set("GNU LPGL 3")
+        url.set("http://www.gnu.org/licenses/lgpl.txt")
+        distribution.set("repo")
+    }
+    artifactsToPublish = "org.sonarsource.text:sonar-text-plugin:jar"
+    artifactsToDownload = ""
+    repoKeyEnv = "ARTIFACTORY_DEPLOY_REPO"
+    usernameEnv = "ARTIFACTORY_DEPLOY_USERNAME"
+    passwordEnv = "ARTIFACTORY_DEPLOY_PASSWORD"
 }
 
-fun enforceJarSize(
-    file: File,
-    minSize: Long,
-    maxSize: Long,
-) {
-    val size = file.length()
-    if (size < minSize) {
-        throw GradleException("${file.path} size ($size) too small. Min is $minSize")
-    } else if (size > maxSize) {
-        throw GradleException("${file.path} size ($size) too large. Max is $maxSize")
-    }
+codeStyleConvention {
+    licenseHeaderFile.set(rootProject.file("LICENSE_HEADER"))
 }

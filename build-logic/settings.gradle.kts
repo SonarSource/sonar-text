@@ -4,17 +4,17 @@ dependencyResolutionManagement {
             url = uri("https://repox.jfrog.io/repox/sonarsource")
 
             val artifactoryUsername =
-                System.getenv("ARTIFACTORY_PRIVATE_USERNAME")
-                    ?: providers.gradleProperty("artifactoryUsername").getOrElse("")
+                providers.environmentVariable("ARTIFACTORY_PRIVATE_USERNAME").orElse(
+                    providers.gradleProperty("artifactoryUsername"))
             val artifactoryPassword =
-                System.getenv("ARTIFACTORY_PRIVATE_PASSWORD")
-                    ?: providers.gradleProperty("artifactoryPassword").getOrElse("")
+                providers.environmentVariable("ARTIFACTORY_PRIVATE_PASSWORD").orElse(
+                    providers.gradleProperty("artifactoryPassword"))
 
-            if (artifactoryUsername != "" && artifactoryPassword != "") {
+            if (artifactoryUsername.isPresent && artifactoryPassword.isPresent) {
                 authentication {
                     credentials {
-                        username = artifactoryUsername
-                        password = artifactoryPassword
+                        username = artifactoryUsername.get()
+                        password = artifactoryPassword.get()
                     }
                 }
             }
@@ -35,17 +35,17 @@ pluginManagement {
             url = uri("https://repox.jfrog.io/repox/sonarsource")
 
             val artifactoryUsername =
-                System.getenv("ARTIFACTORY_PRIVATE_USERNAME")
-                    ?: providers.gradleProperty("artifactoryUsername").getOrElse("")
+                providers.environmentVariable("ARTIFACTORY_PRIVATE_USERNAME").orElse(
+                    providers.gradleProperty("artifactoryUsername"))
             val artifactoryPassword =
-                System.getenv("ARTIFACTORY_PRIVATE_PASSWORD")
-                    ?: providers.gradleProperty("artifactoryPassword").getOrElse("")
+                providers.environmentVariable("ARTIFACTORY_PRIVATE_PASSWORD").orElse(
+                    providers.gradleProperty("artifactoryPassword"))
 
-            if (artifactoryUsername != "" && artifactoryPassword != "") {
+            if (artifactoryUsername.isPresent && artifactoryPassword.isPresent) {
                 authentication {
                     credentials {
-                        username = artifactoryUsername
-                        password = artifactoryPassword
+                        username = artifactoryUsername.get()
+                        password = artifactoryPassword.get()
                     }
                 }
             }
