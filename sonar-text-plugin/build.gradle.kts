@@ -120,6 +120,7 @@ val cleanupTask =
             fileTree(project.layout.buildDirectory.dir("libs")).matching {
                 include("${project.name}-*.jar")
                 exclude("${project.name}-${project.version}-*.jar")
+                exclude("${project.name}-${project.version}.jar")
             }
         )
     }
