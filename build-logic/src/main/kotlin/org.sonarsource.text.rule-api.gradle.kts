@@ -13,6 +13,7 @@ repositories {
         }
         content {
             includeGroup("com.sonarsource.rule-api")
+            includeGroup("com.sonarsource.parent")
         }
     }
     mavenCentral()
