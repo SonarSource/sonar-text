@@ -13,6 +13,11 @@ spotless {
         targetExclude("build/generated/sources/**")
         // point to immutable specific commit of sonar-formater.xml version 23
         eclipse("4.22")
+            .withP2Mirrors(
+                mapOf(
+                    "https://download.eclipse.org/eclipse/" to "https://ftp.fau.de/eclipse/eclipse/"
+                )
+            )
             .configFile(
                 Blowdryer.immutableUrl(
                     "https://raw.githubusercontent.com/SonarSource/sonar-developer-toolset/" +
