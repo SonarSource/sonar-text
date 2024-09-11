@@ -8,7 +8,11 @@ plugins {
     id("com.diffplug.blowdryer")
 }
 
+tasks.artifactoryPublish { skip = true }
+
 artifactoryConfiguration {
+    artifactsToPublish = "org.sonarsource.text:sonar-text-plugin:jar"
+    artifactsToDownload = ""
     repoKeyEnv = "ARTIFACTORY_DEPLOY_REPO"
     usernameEnv = "ARTIFACTORY_DEPLOY_USERNAME"
     passwordEnv = "ARTIFACTORY_DEPLOY_PASSWORD"
