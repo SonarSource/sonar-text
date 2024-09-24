@@ -1,4 +1,4 @@
-val rulApiVersion = "2.7.0.2612"
+val rulApiVersion = "2.8.0.4034"
 
 repositories {
     maven {
