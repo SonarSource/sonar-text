@@ -19,9 +19,11 @@
  */
 package org.sonar.plugins.common;
 
+import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,11 +34,11 @@ public class MultiFileProgressReport implements Runnable {
   private static final int DEFAULT_PROGRESS_UPDATE_PERIOD_MILLIS = 10000;
 
   // data structure is chosen because of the preservation of insertion order. This allows us to display the longest running files first.
-  private final Set<String> currentFileNames = new LinkedHashSet<>();
+  private final Collection<String> currentFileNames = new ConcurrentLinkedDeque<>();
   private long size;
   private long numberOfFinishedFiles;
   private final Thread thread;
-  private long progressUpdatePeriod;
+  private final long progressUpdatePeriod;
   private boolean success;
 
   /**
@@ -98,7 +100,7 @@ public class MultiFileProgressReport implements Runnable {
     thread.start();
   }
 
-  public synchronized void startAnalysisFor(String fileName) {
+  public void startAnalysisFor(String fileName) {
     currentFileNames.add(fileName);
   }
 
@@ -137,37 +139,32 @@ public class MultiFileProgressReport implements Runnable {
 
   private void logCurrentProgress() {
     var sb = new StringBuilder();
+    Collection<String> currentFileNamesCopy;
+    synchronized (this) {
+      currentFileNamesCopy = new LinkedHashSet<>(currentFileNames);
+    }
+    int numberOfFiles = currentFileNamesCopy.size();
     sb.append(numberOfFinishedFiles)
       .append("/")
       .append(size)
       .append(" files analyzed, current ")
-      .append(pluralizeFile(currentFileNames.size()))
+      .append(pluralizeFile(numberOfFiles))
       .append(": ");
 
-    if (currentFileNames.isEmpty()) {
+    boolean debugEnabled = LOG.isDebugEnabled();
+    if (numberOfFiles == 0) {
       sb.append("none");
-    }
-
-    var debugEnabled = LOG.isDebugEnabled();
-    var abbreviatedFileNames = false;
-    int remainingNumberOfFilesToDisplay = currentFileNames.size();
-    if (!debugEnabled && remainingNumberOfFilesToDisplay > MAX_NUMBER_OF_FILES_TO_DISPLAY) {
-      remainingNumberOfFilesToDisplay = MAX_NUMBER_OF_FILES_TO_DISPLAY;
-      abbreviatedFileNames = true;
-    }
-
-    for (String fileName : currentFileNames) {
-      sb.append(fileName);
-      remainingNumberOfFilesToDisplay--;
-      if (remainingNumberOfFilesToDisplay > 0) {
-        sb.append(", ");
-      } else {
-        break;
+    } else {
+      int numberOfFilesToDisplay = debugEnabled ? numberOfFiles : Math.min(numberOfFiles, MAX_NUMBER_OF_FILES_TO_DISPLAY);
+      var fileNamesToDisplay = currentFileNamesCopy.stream()
+        .limit(numberOfFilesToDisplay)
+        .collect(Collectors.joining(", "));
+      sb.append(fileNamesToDisplay);
+      if (numberOfFiles > numberOfFilesToDisplay) {
+        sb.append(", ...");
       }
     }
-    if (abbreviatedFileNames) {
-      sb.append(", ...");
-    }
+
     log(sb.toString(), debugEnabled);
   }
 

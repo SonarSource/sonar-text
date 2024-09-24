@@ -30,6 +30,7 @@ import org.slf4j.event.Level;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 class MultiFileProgressReportTest {
 
@@ -306,6 +307,37 @@ class MultiFileProgressReportTest {
     selfInterruptedThread.start();
     selfInterruptedThread.join();
     assertThat(time.get()).isLessThan(300);
+  }
+
+  @Test
+  void shouldNotThrowConcurrentModificationException() {
+    // disable debug logs to reduce noise
+    logTester.setLevel(Level.ERROR);
+    var progressUpdatePeriodMillis = 10;
+    var report = new MultiFileProgressReport(progressUpdatePeriodMillis);
+    var numFiles = 500;
+    report.start(numFiles);
+
+    var progressUpdateDurationSeconds = 5;
+    var progressUpdater = new Thread(() -> {
+      for (int s = 0; s < progressUpdateDurationSeconds * 1000 / progressUpdatePeriodMillis; s++) {
+        for (int i = 0; i < numFiles; i++) {
+          report.finishAnalysisFor("newFile#" + i);
+          report.startAnalysisFor("newFile#" + i);
+        }
+        try {
+          Thread.sleep(10);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+      }
+      report.stop();
+    });
+
+    progressUpdater.start();
+    assertThatNoException().isThrownBy(report::run);
+
+    logTester.setLevel(Level.DEBUG);
   }
 
   private static void waitForMessage() throws InterruptedException {
