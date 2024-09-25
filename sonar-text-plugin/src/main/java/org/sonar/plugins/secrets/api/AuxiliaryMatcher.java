@@ -34,6 +34,7 @@ import static org.sonar.plugins.secrets.api.DistanceValidation.isBefore;
  * Matcher for auxiliary patterns, which can be found in the context of candidate secrets.
  */
 public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
+  private static final int MIN_LINE_LENGTH_TO_IGNORE_MAX_LINE_DISTANCE = 1000;
   private final AuxiliaryPattern auxiliaryPattern;
   private final PatternMatcher auxiliaryPatternMatcher;
 
@@ -75,14 +76,15 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
       result = result.and((auxMatch, candidateMatch) -> inDistanceOf(auxMatch, candidateMatch, auxiliaryPattern.getMaxCharacterDistance()));
     }
     if (auxiliaryPattern.getMaxLineDistance() != null) {
-      result = result.and((auxMatch, candidateMatch) -> {
-        int auxMatchStartLine = inputFileContext.offsetToLineNumber(auxMatch.getFileStartOffset());
-        int auxMatchEndLine = inputFileContext.offsetToLineNumber(auxMatch.getFileEndOffset());
-        int candidateMatchStartLine = inputFileContext.offsetToLineNumber(candidateMatch.getFileStartOffset());
-        int candidateMatchEndLine = inputFileContext.offsetToLineNumber(candidateMatch.getFileEndOffset());
+      result = result.and(ignoringLongLines(inputFileContext))
+        .and((auxMatch, candidateMatch) -> {
+          int auxMatchStartLine = inputFileContext.offsetToLineNumber(auxMatch.getFileStartOffset());
+          int auxMatchEndLine = inputFileContext.offsetToLineNumber(auxMatch.getFileEndOffset());
+          int candidateMatchStartLine = inputFileContext.offsetToLineNumber(candidateMatch.getFileStartOffset());
+          int candidateMatchEndLine = inputFileContext.offsetToLineNumber(candidateMatch.getFileEndOffset());
 
-        return inDistanceOf(auxMatchStartLine, auxMatchEndLine, candidateMatchStartLine, candidateMatchEndLine, auxiliaryPattern.getMaxLineDistance());
-      });
+          return inDistanceOf(auxMatchStartLine, auxMatchEndLine, candidateMatchStartLine, candidateMatchEndLine, auxiliaryPattern.getMaxLineDistance());
+        });
     }
     return result;
   }
@@ -99,5 +101,14 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
       }
     }
     return filteredCandidates;
+  }
+
+  private static BiPredicate<Match, Match> ignoringLongLines(InputFileContext inputFileContext) {
+    return (Match auxMatch, Match candidateMatch) -> {
+      int startLine = inputFileContext.offsetToLineNumber(candidateMatch.getFileStartOffset());
+      int lineLength = inputFileContext.lines().get(startLine - 1).length();
+      boolean isCandidateLineTooLong = lineLength >= MIN_LINE_LENGTH_TO_IGNORE_MAX_LINE_DISTANCE;
+      return !isCandidateLineTooLong;
+    };
   }
 }

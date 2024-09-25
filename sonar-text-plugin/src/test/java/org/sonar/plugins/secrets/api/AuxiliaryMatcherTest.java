@@ -186,4 +186,19 @@ class AuxiliaryMatcherTest {
     assertThat(result).hasSize(expectedMatches);
   }
 
+  @Test
+  void shouldNotMatchVeryLongLinesIfMaxLineDistanceIsSet() throws IOException {
+    var auxiliaryPattern = constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_BEFORE, "auxPattern");
+    auxiliaryPattern.setMaxLineDistance(1);
+    var auxiliaryMatcher = AuxiliaryMatcher.build(auxiliaryPattern);
+
+    var content = "auxPattern " + "placeholder-".repeat(100) + " and candidate secret";
+    var candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
+
+    var inputFileContext = inputFileContext(content);
+    var result = auxiliaryMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
+
+    assertThat(result).isEmpty();
+  }
+
 }
