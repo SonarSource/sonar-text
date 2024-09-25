@@ -22,6 +22,7 @@ package org.sonar.plugins.secrets.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
@@ -41,6 +42,7 @@ import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 class PreFilterFactoryTest {
@@ -76,8 +78,7 @@ class PreFilterFactoryTest {
   })
   void testMatchesPath(String pathPattern, String filePath, boolean shouldMatch) {
     InputFileContext ctx = mock(InputFileContext.class);
-    when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder(
-      "testProject", filePath).build());
+    when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder("myProject", filePath).build());
     when(ctx.getFileSystem()).thenReturn(new DefaultFileSystem(Path.of(".")));
     assertThat(PreFilterFactory.matchesPath(pathPattern, ctx)).isEqualTo(shouldMatch);
   }
@@ -102,8 +103,7 @@ class PreFilterFactoryTest {
     Predicate<InputFileContext> predicate = PreFilterFactory.createPredicate(detection.getPre(), new SpecificationConfiguration("src/tests"));
 
     InputFileContext ctx = mock(InputFileContext.class);
-    when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder(
-      "testProject", filename).build());
+    when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder("myProject", filename).build());
     when(ctx.getFileSystem()).thenReturn(new DefaultFileSystem(Path.of(".")));
     when(ctx.lines()).thenReturn(List.of());
 
@@ -169,43 +169,48 @@ class PreFilterFactoryTest {
   @ParameterizedTest
   @MethodSource("inputsForTestingMainScopeAndSonarTest")
   void shouldTestMainScopeWhenSonarTestIsNotSet(String filePath, boolean shouldMatch) {
-    var preModule = new PreModule();
-    preModule.setScopes(List.of(RuleScope.MAIN));
-    var ctx = mock(InputFileContext.class);
-    when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder(
-      "testProject", filePath).build());
+    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.MAIN, SpecificationConfiguration.NO_CONFIGURATION, shouldMatch);
+  }
 
-    var predicate = PreFilterFactory.createPredicate(preModule, SpecificationConfiguration.NO_CONFIGURATION);
-
-    assertThat(predicate.test(ctx)).isEqualTo(shouldMatch);
+  @ParameterizedTest
+  @MethodSource("inputsForTestingMainScopeAndSonarTest")
+  void shouldTestMainScopeWhenSonarTestIsNotSetAndBaseDirectoryContainsTest(String filePath, boolean shouldMatch) {
+    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/with/test/in/it/", RuleScope.MAIN, SpecificationConfiguration.NO_CONFIGURATION, shouldMatch);
   }
 
   @ParameterizedTest
   @MethodSource("inputsForTestingMainScopeAndSonarTest")
   void shouldTestMainScopeWhenSonarTestIsSet(String filePath, boolean ignored) {
-    var preModule = new PreModule();
-    preModule.setScopes(List.of(RuleScope.MAIN));
-    var ctx = mock(InputFileContext.class);
-    when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder(
-      "testProject", filePath).build());
-
-    var predicate = PreFilterFactory.createPredicate(preModule, new SpecificationConfiguration("/src/tests"));
-
-    assertThat(predicate.test(ctx)).isTrue();
+    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.MAIN, new SpecificationConfiguration("/src/tests"), true);
   }
 
   @ParameterizedTest
   @MethodSource("inputsForTestingMainScopeAndSonarTest")
   void shouldTestMainScopeWhenSonarTestIsNotSetAndScopeTest(String filePath, boolean ignored) {
+    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.TEST, SpecificationConfiguration.NO_CONFIGURATION, false);
+  }
+
+  private void testPredicateWithScopeAndConfiguration(String filePath, String baseDir, RuleScope scope, SpecificationConfiguration configuration, boolean expected) {
     var preModule = new PreModule();
-    preModule.setScopes(List.of(RuleScope.TEST));
+    preModule.setScopes(List.of(scope));
+
+    String projectKey = "myProject";
+
+    var inputFile = spy(new TestInputFileBuilder(projectKey, filePath).build());
+    URI uri = URI.create("file:" + baseDir + projectKey + "/" + filePath);
+    when(inputFile.uri()).thenReturn(uri);
+
+    DefaultFileSystem fileSystem = new DefaultFileSystem(Path.of(baseDir));
+
     var ctx = mock(InputFileContext.class);
-    when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder(
-      "testProject", filePath).build());
+    when(ctx.getInputFile()).thenReturn(inputFile);
+    when(ctx.getFileSystem()).thenReturn(fileSystem);
 
-    var predicate = PreFilterFactory.createPredicate(preModule, SpecificationConfiguration.NO_CONFIGURATION);
+    var predicate = PreFilterFactory.createPredicate(preModule, configuration);
 
-    assertThat(predicate.test(ctx)).isFalse();
+    assertThat(predicate.test(ctx))
+      .withFailMessage("Input file uri: " + inputFile.uri().getPath())
+      .isEqualTo(expected);
   }
 
   static Stream<Arguments> inputsForTestingMainScopeAndSonarTest() {
@@ -239,6 +244,63 @@ class PreFilterFactoryTest {
       arguments("libraries/kotlin.Test/js/it/js/jest-reporter.js", false),
       arguments("native/native.tests/driver/testData/driver0.kt", false),
       arguments("native/native.Tests/driver/testData/driver0.kt", false),
+      arguments("latestnews.html", true),
+      arguments("abc/latestnews.html", true),
+      arguments("contestresults.js", true),
+      arguments("Protester.java", true));
+  }
+
+  @ParameterizedTest
+  @MethodSource("inputsForTestingMainScopeWithWrongBaseDirectory")
+  void shouldTestMainScopeWhenFileSystemBaseDirPathTypeIsWrong(String filePath, boolean shouldMatch) {
+    var preModule = new PreModule();
+    preModule.setScopes(List.of(RuleScope.MAIN));
+
+    var inputFile = spy(new TestInputFileBuilder("myProject", filePath).build());
+    URI uri = URI.create("file:/base/directory/myProject/" + filePath);
+    when(inputFile.uri()).thenReturn(uri);
+
+    DefaultFileSystem fileSystem = new DefaultFileSystem(Path.of("./wrong/base/directory/path/type"));
+
+    var ctx = mock(InputFileContext.class);
+    when(ctx.getInputFile()).thenReturn(inputFile);
+    when(ctx.getFileSystem()).thenReturn(fileSystem);
+
+    var predicate = PreFilterFactory.createPredicate(preModule, SpecificationConfiguration.NO_CONFIGURATION);
+    assertThat(predicate.test(ctx)).isEqualTo(shouldMatch);
+  }
+
+  static Stream<Arguments> inputsForTestingMainScopeWithWrongBaseDirectory() {
+    return Stream.of(
+      arguments("testutils.go", false),
+      arguments("Testutils.go", false),
+      arguments("test_example.py", false),
+      arguments("Someutils.go", true),
+      arguments("src/main/ExampleFilterTest.java", false),
+      arguments("src/main/examplefiltertest.java", false),
+      arguments("src/main/ExampleFilterTestt.java", true),
+      arguments("docker-compose-api-test.yaml", false),
+      arguments("conftest.py", false),
+      arguments("example_test.go", false),
+      arguments("appsettings.Test.json", false),
+      arguments("docker-compose-tests.yaml", false),
+      arguments("docker-compose-Tests.yaml", false),
+      arguments("docker-compose-Testss.yaml", true),
+      arguments("doc/examples/Example.java", true),
+      arguments("doc/examples/example.go", true),
+      arguments("documentation/examples/example.go", true),
+      arguments("examples/docs/example.go", true),
+      arguments("examples/docs/example.go", true),
+      arguments("examples/docs/src/main/example.go", true),
+      arguments("src/test/java/org/sonar/appsettings.json", true),
+      arguments("src/Test/java/org/sonar/appsettings.json", true),
+      arguments("tests/appsettings.json", true),
+      arguments("a/b/c/tests/appsettings.json", true),
+      arguments("a/b/c/doc", true), // doc is a filename here
+      arguments("libraries/kotlin.test/js/it/js/jest-reporter.js", true),
+      arguments("libraries/kotlin.Test/js/it/js/jest-reporter.js", true),
+      arguments("native/native.tests/driver/testData/driver0.kt", true),
+      arguments("native/native.Tests/driver/testData/driver0.kt", true),
       arguments("latestnews.html", true),
       arguments("abc/latestnews.html", true),
       arguments("contestresults.js", true),

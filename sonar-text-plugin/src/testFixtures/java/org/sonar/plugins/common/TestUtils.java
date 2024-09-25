@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
@@ -152,7 +151,7 @@ public class TestUtils {
   }
 
   public static InputFileContext inputFileContext(InputFile inputFile) throws IOException {
-    var sensorContext = SensorContextTester.create(Paths.get("."));
+    var sensorContext = SensorContextTester.create(Path.of(".").toAbsolutePath());
     return new InputFileContext(sensorContext, inputFile);
   }
 

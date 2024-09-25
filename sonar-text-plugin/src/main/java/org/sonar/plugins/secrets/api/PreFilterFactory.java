@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.secrets.api;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -89,11 +90,25 @@ public final class PreFilterFactory {
   }
 
   private static boolean isFileInDocOrTestDirectory(InputFileContext inputFileContext) {
-    var path = inputFileContext.getInputFile().uri().getPath().toLowerCase(Locale.ROOT);
-    var pathElements = Arrays.asList(path.split("/"));
+    var path = Path.of(inputFileContext.getInputFile().uri());
+    String relativeUnixPath;
+    try {
+      var baseDir = inputFileContext.getFileSystem().baseDir().toPath();
+      var relativePath = baseDir.relativize(path).normalize();
+      relativeUnixPath = normalizeToUnixPathSeparator(relativePath.toString().toLowerCase(Locale.ROOT));
+    } catch (IllegalArgumentException e) {
+      LOG.debug("Couldn't calculate the projects relative path of {}", inputFileContext.getInputFile());
+      // Default to not detect it as test file
+      return false;
+    }
+    var pathElements = Arrays.asList(relativeUnixPath.split("/"));
     var pathElementsWithoutFilename = pathElements.subList(0, pathElements.size() - 1);
     return isDocDirectory(pathElementsWithoutFilename) || isTestDirectory(pathElementsWithoutFilename)
       || hasEnding(pathElementsWithoutFilename, "test") || hasEnding(pathElementsWithoutFilename, "tests");
+  }
+
+  private static String normalizeToUnixPathSeparator(String filename) {
+    return filename.replace('\\', '/');
   }
 
   private static boolean isDocDirectory(List<String> pathElements) {
@@ -105,12 +120,7 @@ public final class PreFilterFactory {
   }
 
   private static boolean hasEnding(List<String> pathElements, String text) {
-    for (String pathElement : pathElements) {
-      if (pathElement.endsWith(text)) {
-        return true;
-      }
-    }
-    return false;
+    return pathElements.stream().anyMatch(pathElement -> pathElement.endsWith(text));
   }
 
   private static boolean matches(FileFilter filter, InputFileContext ctx) {
