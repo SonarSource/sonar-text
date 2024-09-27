@@ -13,7 +13,10 @@ load(
     "project_version_cache",
     "store_project_version_script"
 )
-
+load(
+    "github.com/SonarSource/cirrus-modules/cloud-native/actions.star@analysis/master",
+    "default_gradle_on_failure",
+)
 
 # SHARED CANDIDATE?
 # Looks like : https://github.com/SonarSource/sonar-iac/blob/153aed5008efac5ff1bbb0014672e653194ee79b/.cirrus/modules/build.star#L48
@@ -49,7 +52,8 @@ def build_task():
             "gradle_wrapper_cache": gradle_wrapper_cache(),
             "build_script": build_script(),
             "cleanup_gradle_script": cleanup_gradle_script(),
-            "store_project_version_script": store_project_version_script()
+            "store_project_version_script": store_project_version_script(),
+            "on_failure": default_gradle_on_failure(),
         }
     }
 
