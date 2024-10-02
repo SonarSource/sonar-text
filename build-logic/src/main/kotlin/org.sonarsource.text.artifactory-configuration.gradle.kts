@@ -33,7 +33,7 @@ publishing {
                 }
             }
             scm {
-                url.set("https://github.com/SonarSource/sonar-text-enterprise")
+                url.set("https://github.com/SonarSource/sonar-text")
             }
             developers {
                 developer {

@@ -43,6 +43,7 @@ def run_its_script():
     return [
         "if [ \"$INIT_SUBMODULES\" == \"true\" ]; then git submodule update --init --depth 1; fi",
         "source cirrus-env QA",
+        "source .cirrus/use-gradle-wrapper.sh",
         "./gradlew \"${GRADLE_TASK}\" \"-Dsonar.runtimeVersion=${SQ_VERSION}\" --info --build-cache --console plain --no-daemon"
     ]
 
