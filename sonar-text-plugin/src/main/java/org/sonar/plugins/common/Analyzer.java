@@ -192,7 +192,7 @@ public final class Analyzer {
       .onFile(inputFile)
       .save();
     LOG.warn(message);
-    var exceptionString = e.toString();
-    LOG.debug(exceptionString);
+    // TODO SECRETS-114: remove print of stacktrace
+    LOG.debug("{}: ", e, e);
   }
 }
