@@ -39,7 +39,7 @@ class MultiFileProgressReportTest {
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
-  @Test()
+  @Test
   @Timeout(5)
   void shouldDisplayMessagePluralized() throws InterruptedException {
     var report = new MultiFileProgressReport(100);
@@ -57,7 +57,7 @@ class MultiFileProgressReportTest {
       "3/3 source files have been analyzed");
   }
 
-  @Test()
+  @Test
   @Timeout(5)
   void shouldDisplayMessageSingular() throws InterruptedException {
     var report = new MultiFileProgressReport(100);
@@ -75,7 +75,7 @@ class MultiFileProgressReportTest {
       "1/1 source file has been analyzed");
   }
 
-  @Test()
+  @Test
   @Timeout(5)
   void shouldDisplayMessageForOneCurrentlyAnalyzedFile() throws InterruptedException {
     var report = new MultiFileProgressReport(100);
@@ -94,7 +94,7 @@ class MultiFileProgressReportTest {
       "1/1 source file has been analyzed");
   }
 
-  @Test()
+  @Test
   @Timeout(5)
   void shouldDisplayMessageForTwoCurrentlyAnalyzedFiles() throws InterruptedException {
     var report = new MultiFileProgressReport(100);
@@ -114,7 +114,7 @@ class MultiFileProgressReportTest {
       "2/2 source files have been analyzed");
   }
 
-  @Test()
+  @Test
   @Timeout(5)
   void shouldDisplayMessageForTwoCurrentlyAnalyzedFilesWhenOneAlreadyFinished() throws InterruptedException {
     var report = new MultiFileProgressReport(100);
@@ -136,7 +136,7 @@ class MultiFileProgressReportTest {
       "3/3 source files have been analyzed");
   }
 
-  @Test()
+  @Test
   @Timeout(5)
   void shouldAbbreviateLogMessageInInfoLogLevel() throws InterruptedException {
     var report = new MultiFileProgressReport(100);
@@ -158,7 +158,7 @@ class MultiFileProgressReportTest {
       "4/4 source files have been analyzed");
   }
 
-  @Test()
+  @Test
   @Timeout(5)
   void shouldNotAbbreviateLogMessageInInfoLogLevel() throws InterruptedException {
     var report = new MultiFileProgressReport(100);
@@ -181,7 +181,7 @@ class MultiFileProgressReportTest {
       "4/4 source files have been analyzed");
   }
 
-  @Test()
+  @Test
   @Timeout(5)
   void shouldDisplayLogWhenExceedingInitialNumberOfAnalyzedFiles() throws InterruptedException {
     var report = new MultiFileProgressReport(100);
@@ -207,7 +207,7 @@ class MultiFileProgressReportTest {
       "2/2 source files have been analyzed");
   }
 
-  @Test()
+  @Test
   @Timeout(5)
   void shouldDisplayLogWhenFinishingAnalysisOnNotStartedFile() throws InterruptedException {
     var report = new MultiFileProgressReport(100);
@@ -228,7 +228,7 @@ class MultiFileProgressReportTest {
       "2/2 source files have been analyzed");
   }
 
-  @Test()
+  @Test
   @Timeout(5)
   void shouldCancelCorrectly() throws InterruptedException {
     var report = new MultiFileProgressReport(100);
@@ -242,7 +242,7 @@ class MultiFileProgressReportTest {
       "1 source file to be analyzed");
   }
 
-  @Test()
+  @Test
   @Timeout(5)
   void shouldPreserveInterruptFlagOnStop() throws InterruptedException {
     var report = new MultiFileProgressReport(100);
@@ -274,7 +274,7 @@ class MultiFileProgressReportTest {
     assertThat(logTester.logs()).contains("1/1 source file has been analyzed");
   }
 
-  @Test()
+  @Test
   @Timeout(1)
   void interruptingTheThreadShouldNeverCreateADeadlock() {
     var report = new MultiFileProgressReport();
@@ -290,7 +290,7 @@ class MultiFileProgressReportTest {
     assertThat(end - start).isLessThan(300);
   }
 
-  @Test()
+  @Test
   @Timeout(1)
   void interruptedThreadShouldExitImmediately() throws InterruptedException {
     var report = new MultiFileProgressReport();
@@ -310,6 +310,7 @@ class MultiFileProgressReportTest {
   }
 
   @Test
+  @Timeout(10)
   void shouldNotThrowConcurrentModificationException() {
     // disable debug logs to reduce noise
     logTester.setLevel(Level.ERROR);
