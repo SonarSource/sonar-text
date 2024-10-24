@@ -20,7 +20,6 @@
 package org.sonar.plugins.secrets.checks;
 
 import java.nio.file.Path;
-
 import org.junit.jupiter.api.Test;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.common.Check;

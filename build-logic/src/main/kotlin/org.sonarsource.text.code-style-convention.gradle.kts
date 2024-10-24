@@ -10,6 +10,12 @@ val codeStyleConvention = extensions.create<CodeStyleConvention>("codeStyleConve
 spotless {
     encoding(Charsets.UTF_8)
     java {
+        importOrderFile(
+            Blowdryer.immutableUrl(
+                "https://raw.githubusercontent.com/SonarSource/sonar-developer-toolset/refs/heads/master/eclipse/sonar.importorder"
+            )
+        )
+        removeUnusedImports()
         targetExclude("build/generated/sources/**")
         // point to immutable specific commit of sonar-formater.xml version 23
         eclipse("4.22")

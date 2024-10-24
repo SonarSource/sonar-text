@@ -20,7 +20,6 @@
 package org.sonar.plugins.secrets.checks;
 
 import java.io.IOException;
-
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.sonar.plugins.common.Check;
@@ -39,13 +38,15 @@ class AwsCheckTest extends AbstractRuleExampleTest {
   @ParameterizedTest
   @ValueSource(strings = {
     // key id with EXAMPLE
-    "public class Foo {\n" +
-      "  public static final String KEY = \"AKIAIGKECZXA7EXAMPLE\"\n" +
-      "}",
+    """
+      public class Foo {
+        public static final String KEY = "AKIAIGKECZXA7EXAMPLE"
+      }""",
     // not an access key
-    "public class Foo {\n" +
-      "  public static final String KEY = \"AKIGKECZXA7AEIJLMQ\"\n" +
-      "}",
+    """
+      public class Foo {
+        public static final String KEY = "AKIGKECZXA7AEIJLMQ"
+      }"""
   })
   void negative(String fileContent) throws IOException {
     Check check = getInitializedCheck();
