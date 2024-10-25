@@ -24,7 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -36,7 +35,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.slf4j.event.Level;
 import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.error.AnalysisError;
@@ -62,16 +60,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonar.plugins.common.TestUtils.SONARCLOUD_RUNTIME;
 import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME;
-import static org.sonar.plugins.common.TestUtils.activeRules;
 import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
 import static org.sonar.plugins.common.TextAndSecretsSensor.SONAR_TESTS_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.TEXT_INCLUSIONS_DEFAULT_VALUE;
 
-public class TextAndSecretsSensorTest {
+public abstract class AbstractTextAndSecretsSensorTest {
 
-  private static final TestUtils TEST_UTILS = new TestUtils();
   private static final String SENSITIVE_BIDI_CHARS = "\u0002\u0004";
   private static final int AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();
   private static final String EXPECTED_PROCESSOR_LOG_LINE = "Available processors: " + AVAILABLE_PROCESSORS;
@@ -96,12 +92,20 @@ public class TextAndSecretsSensorTest {
     RegexMatchingManager.setUninterruptibleTimeoutMs(defaultTimeout);
   }
 
+  protected abstract TextAndSecretsSensor sensor(Check check);
+
+  protected abstract TextAndSecretsSensor sensor(SensorContext sensorContext);
+
+  protected abstract TestUtils testUtils();
+
+  protected abstract String sensorName();
+
   @Test
   public void shouldDescribeWithoutErrors() {
     DefaultSensorDescriptor descriptor = new DefaultSensorDescriptor();
     sensor(testUtils().defaultSensorContext()).describe(descriptor);
 
-    assertThat(descriptor.name()).isEqualTo("TextAndSecretsSensor");
+    assertThat(descriptor.name()).isEqualTo(sensorName());
     assertThat(descriptor.languages()).isEmpty();
     assertThat(descriptor.isProcessesFilesIndependently()).isTrue();
     assertThat(descriptor.ruleRepositories()).containsExactlyInAnyOrder("text", "secrets");
@@ -768,23 +772,5 @@ public class TextAndSecretsSensorTest {
       context.fileSystem().add(inputFile);
     }
     sensor.execute(context);
-  }
-
-  protected TextAndSecretsSensor sensor(Check check) {
-    CheckFactory checkFactory = new CheckFactory(activeRules(check.getRuleKey().toString()));
-    return new TextAndSecretsSensor(checkFactory) {
-      @Override
-      protected List<Check> getActiveChecks() {
-        return Collections.singletonList(check);
-      }
-    };
-  }
-
-  protected TextAndSecretsSensor sensor(SensorContext sensorContext) {
-    return new TextAndSecretsSensor(new CheckFactory(sensorContext.activeRules()));
-  }
-
-  protected TestUtils testUtils() {
-    return TEST_UTILS;
   }
 }
