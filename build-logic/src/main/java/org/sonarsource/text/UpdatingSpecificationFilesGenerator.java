@@ -28,6 +28,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -39,6 +40,7 @@ import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.util.Collections.unmodifiableCollection;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 import static kotlin.text.StringsKt.substringAfter;
@@ -49,25 +51,37 @@ import static org.sonarsource.text.CodeGenerationUtilsKt.listSecretSpecification
 public class UpdatingSpecificationFilesGenerator {
 
   private static final Logger LOG = LoggerFactory.getLogger(UpdatingSpecificationFilesGenerator.class);
-  public static final String CHECK_TESTS_PATH_PREFIX = "src/test/java/org/sonar/plugins/secrets/checks";
-  private static final String SECRETS_MODULE_PATH_PREFIX = "src/main/java/org/sonar/plugins/secrets";
-  private static final String SECRETS_MODULE_RESOURCE_PATH_PREFIX = "src/main/resources/org/sonar";
-
-  public static final String CHECK_PATH_PREFIX = SECRETS_MODULE_PATH_PREFIX + "/checks";
   public static final Path RSPEC_LIST_PATH = Path.of("build/generated");
-  private static final Path RSPEC_FILES_PATH = Path.of(SECRETS_MODULE_RESOURCE_PATH_PREFIX, "l10n/secrets/rules/secrets");
-  private static final Path SPEC_FILES_PATH_PREFIX = Path.of(SECRETS_MODULE_RESOURCE_PATH_PREFIX, "plugins/secrets/configuration");
-
-  private static final Charset charset = StandardCharsets.UTF_8;
+  private static final Charset CHARSET = StandardCharsets.UTF_8;
   private static final String LINE_SEPARATOR = "\n";
   private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
   private static final Pattern FORBIDDEN_SYMBOLS_IN_CHECK_NAME = Pattern.compile("[^\\p{IsAlphabetic}]");
 
-  private final TestingEnvironment testingEnvironment = new TestingEnvironment();
-  private final String projectDir;
+  public final String packagePrefix;
+  final Locations locations;
 
-  public UpdatingSpecificationFilesGenerator(String projectDir) {
-    this.projectDir = projectDir;
+  private final TestingEnvironment testingEnvironment = new TestingEnvironment();
+  private final Path projectDir;
+  private final Collection<String> keysToExclude;
+
+  record Locations(Path checkTestsPathPrefix, Path checkPathPrefix, Path rspecFilesPath, Path specFilesPathPrefix) {
+    public static Locations from(String packagePrefix) {
+      var secretsModulePathPrefix = Path.of("src/main/java", packagePrefix, "sonar/plugins/secrets");
+      var secretsModuleResourcePathPrefix = Path.of("src/main/resources", packagePrefix, "sonar");
+
+      var checkTestsPathPrefix = Path.of("src/test/java", packagePrefix, "sonar/plugins/secrets/checks");
+      var checkPathPrefix = secretsModulePathPrefix.resolve("checks");
+      var rspecFilesPath = secretsModuleResourcePathPrefix.resolve("l10n/secrets/rules/secrets");
+      var specFilesPathPrefix = secretsModuleResourcePathPrefix.resolve("plugins/secrets/configuration");
+      return new Locations(checkTestsPathPrefix, checkPathPrefix, rspecFilesPath, specFilesPathPrefix);
+    }
+  }
+
+  public UpdatingSpecificationFilesGenerator(String projectDir, String packagePrefix, Collection<String> keysToExclude) {
+    this.packagePrefix = packagePrefix;
+    this.projectDir = Path.of(projectDir);
+    this.keysToExclude = unmodifiableCollection(keysToExclude);
+    this.locations = Locations.from(packagePrefix);
   }
 
   /**
@@ -80,22 +94,25 @@ public class UpdatingSpecificationFilesGenerator {
    * </ol>
    */
   public void performGeneration() {
-    Set<String> specificationsToLoad = listSecretSpecificationFiles(projectDir, SPEC_FILES_PATH_PREFIX.toString()).stream()
-      .map(File::getName)
-      .collect(Collectors.toSet());
+    var specificationsToLoad = new HashSet<>(listSecretSpecificationFiles(projectDir.resolve(locations.specFilesPathPrefix)));
     if (testingEnvironment.testingEnabled) {
-      specificationsToLoad.addAll(testingEnvironment.additionalSpecificationFilenames);
+      specificationsToLoad.addAll(testingEnvironment.additionalSpecificationFiles(projectDir));
     }
     LOG.debug("Found specifications: {}", specificationsToLoad);
 
-    var rulesMappedToKey = readAllRulesFromSpecifications()
+    var rulesMappedToKey = readAllRulesFromSpecifications(specificationsToLoad)
       .collect(toMap(spec -> spec.get("rspecKey").asText(), Function.identity(), (rule1, rule2) -> rule1));
-    var checkNamesMappedToKey = readAllSpecifications()
+    var checkNamesMappedToKey = readAllSpecifications(specificationsToLoad)
       .flatMap(spec -> StreamSupport.stream(spec.get("provider").get("rules").spliterator(), false)
         .map(rule -> Map.entry(rule.get("rspecKey").asText(), spec.get("provider").get("metadata").get("name").asText())))
       .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (name1, name2) -> name1));
 
     Map<String, String> existingKeysMappedToFileName = retrieveAlreadyExistingKeys(projectDir);
+
+    keysToExclude.forEach((String key) -> {
+      rulesMappedToKey.remove(key);
+      existingKeysMappedToFileName.remove(key);
+    });
 
     Set<String> keysToImplementChecksFor = new HashSet<>(rulesMappedToKey.keySet());
     keysToImplementChecksFor.removeAll(existingKeysMappedToFileName.keySet());
@@ -103,7 +120,7 @@ public class UpdatingSpecificationFilesGenerator {
     Set<String> keysNotUsedAnymore = new HashSet<>(existingKeysMappedToFileName.keySet());
     keysNotUsedAnymore.removeAll(rulesMappedToKey.keySet());
 
-    LOG.debug("All keys: {}, existing keys: {}, keys to implement checks for: {}, keys not used anymore: {}", rulesMappedToKey.keySet(),
+    LOG.warn("All keys: {}, existing keys: {}, keys to implement checks for: {}, keys not used anymore: {}", rulesMappedToKey.keySet(),
       existingKeysMappedToFileName.keySet(), keysToImplementChecksFor, keysNotUsedAnymore);
 
     for (String rspecKey : keysToImplementChecksFor) {
@@ -121,8 +138,8 @@ public class UpdatingSpecificationFilesGenerator {
    * Retrieve keys for already implemented rules
    * @return mapping ruleKey -> checkClassName
    */
-  static Map<String, String> retrieveAlreadyExistingKeys(String projectDir) {
-    var checkClasses = listCheckClasses(projectDir, CHECK_PATH_PREFIX);
+  Map<String, String> retrieveAlreadyExistingKeys(Path projectDir) {
+    var checkClasses = listCheckClasses(projectDir.resolve(locations.checkPathPrefix));
 
     return checkClasses.stream()
       .map(file -> Map.entry(readRuleKey(file), file.getName().replace(".java", "")))
@@ -131,7 +148,9 @@ public class UpdatingSpecificationFilesGenerator {
 
   static String readRuleKey(File file) {
     try {
-      var ruleAnnotation = Files.readAllLines(file.toPath(), charset).stream().filter(s -> s.contains("@Rule")).findFirst()
+      var ruleAnnotation = Files.readAllLines(file.toPath(), CHARSET).stream()
+        .filter(s -> s.contains("Rule(key = \""))
+        .findFirst()
         .orElseThrow(() -> new RuntimeException("No Rule annotation found in file " + file.getName()));
       var rspecKey = substringAfter(ruleAnnotation, "key = \"", "");
       rspecKey = substringBefore(rspecKey, "\"", "");
@@ -152,10 +171,11 @@ public class UpdatingSpecificationFilesGenerator {
   }
 
   void writeCheckFile(String checkName, String rspecKey, String resourcePath) {
-    var checkPath = Path.of(CHECK_PATH_PREFIX, checkName + ".java");
+    var checkPath = locations.checkPathPrefix.resolve(checkName + ".java");
     try (var stream = UpdatingSpecificationFilesGenerator.class.getResourceAsStream(resourcePath)) {
       requireNonNull(stream, "File GenericCheckTemplate not found");
-      var content = new String(stream.readAllBytes(), charset)
+      var content = new String(stream.readAllBytes(), CHARSET)
+        .replace("<package>", packagePrefix + ".sonar.plugins.secrets.checks")
         .replace("GenericCheckTemplate", checkName)
         .replace("<RSPEC-KEY>", rspecKey);
       writeFile(checkPath, content);
@@ -167,10 +187,11 @@ public class UpdatingSpecificationFilesGenerator {
   }
 
   void writeCheckTestFile(String checkName, String resourcePath) {
-    var checkTestPath = Path.of(CHECK_TESTS_PATH_PREFIX, checkName + "Test.java");
+    var checkTestPath = locations.checkTestsPathPrefix.resolve(checkName + "Test.java");
     try (var stream = UpdatingSpecificationFilesGenerator.class.getResourceAsStream(resourcePath)) {
       requireNonNull(stream, "File GenericCheckTestTemplate not found");
-      var content = new String(stream.readAllBytes(), charset)
+      var content = new String(stream.readAllBytes(), CHARSET)
+        .replace("<package>", packagePrefix + ".sonar.plugins.secrets.checks")
         .replace("GenericCheckTemplate", checkName)
         .replace("GenericCheckTemplateTest", checkName + "Test");
       writeFile(checkTestPath, content);
@@ -192,10 +213,10 @@ public class UpdatingSpecificationFilesGenerator {
   }
 
   private void removeUnusedCheck(String checkName, String rspecKey) {
-    var checkPath = Path.of(projectDir, CHECK_PATH_PREFIX, checkName + ".java");
-    var checkTestPath = Path.of(projectDir, CHECK_TESTS_PATH_PREFIX, checkName + "Test.java");
-    var rspecJson = Path.of(projectDir).resolve(RSPEC_FILES_PATH).resolve(rspecKey + ".json");
-    var rspecHtml = Path.of(projectDir).resolve(RSPEC_FILES_PATH).resolve(rspecKey + ".html");
+    var checkPath = projectDir.resolve(locations.checkPathPrefix).resolve(checkName + ".java");
+    var checkTestPath = projectDir.resolve(locations.checkTestsPathPrefix).resolve(checkName + "Test.java");
+    var rspecJson = projectDir.resolve(locations.rspecFilesPath).resolve(rspecKey + ".json");
+    var rspecHtml = projectDir.resolve(locations.rspecFilesPath).resolve(rspecKey + ".html");
 
     try {
       Files.deleteIfExists(checkPath);
@@ -210,7 +231,7 @@ public class UpdatingSpecificationFilesGenerator {
   }
 
   private void constructFileForRulesAPI(Set<String> keysToUpdateRuleAPIFor) {
-    var pathToWriteUpdateFileTo = Path.of(projectDir, "build/generated", "rspecKeysToUpdate.txt");
+    var pathToWriteUpdateFileTo = projectDir.resolve("build/generated/rspecKeysToUpdate.txt");
     String content = generateContentForRulesAPIUpdateFile(keysToUpdateRuleAPIFor);
     writeFile(pathToWriteUpdateFileTo, content);
     LOG.info("Successfully generated rule-api update file");
@@ -231,9 +252,9 @@ public class UpdatingSpecificationFilesGenerator {
         path = Path.of(testingEnvironment.outputFolder.getAbsolutePath(), path.toString());
         Files.createDirectories(path.getParent());
       }
-      var fullPath = Path.of(projectDir).resolve(path);
+      var fullPath = projectDir.resolve(path);
       LOG.debug("Writing file {}", fullPath);
-      Files.writeString(fullPath, content, charset);
+      Files.writeString(fullPath, content, CHARSET);
     } catch (IOException e) {
       throw new GenerationException("error while writing file " + path, e);
     }
@@ -245,14 +266,12 @@ public class UpdatingSpecificationFilesGenerator {
     testingEnvironment.additionalSpecificationFilenames.addAll(additionalSpecificationFilenames);
   }
 
-  Stream<JsonNode> readAllRulesFromSpecifications() {
-    return readAllSpecifications().flatMap((JsonNode node) -> StreamSupport.stream(node.get("provider").get("rules").spliterator(), false));
+  static Stream<JsonNode> readAllRulesFromSpecifications(Collection<File> specificationFiles) {
+    return readAllSpecifications(specificationFiles).flatMap((JsonNode node) -> StreamSupport.stream(node.get("provider").get("rules").spliterator(), false));
   }
 
-  Stream<JsonNode> readAllSpecifications() {
-    return Stream.concat(
-      listSecretSpecificationFiles(projectDir, SPEC_FILES_PATH_PREFIX.toString()).stream(),
-      testingEnvironment.additionalSpecificationFilenames.stream().map(s -> new File(projectDir + TestingEnvironment.SPEC_FILES_LOCATION + s)))
+  static Stream<JsonNode> readAllSpecifications(Collection<File> specificationFiles) {
+    return specificationFiles.stream()
       .map((File file) -> {
         try {
           return MAPPER.readValue(file, JsonNode.class);
@@ -262,8 +281,8 @@ public class UpdatingSpecificationFilesGenerator {
       });
   }
 
-  private static class TestingEnvironment {
-    public static final String SPEC_FILES_LOCATION = "/src/test/resources/secretsConfiguration/generator/";
+  static class TestingEnvironment {
+    public static final String SPEC_FILES_LOCATION = "src/test/resources/secretsConfiguration/generator/";
 
     private boolean testingEnabled;
     private File outputFolder;
@@ -272,6 +291,12 @@ public class UpdatingSpecificationFilesGenerator {
     public TestingEnvironment() {
       this.testingEnabled = false;
       this.outputFolder = null;
+    }
+
+    public Collection<File> additionalSpecificationFiles(Path baseDir) {
+      return additionalSpecificationFilenames.stream()
+        .map(fileName -> baseDir.resolve(TestingEnvironment.SPEC_FILES_LOCATION + fileName).toFile())
+        .collect(Collectors.toSet());
     }
   }
 }

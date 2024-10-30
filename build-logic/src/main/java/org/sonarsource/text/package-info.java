@@ -17,12 +17,5 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-package <package>;
-
-import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
-
-class GenericCheckTemplateTest extends AbstractRuleExampleTest {
-  GenericCheckTemplateTest() {
-    super(new GenericCheckTemplate());
-  }
-}
+@javax.annotation.ParametersAreNonnullByDefault
+package org.sonarsource.text;

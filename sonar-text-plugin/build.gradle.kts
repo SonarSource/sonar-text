@@ -179,6 +179,6 @@ tasks.register("updateCheckClasses") {
         "specifications and removing code for removed specifications"
 
     doLast {
-        UpdatingSpecificationFilesGenerator("$projectDir").performGeneration()
+        UpdatingSpecificationFilesGenerator("$projectDir", "org", emptySet()).performGeneration()
     }
 }

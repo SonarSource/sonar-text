@@ -37,15 +37,14 @@ import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.sonarsource.text.UpdatingSpecificationFilesGenerator.CHECK_PATH_PREFIX;
-import static org.sonarsource.text.UpdatingSpecificationFilesGenerator.CHECK_TESTS_PATH_PREFIX;
 import static org.sonarsource.text.UpdatingSpecificationFilesGenerator.RSPEC_LIST_PATH;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UpdatingSpecificationFilesGeneratorTest {
-  private static final UpdatingSpecificationFilesGenerator GENERATOR = new UpdatingSpecificationFilesGenerator(".");
+  private static final UpdatingSpecificationFilesGenerator GENERATOR = new UpdatingSpecificationFilesGenerator(".", "org", Set.of("S9002"));
   private static final String SPECIFICATION_BUILD_PATH = String.join(File.separator, "build", "resources", "test", "org", "sonar",
     "plugins", "secrets", "configuration");
   private static final String SPECIFICATIONS_TO_COPY_PATH = String.join(File.separator, "src", "test", "resources", "secretsConfiguration", "generator");
@@ -56,37 +55,47 @@ class UpdatingSpecificationFilesGeneratorTest {
     "GeneratorTestTwoNewRSPECKeyUniqueNameCheck");
   private static final Logger LOG = LoggerFactory.getLogger(UpdatingSpecificationFilesGeneratorTest.class);
   @TempDir
-  public static File tempFolder;
+  public static Path tempFolder;
 
   @BeforeAll
   static void setUp() throws IOException {
-    Files.createDirectories(Path.of(CHECK_PATH_PREFIX));
+    Files.createDirectories(GENERATOR.locations.checkPathPrefix());
 
     // Create a mock check class to test the logic for existing checks
-    String checkClass = """
+    var checkClass = """
       package org.sonar.plugins.secrets.checks;
       import org.sonar.check.Rule;
       @Rule(key = "S6733")
       public class ExistingCheck {
       }
       """;
-    Files.writeString(Path.of(CHECK_PATH_PREFIX, "ExistingCheck.java"), checkClass);
+    Files.writeString(GENERATOR.locations.checkPathPrefix().resolve("ExistingCheck.java"), checkClass);
 
-    String unusedCheckClass = """
+    var unusedCheckClass = """
       package org.sonar.plugins.secrets.checks;
       import org.sonar.check.Rule;
       @Rule(key = "S0000")
       public class UnusedCheck {
       }
       """;
-    Files.writeString(Path.of(CHECK_PATH_PREFIX, "UnusedCheck.java"), unusedCheckClass);
+    // TODO: ideally, shouldn't be created in the actual sources directory
+    Files.writeString(GENERATOR.locations.checkPathPrefix().resolve("UnusedCheck.java"), unusedCheckClass);
+
+    var ignoredCheckClass = """
+      package org.sonar.plugins.secrets.checks;
+      import org.sonar.check.Rule;
+      @Rule(key = "S9002")
+      public class IgnoredCheck {
+      }
+      """;
+    Files.writeString(GENERATOR.locations.checkPathPrefix().resolve("IgnoredCheck.java"), ignoredCheckClass);
   }
 
   @Test
   void shouldRetrieveExistingChecks() {
-    var existingChecksMappedToKey = UpdatingSpecificationFilesGenerator.retrieveAlreadyExistingKeys(".");
+    var existingChecksMappedToKey = GENERATOR.retrieveAlreadyExistingKeys(Path.of("."));
 
-    assertThat(existingChecksMappedToKey).containsOnlyKeys("S6733", "S0000");
+    assertThat(existingChecksMappedToKey).containsOnlyKeys("S6733", "S0000", "S9002");
   }
 
   @Test
@@ -98,36 +107,44 @@ class UpdatingSpecificationFilesGeneratorTest {
 
   @Test
   void shouldThrowIfCheckTemplateCannotBeRead() {
-    var generator = new UpdatingSpecificationFilesGenerator(".");
-    assertThatThrownBy(() -> generator.writeCheckFile("FooCheck.java", "S0000", "nonExistentFile"))
+    assertThatThrownBy(() -> GENERATOR.writeCheckFile("FooCheck.java", "S0000", "nonExistentFile"))
       .isInstanceOf(GenerationException.class)
       .hasCauseInstanceOf(NullPointerException.class);
   }
 
   @Test
   void shouldThrowIfCheckTestTemplateCannotBeRead() {
-    var generator = new UpdatingSpecificationFilesGenerator(".");
-    assertThatThrownBy(() -> generator.writeCheckTestFile("FooCheckTest.java", "nonExistentFile"))
+    assertThatThrownBy(() -> GENERATOR.writeCheckTestFile("FooCheckTest.java", "nonExistentFile"))
       .isInstanceOf(GenerationException.class)
       .hasCauseInstanceOf(NullPointerException.class);
   }
 
   @Test
   void shouldThrowIfFileCannotBeWritten() {
-    var generator = new UpdatingSpecificationFilesGenerator(".");
-    assertThatThrownBy(() -> generator.writeFile(Path.of("directory/that/does/not/exist"), "foobar"))
+    assertThatThrownBy(() -> GENERATOR.writeFile(Path.of("directory/that/does/not/exist"), "foobar"))
       .isInstanceOf(GenerationException.class)
       .hasCauseInstanceOf(IOException.class);
   }
 
   @Test
   void shouldThrowIfSpecificationFileCannotBeRead() {
-      var generator = new UpdatingSpecificationFilesGenerator(".");
-      generator.setTestMode(tempFolder, Set.of("nonExistentFile.yaml"));
+    var generator = new UpdatingSpecificationFilesGenerator(".", "org", emptySet());
+    generator.setTestMode(tempFolder.toFile(), Set.of("nonExistentFile.yaml"));
 
-      assertThatThrownBy(() -> generator.readAllSpecifications().toList())
-        .isInstanceOf(GenerationException.class)
-        .hasCauseInstanceOf(IOException.class);
+    assertThatThrownBy(generator::performGeneration)
+      .isInstanceOf(GenerationException.class)
+      .hasCauseInstanceOf(IOException.class)
+      .hasRootCauseMessage("./src/test/resources/secretsConfiguration/generator/nonExistentFile.yaml (No such file or directory)");
+  }
+
+  @Test
+  void shouldUsePackagePrefixInLocations() {
+    var locations = UpdatingSpecificationFilesGenerator.Locations.from("io");
+
+    assertThat(locations.checkPathPrefix()).isEqualTo(Path.of("src/main/java/io/sonar/plugins/secrets/checks"));
+    assertThat(locations.checkTestsPathPrefix()).isEqualTo(Path.of("src/test/java/io/sonar/plugins/secrets/checks"));
+    assertThat(locations.specFilesPathPrefix()).isEqualTo(Path.of("src/main/resources/io/sonar/plugins/secrets/configuration"));
+    assertThat(locations.rspecFilesPath()).isEqualTo(Path.of("src/main/resources/io/sonar/l10n/secrets/rules/secrets"));
   }
 
   /**
@@ -143,7 +160,7 @@ class UpdatingSpecificationFilesGeneratorTest {
   void generationShouldWorkAsExpected() throws IOException {
     // arrange
     createSecretsInSpecificationFolder();
-    GENERATOR.setTestMode(tempFolder, SPECIFICATION_FILENAMES_TO_GENERATE);
+    GENERATOR.setTestMode(tempFolder.toFile(), SPECIFICATION_FILENAMES_TO_GENERATE);
 
     // act
     GENERATOR.performGeneration();
@@ -155,7 +172,7 @@ class UpdatingSpecificationFilesGeneratorTest {
       softly.assertThat(targetPath).exists();
     }
 
-    softly.assertThat(Files.readString(tempFolder.toPath().resolve(RSPEC_LIST_PATH).resolve("rspecKeysToUpdate.txt")))
+    softly.assertThat(Files.readString(tempFolder.resolve(RSPEC_LIST_PATH).resolve("rspecKeysToUpdate.txt")))
       .isEqualTo("""
         S9000
         S9001
@@ -163,16 +180,19 @@ class UpdatingSpecificationFilesGeneratorTest {
         """);
 
     for (String expectedGeneratedClass : EXPECTED_GENERATED_CLASSES) {
-      Path checkPath = tempFolder.toPath().resolve(CHECK_PATH_PREFIX).resolve(expectedGeneratedClass + ".java");
-      Path checkTestPath = tempFolder.toPath().resolve(CHECK_TESTS_PATH_PREFIX).resolve(expectedGeneratedClass + "Test.java");
+      Path checkPath = tempFolder.resolve(GENERATOR.locations.checkPathPrefix()).resolve(expectedGeneratedClass + ".java");
+      Path checkTestPath = tempFolder.resolve(GENERATOR.locations.checkTestsPathPrefix()).resolve(expectedGeneratedClass + "Test.java");
       softly.assertThat(checkPath).exists();
       softly.assertThat(checkTestPath).exists();
     }
-    softly.assertThat(tempFolder.toPath().resolve(CHECK_PATH_PREFIX).resolve("UnusedCheck.java"))
+    softly.assertThat(GENERATOR.locations.checkPathPrefix().resolve("UnusedCheck.java"))
       .as("Unused check class should have been deleted")
       .doesNotExist();
+    softly.assertThat(GENERATOR.locations.checkPathPrefix().resolve("IgnoredCheck.java"))
+      .as("Check class from `keysToExclude` should not have been deleted")
+      .exists();
 
-    try (Stream<Path> files = Files.walk(tempFolder.toPath())) {
+    try (Stream<Path> files = Files.walk(tempFolder)) {
       long count = files.filter(Files::isRegularFile).count();
       // verify that no additional files are created
       softly.assertThat(count).isEqualTo(7);
@@ -199,16 +219,17 @@ class UpdatingSpecificationFilesGeneratorTest {
     }
 
     for (String expectedGeneratedClass : EXPECTED_GENERATED_CLASSES) {
-      Path checkPath = tempFolder.toPath().resolve(CHECK_PATH_PREFIX).resolve(expectedGeneratedClass + ".java");
-      Path checkTestPath = tempFolder.toPath().resolve(CHECK_TESTS_PATH_PREFIX).resolve(expectedGeneratedClass + "Test.java");
+      Path checkPath = tempFolder.resolve(GENERATOR.locations.checkPathPrefix()).resolve(expectedGeneratedClass + ".java");
+      Path checkTestPath = tempFolder.resolve(GENERATOR.locations.checkTestsPathPrefix()).resolve(expectedGeneratedClass + "Test.java");
       deleteFile(checkPath);
       deleteFile(checkTestPath);
     }
 
-    deleteFile(tempFolder.toPath().resolve(RSPEC_LIST_PATH).resolve("rspecKeysToUpdate.txt"));
+    deleteFile(tempFolder.resolve(RSPEC_LIST_PATH).resolve("rspecKeysToUpdate.txt"));
 
-    deleteFile(Path.of(CHECK_PATH_PREFIX, "ExistingCheck.java"));
-    deleteFile(Path.of(CHECK_PATH_PREFIX, "UnusedCheck.java"));
+    deleteFile(GENERATOR.locations.checkPathPrefix().resolve("ExistingCheck.java"));
+    deleteFile(GENERATOR.locations.checkPathPrefix().resolve("UnusedCheck.java"));
+    deleteFile(GENERATOR.locations.checkPathPrefix().resolve("IgnoredCheck.java"));
   }
 
   private static void deleteFile(Path path) {

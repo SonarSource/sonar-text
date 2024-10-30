@@ -19,7 +19,7 @@
  */
 package org.sonarsource.text
 
-import java.io.File
+import java.nio.file.Path
 import java.time.LocalDate
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.FileFilterUtils
@@ -42,16 +42,16 @@ fun Project.writeToFile(content: String, relativePath: String) {
     file(dir.resolve(filename)).writeText(content + lineSeparator)
 }
 
-fun listSecretSpecificationFiles(projectDir: String, specFilesLocation: String) =
+fun listSecretSpecificationFiles(specFilesLocation: Path) =
     FileUtils.listFiles(
-        File("${projectDir}/$specFilesLocation"),
+        specFilesLocation.toFile(),
         FileFilterUtils.suffixFileFilter(".yaml"),
         FileFilterUtils.trueFileFilter()
     ).sorted()
 
-fun listCheckClasses(projectDir: String, checkClassesLocation: String) =
+fun listCheckClasses(checkClassesLocation: Path) =
     FileUtils.listFiles(
-        File("${projectDir}/$checkClassesLocation/"),
+        checkClassesLocation.toFile(),
         FileFilterUtils.suffixFileFilter("Check.java"),
         FileFilterUtils.trueFileFilter()
     ).sorted()

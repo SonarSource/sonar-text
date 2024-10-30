@@ -1,3 +1,4 @@
+import kotlin.io.path.div
 import org.sonarsource.text.GENERATED_SOURCES_DIR
 import org.sonarsource.text.listSecretSpecificationFiles
 import org.sonarsource.text.loadLicenseHeader
@@ -32,7 +33,7 @@ tasks.register("generateSecretsSpecFilesList") {
     outputs.file(layout.buildDirectory.file("$GENERATED_SOURCES_DIR/org/sonar/plugins/secrets/$generatedClassName.java"))
 
     doLast {
-        val files = listSecretSpecificationFiles("$projectDir", "src/main/resources/$specFilesLocation")
+        val files = listSecretSpecificationFiles(projectDir.toPath() / "src/main/resources/$specFilesLocation")
 
         val result =
             template
