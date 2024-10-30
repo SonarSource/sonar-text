@@ -34,3 +34,18 @@ tasks.register("ruleApiUpdate") {
     group = "Rule API"
     dependsOn("ruleApiUpdateSecrets", "ruleApiUpdateText")
 }
+
+sonar {
+    properties {
+        properties["sonar.sources"] as MutableCollection<String> +=
+            gradle.includedBuild("build-logic").projectDir.resolve("src/main/java").toString()
+
+        val binaries = properties["sonar.java.binaries"] as? MutableCollection<String> ?: mutableSetOf()
+        properties["sonar.java.binaries"] = binaries +
+            gradle.includedBuild("build-logic").projectDir.resolve("build/classes/java/main").toString()
+        val libraries = properties["sonar.java.libraries"] as? MutableCollection<String> ?: mutableSetOf()
+        properties["sonar.java.libraries"] = libraries + buildscript.configurations.getByName("classpath")
+        properties["sonar.coverage.jacoco.xmlReportPaths"] =
+            gradle.includedBuild("build-logic").projectDir.resolve("build/reports/jacoco/test/jacocoTestReport.xml").toString()
+    }
+}

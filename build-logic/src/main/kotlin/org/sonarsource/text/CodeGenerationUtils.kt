@@ -19,9 +19,13 @@
  */
 package org.sonarsource.text
 
+import java.io.File
 import java.time.LocalDate
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.filefilter.FileFilterUtils
 import org.gradle.api.Project
 
+const val specFilesLocation = "org/sonar/plugins/secrets/configuration"
 const val GENERATED_SOURCES_DIR = "generated/sources/secrets/java/main"
 const val lineSeparator = "\n"
 
@@ -37,3 +41,17 @@ fun Project.writeToFile(content: String, relativePath: String) {
     dir.mkdirs()
     file(dir.resolve(filename)).writeText(content + lineSeparator)
 }
+
+fun listSecretSpecificationFiles(projectDir: String, specFilesLocation: String) =
+    FileUtils.listFiles(
+        File("${projectDir}/$specFilesLocation"),
+        FileFilterUtils.suffixFileFilter(".yaml"),
+        FileFilterUtils.trueFileFilter()
+    ).sorted()
+
+fun listCheckClasses(projectDir: String, checkClassesLocation: String) =
+    FileUtils.listFiles(
+        File("${projectDir}/$checkClassesLocation/"),
+        FileFilterUtils.suffixFileFilter("Check.java"),
+        FileFilterUtils.trueFileFilter()
+    ).sorted()

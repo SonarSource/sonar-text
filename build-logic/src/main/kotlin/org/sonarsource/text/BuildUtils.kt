@@ -3,6 +3,7 @@ package org.sonarsource.text
 import java.io.File
 import org.gradle.api.GradleException
 import org.gradle.api.Project
+import org.gradle.internal.extensions.stdlib.capitalized
 
 fun enforceJarSize(
     file: File,
@@ -22,3 +23,5 @@ fun Project.signingCondition(): Boolean {
     return (branch == "master" || branch.matches("branch-[\\d.]+".toRegex())) &&
         gradle.taskGraph.hasTask(":artifactoryPublish")
 }
+
+fun String.toCamelCase() = replace("-[a-z]".toRegex()) { it.value.last().uppercase() }.capitalized()

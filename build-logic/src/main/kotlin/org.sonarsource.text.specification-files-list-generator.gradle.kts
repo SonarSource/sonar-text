@@ -1,10 +1,9 @@
-import org.apache.commons.io.FileUtils
-import org.apache.commons.io.filefilter.FileFilterUtils
 import org.sonarsource.text.GENERATED_SOURCES_DIR
+import org.sonarsource.text.listSecretSpecificationFiles
 import org.sonarsource.text.loadLicenseHeader
+import org.sonarsource.text.specFilesLocation
 import org.sonarsource.text.writeToFile
 
-private val specFilesLocation = "org/sonar/plugins/secrets/configuration"
 private val lineSeparator = "\n"
 private val generatedClassName = "SecretsSpecificationFilesDefinition"
 private val template =
@@ -33,12 +32,7 @@ tasks.register("generateSecretsSpecFilesList") {
     outputs.file(layout.buildDirectory.file("$GENERATED_SOURCES_DIR/org/sonar/plugins/secrets/$generatedClassName.java"))
 
     doLast {
-        val files =
-            FileUtils.listFiles(
-                File("${project.projectDir}/src/main/resources/$specFilesLocation/"),
-                FileFilterUtils.suffixFileFilter(".yaml"),
-                FileFilterUtils.trueFileFilter()
-            ).sorted()
+        val files = listSecretSpecificationFiles("$projectDir", "src/main/resources/$specFilesLocation")
 
         val result =
             template

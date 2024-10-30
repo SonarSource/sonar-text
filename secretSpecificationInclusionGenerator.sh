@@ -8,7 +8,7 @@ PROJECT_ROOT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && 
 echo ""
 echo "--------- Generation of Java classes ---------"
 echo ""
-GENERATION_ENABLED=true ./gradlew :sonar-text-plugin:test --tests UpdatingSpecificationFilesGenerator.secondStep || exit
+./gradlew :sonar-text-plugin:updateCheckClasses || exit
 
 echo ""
 echo "---------Creating current license headers and formatting code---------"
@@ -16,8 +16,8 @@ echo ""
 ./gradlew spotlessApply
 
 # Generated file where rspec keys to update are stored.
-# This file will be generated at the secondStep of the generation of java classes
-input="$PROJECT_ROOT_DIR/sonar-text-plugin/src/test/resources/templates/rspecKeysToUpdate.txt"
+# This file is generated during previous steps
+input="$PROJECT_ROOT_DIR/sonar-text-plugin/build/generated/rspecKeysToUpdate.txt"
 
 while IFS= read -r line
 do
@@ -33,7 +33,7 @@ do
 	echo ""
 done < "$input"
 
-rm "$PROJECT_ROOT_DIR/sonar-text-plugin/src/test/resources/templates/rspecKeysToUpdate.txt"
+rm "$PROJECT_ROOT_DIR/sonar-text-plugin/build/generated/rspecKeysToUpdate.txt"
 
 echo ""
 echo "---------Finished Generation process---------"

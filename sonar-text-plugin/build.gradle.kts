@@ -2,6 +2,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
 import org.sonarsource.text.GENERATED_SOURCES_DIR
+import org.sonarsource.text.UpdatingSpecificationFilesGenerator
 import org.sonarsource.text.enforceJarSize
 
 plugins {
@@ -169,4 +170,15 @@ artifactoryConfiguration {
 
 codeStyleConvention {
     licenseHeaderFile.set(rootProject.file("LICENSE_HEADER"))
+}
+
+tasks.register("updateCheckClasses") {
+    group = "build"
+    description =
+        "Synchronize specification files with check classes and corresponding tests, generating code for new " +
+        "specifications and removing code for removed specifications"
+
+    doLast {
+        UpdatingSpecificationFilesGenerator("$projectDir").performGeneration()
+    }
 }
