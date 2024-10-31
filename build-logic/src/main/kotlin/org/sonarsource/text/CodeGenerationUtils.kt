@@ -26,7 +26,6 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.FileFilterUtils
 import org.gradle.api.Project
 
-const val specFilesLocation = "org/sonar/plugins/secrets/configuration"
 const val GENERATED_SOURCES_DIR = "generated/sources/secrets/java/main"
 const val lineSeparator = "\n"
 
@@ -47,7 +46,8 @@ fun listSecretSpecificationFiles(specFilesLocation: Path) =
     FileUtils.listFiles(
         specFilesLocation.toFile(),
         FileFilterUtils.suffixFileFilter(".yaml"),
-        FileFilterUtils.trueFileFilter()
+        // don't recurse into subdirectories
+        null
     ).sorted()
 
 fun listCheckClasses(checkClassesLocation: Path) =

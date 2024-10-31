@@ -1,16 +1,23 @@
 import kotlin.io.path.div
+import org.sonarsource.text.CodeGenerationConfiguration
 import org.sonarsource.text.GENERATED_SOURCES_DIR
 import org.sonarsource.text.listSecretSpecificationFiles
 import org.sonarsource.text.loadLicenseHeader
-import org.sonarsource.text.specFilesLocation
 import org.sonarsource.text.writeToFile
 
-private val lineSeparator = "\n"
-private val generatedClassName = "SecretsSpecificationFilesDefinition"
-private val template =
-    """
+val codeGenerationConfiguration = extensions.findByType<CodeGenerationConfiguration>()
+    ?: extensions.create<CodeGenerationConfiguration>("codeGeneration")
+
+private data class Constants(
+    val packagePrefix: String,
+    val generatedClassName: String,
+) {
+    val specFilesLocation get() = "$packagePrefix/sonar/plugins/secrets/configuration"
+    val template
+        get() =
+            """
     //<LICENSE_HEADER>
-    package org.sonar.plugins.secrets;
+    package $packagePrefix.sonar.plugins.secrets;
 
     import java.util.Set;
     
@@ -23,24 +30,37 @@ private val template =
     //<REPLACE-WITH-LIST-OF-FILES>
       }
     }
-    """.trimIndent()
+            """.trimIndent()
+}
 
 tasks.register("generateSecretsSpecFilesList") {
-    description = "Generates $generatedClassName class based on all specification files"
+    description = "Generates spec files list class based on all specification files"
     group = "build"
-    inputs.files("${project.projectDir}/src/main/resources/$specFilesLocation/")
-    inputs.file(rootProject.file("LICENSE_HEADER"))
-    outputs.file(layout.buildDirectory.file("$GENERATED_SOURCES_DIR/org/sonar/plugins/secrets/$generatedClassName.java"))
+
+    val constants = with(codeGenerationConfiguration) {
+        packagePrefix.zip(specFileListClassName) { packagePrefix, generatedClassName ->
+            Constants(packagePrefix, generatedClassName)
+        }
+    }
+
+    inputs.dir(constants.map { "$projectDir/src/main/resources/${it.specFilesLocation}/" })
+    inputs.file(codeGenerationConfiguration.licenseHeaderFile)
+    outputs.file(
+        constants.flatMap {
+            layout.buildDirectory.file("$GENERATED_SOURCES_DIR/${it.packagePrefix}/sonar/plugins/secrets/${it.generatedClassName}.java")
+        }
+    )
 
     doLast {
-        val files = listSecretSpecificationFiles(projectDir.toPath() / "src/main/resources/$specFilesLocation")
+        val constants = constants.get()
 
-        val result =
-            template
-                .replace("//<LICENSE_HEADER>", loadLicenseHeader(rootProject.file("LICENSE_HEADER")))
-                .replace("//<REPLACE-WITH-LIST-OF-FILES>", discoverSpecFiles(files))
+        val files = listSecretSpecificationFiles(projectDir.toPath() / "src/main/resources/${constants.specFilesLocation}")
 
-        writeToFile(result, "org/sonar/plugins/secrets/$generatedClassName.java")
+        val result = constants.template
+            .replace("//<LICENSE_HEADER>", loadLicenseHeader(codeGenerationConfiguration.licenseHeaderFile.asFile.get()))
+            .replace("//<REPLACE-WITH-LIST-OF-FILES>", discoverSpecFiles(files))
+
+        writeToFile(result, "${constants.packagePrefix}/sonar/plugins/secrets/${constants.generatedClassName}.java")
     }
 }
 

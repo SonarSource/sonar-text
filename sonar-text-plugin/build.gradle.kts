@@ -175,6 +175,7 @@ registerUpdateCheckClassesTask("org", emptySet())
 
 codeGeneration {
     packagePrefix = "org"
-    generatedClassName = "SecretsCheckList"
+    checkListClassName = "SecretsCheckList"
+    specFileListClassName = "SecretsSpecificationFilesDefinition"
     licenseHeaderFile = rootProject.file("LICENSE_HEADER")
 }

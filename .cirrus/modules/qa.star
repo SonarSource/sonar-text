@@ -147,7 +147,7 @@ def qa_os_win_task():
             "only_if": qa_win_condition(),
             "env": qa_win_env(),
             "ec2_instance": ec2_instance_builder(),
-            "gradle_cache": gradle_cache(),
+            "gradle_cache": gradle_cache(fingerprint_script="git rev-parse HEAD"),
             "gradle_wrapper_cache": gradle_wrapper_cache(),
             "set_orchestrator_home_script": set_orchestrator_home_script(),
             "mkdir_orchestrator_home_script": mkdir_orchestrator_home_script(),

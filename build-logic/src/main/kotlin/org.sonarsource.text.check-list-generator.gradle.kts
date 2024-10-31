@@ -8,7 +8,7 @@ import org.sonarsource.text.writeToFile
 val codeGenerationConfiguration = extensions.findByType<CodeGenerationConfiguration>()
     ?: extensions.create<CodeGenerationConfiguration>("codeGeneration")
 
-data class Constants(
+private data class Constants(
     val packagePrefix: String,
     val generatedClassName: String,
 ) {
@@ -42,7 +42,7 @@ tasks.register("generateSecretsCheckList") {
     group = "build"
 
     val constants = with(codeGenerationConfiguration) {
-        packagePrefix.zip(generatedClassName) { packagePrefix, generatedClassName ->
+        packagePrefix.zip(checkListClassName) { packagePrefix, generatedClassName ->
             Constants(packagePrefix, generatedClassName)
         }
     }
