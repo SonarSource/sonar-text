@@ -19,6 +19,7 @@
  */
 package org.sonarsource.text
 
+import java.io.File
 import java.nio.file.Path
 import java.time.LocalDate
 import org.apache.commons.io.FileUtils
@@ -29,8 +30,8 @@ const val specFilesLocation = "org/sonar/plugins/secrets/configuration"
 const val GENERATED_SOURCES_DIR = "generated/sources/secrets/java/main"
 const val lineSeparator = "\n"
 
-fun Project.loadLicenseHeader() =
-    rootProject.file("LICENSE_HEADER").readText(Charsets.UTF_8)
+fun Project.loadLicenseHeader(file: File) =
+    file.readText(Charsets.UTF_8)
         .replace("\$YEAR", LocalDate.now().year.toString())
         .trimEnd()
 

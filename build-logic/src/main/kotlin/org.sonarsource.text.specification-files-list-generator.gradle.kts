@@ -37,7 +37,7 @@ tasks.register("generateSecretsSpecFilesList") {
 
         val result =
             template
-                .replace("//<LICENSE_HEADER>", loadLicenseHeader())
+                .replace("//<LICENSE_HEADER>", loadLicenseHeader(rootProject.file("LICENSE_HEADER")))
                 .replace("//<REPLACE-WITH-LIST-OF-FILES>", discoverSpecFiles(files))
 
         writeToFile(result, "org/sonar/plugins/secrets/$generatedClassName.java")

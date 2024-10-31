@@ -112,19 +112,18 @@ tasks.jar {
     }
 }
 
-val cleanupTask =
-    tasks.register<Delete>("cleanupOldVersion") {
-        group = "build"
-        description = "Clean up jars of old plugin version"
+val cleanupTask = tasks.register<Delete>("cleanupOldVersion") {
+    group = "build"
+    description = "Clean up jars of old plugin version"
 
-        delete(
-            fileTree(project.layout.buildDirectory.dir("libs")).matching {
-                include("${project.name}-*.jar")
-                exclude("${project.name}-${project.version}-*.jar")
-                exclude("${project.name}-${project.version}.jar")
-            }
-        )
-    }
+    delete(
+        fileTree(project.layout.buildDirectory.dir("libs")).matching {
+            include("${project.name}-*.jar")
+            exclude("${project.name}-${project.version}-*.jar")
+            exclude("${project.name}-${project.version}.jar")
+        }
+    )
+}
 
 tasks.shadowJar {
     dependsOn(cleanupTask)
@@ -173,3 +172,9 @@ codeStyleConvention {
 }
 
 registerUpdateCheckClassesTask("org", emptySet())
+
+codeGeneration {
+    packagePrefix = "org"
+    generatedClassName = "SecretsCheckList"
+    licenseHeaderFile = rootProject.file("LICENSE_HEADER")
+}

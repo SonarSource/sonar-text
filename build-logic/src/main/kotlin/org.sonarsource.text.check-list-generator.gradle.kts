@@ -1,17 +1,24 @@
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.FileFilterUtils
+import org.sonarsource.text.CodeGenerationConfiguration
 import org.sonarsource.text.GENERATED_SOURCES_DIR
 import org.sonarsource.text.loadLicenseHeader
 import org.sonarsource.text.writeToFile
 
-private val checksLocation = "org/sonar/plugins/secrets/checks"
-private val checksPackage = "org.sonar.plugins.secrets.checks."
-private val lineSeparator = "\n"
-private val generatedClassName = "SecretsCheckList"
-private val template =
-    """
+val codeGenerationConfiguration = extensions.findByType<CodeGenerationConfiguration>()
+    ?: extensions.create<CodeGenerationConfiguration>("codeGeneration")
+
+data class Constants(
+    val packagePrefix: String,
+    val generatedClassName: String,
+) {
+    val checksLocation get() = "$packagePrefix/sonar/plugins/secrets/checks"
+    val checksPackage get() = "$packagePrefix.sonar.plugins.secrets.checks."
+    val template
+        get() =
+            """
     //<LICENSE_HEADER>
-    package org.sonar.plugins.secrets;
+    package $packagePrefix.sonar.plugins.secrets;
 
     import java.util.List;
     //<REPLACE-WITH-IMPORTS-OF-ALL-CHECKS>
@@ -25,45 +32,60 @@ private val template =
         return SECRET_CHECKS;
       }
     }
-    """.trimIndent()
+            """.trimIndent()
+}
+
+private val lineSeparator = "\n"
 
 tasks.register("generateSecretsCheckList") {
-    description = "Generates $generatedClassName class based on all checks"
+    description = "Generates checks list class based on all checks"
     group = "build"
-    inputs.files("${project.projectDir}/src/main/java/$checksLocation/")
-    inputs.file(rootProject.file("LICENSE_HEADER"))
-    outputs.file(layout.buildDirectory.file("$GENERATED_SOURCES_DIR/org/sonar/plugins/secrets/$generatedClassName.java"))
+
+    val constants = with(codeGenerationConfiguration) {
+        packagePrefix.zip(generatedClassName) { packagePrefix, generatedClassName ->
+            Constants(packagePrefix, generatedClassName)
+        }
+    }
+
+    inputs.dir(constants.map { "$projectDir/src/main/java/${it.checksLocation}/" })
+    inputs.file(codeGenerationConfiguration.licenseHeaderFile)
+    outputs.file(
+        constants.flatMap {
+            layout.buildDirectory.file("$GENERATED_SOURCES_DIR/${it.packagePrefix}/sonar/plugins/secrets/${it.generatedClassName}.java")
+        }
+    )
 
     doLast {
-        val filter =
-            FileFilterUtils.and(
-                FileFilterUtils.suffixFileFilter("Check.java"),
-                FileFilterUtils.notFileFilter(FileFilterUtils.prefixFileFilter("Abstract"))
-            )
+        val constants = constants.get()
 
-        val files =
-            FileUtils.listFiles(
-                File("${project.projectDir}/src/main/java/$checksLocation/"),
-                filter,
-                FileFilterUtils.trueFileFilter()
-            )
+        val filter = FileFilterUtils.and(
+            FileFilterUtils.suffixFileFilter("Check.java"),
+            FileFilterUtils.notFileFilter(FileFilterUtils.prefixFileFilter("Abstract"))
+        )
 
-        val classNames =
-            files.map { it.name.removeSuffix(".java") }
-                .sorted()
+        val files = FileUtils.listFiles(
+            projectDir.resolve("src/main/java/${constants.checksLocation}/"),
+            filter,
+            FileFilterUtils.trueFileFilter()
+        )
 
-        val result =
-            template
-                .replace("//<LICENSE_HEADER>", loadLicenseHeader())
-                .replace("//<REPLACE-WITH-IMPORTS-OF-ALL-CHECKS>", generateImportsFor(classNames))
-                .replace("//<REPLACE-WITH-LIST-OF-CHECKS>", generateChecksMethodFor(classNames))
+        val classNames = files
+            .map { it.name.removeSuffix(".java") }
+            .sorted()
 
-        writeToFile(result, "org/sonar/plugins/secrets/$generatedClassName.java")
+        val result = constants.template
+            .replace("//<LICENSE_HEADER>", loadLicenseHeader(codeGenerationConfiguration.licenseHeaderFile.asFile.get()))
+            .replace("//<REPLACE-WITH-IMPORTS-OF-ALL-CHECKS>", generateImportsFor(constants.checksPackage, classNames))
+            .replace("//<REPLACE-WITH-LIST-OF-CHECKS>", generateChecksMethodFor(classNames))
+
+        writeToFile(result, "${constants.packagePrefix}/sonar/plugins/secrets/${constants.generatedClassName}.java")
     }
 }
 
-fun generateImportsFor(checkNames: List<String>): String =
-    checkNames.joinToString(lineSeparator, postfix = lineSeparator) { "import $checksPackage$it;" }
+fun generateImportsFor(
+    checksPackage: String,
+    checkNames: List<String>,
+): String = checkNames.joinToString(lineSeparator, postfix = lineSeparator) { "import $checksPackage$it;" }
 
 fun generateChecksMethodFor(checkNames: List<String>): String =
     buildString {
