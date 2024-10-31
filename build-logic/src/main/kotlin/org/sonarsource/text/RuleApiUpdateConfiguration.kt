@@ -2,6 +2,8 @@ package org.sonarsource.text
 
 import java.io.File
 import org.gradle.api.Project
+import org.gradle.api.file.RegularFile
+import org.gradle.api.provider.Provider
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
 import org.gradle.api.tasks.JavaExec
@@ -22,31 +24,58 @@ fun Project.registerRuleApiTasks(suffix: String, sonarpediaLocation: File) {
         description = "Update $suffix rules description"
 
         workingDir = sonarpediaLocation
-        args("com.sonarsource.ruleapi.Main", "update")
+        args("update")
     }
 
     val rule = providers.gradleProperty("rule")
     val branch = providers.gradleProperty("branch")
-    registerRuleApiTask("ruleApiGenerateRule$suffix") {
-        description = "Update rule description for $suffix"
+    registerRuleApiGenerateTask(suffix, sonarpediaLocation, rule, branch)
 
-        workingDir = sonarpediaLocation
-        args(
-            buildList {
-                add("com.sonarsource.ruleapi.Main")
-                add("generate")
-                add("-rule")
-                add(rule.getOrElse(""))
-                if (branch.isPresent) {
-                    add("-branch")
-                    add(branch.get())
-                }
+    if (suffix.endsWith("Secrets")) {
+        val pluginSubproject = if (suffix == "Secrets") project(":sonar-text-plugin") else project(":private:sonar-text-enterprise-plugin")
+        registerRuleApiGenerateFromFileTask(
+            "Generation",
+            sonarpediaLocation,
+            pluginSubproject.layout.buildDirectory.file("generated/rspecKeysToUpdate.txt"),
+            branch
+        ).configure {
+            doLast {
+                delete(pluginSubproject.layout.buildDirectory.file("generated/rspecKeysToUpdate.txt"))
             }
-        )
+        }
     }
 }
 
-fun Project.registerRuleApiTask(name: String, configure: JavaExec.() -> Unit): TaskProvider<JavaExec> =
+fun Project.registerRuleApiGenerateFromFileTask(suffix: String, sonarpediaLocation: File, rulesFile: Provider<RegularFile>, branch: Provider<String>): TaskProvider<JavaExec> {
+    val ruleKeysProvider = rulesFile.map {
+        it.asFile.readLines().joinToString(" ")
+    }
+    return registerRuleApiGenerateTask(suffix, sonarpediaLocation, ruleKeysProvider, branch)
+}
+
+fun Project.registerRuleApiGenerateTask(suffix: String, sonarpediaLocation: File, rule: Provider<String>, branch: Provider<String>) = registerRuleApiTask("ruleApiGenerateRule$suffix") {
+    description = "Update rule description for $suffix"
+    onlyIf { rule.isPresent && rule.get().isNotBlank() }
+    outputs.upToDateWhen {
+        // To be on a safe side, don't try to cache results of rule-api.
+        false
+    }
+
+    workingDir = sonarpediaLocation
+    argumentProviders.add {
+        buildList {
+            add("generate")
+            add("-rule")
+            rule.getOrElse("").split(" ").forEach { add(it) }
+            if (branch.isPresent) {
+                add("-branch")
+                add(branch.get())
+            }
+        }
+    }
+}
+
+private fun Project.registerRuleApiTask(name: String, configure: JavaExec.() -> Unit): TaskProvider<JavaExec> =
     tasks.register<JavaExec>(name) {
         group = "Rule API"
         usesService(gradle.sharedServices.registerIfAbsent("ruleApiRepoProvider", RuleApiService::class) {
@@ -54,5 +83,6 @@ fun Project.registerRuleApiTask(name: String, configure: JavaExec.() -> Unit): T
             maxParallelUsages = 1
         })
         classpath = configurations.getByName("ruleApi")
+        mainClass = "com.sonarsource.ruleapi.Main"
         configure(this)
     }
