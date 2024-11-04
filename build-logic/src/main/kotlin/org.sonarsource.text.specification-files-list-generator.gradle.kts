@@ -1,6 +1,7 @@
 import kotlin.io.path.div
 import org.sonarsource.text.CodeGenerationConfiguration
 import org.sonarsource.text.GENERATED_SOURCES_DIR
+import org.sonarsource.text.SPEC_LIST_GENERATION_TASK_NAME
 import org.sonarsource.text.listSecretSpecificationFiles
 import org.sonarsource.text.loadLicenseHeader
 import org.sonarsource.text.writeToFile
@@ -33,7 +34,7 @@ private data class Constants(
             """.trimIndent()
 }
 
-tasks.register("generateSecretsSpecFilesList") {
+tasks.register(SPEC_LIST_GENERATION_TASK_NAME) {
     description = "Generates spec files list class based on all specification files"
     group = "build"
 

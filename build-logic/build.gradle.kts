@@ -13,6 +13,7 @@ dependencies {
     implementation(libs.diffplug.blowdryer)
     implementation(libs.commons.io)
     implementation(libs.jackson.dataformat.yaml)
+    implementation(libs.gradle.shadow)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.assertj.core)
 }

@@ -26,6 +26,8 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.FileFilterUtils
 import org.gradle.api.Project
 
+const val CHECK_LIST_GENERATION_TASK_NAME = "generateSecretsCheckList"
+const val SPEC_LIST_GENERATION_TASK_NAME = "generateSecretsSpecFilesList"
 const val GENERATED_SOURCES_DIR = "generated/sources/secrets/java/main"
 const val lineSeparator = "\n"
 

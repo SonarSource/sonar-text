@@ -1,5 +1,6 @@
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.FileFilterUtils
+import org.sonarsource.text.CHECK_LIST_GENERATION_TASK_NAME
 import org.sonarsource.text.CodeGenerationConfiguration
 import org.sonarsource.text.GENERATED_SOURCES_DIR
 import org.sonarsource.text.loadLicenseHeader
@@ -37,7 +38,7 @@ private data class Constants(
 
 private val lineSeparator = "\n"
 
-tasks.register("generateSecretsCheckList") {
+tasks.register(CHECK_LIST_GENERATION_TASK_NAME) {
     description = "Generates checks list class based on all checks"
     group = "build"
 
