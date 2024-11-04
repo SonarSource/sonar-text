@@ -239,9 +239,9 @@ public class TextAndSecretsSensor implements Sensor {
     return "true".equals(sensorContext.config().get(ANALYZE_ALL_FILES_KEY).orElse("false"));
   }
 
-  protected static String sonarTests(SensorContext sensorContext) {
+  protected static boolean enableAutomaticTestFileDetection(SensorContext sensorContext) {
     var value = sensorContext.config().get(SONAR_TESTS_KEY).orElse("");
-    if (value.isBlank()) {
+    if (value.isBlank() && !isSonarLintContext(sensorContext)) {
       var message = """
         The property "%s" is not set. To improve the analysis accuracy, we categorize a file as a test file if any of the following is true:
           * The filename starts with "test"
@@ -250,8 +250,9 @@ public class TextAndSecretsSensor implements Sensor {
           * Any directory in the file path has a name ending in "test" or "tests"
         """.formatted(SONAR_TESTS_KEY);
       LOG.info(message);
+      return true;
     }
-    return value;
+    return false;
   }
 
   /**
@@ -282,7 +283,7 @@ public class TextAndSecretsSensor implements Sensor {
     var specificationLoader = durationStatistics.timed("deserializingSpecifications" + DurationStatistics.SUFFIX_GENERAL,
       this::constructSpecificationLoader);
 
-    var specificationConfiguration = new SpecificationConfiguration(sonarTests(sensorContext));
+    var specificationConfiguration = new SpecificationConfiguration(enableAutomaticTestFileDetection(sensorContext));
     durationStatistics.timed("initializingSecretMatchers" + DurationStatistics.SUFFIX_GENERAL, () -> {
       for (Check activeCheck : checks) {
         if (activeCheck instanceof SpecificationBasedCheck specificationBasedCheck) {

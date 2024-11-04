@@ -100,7 +100,7 @@ class PreFilterFactoryTest {
   void testFiltersFromYamlFragments(String input, String filename, boolean shouldMatch) throws IOException {
     Detection detection = MAPPER.readValue(input, Detection.class);
 
-    Predicate<InputFileContext> predicate = PreFilterFactory.createPredicate(detection.getPre(), new SpecificationConfiguration("src/tests"));
+    Predicate<InputFileContext> predicate = PreFilterFactory.createPredicate(detection.getPre(), new SpecificationConfiguration(false));
 
     InputFileContext ctx = mock(InputFileContext.class);
     when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder("myProject", filename).build());
@@ -169,25 +169,25 @@ class PreFilterFactoryTest {
   @ParameterizedTest
   @MethodSource("inputsForTestingMainScopeAndSonarTest")
   void shouldTestMainScopeWhenSonarTestIsNotSet(String filePath, boolean shouldMatch) {
-    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.MAIN, SpecificationConfiguration.NO_CONFIGURATION, shouldMatch);
+    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.MAIN, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, shouldMatch);
   }
 
   @ParameterizedTest
   @MethodSource("inputsForTestingMainScopeAndSonarTest")
   void shouldTestMainScopeWhenSonarTestIsNotSetAndBaseDirectoryContainsTest(String filePath, boolean shouldMatch) {
-    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/with/test/in/it/", RuleScope.MAIN, SpecificationConfiguration.NO_CONFIGURATION, shouldMatch);
+    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/with/test/in/it/", RuleScope.MAIN, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, shouldMatch);
   }
 
   @ParameterizedTest
   @MethodSource("inputsForTestingMainScopeAndSonarTest")
   void shouldTestMainScopeWhenSonarTestIsSet(String filePath, boolean ignored) {
-    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.MAIN, new SpecificationConfiguration("/src/tests"), true);
+    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.MAIN, new SpecificationConfiguration(false), true);
   }
 
   @ParameterizedTest
   @MethodSource("inputsForTestingMainScopeAndSonarTest")
   void shouldTestMainScopeWhenSonarTestIsNotSetAndScopeTest(String filePath, boolean ignored) {
-    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.TEST, SpecificationConfiguration.NO_CONFIGURATION, false);
+    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.TEST, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, false);
   }
 
   private void testPredicateWithScopeAndConfiguration(String filePath, String baseDir, RuleScope scope, SpecificationConfiguration configuration, boolean expected) {
@@ -266,7 +266,7 @@ class PreFilterFactoryTest {
     when(ctx.getInputFile()).thenReturn(inputFile);
     when(ctx.getFileSystem()).thenReturn(fileSystem);
 
-    var predicate = PreFilterFactory.createPredicate(preModule, SpecificationConfiguration.NO_CONFIGURATION);
+    var predicate = PreFilterFactory.createPredicate(preModule, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED);
     assertThat(predicate.test(ctx)).isEqualTo(shouldMatch);
   }
 

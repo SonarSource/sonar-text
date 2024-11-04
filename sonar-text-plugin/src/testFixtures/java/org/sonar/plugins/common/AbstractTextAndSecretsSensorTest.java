@@ -121,7 +121,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     sensor(context).execute(context);
 
     assertThat(context.allIssues()).isEmpty();
-    assertCorrectLogs(logTester.logs(), 0);
+    assertCorrectLogs(logTester.logs(), 0, false);
   }
 
   @Test
@@ -130,7 +130,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     sensor(context).execute(context);
 
     assertThat(context.allIssues()).isEmpty();
-    assertCorrectLogs(logTester.logs(), 0);
+    assertCorrectLogs(logTester.logs(), 0, false);
   }
 
   @Test
@@ -149,7 +149,15 @@ public abstract class AbstractTextAndSecretsSensorTest {
     SensorContextTester context = testUtils().defaultSensorContext();
     analyse(sensor(context), context, inputFile(""));
     assertThat(context.allIssues()).isEmpty();
-    assertCorrectLogs(logTester.logs(), 1);
+    assertCorrectLogs(logTester.logs(), 1, false);
+  }
+
+  @Test
+  void emptyFileShouldRaiseNoIssueWithAutoTestDetectionEnabledBecauseSonarqube() {
+    SensorContextTester context = testUtils().sonarqubeSensorContext();
+    analyse(sensor(context), context, inputFile(""));
+    assertThat(context.allIssues()).isEmpty();
+    assertCorrectLogs(logTester.logs(), 1, true);
   }
 
   @Rule(key = "IssueAtLineOne")
@@ -168,7 +176,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
 
     assertThat(asString(context.allIssues())).containsExactly(
       "text:IssueAtLineOne [1:0-1:3] testIssue");
-    assertCorrectLogs(logTester.logs(), 1);
+    assertCorrectLogs(logTester.logs(), 1, false);
   }
 
   @Test
@@ -181,7 +189,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     assertThat(logTester.logs()).containsExactly(
       EXPECTED_PROCESSOR_LOG_LINE,
       DEFAULT_THREAD_USAGE_LOG_LINE,
-      EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE,
       "Analyzing all except non binary files",
       "1 source file to be analyzed");
   }
@@ -269,7 +276,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     analyse(sensor(check), context, inputFile(Path.of("Foo.class"), "abc", null));
 
     // does not even contain "1/1 source file has been analyzed"
-    assertCorrectLogs(logTester.logs(), 0);
+    assertCorrectLogs(logTester.logs(), 0, false);
   }
 
   @Test
@@ -444,7 +451,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
       inputFile(Path.of("FileWithoutExtension"), SENSITIVE_BIDI_CHARS, null));
 
     assertThat(asString(context.allIssues())).isEmpty();
-    assertCorrectLogs(logTester.logs(), 0,
+    assertCorrectLogs(logTester.logs(), 0, false,
       "'txt' was added to the binary file filter because the file 'Foo.txt' is a binary file.",
       "To remove the previous warning you can add the '.txt' extension to the 'sonar.text.excluded.file.suffixes' property.");
   }
@@ -454,7 +461,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     Check check = new BoomCheck();
     SensorContextTester context = sensorContext(check);
     analyseDirectory(sensor(check), context, Path.of("src", "test", "resources", "binary-files"));
-    assertCorrectLogs(logTester.logs(), 0,
+    assertCorrectLogs(logTester.logs(), 0, false,
       "'unknown1' was added to the binary file filter because the file 'src/test/resources/binary-files/Foo.unknown1' is a binary file.",
       // Because of this warning about 'Foo.unknown1' we will not have any error about 'Bar.unknown1'
       "'unknown2' was added to the binary file filter because the file 'src/test/resources/binary-files/Foo.unknown2' is a binary file.",
@@ -522,7 +529,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
 
     Collection<Issue> issues = context.allIssues();
     assertThat(issues).hasSize(2);
-    assertCorrectLogs(logTester.logs(), 2);
+    assertCorrectLogs(logTester.logs(), 2, false);
     verify(gitService, times(0)).retrieveUntrackedFileNames(context.fileSystem().baseDirPath());
     verify(sensorSpy, times(0)).getGitService();
   }
@@ -667,8 +674,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
       "Using 1 thread for analysis, according to the value of \"sonar.text.threads\" property.",
       "Analyzing all except non binary files",
       "3 source files to be analyzed",
-      "3/3 source files have been analyzed",
-      EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
+      "3/3 source files have been analyzed");
   }
 
   @Test
@@ -692,8 +698,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
         "For more information, visit the documentation page.",
       "Analyzing all except non binary files",
       "3 source files to be analyzed",
-      "3/3 source files have been analyzed",
-      EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
+      "3/3 source files have been analyzed");
   }
 
   @Test
@@ -720,8 +725,17 @@ public abstract class AbstractTextAndSecretsSensorTest {
   }
 
   @Test
-  void shouldLogMessageWhenSonarTestIsNotSet() {
+  void shouldNotLogMessageWhenSonarTestIsNotSetWithSonarlint() {
     SensorContextTester context = testUtils().defaultSensorContext();
+    var settings = context.settings().setProperty(SONAR_TESTS_KEY, "");
+    context.setSettings(settings);
+    analyse(sensor(context), context, inputFile(""));
+    assertThat(logTester.logs(Level.INFO)).doesNotContain(EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
+  }
+
+  @Test
+  void shouldLogMessageWhenSonarTestIsNotSetWithSonarqube() {
+    SensorContextTester context = testUtils().sonarqubeSensorContext();
     var settings = context.settings().setProperty(SONAR_TESTS_KEY, "");
     context.setSettings(settings);
     analyse(sensor(context), context, inputFile(""));
@@ -738,26 +752,32 @@ public abstract class AbstractTextAndSecretsSensorTest {
   }
 
   protected void assertCorrectLogs(List<String> logs, int numberOfAnalyzedFiles, String... additionalLogs) {
+    assertCorrectLogs(logs, numberOfAnalyzedFiles, true, additionalLogs);
+  }
+
+  protected void assertCorrectLogs(List<String> logs, int numberOfAnalyzedFiles, boolean withAutoTestDetection, String... additionalLogs) {
     assertThat(logs).contains(
       EXPECTED_PROCESSOR_LOG_LINE,
-      DEFAULT_THREAD_USAGE_LOG_LINE,
-      EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
+      DEFAULT_THREAD_USAGE_LOG_LINE);
+    if (withAutoTestDetection) {
+      assertThat(logs).contains(EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
+    }
     assertThat(logs).containsAll(Arrays.asList(additionalLogs));
 
+    int lineAutoTest = withAutoTestDetection ? 1 : 0;
     if (numberOfAnalyzedFiles == 0) {
-      assertThat(logs).hasSizeGreaterThanOrEqualTo(additionalLogs.length + 3);
+      assertThat(logs).hasSizeGreaterThanOrEqualTo(additionalLogs.length + lineAutoTest + 2);
     } else if (numberOfAnalyzedFiles == 1) {
-      assertThat(logs).hasSizeGreaterThanOrEqualTo(additionalLogs.length + 5);
+      assertThat(logs).hasSizeGreaterThanOrEqualTo(additionalLogs.length + lineAutoTest + 4);
       assertThat(logs).contains(
         "1 source file to be analyzed",
         "1/1 source file has been analyzed");
     } else {
-      assertThat(logs).hasSizeGreaterThanOrEqualTo(additionalLogs.length + 5);
+      assertThat(logs).hasSizeGreaterThanOrEqualTo(additionalLogs.length + lineAutoTest + 4);
       assertThat(logs).contains(
         numberOfAnalyzedFiles + " source files to be analyzed",
         numberOfAnalyzedFiles + "/" + numberOfAnalyzedFiles + " source files have been analyzed");
     }
-
   }
 
   private void analyseDirectory(Sensor sensor, SensorContextTester context, Path directory) throws IOException {

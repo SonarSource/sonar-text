@@ -76,7 +76,7 @@ public final class PreFilterFactory {
 
     return (InputFileContext inputFileContext) -> {
       var type = inputFileContext.getInputFile().type();
-      if (!scopes.contains(RuleScope.TEST) && specificationConfiguration.sonarTests().isBlank() && type == InputFile.Type.MAIN) {
+      if (!scopes.contains(RuleScope.TEST) && specificationConfiguration.automaticTestFileDetection() && type == InputFile.Type.MAIN) {
         return !isFilenameTest(inputFileContext) && !isFileInDocOrTestDirectory(inputFileContext);
       }
       var ruleScope = RuleScope.valueOf(type.toString().toUpperCase(Locale.ROOT));

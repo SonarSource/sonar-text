@@ -77,7 +77,7 @@ public abstract class AbstractRuleExampleTest {
     }
 
     this.check = check;
-    check.initialize(specificationLoader, mockDurationStatistics(), SpecificationConfiguration.NO_CONFIGURATION);
+    check.initialize(specificationLoader, mockDurationStatistics(), SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED);
 
     if (!loaderExceptions.isEmpty()) {
       for (Throwable e : loaderExceptions) {

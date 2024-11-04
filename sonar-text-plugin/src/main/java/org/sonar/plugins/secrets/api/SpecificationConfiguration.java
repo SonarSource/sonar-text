@@ -21,9 +21,9 @@ package org.sonar.plugins.secrets.api;
 
 /**
  * The settings for {@link SpecificationBasedCheck} initialization.
- * @param sonarTests the value of "sonar.tests" flag.
+ * @param automaticTestFileDetection enable the automatic test file detection.
  */
-public record SpecificationConfiguration(String sonarTests) {
+public record SpecificationConfiguration(boolean automaticTestFileDetection) {
 
-  public static final SpecificationConfiguration NO_CONFIGURATION = new SpecificationConfiguration("");
+  public static final SpecificationConfiguration AUTO_TEST_FILE_DETECTION_ENABLED = new SpecificationConfiguration(true);
 }

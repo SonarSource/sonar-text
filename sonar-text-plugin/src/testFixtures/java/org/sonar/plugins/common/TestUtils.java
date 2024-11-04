@@ -163,6 +163,12 @@ public class TestUtils {
     return sensorContext(allRuleKeys());
   }
 
+  public SensorContextTester sonarqubeSensorContext() {
+    SensorContextTester sensorContextTester = sensorContext(allRuleKeys());
+    sensorContextTester.setRuntime(SONARQUBE_RUNTIME);
+    return sensorContextTester;
+  }
+
   public static SensorContextTester sensorContext(String... activeRules) {
     return sensorContext(new File(".").getAbsoluteFile(), activeRules);
   }
