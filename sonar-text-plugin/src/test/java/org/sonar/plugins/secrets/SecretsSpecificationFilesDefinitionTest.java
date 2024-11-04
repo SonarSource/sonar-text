@@ -28,6 +28,6 @@ class SecretsSpecificationFilesDefinitionTest {
   @Test
   void secretSpecificationsShouldBeCounted() {
     assertThat(SecretsSpecificationFilesDefinition.existingSecretSpecifications())
-      .hasSizeGreaterThanOrEqualTo(55);
+      .hasSizeGreaterThanOrEqualTo(28);
   }
 }

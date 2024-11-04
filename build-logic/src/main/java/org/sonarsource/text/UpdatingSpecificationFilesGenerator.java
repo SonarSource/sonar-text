@@ -120,7 +120,7 @@ public class UpdatingSpecificationFilesGenerator {
     Set<String> keysNotUsedAnymore = new HashSet<>(existingKeysMappedToFileName.keySet());
     keysNotUsedAnymore.removeAll(rulesMappedToKey.keySet());
 
-    LOG.warn("All keys: {}, existing keys: {}, keys to implement checks for: {}, keys not used anymore: {}", rulesMappedToKey.keySet(),
+    LOG.debug("All keys: {}, existing keys: {}, keys to implement checks for: {}, keys not used anymore: {}", rulesMappedToKey.keySet(),
       existingKeysMappedToFileName.keySet(), keysToImplementChecksFor, keysNotUsedAnymore);
 
     for (String rspecKey : keysToImplementChecksFor) {
