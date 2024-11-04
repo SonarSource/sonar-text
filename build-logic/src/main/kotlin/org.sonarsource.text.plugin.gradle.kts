@@ -11,7 +11,7 @@ plugins {
     id("org.sonarsource.text.check-list-generator")
     id("org.sonarsource.text.specification-files-list-generator")
     jacoco
-    id("com.github.johnrengelman.shadow")
+    id("com.gradleup.shadow")
 }
 
 val generateJavaCode by tasks.registering {

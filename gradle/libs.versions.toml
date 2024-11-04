@@ -21,7 +21,7 @@ yguard = "4.1.1"
 eclipse-jgit = "7.0.0.202409031743-r"
 commons-io = "2.17.0"
 re2j = "1.7"
-gradle-shadow = "8.1.1"
+gradle-shadow = "8.3.4"
 
 [libraries]
 sonar-analyzer-commons = { module = "org.sonarsource.analyzer-commons:sonar-analyzer-commons", version.ref = "sonar-commons" }
@@ -48,7 +48,7 @@ yguard = { module = "com.yworks:yguard", version.ref = "yguard"}
 eclipse-jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "eclipse-jgit" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
 google-re2j = { module = "com.google.re2j:re2j", version.ref = "re2j" }
-gradle-shadow = { module = "com.github.johnrengelman:shadow", version.ref = "gradle-shadow" }
+gradle-shadow = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "gradle-shadow" }
 
 [plugins]
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless-gradle" }
