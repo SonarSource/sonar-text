@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.stream.Stream;
 import org.assertj.core.api.SoftAssertions;
@@ -145,6 +146,20 @@ class UpdatingSpecificationFilesGeneratorTest {
     assertThat(locations.checkTestsPathPrefix()).isEqualTo(Path.of("src/test/java/io/sonar/plugins/secrets/checks"));
     assertThat(locations.specFilesPathPrefix()).isEqualTo(Path.of("src/main/resources/io/sonar/plugins/secrets/configuration"));
     assertThat(locations.rspecFilesPath()).isEqualTo(Path.of("src/main/resources/io/sonar/l10n/secrets/rules/secrets"));
+  }
+
+  @Test
+  void shouldGenerateUniqueCheckClassesForThreeRules() {
+    var checkName = "TestDetection";
+    var existingClassNames = new HashMap<String, String>();
+
+    UpdatingSpecificationFilesGenerator.sanitizeCheckName(checkName, "S9000", existingClassNames);
+    UpdatingSpecificationFilesGenerator.sanitizeCheckName(checkName, "S9001", existingClassNames);
+    UpdatingSpecificationFilesGenerator.sanitizeCheckName(checkName, "S9002", existingClassNames);
+
+    assertThat(existingClassNames)
+      .hasSize(3)
+      .containsValues("TestDetectionCheck", "TestDetectionUniqueNameCheck", "TestDetectionUniqueNameUniqueNameCheck");
   }
 
   /**

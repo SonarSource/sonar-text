@@ -103,8 +103,7 @@ public class UpdatingSpecificationFilesGenerator {
     var rulesMappedToKey = readAllRulesFromSpecifications(specificationsToLoad)
       .collect(toMap(spec -> spec.get("rspecKey").asText(), Function.identity(), (rule1, rule2) -> rule1));
     var checkNamesMappedToKey = readAllSpecifications(specificationsToLoad)
-      .flatMap(spec -> StreamSupport.stream(spec.get("provider").get("rules").spliterator(), false)
-        .map(rule -> Map.entry(rule.get("rspecKey").asText(), spec.get("provider").get("metadata").get("name").asText())))
+      .flatMap(spec -> rulesStream(spec).map(rule -> Map.entry(rule.get("rspecKey").asText(), providerName(spec))))
       .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (name1, name2) -> name1));
 
     Map<String, String> existingKeysMappedToFileName = retrieveAlreadyExistingKeys(projectDir);
@@ -160,10 +159,10 @@ public class UpdatingSpecificationFilesGenerator {
     }
   }
 
-  private static String sanitizeCheckName(String checkName, String rspecKey, Map<String, String> existingClassNames) {
+  static String sanitizeCheckName(String checkName, String rspecKey, Map<String, String> existingClassNames) {
     checkName = FORBIDDEN_SYMBOLS_IN_CHECK_NAME.matcher(checkName).replaceAll("") + "Check";
 
-    if (existingClassNames.containsValue(checkName)) {
+    while (existingClassNames.containsValue(checkName)) {
       checkName = checkName.replace("Check", "UniqueNameCheck");
     }
     existingClassNames.put(rspecKey, checkName);
@@ -267,7 +266,8 @@ public class UpdatingSpecificationFilesGenerator {
   }
 
   static Stream<JsonNode> readAllRulesFromSpecifications(Collection<File> specificationFiles) {
-    return readAllSpecifications(specificationFiles).flatMap((JsonNode node) -> StreamSupport.stream(node.get("provider").get("rules").spliterator(), false));
+    return readAllSpecifications(specificationFiles)
+      .flatMap(UpdatingSpecificationFilesGenerator::rulesStream);
   }
 
   static Stream<JsonNode> readAllSpecifications(Collection<File> specificationFiles) {
@@ -279,6 +279,14 @@ public class UpdatingSpecificationFilesGenerator {
           throw new GenerationException("error while reading specification file " + file, e);
         }
       });
+  }
+
+  private static Stream<JsonNode> rulesStream(JsonNode spec) {
+    return StreamSupport.stream(spec.get("provider").get("rules").spliterator(), false);
+  }
+
+  private static String providerName(JsonNode spec) {
+    return spec.get("provider").get("metadata").get("name").asText();
   }
 
   static class TestingEnvironment {
