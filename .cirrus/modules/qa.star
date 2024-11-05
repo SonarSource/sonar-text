@@ -1,6 +1,6 @@
 load("github.com/SonarSource/cirrus-modules/cloud-native/platform.star@analysis/master", "base_image_container_builder", "ec2_instance_builder")
 load(
-    "github.com/SonarSource/cirrus-modules/cloud-native/cache.star@analysis/petertrr/improve-gradle-caching",
+    "github.com/SonarSource/cirrus-modules/cloud-native/cache.star@analysis/master",
     "gradle_cache",
     "gradle_wrapper_cache",
     "cleanup_gradle_script",

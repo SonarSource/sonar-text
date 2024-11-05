@@ -117,7 +117,7 @@ class MultiFileProgressReportTest {
   @Test
   @Timeout(5)
   void shouldDisplayMessageForTwoCurrentlyAnalyzedFilesWhenOneAlreadyFinished() throws InterruptedException {
-    var report = new MultiFileProgressReport(100);
+    var report = new MultiFileProgressReport(250);
     report.start(3);
     report.startAnalysisFor("file1");
     report.startAnalysisFor("file2");
