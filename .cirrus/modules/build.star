@@ -23,7 +23,8 @@ load(
 def build_env():
     env = pgp_signing_env()
     env |= {
-        "DEPLOY_PULL_REQUEST": "true"
+        "DEPLOY_PULL_REQUEST": "true",
+        "BUILD_ARGUMENTS": "--profile"
     }
     return env
 
@@ -35,7 +36,7 @@ def build_script():
     return [
         "source cirrus-env BUILD-PRIVATE",
         "source .cirrus/use-gradle-wrapper.sh",
-        "regular_gradle_build_deploy_analyze :build-logic:test",
+        "regular_gradle_build_deploy_analyze :build-logic:test ${BUILD_ARGUMENTS}",
         "source set_gradle_build_version ${BUILD_NUMBER}",
         "echo export PROJECT_VERSION=${PROJECT_VERSION} >> ~/.profile",
     ]
@@ -53,6 +54,11 @@ def build_task():
             "build_script": build_script(),
             "cleanup_gradle_script": cleanup_gradle_script(),
             "store_project_version_script": store_project_version_script(),
+            "on_success": {
+                "profile_report_artifacts": {
+                    "path": "build/reports/profile/profile-*.html"
+                }
+            },
             "on_failure": default_gradle_on_failure(),
         }
     }

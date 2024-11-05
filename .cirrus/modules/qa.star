@@ -64,7 +64,7 @@ def qa_plugin_env():
 
 def qa_plugin_task():
     return {
-        "qa_plugin_task": qa_task(qa_plugin_env())
+        "qa_plugin_task": qa_task(qa_plugin_env(), memory="12G", cpu="6")
     }
 
 

@@ -5,7 +5,10 @@ load(
     "merge_dict"
 )
 load(".cirrus/modules/env.star", "env")
-load(".cirrus/modules/build.star", "build_task", "sca_scan_task")
+load(
+    ".cirrus/modules/build.star",
+    "build_task",
+    "sca_scan_task")
 load(
     ".cirrus/modules/qa.star",
     "qa_plugin_task",

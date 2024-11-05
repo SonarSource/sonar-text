@@ -1,4 +1,5 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 // Inspiration: https://docs.gradle.org/current/samples/sample_jvm_multi_project_with_additional_test_types.html
 
@@ -29,6 +30,9 @@ val integrationTestTask =
         if (System.getProperty("keepSonarqubeRunning") != null) {
             systemProperty("keepSonarqubeRunning", System.getProperty("keepSonarqubeRunning"))
         }
+
+        val enableParallelExecution = DefaultNativePlatform.getCurrentOperatingSystem().isWindows.not()
+        systemProperty("junit.jupiter.execution.parallel.enabled", enableParallelExecution.toString())
 
         testLogging {
             // log the full stack trace (default is the 1st line of the stack trace)
