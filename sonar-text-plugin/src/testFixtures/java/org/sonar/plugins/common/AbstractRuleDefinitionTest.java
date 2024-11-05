@@ -43,15 +43,13 @@ public abstract class AbstractRuleDefinitionTest {
 
   @Test
   void shouldDefineSonarWayProfile() {
-    CommonRulesDefinition rulesDefinition = getRuleDefinition(TestUtils.SONARLINT_RUNTIME);
     BuiltInQualityProfilesDefinition.Context context = new BuiltInQualityProfilesDefinition.Context();
     BuiltInQualityProfilesDefinition profileDefinition = getQualityProfile();
     profileDefinition.define(context);
     BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile(getRepositoryKey(), "Sonar way");
     assertThat(profile.language()).isEqualTo(getRepositoryKey());
     assertThat(profile.name()).isEqualTo("Sonar way");
-    int expectedSonarWayChecks = rulesDefinition.checks().size() - nonSonarWayRulesCount();
-    assertThat(profile.rules()).hasSize(expectedSonarWayChecks);
+    assertThat(profile.rules()).hasSize(expectedSonarWayChecksCount(TestUtils.SONARLINT_RUNTIME));
   }
 
   protected abstract CommonRulesDefinition getRuleDefinition(SonarRuntime sonarRuntime);
@@ -61,6 +59,11 @@ public abstract class AbstractRuleDefinitionTest {
   protected abstract String getRepositoryKey();
 
   protected abstract String getRepositoryName();
+
+  protected int expectedSonarWayChecksCount(SonarRuntime sonarRuntime) {
+    var rulesDefinition = getRuleDefinition(sonarRuntime);
+    return rulesDefinition.checks().size() - nonSonarWayRulesCount();
+  }
 
   protected int nonSonarWayRulesCount() {
     return 0;
