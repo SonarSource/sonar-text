@@ -19,9 +19,9 @@
  */
 package <package>;
 
-import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
+import <base-test-class>;
 
-class GenericCheckTemplateTest extends AbstractRuleExampleTest {
+class GenericCheckTemplateTest extends <base-test-class-name> {
   GenericCheckTemplateTest() {
     super(new GenericCheckTemplate());
   }

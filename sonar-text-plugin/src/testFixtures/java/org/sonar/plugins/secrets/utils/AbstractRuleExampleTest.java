@@ -67,13 +67,17 @@ public abstract class AbstractRuleExampleTest {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractRuleExampleTest.class);
   private static SecretsSpecificationLoader specificationLoader;
   private final SpecificationBasedCheck check;
+  private final String specificationLocation;
   private final Collection<Throwable> loaderExceptions = new HashSet<>();
 
   protected AbstractRuleExampleTest(SpecificationBasedCheck check) {
+    this(check, SecretsSpecificationLoader.DEFAULT_SPECIFICATION_LOCATION, existingSecretSpecifications());
+  }
+
+  protected AbstractRuleExampleTest(SpecificationBasedCheck check, String specificationLocation, Set<String> specifications) {
+    this.specificationLocation = specificationLocation;
     if (specificationLoader == null) {
-      specificationLoader = new SecretsSpecificationLoader(
-        SecretsSpecificationLoader.DEFAULT_SPECIFICATION_LOCATION, existingSecretSpecifications(),
-        (e, ignored) -> loaderExceptions.add(e));
+      specificationLoader = new SecretsSpecificationLoader(specificationLocation, specifications, (e, ignored) -> loaderExceptions.add(e));
     }
 
     this.check = check;
@@ -103,7 +107,7 @@ public abstract class AbstractRuleExampleTest {
     ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
     List<String> fileNames = specificationLoader.getSpecificationFilesForKey(check.getRuleKey().rule());
     for (String fileName : fileNames) {
-      InputStream specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("org/sonar/plugins/secrets/configuration/" + fileName);
+      InputStream specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(specificationLocation + fileName);
       JsonNode specification = MAPPER.readTree(specificationStream);
 
       Set<ValidationMessage> validationMessages = SchemaValidator.validate(specification);

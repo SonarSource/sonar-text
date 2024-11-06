@@ -89,6 +89,11 @@ tasks.register("updateCheckClasses") {
 
     doLast {
         val config = project.extensions.getByName<CodeGenerationConfiguration>("codeGeneration")
-        UpdatingSpecificationFilesGenerator("$projectDir", config.packagePrefix.get(), config.excludedKeys.get()).performGeneration()
+        UpdatingSpecificationFilesGenerator(
+            "$projectDir",
+            config.packagePrefix.get(),
+            config.excludedKeys.get(),
+            config.baseTestClass.get()
+        ).performGeneration()
     }
 }

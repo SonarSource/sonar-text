@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import kotlin.text.StringsKt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +64,7 @@ public class UpdatingSpecificationFilesGenerator {
   private final TestingEnvironment testingEnvironment = new TestingEnvironment();
   private final Path projectDir;
   private final Collection<String> keysToExclude;
+  private final String baseTestClass;
 
   record Locations(Path checkTestsPathPrefix, Path checkPathPrefix, Path rspecFilesPath, Path specFilesPathPrefix) {
     public static Locations from(String packagePrefix) {
@@ -77,8 +79,9 @@ public class UpdatingSpecificationFilesGenerator {
     }
   }
 
-  public UpdatingSpecificationFilesGenerator(String projectDir, String packagePrefix, Collection<String> keysToExclude) {
+  public UpdatingSpecificationFilesGenerator(String projectDir, String packagePrefix, Collection<String> keysToExclude, String baseTestClass) {
     this.packagePrefix = packagePrefix;
+    this.baseTestClass = baseTestClass;
     this.projectDir = Path.of(projectDir);
     this.keysToExclude = unmodifiableCollection(keysToExclude);
     this.locations = Locations.from(packagePrefix);
@@ -189,8 +192,11 @@ public class UpdatingSpecificationFilesGenerator {
     var checkTestPath = locations.checkTestsPathPrefix.resolve(checkName + "Test.java");
     try (var stream = UpdatingSpecificationFilesGenerator.class.getResourceAsStream(resourcePath)) {
       requireNonNull(stream, "File GenericCheckTestTemplate not found");
+      var baseTestClassName = StringsKt.substringAfterLast(baseTestClass, ".", "");
       var content = new String(stream.readAllBytes(), CHARSET)
         .replace("<package>", packagePrefix + ".sonar.plugins.secrets.checks")
+        .replace("<base-test-class>", baseTestClass)
+        .replace("<base-test-class-name>", baseTestClassName)
         .replace("GenericCheckTemplate", checkName)
         .replace("GenericCheckTemplateTest", checkName + "Test");
       writeFile(checkTestPath, content);

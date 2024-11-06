@@ -101,6 +101,7 @@ codeStyleConvention {
 
 codeGeneration {
     packagePrefix = "org"
+    baseTestClass = "org.sonar.plugins.secrets.utils.AbstractRuleExampleTest"
     excludedKeys = emptySet()
     checkListClassName = "SecretsCheckList"
     specFileListClassName = "SecretsSpecificationFilesDefinition"

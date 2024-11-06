@@ -9,6 +9,7 @@ import org.gradle.kotlin.dsl.setProperty
 
 open class CodeGenerationConfiguration(objects: ObjectFactory) {
     val packagePrefix: Property<String> = objects.property<String>()
+    val baseTestClass: Property<String> = objects.property<String>()
     val excludedKeys: SetProperty<String> = objects.setProperty<String>()
     val checkListClassName: Property<String> = objects.property<String>()
     val specFileListClassName: Property<String> = objects.property<String>()

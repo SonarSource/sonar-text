@@ -45,7 +45,11 @@ import static org.sonarsource.text.UpdatingSpecificationFilesGenerator.RSPEC_LIS
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UpdatingSpecificationFilesGeneratorTest {
-  private static final UpdatingSpecificationFilesGenerator GENERATOR = new UpdatingSpecificationFilesGenerator(".", "org", Set.of("S9002"));
+  private static final UpdatingSpecificationFilesGenerator GENERATOR = new UpdatingSpecificationFilesGenerator(
+    ".",
+    "org",
+    Set.of("S9002"),
+    "org.sonar.plugins.secrets.utils.AbstractRuleExampleTest");
   private static final String SPECIFICATION_BUILD_PATH = String.join(File.separator, "build", "resources", "test", "org", "sonar",
     "plugins", "secrets", "configuration");
   private static final String SPECIFICATIONS_TO_COPY_PATH = String.join(File.separator, "src", "test", "resources", "secretsConfiguration", "generator");
@@ -129,7 +133,7 @@ class UpdatingSpecificationFilesGeneratorTest {
 
   @Test
   void shouldThrowIfSpecificationFileCannotBeRead() {
-    var generator = new UpdatingSpecificationFilesGenerator(".", "org", emptySet());
+    var generator = new UpdatingSpecificationFilesGenerator(".", "org", emptySet(), "org.sonar.plugins.secrets.utils.AbstractRuleExampleTest");
     generator.setTestMode(tempFolder.toFile(), Set.of("nonExistentFile.yaml"));
 
     assertThatThrownBy(generator::performGeneration)
