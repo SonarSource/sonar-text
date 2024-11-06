@@ -1,6 +1,6 @@
 [versions]
 sonar-commons = "2.14.0.3087"
-sonar-plugin-api = "10.12.0.2522"
+sonar-plugin-api = "10.13.0.2560"
 sonarqube = "10.7.0.96327"
 sonar-java = "8.5.0.37199"
 sonar-scanner-gradle = "5.1.0.4882"
@@ -10,7 +10,7 @@ sonarlint-core = "9.8.0.76914"
 slf4j = "2.0.16"
 logback = "1.5.12"
 jackson = "2.18.1"
-json-schema-validator = "1.5.2"
+json-schema-validator = "1.5.3"
 junit = "5.11.3"
 assertj = "3.26.3"
 mockito = "5.14.2"
@@ -21,7 +21,7 @@ yguard = "4.1.1"
 eclipse-jgit = "7.0.0.202409031743-r"
 commons-io = "2.17.0"
 re2j = "1.7"
-gradle-shadow = "8.3.4"
+gradle-shadow = "8.3.5"
 
 [libraries]
 sonar-analyzer-commons = { module = "org.sonarsource.analyzer-commons:sonar-analyzer-commons", version.ref = "sonar-commons" }
