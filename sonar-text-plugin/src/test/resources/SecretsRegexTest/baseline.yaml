@@ -7,14 +7,6 @@ issuesToVerify:
     message: Simplify this regular expression to reduce its complexity from 23 to the 20 allowed.
     details: "text: (?i)com\\.google\\.android\\.(?:maps\\.v2|geo)\\.API_KEY|google[_\\W]?maps?|maps?[_\\W]?(?:api[_\\W]?)?key|https://www\\.google\\.com/maps/embed/v1/place"
 
-  - secretRuleKey: S6691
-    secretRuleId: google-oauth-secret-no-prefix-client-id-after
-    location: matching
-    regexText: "(?i)secret(?:[^})\\\\r\\\\n]*+\\\\r?\\\\n)?[^})\\\\r\\\\n]{0,50}\\\\b([\\\\w\\\\-]{24})\\\\b(?:[^})\\\\r\\\\n]*+\\\\r?\\\\n){0,3}[^})\\\\r\\\\n]{0,300}\\\\.apps\\\\.googleusercontent\\\\.com\\\\b(?!(?:[^})\\\\r\\\\n]*+\\\\r?\\\\n)?[^})\\\\r\\\\n]{0,30}secret)"
-    issueRuleKey: S5843
-    message: Simplify this regular expression to reduce its complexity from 32 to the 20 allowed.
-    details: "text: (?i)secret(?:[^})\\\\r\\\\n]*+\\\\r?\\\\n)?[^})\\\\r\\\\n]{0,50}\\\\b([\\\\w\\\\-]{24})\\\\b(?:[^})\\\\r\\\\n]*+\\\\r?\\\\n){0,3}[^})\\\\r\\\\n]{0,300}\\\\.apps\\\\.googleusercontent\\\\.com\\\\b(?!(?:[^})\\\\r\\\\n]*+\\\\r?\\\\n)?[^})\\\\r\\\\n]{0,30}secret)"
-
   - secretRuleKey: S6290
     secretRuleId: aws-session-tokens
     location: matching
@@ -166,12 +158,3 @@ issuesToVerify:
     issueRuleKey: S5852
     message: Make sure the regex used here, which is vulnerable to polynomial runtime due to backtracking, cannot lead to denial of service.
     details: ""
-
-  # This regex is long and complex because the secret itself is long and complex.
-  - secretRuleKey: S7011
-    secretRuleId: azure-eventgrid-t2-shared-access-secrets
-    location: matching
-    regexText: "(?i)\\\\b(r=(?<resource>https%3a%2f%2f[-a-z0-9%._]{1,200}\\\\.eventgrid\\\\.azure\\\\.net%2fapi%2fevents(?:%3f)?(?:apiVersion%3d\\\\d{4}-\\\\d{1,2}-\\\\d{1,2})?)&e=(?<expiration>\\\\d{1,2}%2f\\\\d{1,2}%2f\\\\d{4}(?:%20|\\\\+)\\\\d{1,2}%3a\\\\d{1,2}%3a\\\\d{1,2}(?:%20|\\\\+)[AP]M)&s=(?<signature>[-a-z0-9+\\\\/_%]{30,100}%3d))\\\\b"
-    issueRuleKey: S5843
-    message: Simplify this regular expression to reduce its complexity from 22 to the 20 allowed.
-    details: "text: (?i)\\\\b(r=(?<resource>https%3a%2f%2f[-a-z0-9%._]{1,200}\\\\.eventgrid\\\\.azure\\\\.net%2fapi%2fevents(?:%3f)?(?:apiVersion%3d\\\\d{4}-\\\\d{1,2}-\\\\d{1,2})?)&e=(?<expiration>\\\\d{1,2}%2f\\\\d{1,2}%2f\\\\d{4}(?:%20|\\\\+)\\\\d{1,2}%3a\\\\d{1,2}%3a\\\\d{1,2}(?:%20|\\\\+)[AP]M)&s=(?<signature>[-a-z0-9+\\\\/_%]{30,100}%3d))\\\\b"

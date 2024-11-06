@@ -35,6 +35,7 @@ tasks.test {
         // verbose log for failed and skipped tests (by default the name of the tests are not logged)
         events("skipped", "failed")
     }
+    providers.systemProperty("filename").map { systemProperty("filename", it) }.orNull
 }
 
 jacoco {

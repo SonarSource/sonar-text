@@ -55,14 +55,16 @@ import org.sonarsource.analyzer.commons.regex.ast.RegexSyntaxElement;
 public class TestRegexScannerContext implements JavaFileScannerContext, RegexScannerContext {
 
   private final List<Issue> issues = new ArrayList<>();
-  private SecretsRegexTest.PatternLocation patternLocation;
+  private final String baselineFileName;
+  private PatternLocation patternLocation;
 
-  private SecretsRegexBaseline baseline;
+  private final SecretsRegexBaseline baseline;
 
-  public TestRegexScannerContext() {
+  public TestRegexScannerContext(String baselineFileName) {
+    this.baselineFileName = baselineFileName;
     try {
       var mapper = new ObjectMapper(new YAMLFactory());
-      var file = new File("src/test/resources/SecretsRegexTest/baseline.yaml");
+      var file = new File("src/test/resources/SecretsRegexTest", baselineFileName);
       var treeNode = mapper.readTree(file);
       baseline = mapper.treeToValue(treeNode, SecretsRegexBaseline.class);
     } catch (IOException e) {
@@ -96,12 +98,12 @@ public class TestRegexScannerContext implements JavaFileScannerContext, RegexSca
         .filter(issue -> !issuesInUse.contains(issue))
         .map(TestRegexScannerContext::toIssueMessage)
         .collect(Collectors.joining("\n"));
-      System.out.println("Found outdated issues in baseline (SecretsRegexTest/baseline.yaml), please clean up them! Outdated issues:\n" + unusedIssues);
+      System.out.println("Found outdated issues in baseline (SecretsRegexTest/" + baselineFileName + "), please clean up them! Outdated issues:\n" + unusedIssues);
     }
     if (numberOfNewIssues != 0) {
       var text = ("Found following issues in Regexes (%s):%n" +
-        "Please fix them or suppress in SecretsRegexTest/baseline.yaml:%n%s")
-          .formatted(numberOfNewIssues, message);
+        "Please fix them or suppress in SecretsRegexTest/%s:%n%s")
+          .formatted(numberOfNewIssues, baselineFileName, message);
       throw new AssertionFailedError(text);
     }
   }
@@ -118,7 +120,7 @@ public class TestRegexScannerContext implements JavaFileScannerContext, RegexSca
         issue.details.replace("\\\\", "\\\\\\\\").replace("\"", "\\\""));
   }
 
-  public void setPatternLocation(SecretsRegexTest.PatternLocation patternLocation) {
+  public void setPatternLocation(PatternLocation patternLocation) {
     this.patternLocation = patternLocation;
   }
 
@@ -145,13 +147,13 @@ public class TestRegexScannerContext implements JavaFileScannerContext, RegexSca
       details = "text: %s".formatted(regexText);
     }
 
-    issues.add(new Issue(patternLocation.secretRspecKey, patternLocation.secretRuleId, patternLocation.location, ruleKey, regexText, message, details));
+    issues.add(new Issue(patternLocation.secretRspecKey(), patternLocation.secretRuleId(), patternLocation.location(), ruleKey, regexText, message, details));
   }
 
   @Override
   public void reportIssue(RegexCheck regexCheck, Tree javaSyntaxElement, String message, @Nullable Integer cost, List<RegexCheck.RegexIssueLocation> secondaries) {
     var ruleKey = readRuleKey(regexCheck);
-    issues.add(new Issue(patternLocation.secretRspecKey, patternLocation.secretRuleId, patternLocation.location, ruleKey, patternLocation.regex, message, ""));
+    issues.add(new Issue(patternLocation.secretRspecKey(), patternLocation.secretRuleId(), patternLocation.location(), ruleKey, patternLocation.regex(), message, ""));
   }
 
   @Override
@@ -219,17 +221,17 @@ public class TestRegexScannerContext implements JavaFileScannerContext, RegexSca
 
   @Override
   public void addIssueOnFile(JavaCheck check, String message) {
-
+    // unused in the test context
   }
 
   @Override
   public void addIssue(int line, JavaCheck check, String message) {
-
+    // unused in the test context
   }
 
   @Override
   public void addIssue(int line, JavaCheck check, String message, @Nullable Integer cost) {
-
+    // unused in the test context
   }
 
   @Override
@@ -239,7 +241,7 @@ public class TestRegexScannerContext implements JavaFileScannerContext, RegexSca
 
   @Override
   public void addIssueOnProject(JavaCheck check, String message) {
-
+    // unused in the test context
   }
 
   @Override

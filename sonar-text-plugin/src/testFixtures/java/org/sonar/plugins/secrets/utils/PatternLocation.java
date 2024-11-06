@@ -19,10 +19,9 @@
  */
 package org.sonar.plugins.secrets.utils;
 
-import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
-
-public class SecretsRegexTest extends AbstractSecretsRegexTest {
-  public SecretsRegexTest() {
-    super(SecretsSpecificationLoader.DEFAULT_SPECIFICATION_LOCATION, "baseline.yaml");
-  }
+public record PatternLocation(
+  String secretRspecKey,
+  String secretRuleId,
+  String location,
+  String regex) {
 }
