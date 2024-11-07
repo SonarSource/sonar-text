@@ -1,3 +1,4 @@
+import java.time.Duration
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.sonarsource.text.CHECK_LIST_GENERATION_TASK_NAME
 import org.sonarsource.text.CodeGenerationConfiguration
@@ -36,6 +37,7 @@ tasks.test {
         events("skipped", "failed")
     }
     providers.systemProperty("filename").map { systemProperty("filename", it) }.orNull
+    timeout = Duration.ofMinutes(5)
 }
 
 jacoco {

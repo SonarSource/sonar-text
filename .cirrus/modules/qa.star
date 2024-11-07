@@ -154,6 +154,11 @@ def qa_os_win_task():
             "orchestrator_cache": orchestrator_cache(),
             "build_script": qa_win_script(),
             "cleanup_gradle_script": cleanup_gradle_script(),
+            "on_success": {
+                "profile_report_artifacts": {
+                    "path": "build/reports/profile/**"
+                }
+            },
             "on_failure": default_gradle_on_failure(),
         }
     }

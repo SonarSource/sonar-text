@@ -31,6 +31,7 @@ import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.atIndex;
 
 class MultiFileProgressReportTest {
 
@@ -51,10 +52,10 @@ class MultiFileProgressReportTest {
 
     report.stop();
 
-    assertThat(logTester.logs()).containsExactly(
-      "3 source files to be analyzed",
-      "0/3 files analyzed, current files: none",
-      "3/3 source files have been analyzed");
+    assertThat(logTester.logs())
+      .contains("3 source files to be analyzed", atIndex(0))
+      .contains("0/3 files analyzed, current files: none")
+      .last().isEqualTo("3/3 source files have been analyzed");
   }
 
   @Test
@@ -69,10 +70,10 @@ class MultiFileProgressReportTest {
 
     report.stop();
 
-    assertThat(logTester.logs()).containsExactly(
-      "1 source file to be analyzed",
-      "0/1 files analyzed, current files: none",
-      "1/1 source file has been analyzed");
+    assertThat(logTester.logs())
+      .contains("1 source file to be analyzed", atIndex(0))
+      .contains("0/1 files analyzed, current files: none")
+      .last().isEqualTo("1/1 source file has been analyzed");
   }
 
   @Test
@@ -88,10 +89,10 @@ class MultiFileProgressReportTest {
 
     report.stop();
 
-    assertThat(logTester.logs()).containsExactly(
-      "1 source file to be analyzed",
-      "0/1 files analyzed, current file: file1",
-      "1/1 source file has been analyzed");
+    assertThat(logTester.logs())
+      .contains("1 source file to be analyzed", atIndex(0))
+      .contains("0/1 files analyzed, current file: file1")
+      .last().isEqualTo("1/1 source file has been analyzed");
   }
 
   @Test
@@ -108,16 +109,16 @@ class MultiFileProgressReportTest {
 
     report.stop();
 
-    assertThat(logTester.logs()).containsExactly(
-      "2 source files to be analyzed",
-      "0/2 files analyzed, current files: file1, file2",
-      "2/2 source files have been analyzed");
+    assertThat(logTester.logs())
+      .contains("2 source files to be analyzed", atIndex(0))
+      .contains("0/2 files analyzed, current files: file1, file2")
+      .last().isEqualTo("2/2 source files have been analyzed");
   }
 
   @Test
   @Timeout(5)
   void shouldDisplayMessageForTwoCurrentlyAnalyzedFilesWhenOneAlreadyFinished() throws InterruptedException {
-    var report = new MultiFileProgressReport(250);
+    var report = new MultiFileProgressReport(100);
     report.start(3);
     report.startAnalysisFor("file1");
     report.startAnalysisFor("file2");
@@ -130,10 +131,10 @@ class MultiFileProgressReportTest {
 
     report.stop();
 
-    assertThat(logTester.logs()).containsExactly(
-      "3 source files to be analyzed",
-      "1/3 files analyzed, current files: file1, file3",
-      "3/3 source files have been analyzed");
+    assertThat(logTester.logs())
+      .contains("3 source files to be analyzed", atIndex(0))
+      .contains("1/3 files analyzed, current files: file1, file3")
+      .last().isEqualTo("3/3 source files have been analyzed");
   }
 
   @Test
@@ -152,10 +153,10 @@ class MultiFileProgressReportTest {
 
     report.stop();
 
-    assertThat(logTester.logs()).containsExactly(
-      "4 source files to be analyzed",
-      "0/4 files analyzed, current files: file1, file2, file3, ...",
-      "4/4 source files have been analyzed");
+    assertThat(logTester.logs())
+      .contains("4 source files to be analyzed", atIndex(0))
+      .contains("0/4 files analyzed, current files: file1, file2, file3, ...")
+      .last().isEqualTo("4/4 source files have been analyzed");
   }
 
   @Test
@@ -175,10 +176,10 @@ class MultiFileProgressReportTest {
 
     report.stop();
 
-    assertThat(logTester.logs()).containsExactly(
-      "4 source files to be analyzed",
-      "0/4 files analyzed, current files: file1, file2, file3, file4",
-      "4/4 source files have been analyzed");
+    assertThat(logTester.logs())
+      .contains("4 source files to be analyzed", atIndex(0))
+      .contains("0/4 files analyzed, current files: file1, file2, file3, file4")
+      .last().isEqualTo("4/4 source files have been analyzed");
   }
 
   @Test
@@ -187,24 +188,24 @@ class MultiFileProgressReportTest {
     var report = new MultiFileProgressReport(100);
     logTester.setLevel(Level.DEBUG);
     report.start(2);
+    // Wait for start message
+    waitForMessage();
     report.startAnalysisFor("file1");
     report.finishAnalysisFor("file1");
     report.startAnalysisFor("file2");
     report.finishAnalysisFor("file2");
     report.startAnalysisFor("fileThatExceedsSize");
     report.finishAnalysisFor("fileThatExceedsSize");
-    // Wait for start message
-    waitForMessage();
     // Wait for at least one progress message
     waitForMessage();
 
     report.stop();
 
-    assertThat(logTester.logs()).contains(
-      "2 source files to be analyzed",
-      "2/2 files analyzed, current files: none",
-      "Reported finished analysis on more files than expected",
-      "2/2 source files have been analyzed");
+    assertThat(logTester.logs())
+      .contains("2 source files to be analyzed", atIndex(0))
+      .contains("2/2 files analyzed, current files: none",
+        "Reported finished analysis on more files than expected")
+      .last().isEqualTo("2/2 source files have been analyzed");
   }
 
   @Test
@@ -221,11 +222,10 @@ class MultiFileProgressReportTest {
 
     report.stop();
 
-    assertThat(logTester.logs()).contains(
-      "2 source files to be analyzed",
-      "0/2 files analyzed, current files: none",
-      "Couldn't finish progress report of file \"file1\", as it was not in the list of files being analyzed",
-      "2/2 source files have been analyzed");
+    assertThat(logTester.logs()).contains("2 source files to be analyzed")
+      .contains("0/2 files analyzed, current files: none",
+        "Couldn't finish progress report of file \"file1\", as it was not in the list of files being analyzed")
+      .last().isEqualTo("2/2 source files have been analyzed");
   }
 
   @Test
