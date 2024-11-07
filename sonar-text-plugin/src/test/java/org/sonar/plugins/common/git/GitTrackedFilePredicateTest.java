@@ -24,12 +24,10 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.sonar.api.batch.fs.FilePredicate;
-import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,8 +36,6 @@ import static org.mockito.Mockito.when;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 
 class GitTrackedFilePredicateTest {
-  @RegisterExtension
-  LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
   // Workaround to get the base directory of the project
   private static final Path BASE_DIR = inputFile(Paths.get("")).path();

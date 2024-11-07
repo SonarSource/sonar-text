@@ -97,6 +97,7 @@ public class GitServiceTest {
   @ParameterizedTest
   @ValueSource(classes = {NoWorkTreeException.class, RuntimeException.class})
   void shouldReturnFalseWhenJgitException(Class<? extends Exception> exceptionClass) throws JgitSupplier.JgitInitializationException, IOException {
+    logTester.setLevel(Level.DEBUG);
 
     var expectedException = new JgitSupplier.JgitInitializationException(mock(exceptionClass));
     var jgitSupplier = mock(JgitSupplier.class);
@@ -108,8 +109,10 @@ public class GitServiceTest {
 
     assertThat(gitResult.isGitStatusSuccessful()).isFalse();
     assertThat(logTester.logs())
-      .anyMatch(l -> l.contains("Using JGit to retrieve untracked files"))
-      .anyMatch(l -> l.contains("Unable to retrieve git status"));
+      .anySatisfy(line -> assertThat(line).contains("Using JGit to retrieve untracked files"))
+      .anySatisfy(line -> assertThat(line).contains("Exception querying Git data: " + expectedException.getMessage()));
+
+    logTester.setLevel(Level.INFO);
   }
 
   @Test
@@ -202,7 +205,7 @@ public class GitServiceTest {
   void shouldLocateGitOnWindowsWithMockedCall() throws IOException {
     ProcessBuilderWrapper mockedWrapper = mock(ProcessBuilderWrapper.class);
     when(mockedWrapper.execute(any(), any())).thenAnswer(invocationOnMock -> {
-      Consumer<String> consumer = invocationOnMock.getArgument(1, Consumer.class);
+      Consumer<String> consumer = invocationOnMock.getArgument(1);
       consumer.accept("C:\\path\\to\\git.exe");
       return ProcessBuilderWrapper.Status.SUCCESS;
     });

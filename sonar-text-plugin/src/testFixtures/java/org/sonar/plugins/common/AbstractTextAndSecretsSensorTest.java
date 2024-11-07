@@ -601,7 +601,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     Collection<Issue> issues = context.allIssues();
     assertThat(issues).hasSize(1);
     assertCorrectLogs(logTester.logs(), 1,
-      "Unable to retrieve git status",
       "Analyzing only language associated files, make sure to run the analysis " +
         "inside a git repository to make use of inclusions specified via \"sonar.text.inclusions\"");
   }

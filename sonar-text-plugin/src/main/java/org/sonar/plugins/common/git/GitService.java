@@ -60,7 +60,7 @@ public class GitService {
         return getUntrackedFilesFromJgit(jgitSupplier, baseDir);
       }
     } catch (JgitSupplier.JgitInitializationException | GitAPIException | IOException e) {
-      LOG.warn("Unable to retrieve git status", e);
+      LOG.debug("Exception querying Git data: {}", e.getMessage());
       return new Result(false, Set.of());
     }
   }
