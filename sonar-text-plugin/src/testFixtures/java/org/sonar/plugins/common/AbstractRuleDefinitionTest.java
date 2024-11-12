@@ -39,6 +39,8 @@ public abstract class AbstractRuleDefinitionTest {
     assertThat(repository).isNotNull();
     assertThat(repository.rules()).hasSize(rulesDefinition.checks().size());
     assertThat(repository.name()).isEqualTo(getRepositoryName());
+
+    customRepositoryAssertions(repository, rulesDefinition);
   }
 
   @Test
