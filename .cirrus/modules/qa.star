@@ -11,6 +11,7 @@ load(
 load(
     "github.com/SonarSource/cirrus-modules/cloud-native/actions.star@analysis/master",
     "default_gradle_on_failure",
+    "gradle_html_report_artifacts",
 )
 
 QA_PLUGIN_GRADLE_TASK = "private:its:plugin:integrationTest"
@@ -34,7 +35,7 @@ def qa_task(env, memory="11G", cpu="4"):
         "mkdir_orchestrator_home_script": mkdir_orchestrator_home_script(),
         "orchestrator_cache": orchestrator_cache(),
         "run_its_script": run_its_script(),
-        "on_failure": default_gradle_on_failure(),
+        "gradle_test_artifacts": gradle_html_report_artifacts(),
         "cleanup_gradle_script": cleanup_gradle_script(),
     }
 
@@ -44,7 +45,7 @@ def run_its_script():
         "if [ \"$INIT_SUBMODULES\" == \"true\" ]; then git submodule update --init --depth 1; fi",
         "source cirrus-env QA",
         "source .cirrus/use-gradle-wrapper.sh",
-        "./gradlew \"${GRADLE_TASK}\" \"-Dsonar.runtimeVersion=${SQ_VERSION}\" --info --build-cache --console plain --no-daemon"
+        "./gradlew \"${GRADLE_TASK}\" \"-Dsonar.runtimeVersion=${SQ_VERSION}\" --build-cache --console plain --no-daemon"
     ]
 
 
@@ -64,7 +65,7 @@ def qa_plugin_env():
 
 def qa_plugin_task():
     return {
-        "qa_plugin_task": qa_task(qa_plugin_env(), memory="12G", cpu="6")
+        "qa_plugin_task": qa_task(qa_plugin_env(), memory="14G", cpu="6")
     }
 
 
