@@ -8,7 +8,7 @@ INITIAL_VERSION=$(grep version gradle.properties | awk -F= '{print $2}')
 
 ./gradlew --no-daemon --console plain \
   -DbuildNumber="$CI_BUILD_NUMBER" \
-  build sonar \
+  build sonar :build-logic:test \
   -Dsonar.host.url="$SONAR_HOST_URL" \
   -Dsonar.token="$SONAR_TOKEN" \
   -Dsonar.projectVersion="$INITIAL_VERSION" \
