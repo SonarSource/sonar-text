@@ -1,4 +1,5 @@
-load("github.com/SonarSource/cirrus-modules/cloud-native/platform.star@analysis/master", "base_image_container_builder", "ec2_instance_builder")
+load("github.com/SonarSource/cirrus-modules/cloud-native/platform.star@analysis/master", "base_image_container_builder",
+     "ec2_instance_builder")
 load(
     "github.com/SonarSource/cirrus-modules/cloud-native/cache.star@analysis/master",
     "gradle_cache",
@@ -126,8 +127,10 @@ def qa_benchmark_task():
         }
     }
 
+
 def qa_win_condition():
     return "$CIRRUS_PR_LABELS =~ \".*qa-win.*\" || $CIRRUS_BRANCH == $CIRRUS_DEFAULT_BRANCH || $CIRRUS_BRANCH =~ \"branch-.*\""
+
 
 def qa_win_env():
     return {
@@ -135,11 +138,13 @@ def qa_win_env():
         "GITHUB_TOKEN": "VAULT[development/github/token/licenses-ro token]",
     }
 
+
 def qa_win_script():
     return [
         "source cirrus-env CI",
         "./gradlew ${GRADLE_COMMON_FLAGS} --info --no-parallel --build-cache test integrationTest -x :private:its:benchmark:integrationTest",
     ]
+
 
 def qa_os_win_task():
     return {
@@ -162,4 +167,17 @@ def qa_os_win_task():
             },
             "on_failure": default_gradle_on_failure(),
         }
+    }
+
+
+def qa_sqs_edition_test_task():
+    task = qa_task(env={
+        "GRADLE_TASK": "sonarQubeEditionTest",
+        "SQ_VERSION": QA_QUBE_LATEST_RELEASE,
+        "GITHUB_TOKEN": "VAULT[development/github/token/licenses-ro token]", },
+        memory="14G",
+        cpu="4")
+    task["skip"] = "$CIRRUS_PR_LABELS !=~ \".*qa-edition.*\""
+    return {
+        "qa_sqs_edition_test_task": task
     }

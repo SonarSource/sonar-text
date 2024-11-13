@@ -15,6 +15,7 @@ load(
     "qa_ruling_task",
     "qa_benchmark_task",
     "qa_os_win_task",
+    "qa_sqs_edition_test_task",
 )
 load(".cirrus/modules/promote.star", "promote_task")
 
@@ -28,5 +29,6 @@ def private_pipeline_builder():
     merge_dict(conf, qa_ruling_task())
     merge_dict(conf, qa_benchmark_task())
     merge_dict(conf, qa_os_win_task())
+    merge_dict(conf, qa_sqs_edition_test_task())
     merge_dict(conf, promote_task())
     return conf
