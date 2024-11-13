@@ -2,6 +2,7 @@ import org.sonarsource.text.enforceJarSize
 
 plugins {
     id("org.sonarsource.text.plugin")
+    id("org.sonarsource.text.code-generation")
     id("org.sonarsource.text.artifactory-configuration")
     `java-library`
     `java-test-fixtures`

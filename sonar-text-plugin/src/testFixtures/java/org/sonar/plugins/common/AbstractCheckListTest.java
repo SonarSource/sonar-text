@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public abstract class AbstractCheckListTest {
 
   @Test
-  void eachCheckShouldBeDeclaredInTheCheckList() throws IOException {
+  protected void eachCheckShouldBeDeclaredInTheCheckList() throws IOException {
     Path checksPackage = checksPackage();
     try (Stream<Path> list = Files.walk(checksPackage)) {
       int expectedCount = (int) list.filter(file -> file.toString().endsWith("Check.java")).count();

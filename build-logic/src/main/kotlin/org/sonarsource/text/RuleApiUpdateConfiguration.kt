@@ -31,8 +31,12 @@ fun Project.registerRuleApiTasks(suffix: String, sonarpediaLocation: File) {
     val branch = providers.gradleProperty("branch")
     registerRuleApiGenerateTask(suffix, sonarpediaLocation, rule, branch)
 
-    if (suffix.endsWith("Secrets")) {
-        val pluginSubproject = if (suffix == "Secrets") project(":sonar-text-plugin") else project(":private:sonar-text-enterprise-plugin")
+    if (suffix == "Secrets" || suffix == "DeveloperSecrets") {
+        val pluginSubproject = when (suffix) {
+            "Secrets" -> project(":sonar-text-plugin")
+            "DeveloperSecrets" -> project(":private:sonar-text-developer-plugin")
+            else -> error("Unsupported suffix: $suffix")
+        }
         registerRuleApiGenerateFromFileTask(
             "Generation",
             sonarpediaLocation,
