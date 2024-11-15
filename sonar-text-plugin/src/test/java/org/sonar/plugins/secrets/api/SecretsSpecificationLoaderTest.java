@@ -34,6 +34,7 @@ import org.sonar.plugins.secrets.configuration.model.Rule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.secrets.SecretsSpecificationFilesDefinition.existingSecretSpecifications;
+import static org.sonar.plugins.secrets.api.SecretsSpecificationLoader.DEFAULT_EXCEPTION_HANDLER;
 import static org.sonar.plugins.secrets.api.SecretsSpecificationLoader.DEFAULT_SPECIFICATION_LOCATION;
 
 @Order(1)
@@ -65,6 +66,17 @@ class SecretsSpecificationLoaderTest {
     Rule expectedRule = ReferenceTestModel.constructMinimumSpecification().getProvider().getRules().get(0);
 
     Rule rule = new SecretsSpecificationLoader(specificationLocation, specifications).getRulesForKey("exampleKey").get(0);
+
+    assertThat(rule).usingRecursiveComparison().isEqualTo(expectedRule);
+  }
+
+  @Test
+  void shouldLoadExpectedRuleFromMap() {
+    String specificationLocation = "secretsConfiguration/";
+    Set<String> specifications = Set.of("validMinSpec.yaml");
+    Rule expectedRule = ReferenceTestModel.constructMinimumSpecification().getProvider().getRules().get(0);
+
+    Rule rule = new SecretsSpecificationLoader(Map.of(specificationLocation, specifications), DEFAULT_EXCEPTION_HANDLER).getRulesForKey("exampleKey").get(0);
 
     assertThat(rule).usingRecursiveComparison().isEqualTo(expectedRule);
   }

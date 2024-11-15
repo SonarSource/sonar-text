@@ -19,22 +19,22 @@
  */
 package org.sonar.plugins.common;
 
-import java.util.Collections;
 import java.util.List;
 import org.sonar.api.SonarRuntime;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonarsource.analyzer.commons.RuleMetadataLoader;
 
-public class CommonRulesDefinition implements RulesDefinition {
+public abstract class CommonRulesDefinition implements RulesDefinition {
 
   private static final String RESOURCE_FOLDER_FORMAT = "/%s/sonar/l10n/%s/rules/%s";
+  protected static final String DEFAULT_PACKAGE_PREFIX = "org";
 
   private final SonarRuntime sonarRuntime;
   public final String repositoryKey;
   public final String repositoryName;
   public final String languageKey;
 
-  public CommonRulesDefinition(SonarRuntime sonarRuntime, String repositoryKey, String repositoryName,
+  protected CommonRulesDefinition(SonarRuntime sonarRuntime, String repositoryKey, String repositoryName,
     String languageKey) {
     this.sonarRuntime = sonarRuntime;
     this.repositoryKey = repositoryKey;
@@ -44,21 +44,19 @@ public class CommonRulesDefinition implements RulesDefinition {
 
   @Override
   public void define(Context context) {
-    NewRepository repository = context.createRepository(repositoryKey, languageKey).setName(repositoryName);
+    var repository = context.createRepository(repositoryKey, languageKey).setName(repositoryName);
 
-    loadRepository(repository);
+    loadRepository(packagePrefix(), repository, checks());
     repository.done();
   }
 
-  public List<Class<?>> checks() {
-    return Collections.emptyList();
-  }
+  public abstract List<Class<?>> checks();
 
-  public void loadRepository(NewRepository repository) {
-    String resourcePath = resourcePath(packagePrefix(), repositoryKey, languageKey);
-    String defaultProfilePath = DefaultQualityProfileDefinition.profilePath(packagePrefix(), repositoryKey, languageKey);
-    RuleMetadataLoader ruleMetadataLoader = new RuleMetadataLoader(resourcePath, defaultProfilePath, sonarRuntime);
-    ruleMetadataLoader.addRulesByAnnotatedClass(repository, checks());
+  protected void loadRepository(String packagePrefix, RulesDefinition.NewRepository repository, List<Class<?>> checkClasses) {
+    var resourcePath = resourcePath(packagePrefix, repositoryKey, languageKey);
+    var defaultProfilePath = DefaultQualityProfileDefinition.profilePath(packagePrefix, repositoryKey, languageKey);
+    var ruleMetadataLoader = new RuleMetadataLoader(resourcePath, defaultProfilePath, sonarRuntime);
+    ruleMetadataLoader.addRulesByAnnotatedClass(repository, checkClasses);
   }
 
   public static String resourcePath(String packagePrefix, String repository, String language) {
@@ -66,6 +64,6 @@ public class CommonRulesDefinition implements RulesDefinition {
   }
 
   public String packagePrefix() {
-    return "org";
+    return DEFAULT_PACKAGE_PREFIX;
   }
 }

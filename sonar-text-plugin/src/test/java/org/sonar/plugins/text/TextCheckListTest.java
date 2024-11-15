@@ -20,14 +20,15 @@
 package org.sonar.plugins.text;
 
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import org.sonar.plugins.common.AbstractCheckListTest;
 
 class TextCheckListTest extends AbstractCheckListTest {
 
   @Override
-  protected Path checksPackage() {
-    return Path.of("src", "main", "java", "org", "sonar", "plugins", "text", "checks");
+  protected Collection<Path> checksPackagePaths() {
+    return List.of(Path.of("src/main/java/org/sonar/plugins/text/checks"));
   }
 
   @Override

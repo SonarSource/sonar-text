@@ -25,3 +25,5 @@ fun Project.signingCondition(): Boolean {
 }
 
 fun String.toCamelCase() = replace("-[a-z]".toRegex()) { it.value.last().uppercase() }.capitalized()
+
+fun String.toSnakeCase() = replace("[a-z][A-Z]".toRegex()) { it.value.first() + "_" + it.value.last().lowercase() }

@@ -12,6 +12,7 @@ open class CodeGenerationConfiguration(objects: ObjectFactory) {
     val baseTestClass: Property<String> = objects.property<String>()
     val excludedKeys: SetProperty<String> = objects.setProperty<String>()
     val checkListClassName: Property<String> = objects.property<String>()
+    val checkListClassesToEmbed: SetProperty<String> = objects.setProperty<String>()
     val specFileListClassName: Property<String> = objects.property<String>()
     val licenseHeaderFile: RegularFileProperty = objects.fileProperty()
 }

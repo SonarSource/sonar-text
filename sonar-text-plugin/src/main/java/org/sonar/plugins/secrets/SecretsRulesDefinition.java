@@ -20,7 +20,6 @@
 package org.sonar.plugins.secrets;
 
 import java.util.List;
-import org.sonar.api.SonarEdition;
 import org.sonar.api.SonarRuntime;
 import org.sonar.plugins.common.CommonRulesDefinition;
 import org.sonar.plugins.common.DefaultQualityProfileDefinition;
@@ -35,19 +34,8 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
   }
 
   public static class DefaultQualityProfile extends DefaultQualityProfileDefinition {
-    private final SonarRuntime sonarRuntime;
-
-    public DefaultQualityProfile(SonarRuntime sonarRuntime) {
+    public DefaultQualityProfile() {
       super(REPOSITORY_KEY, SecretsLanguage.KEY);
-      this.sonarRuntime = sonarRuntime;
-    }
-
-    @Override
-    public void define(Context context) {
-      if (sonarRuntime.getEdition() != SonarEdition.COMMUNITY) {
-        return;
-      }
-      super.define(context);
     }
   }
 

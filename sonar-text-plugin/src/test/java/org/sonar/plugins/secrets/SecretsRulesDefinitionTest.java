@@ -20,12 +20,7 @@
 package org.sonar.plugins.secrets;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
-import org.sonar.api.SonarEdition;
-import org.sonar.api.SonarQubeSide;
 import org.sonar.api.SonarRuntime;
-import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.rules.RuleType;
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
 import org.sonar.api.server.rule.RulesDefinition;
@@ -33,12 +28,9 @@ import org.sonar.plugins.common.AbstractRuleDefinitionTest;
 import org.sonar.plugins.common.CommonRulesDefinition;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.sonar.plugins.common.TestUtils.LATEST_SQ_VERSION;
 
 class SecretsRulesDefinitionTest extends AbstractRuleDefinitionTest {
 
@@ -49,7 +41,7 @@ class SecretsRulesDefinitionTest extends AbstractRuleDefinitionTest {
 
   @Override
   protected BuiltInQualityProfilesDefinition getQualityProfile() {
-    return new SecretsRulesDefinition.DefaultQualityProfile(SonarRuntimeImpl.forSonarQube(LATEST_SQ_VERSION, SonarQubeSide.SERVER, SonarEdition.COMMUNITY));
+    return new SecretsRulesDefinition.DefaultQualityProfile();
   }
 
   @Override
@@ -77,20 +69,9 @@ class SecretsRulesDefinitionTest extends AbstractRuleDefinitionTest {
   void shouldCreateRepositoryInCommunityEdition() {
     var context = spy(new BuiltInQualityProfilesDefinition.Context());
 
-    new SecretsRulesDefinition.DefaultQualityProfile(SonarRuntimeImpl.forSonarQube(LATEST_SQ_VERSION, SonarQubeSide.SERVER, SonarEdition.COMMUNITY))
+    new SecretsRulesDefinition.DefaultQualityProfile()
       .define(context);
 
     verify(context, times(1)).createBuiltInQualityProfile(SecretsRulesDefinition.DefaultQualityProfile.NAME, SecretsLanguage.KEY);
-  }
-
-  @ParameterizedTest
-  @EnumSource(value = SonarEdition.class, names = {"COMMUNITY"}, mode = EnumSource.Mode.EXCLUDE)
-  void shouldNotCreateRepositoryInEdition(SonarEdition edition) {
-    var context = spy(new BuiltInQualityProfilesDefinition.Context());
-
-    new SecretsRulesDefinition.DefaultQualityProfile(SonarRuntimeImpl.forSonarQube(LATEST_SQ_VERSION, SonarQubeSide.SERVER, edition))
-      .define(context);
-
-    verify(context, never()).createBuiltInQualityProfile(anyString(), anyString());
   }
 }

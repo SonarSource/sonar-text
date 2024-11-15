@@ -22,6 +22,7 @@ package org.sonar.plugins.common;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
@@ -32,15 +33,17 @@ public abstract class AbstractCheckListTest {
 
   @Test
   protected void eachCheckShouldBeDeclaredInTheCheckList() throws IOException {
-    Path checksPackage = checksPackage();
-    try (Stream<Path> list = Files.walk(checksPackage)) {
-      int expectedCount = (int) list.filter(file -> file.toString().endsWith("Check.java")).count();
-      List<Class<?>> checkClassList = checkClassList();
-      assertThat(checkClassList).hasSize(expectedCount);
+    int expectedCount = 0;
+    for (var checksPackage : checksPackagePaths()) {
+      try (Stream<Path> list = Files.walk(checksPackage)) {
+        expectedCount += (int) list.filter(file -> file.toString().endsWith("Check.java")).count();
+      }
     }
+    List<Class<?>> checkClassList = checkClassList();
+    assertThat(checkClassList).hasSize(expectedCount);
   }
 
-  protected abstract Path checksPackage();
+  protected abstract Collection<Path> checksPackagePaths();
 
   protected abstract List<Class<?>> checkClassList();
 

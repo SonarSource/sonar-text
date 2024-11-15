@@ -26,8 +26,8 @@ spotless {
     }
 }
 
-registerRuleApiTasks("Secrets", file("$projectDir/sonarpedia-secrets"))
-registerRuleApiTasks("Text", file("$projectDir/sonarpedia-text"))
+registerRuleApiTasks("Secrets", file("$projectDir/sonar-text-plugin/sonarpedia-secrets"))
+registerRuleApiTasks("Text", file("$projectDir/sonar-text-plugin/sonarpedia-text"))
 
 tasks.register("ruleApiUpdate") {
     description = "Update ALL rules description"

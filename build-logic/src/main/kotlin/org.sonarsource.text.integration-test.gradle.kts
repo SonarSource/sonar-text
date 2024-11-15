@@ -37,7 +37,6 @@ val integrationTestTask =
         testLogging {
             // log the full stack trace (default is the 1st line of the stack trace)
             exceptionFormat = TestExceptionFormat.FULL
-            // verbose log for failed and skipped tests (by default the name of the tests are not logged)
-            events("skipped", "failed")
+            events("started", "passed", "skipped", "failed")
         }
     }

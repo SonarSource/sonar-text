@@ -20,6 +20,7 @@
 package org.sonar.plugins.secrets;
 
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import org.sonar.plugins.common.AbstractCheckListTest;
 import org.sonar.plugins.common.TestUtils;
@@ -27,8 +28,8 @@ import org.sonar.plugins.common.TestUtils;
 public class SecretsCheckListTest extends AbstractCheckListTest {
 
   @Override
-  protected Path checksPackage() {
-    return Path.of("src", "main", "java", "org", "sonar", "plugins", "secrets", "checks");
+  protected Collection<Path> checksPackagePaths() {
+    return List.of(Path.of("src/main/java/org/sonar/plugins/secrets/checks"));
   }
 
   @Override

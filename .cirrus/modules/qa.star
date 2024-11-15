@@ -19,6 +19,7 @@ QA_PLUGIN_GRADLE_TASK = "private:its:plugin:integrationTest"
 QA_RULING_GRADLE_TASK = "private:its:ruling:integrationTest"
 QA_BENCHMARK_GRADLE_TASK = "private:its:benchmark:integrationTest"
 QA_QUBE_LATEST_RELEASE = "LATEST_RELEASE"
+QA_QUBE_DEV = "DEV"
 
 
 #
@@ -58,7 +59,7 @@ def qa_plugin_env():
         "GRADLE_TASK": QA_PLUGIN_GRADLE_TASK,
         "matrix": [
             {"SQ_VERSION": QA_QUBE_LATEST_RELEASE},
-            {"SQ_VERSION": "DEV"},
+            {"SQ_VERSION": QA_QUBE_DEV},
         ],
         "GITHUB_TOKEN": "VAULT[development/github/token/licenses-ro token]",
     }
@@ -173,7 +174,7 @@ def qa_os_win_task():
 def qa_sqs_edition_test_task():
     task = qa_task(env={
         "GRADLE_TASK": "sonarQubeEditionTest",
-        "SQ_VERSION": QA_QUBE_LATEST_RELEASE,
+        "SQ_VERSION": QA_QUBE_DEV,
         "GITHUB_TOKEN": "VAULT[development/github/token/licenses-ro token]", },
         memory="14G",
         cpu="4")

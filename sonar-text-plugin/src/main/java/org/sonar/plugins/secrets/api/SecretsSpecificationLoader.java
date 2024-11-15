@@ -77,6 +77,19 @@ public class SecretsSpecificationLoader implements SpecificationLoader {
   }
 
   /**
+   * Create a new SpecificationLoader.
+   * @param specificationsByLocation A map of specification locations (directories containing the specification files) to sets of specification file names.
+   * @param exceptionHandler Handler for exceptions that occur during specification loading.
+   */
+  public SecretsSpecificationLoader(Map<String, Set<String>> specificationsByLocation, ExceptionHandler exceptionHandler) {
+    this.exceptionHandler = exceptionHandler;
+
+    for (Map.Entry<String, Set<String>> entry : specificationsByLocation.entrySet()) {
+      loadSpecifications(entry.getKey(), entry.getValue());
+    }
+  }
+
+  /**
    * Load a list of specifications.
    * For each loaded {@link Specification} object, the specification object and the name of the file it was loaded from
    * will be stored in the {@link #rulesMappedToKey} and {@link #keyMappedToFiles} maps.

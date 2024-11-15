@@ -4,6 +4,7 @@ import org.sonarsource.text.CHECK_LIST_GENERATION_TASK_NAME
 import org.sonarsource.text.CodeGenerationConfiguration
 import org.sonarsource.text.GENERATED_SOURCES_DIR
 import org.sonarsource.text.loadLicenseHeader
+import org.sonarsource.text.toSnakeCase
 import org.sonarsource.text.writeToFile
 
 val codeGenerationConfiguration = extensions.findByType<CodeGenerationConfiguration>()
@@ -30,8 +31,10 @@ private data class Constants(
       //<REPLACE-WITH-LIST-OF-CHECKS>
 
       public List<Class<?>> checks() {
-        return SECRET_CHECKS;
+        //<REPLACE-WITH-CHECKS-METHOD>
       }
+          
+    //<REPLACE-WITH-ADDITIONAL-METHODS>
     }
             """.trimIndent()
 }
@@ -74,10 +77,17 @@ tasks.register(CHECK_LIST_GENERATION_TASK_NAME) {
             .map { it.name.removeSuffix(".java") }
             .sorted()
 
-        val result = constants.template
-            .replace("//<LICENSE_HEADER>", loadLicenseHeader(codeGenerationConfiguration.licenseHeaderFile.asFile.get()))
-            .replace("//<REPLACE-WITH-IMPORTS-OF-ALL-CHECKS>", generateImportsFor(constants.checksPackage, classNames))
-            .replace("//<REPLACE-WITH-LIST-OF-CHECKS>", generateChecksMethodFor(classNames))
+        val result = with(codeGenerationConfiguration) {
+            constants.template
+                .replace("//<LICENSE_HEADER>", loadLicenseHeader(licenseHeaderFile.asFile.get()))
+                .replace("//<REPLACE-WITH-IMPORTS-OF-ALL-CHECKS>", generateImportsFor(constants.checksPackage, classNames))
+                .replace(
+                    "//<REPLACE-WITH-LIST-OF-CHECKS>",
+                    generateSecretChecksFieldFor(classNames, checkListClassesToEmbed.get())
+                )
+                .replace("//<REPLACE-WITH-CHECKS-METHOD>", generateChecksMethod(checkListClassesToEmbed.get()))
+                .replace("//<REPLACE-WITH-ADDITIONAL-METHODS>", generateAdditionalMethods(codeGenerationConfiguration))
+        }
 
         writeToFile(result, "${constants.packagePrefix}/sonar/plugins/secrets/${constants.generatedClassName}.java")
     }
@@ -88,8 +98,40 @@ fun generateImportsFor(
     checkNames: List<String>,
 ): String = checkNames.joinToString(lineSeparator, postfix = lineSeparator) { "import $checksPackage$it;" }
 
-fun generateChecksMethodFor(checkNames: List<String>): String =
+fun generateSecretChecksFieldFor(
+    checkNames: List<String>,
+    checkListClassesToEmbed: Set<String>,
+): String =
     buildString {
         append("private static final List<Class<?>> SECRET_CHECKS = List.of($lineSeparator")
         append(checkNames.joinToString(",$lineSeparator", postfix = ");") { "    $it.class" })
+        for (checkListName in checkListClassesToEmbed) {
+            val checkListFieldName = checkListClassToFieldName(checkListName)
+            append(lineSeparator)
+            append("  private static final List<Class<?>> $checkListFieldName = new $checkListName().checks();")
+        }
     }
+
+fun generateChecksMethod(checkClassesToEmbed: Set<String>): String =
+    buildString {
+        append("var allChecks = new java.util.ArrayList<Class<?>>();$lineSeparator")
+        for (checkClass in checkClassesToEmbed) {
+            append("    allChecks.addAll(${checkListClassToFieldName(checkClass)});$lineSeparator")
+        }
+        append("    allChecks.addAll(SECRET_CHECKS);$lineSeparator")
+        append("    return allChecks;")
+    }
+
+fun generateAdditionalMethods(codeGenerationConfiguration: CodeGenerationConfiguration): String =
+    buildString {
+        append("  public static List<Class<?>> getCurrentEditionChecks() { return SECRET_CHECKS; }$lineSeparator")
+        for (checkClass in codeGenerationConfiguration.checkListClassesToEmbed.get()) {
+            val checkClassName = checkClass.substringAfterLast('.')
+            val checkListFieldName = checkListClassToFieldName(checkClass)
+            append("  public static List<Class<?>> get${checkClassName}Checks() { return $checkListFieldName; }$lineSeparator")
+        }
+    }
+
+private fun checkListClassToFieldName(checkListClass: String): String {
+    return checkListClass.substringAfterLast('.').toSnakeCase().uppercase() + "_CHECKS"
+}

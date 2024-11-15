@@ -105,6 +105,7 @@ codeGeneration {
     baseTestClass = "org.sonar.plugins.secrets.utils.AbstractRuleExampleTest"
     excludedKeys = emptySet()
     checkListClassName = "SecretsCheckList"
+    checkListClassesToEmbed = emptySet()
     specFileListClassName = "SecretsSpecificationFilesDefinition"
     licenseHeaderFile = rootProject.file("LICENSE_HEADER")
 }
