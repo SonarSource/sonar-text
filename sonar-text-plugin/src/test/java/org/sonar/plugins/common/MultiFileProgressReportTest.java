@@ -19,8 +19,11 @@
  */
 package org.sonar.plugins.common;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -30,7 +33,6 @@ import org.slf4j.event.Level;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.atIndex;
 
 class MultiFileProgressReportTest {
@@ -311,34 +313,29 @@ class MultiFileProgressReportTest {
 
   @Test
   @Timeout(10)
-  void shouldNotThrowConcurrentModificationException() {
-    // disable debug logs to reduce noise
-    logTester.setLevel(Level.ERROR);
+  void shouldNotThrowConcurrentModificationException() throws InterruptedException {
+    logTester.setLevel(Level.DEBUG);
     var progressUpdatePeriodMillis = 10;
     var report = new MultiFileProgressReport(progressUpdatePeriodMillis);
     var numFiles = 500;
     report.start(numFiles);
 
-    var progressUpdateDurationSeconds = 5;
-    var progressUpdater = new Thread(() -> {
-      for (int s = 0; s < progressUpdateDurationSeconds * 1000 / progressUpdatePeriodMillis; s++) {
-        for (int i = 0; i < numFiles; i++) {
-          report.finishAnalysisFor("newFile#" + i);
-          report.startAnalysisFor("newFile#" + i);
-        }
-        try {
-          Thread.sleep(10);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-        }
-      }
-      report.stop();
+    var executor = Executors.newScheduledThreadPool(100);
+    executor.schedule(report::stop, 50 * progressUpdatePeriodMillis, TimeUnit.MILLISECONDS);
+    IntStream.rangeClosed(0, numFiles).forEach(i -> {
+      report.startAnalysisFor("newFile#" + i);
+      executor.schedule(() -> report.finishAnalysisFor("newFile#" + i), i + progressUpdatePeriodMillis, TimeUnit.MILLISECONDS);
     });
 
-    progressUpdater.start();
-    assertThatNoException().isThrownBy(report::run);
+    executor.shutdown();
+    executor.awaitTermination(5, TimeUnit.SECONDS);
+    executor.shutdownNow();
 
-    logTester.setLevel(Level.DEBUG);
+    assertThat(logTester.logs())
+      .contains("500 source files to be analyzed")
+      .doesNotContain("Uncaught exception in the progress report thread: java.util.ConcurrentModificationException");
+
+    logTester.setLevel(Level.INFO);
   }
 
   private static void waitForMessage() throws InterruptedException {

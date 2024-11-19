@@ -161,7 +161,11 @@ def qa_os_win_task():
             "mkdir_orchestrator_home_script": mkdir_orchestrator_home_script(),
             "orchestrator_cache": orchestrator_cache(),
             "build_script": qa_win_script(),
-            "cleanup_gradle_script": cleanup_gradle_script(),
+            "cleanup_gradle_script": [
+                'for version_cache in "${GRADLE_USER_HOME}/caches/8.*"; do rm -rf "${version_cache}"; done',
+                'rm -rf "${GRADLE_USER_HOME}/caches/journal-1/"',
+                'rm -rf "${GRADLE_USER_HOME}/caches/transforms-1"',
+            ],
             "on_success": {
                 "profile_report_artifacts": {
                     "path": "build/reports/profile/**"

@@ -61,6 +61,7 @@ public class MultiFileProgressReport implements Runnable {
     thread = new Thread(this);
     thread.setName("Progress of the text and secrets analysis");
     thread.setDaemon(true);
+    thread.setUncaughtExceptionHandler((thread, throwable) -> LOG.debug("Uncaught exception in the progress report thread: {}", throwable.getClass().getCanonicalName()));
   }
 
   @Override
