@@ -29,7 +29,10 @@ publishing {
             }
             licenses {
                 license {
-                    artifactoryConfiguration.license?.invoke(this)
+                    name = artifactoryConfiguration.licenseName
+                    url = artifactoryConfiguration.licenseUrl
+                    distribution = artifactoryConfiguration.licenseDistribution
+                    comments = artifactoryConfiguration.licenseComments
                 }
             }
             scm {

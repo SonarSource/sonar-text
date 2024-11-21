@@ -1,7 +1,6 @@
 package org.sonarsource.text
 
 import org.gradle.api.provider.Property
-import org.gradle.api.publish.maven.MavenPomLicense
 
 interface ArtifactoryConfiguration {
     val artifactsToPublish: Property<String>
@@ -9,8 +8,10 @@ interface ArtifactoryConfiguration {
     val repoKeyEnv: Property<String>
     val usernameEnv: Property<String>
     val passwordEnv: Property<String>
-    var license: (MavenPomLicense.() -> Unit)?
-    fun license(action: MavenPomLicense.() -> Unit) {
-        license = action
-    }
+
+    // Following fields duplicate properties of MavenPomLicense
+    val licenseName: Property<String>
+    val licenseUrl: Property<String>
+    val licenseDistribution: Property<String>
+    val licenseComments: Property<String>
 }
