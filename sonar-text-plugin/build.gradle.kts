@@ -102,13 +102,15 @@ publishing {
 }
 
 artifactoryConfiguration {
+    license {
+        name = "SSALv1"
+        url = "https://sonarsource.com/license/ssal/"
+        distribution = "repo"
+    }
+
     repoKeyEnv = "ARTIFACTORY_DEPLOY_REPO"
     usernameEnv = "ARTIFACTORY_DEPLOY_USERNAME"
     passwordEnv = "ARTIFACTORY_DEPLOY_PASSWORD"
-
-    licenseName = "SSALv1"
-    licenseUrl = "https://sonarsource.com/license/ssal/"
-    licenseDistribution = "repo"
 }
 
 codeStyleConvention {

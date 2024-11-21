@@ -45,10 +45,10 @@ publishing {
             }
             licenses {
                 license {
-                    name = artifactoryConfiguration.licenseName
-                    url = artifactoryConfiguration.licenseUrl
-                    distribution = artifactoryConfiguration.licenseDistribution
-                    comments = artifactoryConfiguration.licenseComments
+                    name = artifactoryConfiguration.license.name
+                    url = artifactoryConfiguration.license.url
+                    distribution = artifactoryConfiguration.license.distribution
+                    comments = artifactoryConfiguration.license.comments
                 }
             }
             scm {
