@@ -4,27 +4,22 @@
  * mailto:info AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
+ * modify it under the terms of the Sonar Source-Available License Version 1, as published by SonarSource SA.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the Sonar Source-Available License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * You should have received a copy of the Sonar Source-Available License
+ * along with this program; if not, see https://sonarsource.com/license/ssal/
  */
 package org.sonar.plugins.secrets.utils;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.networknt.schema.ValidationMessage;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
@@ -45,7 +40,6 @@ import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.InputFileContext;
-import org.sonar.plugins.secrets.api.Match;
 import org.sonar.plugins.secrets.api.PatternMatcher;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
@@ -94,7 +88,7 @@ public abstract class AbstractRuleExampleTest {
   @TestFactory
   @DisplayName("Execute examples from the configuration file")
   Stream<DynamicTest> loadExamples() {
-    List<Rule> rulesForKey = specificationLoader.getRulesForKey(check.getRuleKey().rule());
+    var rulesForKey = specificationLoader.getRulesForKey(check.getRuleKey().rule());
     return rulesForKey.stream().flatMap(
       rule -> rule.getExamples().stream()
         // for easier debugging of specific rules uncomment the line below
@@ -104,13 +98,13 @@ public abstract class AbstractRuleExampleTest {
 
   @Test
   void testSpecificationFileValidity() throws IOException {
-    ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
-    List<String> fileNames = specificationLoader.getSpecificationFilesForKey(check.getRuleKey().rule());
+    var mapper = new ObjectMapper(new YAMLFactory());
+    var fileNames = specificationLoader.getSpecificationFilesForKey(check.getRuleKey().rule());
     for (String fileName : fileNames) {
-      InputStream specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(specificationLocation + fileName);
-      JsonNode specification = MAPPER.readTree(specificationStream);
+      var specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(specificationLocation + fileName);
+      var specification = mapper.readTree(specificationStream);
 
-      Set<ValidationMessage> validationMessages = SchemaValidator.validate(specification);
+      var validationMessages = SchemaValidator.validate(specification);
       assertThat(validationMessages)
         .as(validationMessageReport(fileName, validationMessages))
         .isEmpty();
@@ -130,12 +124,12 @@ public abstract class AbstractRuleExampleTest {
   private Executable analyzeExample(Rule rule, RuleExample ruleExample) {
     return () -> {
       var context = sensorContext(check);
-      String exampleFileName = ruleExample.getFileName() != null ? ruleExample.getFileName() : "file.txt";
-      InputFileContext inputFileContext = new InputFileContext(context, inputFile(Path.of(exampleFileName), ruleExample.getText()));
+      var exampleFileName = ruleExample.getFileName() != null ? ruleExample.getFileName() : "file.txt";
+      var inputFileContext = new InputFileContext(context, inputFile(Path.of(exampleFileName), ruleExample.getText()));
 
       check.analyze(inputFileContext, rule.getId());
 
-      Collection<Issue> issues = context.allIssues();
+      var issues = context.allIssues();
       if (ruleExample.isContainsSecret()) {
         List<TextRange> expectedRanges = calculatePossibleRanges(ruleExample, inputFileContext, rule.getId());
 
@@ -154,22 +148,22 @@ public abstract class AbstractRuleExampleTest {
   }
 
   private List<TextRange> calculatePossibleRanges(RuleExample ruleExample, InputFileContext ctx, String ruleId) {
-    Matching matching = new Matching();
+    var matching = new Matching();
     // `Matcher#findIn` uses `Matcher#find`, so the pattern doesn't need to match the entire string
     matching.setPattern("(" + Pattern.quote(ruleExample.getMatch().stripTrailing()) + ")");
-    PatternMatcher matcher = PatternMatcher.build(matching);
-    List<Match> matches = matcher.findIn(ruleExample.getText(), ruleId);
+    var matcher = PatternMatcher.build(matching);
+    var matches = matcher.findIn(ruleExample.getText(), ruleId);
     return matches.stream().map(m -> ctx.newTextRangeFromFileOffsets(m.getFileStartOffset(), m.getFileEndOffset())).toList();
   }
 
   private String displayName(Rule rule, RuleExample example) {
-    String positiveOrNegative = example.isContainsSecret() ? "" : " not";
-    int indexOfExampleInRule = rule.getExamples().indexOf(example) + 1;
+    var positiveOrNegative = example.isContainsSecret() ? "" : " not";
+    var indexOfExampleInRule = rule.getExamples().indexOf(example) + 1;
     return String.format("%s example %d: Should%s find issue", rule.getId(), indexOfExampleInRule, positiveOrNegative);
   }
 
   private String failingMessage(Collection<Issue> issues, Rule rule, RuleExample ruleExample) {
-    StringBuilder sb = new StringBuilder();
+    var sb = new StringBuilder();
     sb.append("Test case \"");
     sb.append(displayName(rule, ruleExample));
     if (issues.isEmpty()) {
@@ -204,10 +198,10 @@ public abstract class AbstractRuleExampleTest {
   }
 
   private String retrieveMatchedContent(Issue issue, String content) {
-    String[] split = content.split("\\R");
-    StringBuilder sb = new StringBuilder();
-    int startLine = issue.primaryLocation().textRange().start().line();
-    int endLine = issue.primaryLocation().textRange().end().line();
+    var split = content.split("\\R");
+    var sb = new StringBuilder();
+    var startLine = issue.primaryLocation().textRange().start().line();
+    var endLine = issue.primaryLocation().textRange().end().line();
     for (int i = startLine; i <= endLine; i++) {
       String stringToAdd = split[i - 1];
       if (i == endLine) {

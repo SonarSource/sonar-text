@@ -1,3 +1,19 @@
+/*
+ * SonarQube Text Plugin
+ * Copyright (C) 2021-2024 SonarSource SA
+ * mailto:info AT sonarsource DOT com
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the Sonar Source-Available License Version 1, as published by SonarSource SA.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the Sonar Source-Available License for more details.
+ *
+ * You should have received a copy of the Sonar Source-Available License
+ * along with this program; if not, see https://sonarsource.com/license/ssal/
+ */
 import org.sonarsource.text.registerRuleApiTasks
 
 plugins {
@@ -18,11 +34,30 @@ artifactoryConfiguration {
     passwordEnv = "ARTIFACTORY_DEPLOY_PASSWORD"
 }
 
+val kotlinGradleDelimiter = "(package|import|plugins|pluginManagement|dependencyResolutionManagement|repositories) "
 spotless {
+    // Mainly used to define spotless configuration for the build-logic
     encoding(Charsets.UTF_8)
+    java {
+        target("/build-logic/src/**/*.java")
+        licenseHeaderFile(rootProject.file("LICENSE_HEADER")).updateYearWithLatest(true)
+    }
     kotlinGradle {
         ktlint().setEditorConfigPath("$rootDir/.editorconfig")
-        target("*.gradle.kts", "/build-logic/src/**/*.gradle.kts")
+        target("*.gradle.kts", "build-logic/*.gradle.kts", "/build-logic/src/**/*.gradle.kts")
+        licenseHeaderFile(
+            rootProject.file("LICENSE_HEADER"),
+            kotlinGradleDelimiter
+        ).updateYearWithLatest(true)
+    }
+    kotlin {
+        ktlint().setEditorConfigPath("$rootDir/.editorconfig")
+        target("/build-logic/src/**/*.kt")
+        licenseHeaderFile(rootProject.file("LICENSE_HEADER")).updateYearWithLatest(true)
+    }
+    format("javaMisc") {
+        target("/build-logic/src/**/package-info.java")
+        licenseHeaderFile(rootProject.file("LICENSE_HEADER"), "@javax.annotation").updateYearWithLatest(true)
     }
 }
 

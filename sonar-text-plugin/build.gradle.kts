@@ -1,3 +1,19 @@
+/*
+ * SonarQube Text Plugin
+ * Copyright (C) 2021-2024 SonarSource SA
+ * mailto:info AT sonarsource DOT com
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the Sonar Source-Available License Version 1, as published by SonarSource SA.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the Sonar Source-Available License for more details.
+ *
+ * You should have received a copy of the Sonar Source-Available License
+ * along with this program; if not, see https://sonarsource.com/license/ssal/
+ */
 import org.sonarsource.text.enforceJarSize
 
 plugins {
@@ -45,7 +61,7 @@ tasks.jar {
                 "Plugin-Homepage" to "https://sonarsource.atlassian.net/browse/SONARTEXT",
                 "Plugin-IssueTrackerUrl" to "https://sonarsource.atlassian.net/browse/SONARTEXT",
                 "Plugin-Key" to "text",
-                "Plugin-License" to "GNU LGPL 3",
+                "Plugin-License" to "SSALv1",
                 "Plugin-Name" to "Text Code Quality and Security",
                 "Plugin-Organization" to "SonarSource",
                 "Plugin-OrganizationUrl" to "https://www.sonarsource.com",
@@ -90,8 +106,8 @@ artifactoryConfiguration {
     usernameEnv = "ARTIFACTORY_DEPLOY_USERNAME"
     passwordEnv = "ARTIFACTORY_DEPLOY_PASSWORD"
 
-    licenseName = "GNU LPGL 3"
-    licenseUrl = "http://www.gnu.org/licenses/lgpl.txt"
+    licenseName = "SSALv1"
+    licenseUrl = "https://sonarsource.com/license/ssal/"
     licenseDistribution = "repo"
 }
 

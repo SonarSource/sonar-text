@@ -94,8 +94,12 @@ There is also a way of running this check from the command line.
 ./gradlew --rerun-tasks :sonar-text-plugin:test --console plain --tests SecretsRegexTest.shouldValidateSingleFile -Dfilename=google-oauth2.yaml
 ```
 
-### License
+# License
 
-Copyright 2012-2024 SonarSource.
+Copyright 2021-2024 SonarSource.
 
-Licensed under the [GNU Lesser General Public License, Version 3.0](https://www.gnu.org/licenses/lgpl.txt)
+SonarQube analyzers released after November 29, 2024, including patch fixes for prior versions, 
+are published under the [Sonar Source-Available License Version 1 (SSALv1)](LICENSE.txt).
+
+See individual files for details that specify the license applicable to each file. 
+Files subject to the SSALv1 will be noted in their headers.
