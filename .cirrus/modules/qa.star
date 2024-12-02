@@ -19,8 +19,7 @@ QA_PLUGIN_GRADLE_TASK = "private:its:plugin:integrationTest"
 QA_RULING_GRADLE_TASK = "private:its:ruling:integrationTest"
 QA_BENCHMARK_GRADLE_TASK = "private:its:benchmark:integrationTest"
 QA_QUBE_LATEST_RELEASE = "LATEST_RELEASE"
-# Sonarqube versioning is changing, temporary pin for ITS
-QA_QUBE_DEV = "DEV[10.8]"
+QA_QUBE_DEV = "DEV"
 
 
 #
