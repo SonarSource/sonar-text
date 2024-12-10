@@ -43,6 +43,7 @@ import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.check.Rule;
 import org.sonar.plugins.common.git.GitService;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
+import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.api.task.RegexMatchingManager;
 import org.sonar.plugins.text.api.TextCheck;
@@ -745,6 +746,30 @@ public abstract class AbstractTextAndSecretsSensorTest {
     context.setSettings(settings);
     analyse(sensor(context), context, inputFile(""));
     assertThat(logTester.logs(Level.INFO)).doesNotContain(EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
+  }
+
+  @Test
+  void numberOfSecretChecksShouldBeIdenticalToLoadedSecretSpecificationRSPECKeys() {
+    var sensor = sensor(testUtils().defaultSensorContext());
+    SecretsSpecificationLoader secretsSpecificationLoader = sensor.constructSpecificationLoader();
+    int numberOfSecretSpecificationRSPECKeys = secretsSpecificationLoader.getRulesMappedToKey().keySet().size();
+
+    // TemplateRule is an interface that is not implemented by the secret checks that are loaded from the secret specification
+    var numberOfSecretChecksWithoutTemplateRules = testUtils().secretCheckClassList().stream()
+      .filter(check -> Arrays.stream(check.getInterfaces())
+        .noneMatch(i -> i.getName().contains("TemplateRule")))
+      .count();
+
+    assertThat(numberOfSecretSpecificationRSPECKeys).isEqualTo(numberOfSecretChecksWithoutTemplateRules);
+  }
+
+  @Test
+  void numberOfActiveChecksShouldMatchNumberOfChecksInCheckLists() {
+    var sensor = sensor(testUtils().defaultSensorContext());
+    var numberOfActiveChecks = sensor.getActiveChecks().size();
+    var numberOfChecksInCheckLists = testUtils().secretCheckClassList().size() + testUtils().textCheckClassList().size();
+
+    assertThat(numberOfActiveChecks).isEqualTo(numberOfChecksInCheckLists);
   }
 
   protected void assertCorrectLogs(List<String> logs, int numberOfAnalyzedFiles, String... additionalLogs) {
