@@ -20,7 +20,7 @@ import java.util.List;
 import org.sonar.api.Plugin;
 import org.sonar.api.PropertyType;
 import org.sonar.api.config.PropertyDefinition;
-import org.sonar.api.resources.Qualifiers;
+import org.sonar.api.config.PropertyDefinition.ConfigScope;
 import org.sonar.plugins.common.warnings.DefaultAnalysisWarningsWrapper;
 import org.sonar.plugins.secrets.SecretsLanguage;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
@@ -59,7 +59,7 @@ public class TextAndSecretsPlugin implements Plugin {
         .name("Activate Secrets Analysis")
         .description("Disabling Secrets analysis ensures that no files are analyzed for containing secrets.")
         .type(PropertyType.BOOLEAN)
-        .onQualifiers(Qualifiers.PROJECT)
+        .onConfigScopes(ConfigScope.PROJECT)
         .category(TextAndSecretsSensor.TEXT_CATEGORY)
         .subCategory(GENERAL_SUBCATEGORY)
         .build(),
@@ -70,7 +70,7 @@ public class TextAndSecretsPlugin implements Plugin {
         .name("Activate inclusion of custom file path patterns")
         .description("Disabling custom file path patterns ensures that only files associated to a language will get analyzed.")
         .type(PropertyType.BOOLEAN)
-        .onQualifiers(Qualifiers.PROJECT)
+        .onConfigScopes(ConfigScope.PROJECT)
         .category(TextAndSecretsSensor.TEXT_CATEGORY)
         .subCategory(GENERAL_SUBCATEGORY)
         .build(),
@@ -82,7 +82,7 @@ public class TextAndSecretsPlugin implements Plugin {
         .multiValues(true)
         .description("Additional list of binary file suffixes that should not be analyzed with rules targeting text files.")
         .subCategory(GENERAL_SUBCATEGORY)
-        .onQualifiers(Qualifiers.PROJECT)
+        .onConfigScopes(ConfigScope.PROJECT)
         .build(),
 
       PropertyDefinition.builder(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY)
@@ -94,7 +94,7 @@ public class TextAndSecretsPlugin implements Plugin {
           "in addition to those associated to a language. This is only applied when the scanner detects a git repository. " +
           "It's not possible to analyze files or directories starting with a dot on UNIX systems.")
         .subCategory(GENERAL_SUBCATEGORY)
-        .onQualifiers(Qualifiers.PROJECT)
+        .onConfigScopes(ConfigScope.PROJECT)
         .build());
   }
 }
