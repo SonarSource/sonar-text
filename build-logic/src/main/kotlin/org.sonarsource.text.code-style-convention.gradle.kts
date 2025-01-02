@@ -16,13 +16,13 @@
  */
 import com.diffplug.blowdryer.Blowdryer
 import org.sonarsource.text.CodeStyleConvention
+import org.sonarsource.text.KOTLIN_GRADLE_DELIMITER
 
 plugins {
     id("com.diffplug.spotless")
 }
 
 val codeStyleConvention = extensions.create<CodeStyleConvention>("codeStyleConvention")
-val kotlinGradleDelimiter = "(package|import|plugins|pluginManagement|dependencyResolutionManagement|repositories) "
 
 spotless {
     encoding(Charsets.UTF_8)
@@ -51,7 +51,7 @@ spotless {
     }
     kotlinGradle {
         ktlint().setEditorConfigPath("$rootDir/.editorconfig")
-        licenseHeaderFile(codeStyleConvention.licenseHeaderFile, kotlinGradleDelimiter).updateYearWithLatest(true)
+        licenseHeaderFile(codeStyleConvention.licenseHeaderFile, KOTLIN_GRADLE_DELIMITER).updateYearWithLatest(true)
     }
     format("javaMisc") {
         target("src/**/package-info.java")

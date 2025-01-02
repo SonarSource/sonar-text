@@ -14,6 +14,7 @@
  * You should have received a copy of the Sonar Source-Available License
  * along with this program; if not, see https://sonarsource.com/license/ssal/
  */
+import org.sonarsource.text.KOTLIN_GRADLE_DELIMITER
 import org.sonarsource.text.registerRuleApiTasks
 
 plugins {
@@ -34,7 +35,6 @@ artifactoryConfiguration {
     passwordEnv = "ARTIFACTORY_DEPLOY_PASSWORD"
 }
 
-val kotlinGradleDelimiter = "(package|import|plugins|pluginManagement|dependencyResolutionManagement|repositories) "
 spotless {
     // Mainly used to define spotless configuration for the build-logic
     encoding(Charsets.UTF_8)
@@ -47,7 +47,7 @@ spotless {
         target("*.gradle.kts", "build-logic/*.gradle.kts", "/build-logic/src/**/*.gradle.kts")
         licenseHeaderFile(
             rootProject.file("LICENSE_HEADER"),
-            kotlinGradleDelimiter
+            KOTLIN_GRADLE_DELIMITER
         ).updateYearWithLatest(true)
     }
     kotlin {
