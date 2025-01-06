@@ -55,4 +55,9 @@ val integrationTestTask =
             exceptionFormat = TestExceptionFormat.FULL
             events("started", "passed", "skipped", "failed")
         }
+
+        outputs.upToDateWhen {
+            // As the exact SQ version is not known at configuration time, we cannot know if the task is up-to-date
+            false
+        }
     }
