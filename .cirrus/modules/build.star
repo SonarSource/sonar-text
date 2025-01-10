@@ -16,7 +16,9 @@ load(
 load(
     "github.com/SonarSource/cirrus-modules/cloud-native/actions.star@analysis/master",
     "default_gradle_on_failure",
+    "gradle_junit_xml_report_artifacts"
 )
+
 
 # SHARED CANDIDATE?
 # Looks like : https://github.com/SonarSource/sonar-iac/blob/153aed5008efac5ff1bbb0014672e653194ee79b/.cirrus/modules/build.star#L48
@@ -59,7 +61,22 @@ def build_task():
                     "path": "build/reports/profile/profile-*.html"
                 }
             },
-            "on_failure": default_gradle_on_failure(),
+            "on_failure": {
+                "junit_artifacts": gradle_junit_xml_report_artifacts(),
+                "flatten_report_script": [
+                    # language=bash
+                    """
+                    find . -type d -path \\*/build/reports/tests | while read -r test_dir; do
+                        project_name=$(basename $(realpath ${test_dir}/../../..))
+                        mkdir -p ${project_name}-test-report
+                        cp -r "${test_dir}"/test/* ${project_name}-test-report
+                    done
+                    """
+                ],
+                "flattened_report_artifacts": {
+                    "path": "*-test-report/**"
+                }
+            }
         }
     }
 
