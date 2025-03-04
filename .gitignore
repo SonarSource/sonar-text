@@ -51,3 +51,7 @@ Desktop.ini
 
 # ---- A file generated on CI
 project-version/evaluated_project_version.txt
+
+# ---- CI script generated files
+build-logic/src/main/resources/script/node_modules/
+build-logic/src/main/resources/script/package-lock.json

@@ -1,0 +1,12 @@
+{
+  "name": "script",
+  "version": "1.0.0",
+  "description": "",
+  "main": "generate-secrets.js",
+  "scripts": {},
+  "private": true,
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "ajv": "^8.17.1"
+  }
+}
