@@ -52,7 +52,7 @@ try {
 
     const slugify = (str) => str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
     const toConstantCase = (str) => str.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/(^_|_$)+/g, '');
-    const escapeBackslashes = (str) => str.replace(/\\/g, '\\\\');
+    const escapeSpecialCharacters = (str) => str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 
     // Generate files for each secret
     secrets.forEach(secret => {
@@ -68,9 +68,9 @@ try {
                 .replace(/\$\{NAME_SLUGIFIED\}/g, nameSlugified)
                 .replace(/\$\{NAME_CONSTANT\}/g, nameConstantCase)
                 .replace(/\$\{EXAMPLE\}/g, example)
-                .replace(/\$\{PRE_FILTER\}/g, escapeBackslashes(preFilter))
-                .replace(/\$\{PATTERN\}/g, escapeBackslashes(pattern))
-                .replace(/\$\{PATTERN_AROUND\}/g, patternAround ? escapeBackslashes(patternAround) : '');
+                .replace(/\$\{PRE_FILTER\}/g, escapeSpecialCharacters(preFilter))
+                .replace(/\$\{PATTERN\}/g, escapeSpecialCharacters(pattern))
+                .replace(/\$\{PATTERN_AROUND\}/g, patternAround ? escapeSpecialCharacters(patternAround) : '');
 
         // Write the content to a new file
         const outputPath = path.join(__dirname, `../../../../../private/sonar-text-developer-plugin/src/main/resources/com/sonar/plugins/secrets/configuration/${nameSlugified}.yaml`);
