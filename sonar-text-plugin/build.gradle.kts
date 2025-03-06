@@ -86,7 +86,7 @@ tasks.shadowJar {
     exclude("NOTICE*")
 
     doLast {
-        enforceJarSize(tasks.shadowJar.get().archiveFile.get().asFile, 6_500_000L, 7_500_000L)
+        enforceJarSize(tasks.shadowJar.get().archiveFile.get().asFile, 6_500_000L, 8_500_000L)
     }
 }
 
