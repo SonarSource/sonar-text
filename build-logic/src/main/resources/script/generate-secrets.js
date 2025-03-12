@@ -52,7 +52,7 @@ try {
 
     const slugify = (str) => str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
     const toConstantCase = (str) => str.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/(^_|_$)+/g, '');
-    const escapeSpecialCharacters = (str) => str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapeSpecialCharacters = (str) => str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
 
     // Generate files for each secret
     secrets.forEach(secret => {
@@ -67,7 +67,7 @@ try {
                 .replace(/\$\{NAME\}/g, name)
                 .replace(/\$\{NAME_SLUGIFIED\}/g, nameSlugified)
                 .replace(/\$\{NAME_CONSTANT\}/g, nameConstantCase)
-                .replace(/\$\{EXAMPLE\}/g, example)
+                .replace(/\$\{EXAMPLE\}/g, escapeSpecialCharacters(example))
                 .replace(/\$\{PRE_FILTER\}/g, escapeSpecialCharacters(preFilter))
                 .replace(/\$\{PATTERN\}/g, escapeSpecialCharacters(pattern))
                 .replace(/\$\{PATTERN_AROUND\}/g, patternAround ? escapeSpecialCharacters(patternAround) : '');
