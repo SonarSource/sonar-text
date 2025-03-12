@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DynamicTest;
@@ -140,6 +141,7 @@ public abstract class AbstractRuleExampleTest {
         // any of them matches the actual range.
         assertThat(expectedRanges).withFailMessage(() -> failingMessage(issues, rule, ruleExample)).isNotEmpty();
         assertThat(issues).map(i -> i.primaryLocation().textRange())
+          .withFailMessage(() -> failingMessage(issues, rule, ruleExample, expectedRanges))
           .containsAnyElementsOf(expectedRanges);
       } else {
         assertThat(issues).withFailMessage(() -> failingMessage(issues, rule, ruleExample)).isEmpty();
@@ -163,6 +165,10 @@ public abstract class AbstractRuleExampleTest {
   }
 
   private String failingMessage(Collection<Issue> issues, Rule rule, RuleExample ruleExample) {
+    return failingMessage(issues, rule, ruleExample, List.of());
+  }
+
+  private String failingMessage(Collection<Issue> issues, Rule rule, RuleExample ruleExample, List<TextRange> expectedRanges) {
     var sb = new StringBuilder();
     sb.append("Test case \"");
     sb.append(displayName(rule, ruleExample));
@@ -184,13 +190,25 @@ public abstract class AbstractRuleExampleTest {
         LOG.error("Exception calculating matched content, see test results below", e);
       }
       sb.append("\"");
+      sb.append("    (").append(issue.primaryLocation().textRange()).append(")");
       sb.append(System.lineSeparator());
     }
 
     if (ruleExample.isContainsSecret()) {
-      sb.append("But the example should have matched on: \"");
+      sb.append("But the example should have matched on:");
+      sb.append(System.lineSeparator());
+      sb.append("- \"");
       sb.append(ruleExample.getMatch());
       sb.append("\"");
+      if (!ruleExample.getText().contains(ruleExample.getMatch()))
+        sb.append("    (not in the example text)");
+      else if (expectedRanges.isEmpty()) {
+        sb.append("    (unknown range)");
+      } else {
+        sb.append("    (");
+        sb.append(expectedRanges.stream().map(Object::toString).collect(Collectors.joining(" or ")));
+        sb.append(")");
+      }
     } else {
       sb.append("But the example doesn't expect a match");
     }
