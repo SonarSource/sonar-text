@@ -22,12 +22,29 @@ function estimateShannonEntropy(str) {
         .reduce((sum, f) => sum - f/len * Math.log2(f/len), 0)
 }
 
+function convertPatternToJSFormat(pattern) {
+    if (pattern.startsWith("(?i)")) {
+        pattern = pattern.substring(4);
+        if (!pattern.startsWith("/")) {
+            pattern = "/" + pattern;
+        }
+        if (!pattern.endsWith("/")) {
+            pattern = pattern + "/";
+        }
+        pattern = pattern + "i";
+    }
+    return pattern;
+}
+
 function computeEntropy(pattern, samples = 5000) {
     let minimum = null;
     let minSample = null;
     let maximum = null;
     let maxSample = null;
     const measures = [];
+
+    pattern = convertPatternToJSFormat(pattern);
+
     const randexp = new RandExp(pattern);
     const regexp = new RegExp(pattern);
     for (let i = 0; i < samples; i++) {

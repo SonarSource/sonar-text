@@ -60,7 +60,13 @@ try {
         const { rspecKey, name, example, preFilter, pattern, patternAround } = secret;
         const nameSlugified = slugify(name);
         const nameConstantCase = toConstantCase(nameSlugified);
-        const entropyThreshold = Math.floor(computeEntropy(pattern) * 10) / 10;
+
+        let entropyThreshold = 3.5; // Fallback value
+        try {
+            entropyThreshold = Math.floor(computeEntropy(pattern) * 10) / 10;
+        } catch (error) {
+            console.error(`Error computing entropy for pattern ${pattern}: ${error.message}`);
+        }
 
         // Replace placeholders in the template
         const usedTemplate = patternAround ? templateWithPatternAround : template;
