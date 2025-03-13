@@ -26,7 +26,7 @@ QA_QUBE_DEV = "DEV"
 # Plugin
 #
 
-def qa_task(env, memory="12G", cpu="4"):
+def qa_task(env, memory="14G", cpu="4"):
     return {
         "depends_on": "build",
         "eks_container": base_image_container_builder(memory=memory, cpu=cpu),
