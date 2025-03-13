@@ -32,7 +32,8 @@ public final class DistanceValidation {
    * @return true if the first match is before the second match, false otherwise
    */
   public static boolean isBefore(Match firstMatch, Match secondMatch) {
-    return firstMatch.getFileEndOffset() < secondMatch.getFileStartOffset();
+    // "fileEndOffset" is exclusive while "fileStartOffset" is inclusive, so we need to use <=
+    return firstMatch.fileEndOffset() <= secondMatch.fileStartOffset();
   }
 
   /**
@@ -42,7 +43,8 @@ public final class DistanceValidation {
    * @return true if the first match is after the second match, false otherwise
    */
   public static boolean isAfter(Match firstMatch, Match secondMatch) {
-    return firstMatch.getFileStartOffset() > secondMatch.getFileEndOffset();
+    // "fileStartOffset" is inclusive while "fileEndOffset" is exclusive, so we need to use >=
+    return firstMatch.fileStartOffset() >= secondMatch.fileEndOffset();
   }
 
   /**
@@ -54,8 +56,8 @@ public final class DistanceValidation {
    */
   public static boolean inDistanceOf(Match firstMatch, Match secondMatch, int distance) {
     return inDistanceOf(
-      firstMatch.getFileStartOffset(), firstMatch.getFileEndOffset(),
-      secondMatch.getFileStartOffset(), secondMatch.getFileEndOffset(),
+      firstMatch.fileStartOffset(), firstMatch.fileEndOffset(),
+      secondMatch.fileStartOffset(), secondMatch.fileEndOffset(),
       distance);
   }
 

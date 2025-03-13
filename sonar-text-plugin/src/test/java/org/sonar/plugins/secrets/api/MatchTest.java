@@ -29,9 +29,9 @@ class MatchTest {
     int fileEndOffset = 20;
     Match match = new Match(text, fileStartOffset, fileEndOffset);
 
-    assertThat(match.getText()).isEqualTo(text);
-    assertThat(match.getFileStartOffset()).isEqualTo(fileStartOffset);
-    assertThat(match.getFileEndOffset()).isEqualTo(fileEndOffset);
+    assertThat(match.text()).isEqualTo(text);
+    assertThat(match.fileStartOffset()).isEqualTo(fileStartOffset);
+    assertThat(match.fileEndOffset()).isEqualTo(fileEndOffset);
     assertThat(match).hasToString("Match{text='text', fileStartOffset=10, fileEndOffset=20}");
   }
 }

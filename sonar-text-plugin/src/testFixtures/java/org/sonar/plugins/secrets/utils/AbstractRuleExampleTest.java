@@ -155,7 +155,7 @@ public abstract class AbstractRuleExampleTest {
     matching.setPattern("(" + Pattern.quote(ruleExample.getMatch().stripTrailing()) + ")");
     var matcher = PatternMatcher.build(matching);
     var matches = matcher.findIn(ruleExample.getText(), ruleId);
-    return matches.stream().map(m -> ctx.newTextRangeFromFileOffsets(m.getFileStartOffset(), m.getFileEndOffset())).toList();
+    return matches.stream().map(m -> ctx.newTextRangeFromFileOffsets(m.fileStartOffset(), m.fileEndOffset())).toList();
   }
 
   private String displayName(Rule rule, RuleExample example) {

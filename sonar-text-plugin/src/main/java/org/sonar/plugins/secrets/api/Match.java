@@ -16,28 +16,12 @@
  */
 package org.sonar.plugins.secrets.api;
 
-public class Match {
-  private final String text;
-  private final int fileStartOffset;
-  private final int fileEndOffset;
-
-  public Match(String text, int fileStartOffset, int fileEndOffset) {
-    this.text = text;
-    this.fileStartOffset = fileStartOffset;
-    this.fileEndOffset = fileEndOffset;
-  }
-
-  public String getText() {
-    return text;
-  }
-
-  public int getFileStartOffset() {
-    return fileStartOffset;
-  }
-
-  public int getFileEndOffset() {
-    return fileEndOffset;
-  }
+/**
+ * @param text            matched text
+ * @param fileStartOffset inclusive start offset
+ * @param fileEndOffset   exclusive end offset
+ */
+public record Match(String text, int fileStartOffset, int fileEndOffset) {
 
   @Override
   public String toString() {

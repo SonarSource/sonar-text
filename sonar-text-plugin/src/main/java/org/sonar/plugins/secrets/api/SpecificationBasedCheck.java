@@ -57,7 +57,7 @@ public abstract class SpecificationBasedCheck extends AbstractSpecificationBased
       if (ruleFilter.test(secretMatcher.getRuleId())) {
         durationStatistics.timed(secretMatcher.getRuleId() + DurationStatistics.SUFFIX_TOTAL, () -> secretMatcher.findIn(ctx))
           .stream()
-          .map(match -> ctx.newTextRangeFromFileOffsets(match.getFileStartOffset(), match.getFileEndOffset()))
+          .map(match -> ctx.newTextRangeFromFileOffsets(match.fileStartOffset(), match.fileEndOffset()))
           .forEach(textRange -> ctx.reportIssueOnTextRange(getRuleKey(), textRange, secretMatcher.getMessageFromRule()));
       }
     }

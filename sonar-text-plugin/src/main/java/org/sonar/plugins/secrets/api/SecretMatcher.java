@@ -88,7 +88,7 @@ public class SecretMatcher implements Matcher {
     return secretsFilteredOnContext.stream()
       .filter(match -> durationStatistics.timed(
         getRuleId() + DurationStatistics.SUFFIX_POST,
-        () -> postFilter.test(match.getText())))
+        () -> postFilter.test(match.text())))
       .toList();
   }
 

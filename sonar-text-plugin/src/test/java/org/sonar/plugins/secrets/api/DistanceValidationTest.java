@@ -31,7 +31,7 @@ class DistanceValidationTest {
 
   @Test
   void testFirstBeforeSecondMatch() {
-    Match first = new Match("text", 10, 20);
+    Match first = new Match("text", 10, 21);
     Match second = new Match("text", 21, 30);
 
     assertThat(isBefore(first, second)).isTrue();
@@ -56,7 +56,7 @@ class DistanceValidationTest {
     return Stream.of(
       Arguments.of("Overlapping Matches", 15, 30),
       Arguments.of("Enclosed Match", 15, 17),
-      Arguments.of("Sharing one character", 20, 25));
+      Arguments.of("Sharing one character", 19, 25));
   }
 
   @ParameterizedTest(name = "{0}")

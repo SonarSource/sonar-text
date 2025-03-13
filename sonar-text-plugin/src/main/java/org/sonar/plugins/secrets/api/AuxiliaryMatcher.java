@@ -75,10 +75,10 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
     if (auxiliaryPattern.getMaxLineDistance() != null) {
       result = result.and(ignoringLongLines(inputFileContext))
         .and((auxMatch, candidateMatch) -> {
-          int auxMatchStartLine = inputFileContext.offsetToLineNumber(auxMatch.getFileStartOffset());
-          int auxMatchEndLine = inputFileContext.offsetToLineNumber(auxMatch.getFileEndOffset());
-          int candidateMatchStartLine = inputFileContext.offsetToLineNumber(candidateMatch.getFileStartOffset());
-          int candidateMatchEndLine = inputFileContext.offsetToLineNumber(candidateMatch.getFileEndOffset());
+          int auxMatchStartLine = inputFileContext.offsetToLineNumber(auxMatch.fileStartOffset());
+          int auxMatchEndLine = inputFileContext.offsetToLineNumber(auxMatch.fileEndOffset());
+          int candidateMatchStartLine = inputFileContext.offsetToLineNumber(candidateMatch.fileStartOffset());
+          int candidateMatchEndLine = inputFileContext.offsetToLineNumber(candidateMatch.fileEndOffset());
 
           return inDistanceOf(auxMatchStartLine, auxMatchEndLine, candidateMatchStartLine, candidateMatchEndLine, auxiliaryPattern.getMaxLineDistance());
         });
@@ -102,7 +102,7 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
 
   private static BiPredicate<Match, Match> ignoringLongLines(InputFileContext inputFileContext) {
     return (Match auxMatch, Match candidateMatch) -> {
-      int startLine = inputFileContext.offsetToLineNumber(candidateMatch.getFileStartOffset());
+      int startLine = inputFileContext.offsetToLineNumber(candidateMatch.fileStartOffset());
       int lineLength = inputFileContext.lines().get(startLine - 1).length();
       boolean isCandidateLineTooLong = lineLength >= MIN_LINE_LENGTH_TO_IGNORE_MAX_LINE_DISTANCE;
       return !isCandidateLineTooLong;
