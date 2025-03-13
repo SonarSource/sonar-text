@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const core = require('@actions/core');
 const Ajv = require('ajv');
+const {computeEntropy} = require("./entropy");
 
 const ajv = new Ajv();
 
@@ -59,6 +60,7 @@ try {
         const { rspecKey, name, example, preFilter, pattern, patternAround } = secret;
         const nameSlugified = slugify(name);
         const nameConstantCase = toConstantCase(nameSlugified);
+        const entropyThreshold = Math.floor(computeEntropy(pattern) * 10) / 10;
 
         // Replace placeholders in the template
         const usedTemplate = patternAround ? templateWithPatternAround : template;
@@ -70,7 +72,8 @@ try {
                 .replace(/\$\{EXAMPLE\}/g, escapeSpecialCharacters(example))
                 .replace(/\$\{PRE_FILTER\}/g, escapeSpecialCharacters(preFilter))
                 .replace(/\$\{PATTERN\}/g, escapeSpecialCharacters(pattern))
-                .replace(/\$\{PATTERN_AROUND\}/g, patternAround ? escapeSpecialCharacters(patternAround) : '');
+                .replace(/\$\{PATTERN_AROUND\}/g, patternAround ? escapeSpecialCharacters(patternAround) : '')
+                .replace(/\$\{ENTROPY_THRESHOLD\}/g, entropyThreshold);
 
         // Write the content to a new file
         const outputPath = path.join(__dirname, `../../../../../private/sonar-text-developer-plugin/src/main/resources/com/sonar/plugins/secrets/configuration/${nameSlugified}.yaml`);
