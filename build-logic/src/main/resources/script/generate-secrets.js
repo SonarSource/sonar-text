@@ -61,11 +61,11 @@ try {
         const nameSlugified = slugify(name);
         const nameConstantCase = toConstantCase(nameSlugified);
 
-        let entropyThreshold = 3.5; // Fallback value
+        let entropyThreshold = "3.5 # Fallback value, to be validated";
         try {
             entropyThreshold = Math.floor(computeEntropy(pattern) * 10) / 10;
         } catch (error) {
-            console.error(`Error computing entropy for pattern ${pattern}: ${error.message}`);
+            console.error(`Unsupported pattern when computing entropy for ${pattern}: ${error.message}`);
         }
 
         // Replace placeholders in the template
