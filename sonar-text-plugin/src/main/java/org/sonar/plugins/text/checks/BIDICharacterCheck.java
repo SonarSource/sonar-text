@@ -20,6 +20,8 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import org.sonar.check.Rule;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.text.api.TextCheck;
@@ -48,12 +50,25 @@ public class BIDICharacterCheck extends TextCheck {
   private static final char PDF = '\u202C'; // Pop Directional Formatting
   private static final char PDI = '\u2069'; // Pop Directional Isolate
 
+  private static final Predicate<String> ANDROID_I18N_FILE_PREDICATE = Pattern.compile("res/values-[a-zA-Z\\-]+/strings.xml$").asPredicate();
+
   @Override
   public void analyze(InputFileContext ctx) {
+    if (isAndroidI18nFile(ctx)) {
+      // This rule should not analyze Android Internationalization files to not make rule noisy.
+      // It is expected that those files contain BIDI characters.
+      return;
+    }
     List<String> lines = ctx.lines();
     for (var lineOffset = 0; lineOffset < lines.size(); lineOffset++) {
       checkLine(ctx, lines.get(lineOffset), lineOffset + 1);
     }
+  }
+
+  // For testing
+  static boolean isAndroidI18nFile(InputFileContext ctx) {
+    var inputFile = ctx.getInputFile();
+    return "strings.xml".equals(inputFile.filename()) && ANDROID_I18N_FILE_PREDICATE.test(inputFile.uri().getPath());
   }
 
   private void checkLine(InputFileContext ctx, String lineContent, int lineNumber) {
