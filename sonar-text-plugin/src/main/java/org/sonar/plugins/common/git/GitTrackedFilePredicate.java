@@ -17,20 +17,23 @@
 package org.sonar.plugins.common.git;
 
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.InputFile;
-import org.sonar.plugins.common.TextAndSecretsSensor;
 
 public class GitTrackedFilePredicate implements FilePredicate {
   private static final Logger LOG = LoggerFactory.getLogger(GitTrackedFilePredicate.class);
+  private final Set<String> ignoredFileNames = new HashSet<>();
   private final Set<String> untrackedFileNames;
   private final boolean isGitStatusSuccessful;
   private final Path projectRootPath;
+  private final FilePredicate defaultFilePredicate;
 
-  public GitTrackedFilePredicate(Path baseDir, GitService gitService) {
+  public GitTrackedFilePredicate(Path baseDir, GitService gitService, FilePredicate defaultFilePredicate) {
     var gitResult = gitService.retrieveUntrackedFileNames(baseDir);
     this.untrackedFileNames = gitResult.untrackedFileNames();
     this.isGitStatusSuccessful = gitResult.isGitStatusSuccessful();
@@ -38,6 +41,7 @@ public class GitTrackedFilePredicate implements FilePredicate {
     if (!isGitStatusSuccessful) {
       LOG.debug("Unable to retrieve git status");
     }
+    this.defaultFilePredicate = defaultFilePredicate;
   }
 
   @Override
@@ -49,9 +53,13 @@ public class GitTrackedFilePredicate implements FilePredicate {
         relativePath = projectRootPath.relativize(filePath).toString();
       } catch (IllegalArgumentException e) {
         LOG.debug("Unable to resolve git status for {}, falling back to analyzing the file if it's associated with a language", inputFile, e);
-        return TextAndSecretsSensor.LANGUAGE_FILE_PREDICATE.apply(inputFile);
+        return defaultFilePredicate.apply(inputFile);
       }
-      return !untrackedFileNames.contains(relativePath);
+      var result = !untrackedFileNames.contains(relativePath);
+      if (!result) {
+        ignoredFileNames.add(relativePath);
+      }
+      return result;
     } else {
       return true;
     }
@@ -59,5 +67,14 @@ public class GitTrackedFilePredicate implements FilePredicate {
 
   public boolean isGitStatusSuccessful() {
     return isGitStatusSuccessful;
+  }
+
+  public void logSummary() {
+    var numberOfIgnoredFiles = ignoredFileNames.size();
+    if (numberOfIgnoredFiles > 0) {
+      LOG.info("{} files are ignored because they are untracked by git", numberOfIgnoredFiles);
+      var fileList = ignoredFileNames.stream().sorted().collect(Collectors.joining("\n\t"));
+      LOG.debug("Files untracked by git:\n\t{}", fileList);
+    }
   }
 }

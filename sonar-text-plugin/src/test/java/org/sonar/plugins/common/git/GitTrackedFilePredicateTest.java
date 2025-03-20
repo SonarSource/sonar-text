@@ -25,6 +25,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.sonar.api.batch.fs.FilePredicate;
+import org.sonar.plugins.common.TextAndSecretsSensor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -42,7 +43,7 @@ class GitTrackedFilePredicateTest {
   void shouldMatchSomeFilesWhenSomeUntracked(boolean isGitStatusSuccessful, Set<String> untrackedFiles, Map<String, Boolean> fileToExpectedMatch) {
     var gitService = mock(GitService.class);
     when(gitService.retrieveUntrackedFileNames(any())).thenReturn(new GitService.Result(isGitStatusSuccessful, untrackedFiles));
-    FilePredicate predicate = new GitTrackedFilePredicate(BASE_DIR, gitService);
+    FilePredicate predicate = new GitTrackedFilePredicate(BASE_DIR, gitService, TextAndSecretsSensor.LANGUAGE_FILE_PREDICATE);
 
     for (Map.Entry<String, Boolean> entry : fileToExpectedMatch.entrySet()) {
       String file = entry.getKey();

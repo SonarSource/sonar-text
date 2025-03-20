@@ -496,7 +496,8 @@ public abstract class AbstractTextAndSecretsSensorTest {
     Path fooJavaPath = Path.of("src", "foo.java");
     String relativePathFooJava = "src" + fooJavaPath.getFileSystem().getSeparator() + "foo.java";
     var gitService = mock(GitService.class);
-    when(gitService.retrieveUntrackedFileNames(any())).thenReturn(new GitService.Result(true, Set.of("a.txt", relativePathFooJava)));
+    when(gitService.retrieveUntrackedFileNames(any()))
+      .thenReturn(new GitService.Result(true, Set.of("a.txt", relativePathFooJava)));
     when(sensorSpy.getGitService()).thenReturn(gitService);
 
     analyse(sensorSpy, context,
@@ -509,7 +510,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
       .hasSize(1)
       .map(it -> ((InputFile) it.primaryLocation().inputComponent()).filename())
       .containsExactly("b.txt");
-    assertCorrectLogs(logTester.logs(), 1);
+    assertCorrectLogs(logTester.logs(), 1, "1 files are ignored because they are untracked by git");
   }
 
   @Test
@@ -541,17 +542,26 @@ public abstract class AbstractTextAndSecretsSensorTest {
     var sensor = sensor(check);
     var sensorSpy = Mockito.spy(sensor);
     var gitService = mock(GitService.class);
-    when(gitService.retrieveUntrackedFileNames(any())).thenReturn(new GitService.Result(true, Set.of("a.txt")));
+    when(gitService.retrieveUntrackedFileNames(any()))
+      .thenReturn(new GitService.Result(true, Set.of("a.txt", "c.txt", "d.txt")));
     when(sensorSpy.getGitService()).thenReturn(gitService);
 
     analyse(sensorSpy, context,
       inputFile(Path.of("a.txt"), "{}"),
-      inputFile(Path.of("b.txt"), "{}"));
+      inputFile(Path.of("b.txt"), "{}"),
+      inputFile(Path.of("c.txt"), "{}"),
+      inputFile(Path.of("d.txt"), "{}"));
 
     Collection<Issue> issues = context.allIssues();
     assertThat(issues).hasSize(1);
     assertCorrectLogs(logTester.logs(), 1,
-      "Analyzing language associated files and files included via \"sonar.text.inclusions\" that are tracked by git");
+      "Analyzing language associated files and files included via \"sonar.text.inclusions\" that are tracked by git",
+      "3 files are ignored because they are untracked by git",
+      """
+        Files untracked by git:
+        \ta.txt
+        \tc.txt
+        \td.txt""");
   }
 
   @Test

@@ -71,6 +71,7 @@ public class TextAndSecretsSensor implements Sensor {
   protected final AnalysisWarningsWrapper analysisWarnings;
   protected DurationStatistics durationStatistics;
   private ParallelizationManager parallelizationManager;
+  private GitTrackedFilePredicate gitTrackedFilePredicate;
 
   public TextAndSecretsSensor(CheckFactory checkFactory) {
     this(checkFactory, DefaultAnalysisWarningsWrapper.NOOP_ANALYSIS_WARNINGS);
@@ -113,6 +114,9 @@ public class TextAndSecretsSensor implements Sensor {
     var filePredicate = constructFilePredicate(sensorContext, notBinaryFilePredicate, analyzeAllFiles);
 
     List<InputFile> inputFiles = getInputFiles(sensorContext, filePredicate);
+    if (gitTrackedFilePredicate != null) {
+      gitTrackedFilePredicate.logSummary();
+    }
     if (inputFiles.isEmpty()) {
       LOG.debug("There are no files to be analyzed");
       return;
@@ -170,8 +174,10 @@ public class TextAndSecretsSensor implements Sensor {
       return LANGUAGE_FILE_PREDICATE;
     }
 
-    var trackedByGitPredicate = durationStatistics.timed("trackedByGitPredicate" + DurationStatistics.SUFFIX_GENERAL,
-      () -> new GitTrackedFilePredicate(sensorContext.fileSystem().baseDir().toPath(), getGitService()));
+    gitTrackedFilePredicate = new GitTrackedFilePredicate(sensorContext.fileSystem().baseDir().toPath(), getGitService(), LANGUAGE_FILE_PREDICATE);
+    var trackedByGitPredicate = durationStatistics.timed(
+      "trackedByGitPredicate" + DurationStatistics.SUFFIX_GENERAL,
+      () -> gitTrackedFilePredicate);
     if (!trackedByGitPredicate.isGitStatusSuccessful()) {
       LOG.warn("Analyzing only language associated files, " +
         "make sure to run the analysis inside a git repository to make use of inclusions specified via \"{}\"",
