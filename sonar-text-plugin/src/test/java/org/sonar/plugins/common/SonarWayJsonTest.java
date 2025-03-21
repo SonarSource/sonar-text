@@ -16,40 +16,13 @@
  */
 package org.sonar.plugins.common;
 
-import com.networknt.schema.InputFormat;
-import com.networknt.schema.JsonSchema;
-import com.networknt.schema.JsonSchemaFactory;
-import com.networknt.schema.PathType;
-import com.networknt.schema.SchemaValidatorsConfig;
-import com.networknt.schema.SpecVersion;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Locale;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.fail;
+import static org.sonar.plugins.common.SonarWayJsonHelper.validateJson;
 
-public class SonarWayJsonTest {
-
-  public static final JsonSchema JSON_SCHEMA;
-
-  static {
-    var config = SchemaValidatorsConfig.builder()
-      .pathType(PathType.JSON_PATH)
-      .locale(Locale.ENGLISH)
-      .build();
-    JSON_SCHEMA = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012).getSchema("", config);
-  }
-
-  public static void validateJson(Path path) throws IOException {
-    var content = Files.readString(path);
-    try {
-      JSON_SCHEMA.validate(content, InputFormat.JSON);
-    } catch (Exception e) {
-      fail("Failed to validate SonarWay profile at \"%s\"".formatted(path), e);
-    }
-  }
+class SonarWayJsonTest {
 
   @Test
   void shouldValidateSecretsSonarWayJson() throws IOException {
@@ -62,4 +35,5 @@ public class SonarWayJsonTest {
     var path = Path.of("src", "main", "resources", "org", "sonar", "l10n", "text", "rules", "text", "Sonar_way_profile.json");
     validateJson(path);
   }
+
 }
