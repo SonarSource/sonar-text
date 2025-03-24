@@ -53,5 +53,5 @@ Desktop.ini
 project-version/evaluated_project_version.txt
 
 # ---- CI script generated files
-build-logic/src/main/resources/script/node_modules/
-build-logic/src/main/resources/script/package-lock.json
+.github/workflows/scripts/node_modules/
+.github/workflows/scripts/coverage/
