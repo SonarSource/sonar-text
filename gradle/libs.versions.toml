@@ -4,23 +4,23 @@ sonar-commons = "2.16.0.3141"
 # https://github.com/SonarSource/sonar-plugin-api?tab=readme-ov-file#compatibility
 sonar-plugin-api = "11.1.0.2693"
 sonarqube = "25.3.0.104237"
-sonar-java = "8.10.0.38194"
+sonar-java = "8.11.0.38440"
 sonar-scanner-gradle = "6.0.1.5171"
-sonar-orchestrator = "5.3.0.2465"
+sonar-orchestrator = "5.4.0.2489"
 sonar-license-api = "3.4"
-sonar-lint = "10.16.0.80440"
+sonar-lint = "10.17.0.80607"
 slf4j = "2.0.17"
-logback = "1.5.17"
+logback = "1.5.18"
 jackson = "2.18.3"
 json-schema-validator = "1.5.6"
-junit = "5.11.4"
+junit = "5.12.1"
 assertj = "3.27.3"
 mockito = "5.16.1"
 jfrog-gradle = "5.2.5"
 spotless-gradle = "6.25.0"
 blowdryer-gradle = "1.7.1"
 yguard = "4.1.1"
-eclipse-jgit = "7.1.0.202411261347-r"
+eclipse-jgit = "7.2.0.202503040940-r"
 commons-io = "2.18.0"
 re2j = "1.8"
 gradle-shadow = "8.3.6"
@@ -45,6 +45,8 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 com-networknt-jsonSchemaValidator = { module = "com.networknt:json-schema-validator", version.ref = "json-schema-validator" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+# Version of JUnit Platform is taken from the JUnit BOM that is imported by junit-jupiter
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 jfrog-buildinfo-gradle = { module = "org.jfrog.buildinfo:build-info-extractor-gradle", version.ref = "jfrog-gradle" }

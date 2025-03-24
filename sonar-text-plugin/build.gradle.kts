@@ -39,6 +39,7 @@ dependencies {
     testImplementation(libs.sonar.plugin.api.impl)
     testImplementation(libs.mockito.core)
     testImplementation(libs.logback.classic)
+    testRuntimeOnly(libs.junit.platform.launcher)
 
     testFixturesImplementation(libs.junit.jupiter)
     testFixturesImplementation(libs.assertj.core)
@@ -46,6 +47,7 @@ dependencies {
     testFixturesImplementation(libs.sonar.plugin.api.impl)
     testFixturesImplementation(libs.mockito.core)
     testFixturesImplementation(libs.sonar.java.checks)
+    testFixturesRuntimeOnly(libs.junit.platform.launcher)
 }
 
 // used to be done by sonar-packaging maven plugin
