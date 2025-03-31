@@ -33,13 +33,15 @@ import org.slf4j.LoggerFactory;
  */
 public class RegexMatchingManager {
   private static final Logger LOG = LoggerFactory.getLogger(RegexMatchingManager.class);
+
   /**
    * The timeout time in millisecond after which the {@link RegexMatchingManager} will try to interrupt the thread.
    */
   private static int timeoutMs = 10_000;
+
   /**
    * The timeout time in millisecond after which the {@link RegexMatchingManager} will stop waiting for the precedent interruption to be effective
-   * and will throw a {@link RuntimeException}. Once it's reached it will kill the analysis of this file.
+   * and will throw a {@link RuntimeException}. Once it's reached, it will kill the analysis of this file.
    */
   private static int uninterruptibleTimeoutMs = 60_000;
 

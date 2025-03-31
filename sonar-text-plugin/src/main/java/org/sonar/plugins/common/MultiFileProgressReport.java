@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonar.plugins.common.thread.ThreadUtils;
 
 public class MultiFileProgressReport implements Runnable {
 
@@ -56,7 +57,7 @@ public class MultiFileProgressReport implements Runnable {
     this.progressUpdatePeriod = progressUpdatePeriod;
     interrupted.set(false);
     thread = new Thread(this);
-    thread.setName("Progress of the text and secrets analysis");
+    ThreadUtils.setThreadName(thread, "Progress of the text and secrets analysis");
     thread.setDaemon(true);
     thread.setUncaughtExceptionHandler((thread, throwable) -> LOG.debug("Uncaught exception in the progress report thread: {}", throwable.getClass().getCanonicalName()));
   }

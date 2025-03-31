@@ -16,9 +16,14 @@
  */
 package org.sonar.plugins.common;
 
+import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -27,10 +32,13 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.slf4j.event.Level;
+import org.sonar.api.SonarRuntime;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
@@ -64,6 +72,8 @@ import static org.sonar.plugins.common.TestUtils.sensorContext;
 import static org.sonar.plugins.common.TextAndSecretsSensor.SONAR_TESTS_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.TEXT_INCLUSIONS_DEFAULT_VALUE;
 
+// The class is executed in isolation from other test classes, because of shouldNotLeakThreads() method.
+@Isolated
 public abstract class AbstractTextAndSecretsSensorTest {
 
   private static final String SENSITIVE_BIDI_CHARS = "\u0002\u0004";
@@ -493,8 +503,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     context.setRuntime(SONARQUBE_RUNTIME);
     var sensor = sensor(check);
     var sensorSpy = Mockito.spy(sensor);
-    Path fooJavaPath = Path.of("src", "foo.java");
-    String relativePathFooJava = "src" + fooJavaPath.getFileSystem().getSeparator() + "foo.java";
+    String relativePathFooJava = "src" + File.pathSeparator + "foo.java";
     var gitService = mock(GitService.class);
     when(gitService.retrieveUntrackedFileNames(any()))
       .thenReturn(new GitService.Result(true, Set.of("a.txt", relativePathFooJava)));
@@ -503,7 +512,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     analyse(sensorSpy, context,
       inputFile(Path.of("a.txt"), "{}", "secrets"),
       inputFile(Path.of("b.txt"), "{}", "secrets"),
-      inputFile(fooJavaPath));
+      inputFile(Path.of("src", "foo.java")));
 
     Collection<Issue> issues = context.allIssues();
     assertThat(issues)
@@ -511,6 +520,41 @@ public abstract class AbstractTextAndSecretsSensorTest {
       .map(it -> ((InputFile) it.primaryLocation().inputComponent()).filename())
       .containsExactly("b.txt");
     assertCorrectLogs(logTester.logs(), 1, "1 files are ignored because they are untracked by git");
+  }
+
+  static Set<SonarRuntime> shouldNotLeakThreads() {
+    return TestUtils.sonarRuntimes();
+  }
+
+  @ParameterizedTest
+  @MethodSource
+  void shouldNotLeakThreads(SonarRuntime sonarRuntime) {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setRuntime(sonarRuntime);
+    var sensor = sensor(check);
+
+    var threadsBefore = activeCreatedThreadsNames();
+    analyse(sensor, context,
+      inputFile(Path.of("a.txt"), "{}", "secrets"),
+      inputFile(Path.of("b.txt"), "{}", "secrets"),
+      inputFile(Path.of("src", "foo.java")));
+
+    var threadsAfter = activeCreatedThreadsNames();
+    threadsAfter.removeAll(threadsBefore);
+    assertThat(threadsAfter).isEmpty();
+  }
+
+  static List<String> activeCreatedThreadsNames() {
+    var result = new ArrayList<String>();
+    ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+    for (ThreadInfo threadInfo : threadMXBean.dumpAllThreads(true, true)) {
+      // the demon threads don't block the application termination
+      if (!threadInfo.isDaemon()) {
+        result.add(threadInfo.getThreadName());
+      }
+    }
+    return result;
   }
 
   @Test

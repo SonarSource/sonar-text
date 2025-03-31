@@ -33,11 +33,17 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class ProcessBuilderWrapper {
   private static final Logger LOG = LoggerFactory.getLogger(ProcessBuilderWrapper.class);
   private static final long TIMEOUT_MILLIS = 30_000;
-  private static final ExecutorService PROCESS_MONITOR = Executors.newSingleThreadExecutor();
+
+  private final ExecutorService processMonitor = Executors.newSingleThreadExecutor();
 
   public Status execute(List<String> command, Consumer<String> lineConsumer) throws IOException {
     var process = startProcess(command);
-    var readerFuture = PROCESS_MONITOR.submit(() -> readProcessOutput(process, lineConsumer));
+    var readerFuture = processMonitor.submit(() -> {
+      var message = "Read the \"%s\" stdout in thread \"%s\""
+        .formatted(String.join(" ", command), Thread.currentThread().getName());
+      LOG.debug(message);
+      readProcessOutput(process, lineConsumer);
+    });
 
     try {
       var exited = process.waitFor(TIMEOUT_MILLIS, MILLISECONDS);
@@ -63,6 +69,12 @@ public class ProcessBuilderWrapper {
   Process startProcess(List<String> command) throws IOException {
     var processBuilder = new ProcessBuilder(command);
     return processBuilder.start();
+  }
+
+  public void shutdown() {
+    // This class is used for reading standard output of Git commands.
+    // When the interaction with git is done, it is safe to intermediately stop all threads without waiting for tasks to terminate.
+    processMonitor.shutdownNow();
   }
 
   private static void readProcessOutput(Process process, Consumer<String> lineConsumer) {

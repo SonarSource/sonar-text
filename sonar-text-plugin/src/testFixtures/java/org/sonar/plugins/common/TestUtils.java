@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -207,5 +208,9 @@ public class TestUtils {
 
   public List<Class<?>> textCheckClassList() {
     return new TextCheckList().checks();
+  }
+
+  public static Set<SonarRuntime> sonarRuntimes() {
+    return Set.of(SONARLINT_RUNTIME, SONARQUBE_RUNTIME, SONARCLOUD_RUNTIME);
   }
 }

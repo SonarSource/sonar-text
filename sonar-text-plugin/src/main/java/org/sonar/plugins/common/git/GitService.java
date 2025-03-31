@@ -42,7 +42,8 @@ public class GitService {
     this(new JgitSupplier(), new ProcessBuilderWrapper());
   }
 
-  public GitService(JgitSupplier jgitSupplier, ProcessBuilderWrapper processBuilderWrapper) {
+  // visible for testing only
+  GitService(JgitSupplier jgitSupplier, ProcessBuilderWrapper processBuilderWrapper) {
     this.jgitSupplier = jgitSupplier;
     this.processBuilderWrapper = processBuilderWrapper;
   }
@@ -90,6 +91,8 @@ public class GitService {
       }
     } catch (IOException e) {
       return new Result(false, Set.of());
+    } finally {
+      processBuilderWrapper.shutdown();
     }
 
     return new Result(true, untrackedFiles);
