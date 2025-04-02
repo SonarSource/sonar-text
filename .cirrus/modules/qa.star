@@ -26,7 +26,7 @@ QA_QUBE_DEV = "DEV"
 # Plugin
 #
 
-def qa_task(env, memory="14G", cpu="4"):
+def qa_task(env, memory="14G", cpu="4", orchestrator_cache_reupload_on_changes=True):
     return {
         "depends_on": "build",
         "eks_container": base_image_container_builder(memory=memory, cpu=cpu),
@@ -35,7 +35,7 @@ def qa_task(env, memory="14G", cpu="4"):
         "gradle_wrapper_cache": gradle_wrapper_cache(),
         "set_orchestrator_home_script": set_orchestrator_home_script(),
         "mkdir_orchestrator_home_script": mkdir_orchestrator_home_script(),
-        "orchestrator_cache": orchestrator_cache(),
+        "orchestrator_cache": orchestrator_cache(reupload_on_changes = orchestrator_cache_reupload_on_changes),
         "run_its_script": run_its_script(),
         "gradle_test_artifacts": gradle_html_report_artifacts(),
         "cleanup_gradle_script": cleanup_gradle_script(),
@@ -93,16 +93,17 @@ def qa_ruling_task():
 
 
 def qa_benchmark_condition():
-    return "$CIRRUS_PR_LABELS !=~ \".*qa-bench.*\""
+    # skip a job when no "qa-bench" label or not cron named nightly-sunday
+    return "$CIRRUS_PR_LABELS !=~ \".*qa-bench.*\" || $CIRRUS_CRON != \"nightly-sunday\""
 
 
 def qa_benchmark_env():
     return {
         "GRADLE_TASK": QA_BENCHMARK_GRADLE_TASK,
         "GITHUB_TOKEN": "VAULT[development/github/token/licenses-ro token]",
-        "SQ_VERSION": "LATEST_RELEASE",
+        "SQ_VERSION": QA_QUBE_LATEST_RELEASE,
         "BENCHMARK_SETTINGS": "$CIRRUS_PR_LABELS",
-        "INIT_SUBMODULES": "true"
+        "INIT_SUBMODULES": "true",
     }
 
 
@@ -121,7 +122,7 @@ def qa_benchmark_task():
             "gradle_wrapper_cache": gradle_wrapper_cache(),
             "set_orchestrator_home_script": set_orchestrator_home_script(),
             "mkdir_orchestrator_home_script": mkdir_orchestrator_home_script(),
-            "orchestrator_cache": orchestrator_cache(),
+            "orchestrator_cache": orchestrator_cache(reupload_on_changes=False),
             "run_benchmark_script": run_its_script(),
             "cleanup_gradle_script": cleanup_gradle_script(),
             "on_failure": default_gradle_on_failure(),
@@ -180,8 +181,11 @@ def qa_sqs_edition_test_task():
         "GRADLE_TASK": "sonarQubeEditionTest",
         "SQ_VERSION": QA_QUBE_DEV,
         "GITHUB_TOKEN": "VAULT[development/github/token/licenses-ro token]", },
-        memory="14G",
-        cpu="4")
+        memory="16G",
+        cpu="4",
+        # The orchestrator_cache after task execution may be > 5GB (all SQS editions) and requires more memory to upload it and
+        # other jobs will not benefit from it
+        orchestrator_cache_reupload_on_changes=False)
     task["skip"] = "$CIRRUS_PR_LABELS !=~ \".*qa-edition.*\""
     return {
         "qa_sqs_edition_test_task": task
