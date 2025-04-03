@@ -93,8 +93,8 @@ def qa_ruling_task():
 
 
 def qa_benchmark_condition():
-    # skip a job when no "qa-bench" label or not cron named nightly-sunday
-    return "$CIRRUS_PR_LABELS !=~ \".*qa-bench.*\" || $CIRRUS_CRON != \"nightly-sunday\""
+    # skip a job when not (matches "qa-bench" label or cron named nightly-sunday)
+    return "$CIRRUS_PR_LABELS !=~ \".*qa-bench.*\" && $CIRRUS_CRON != \"nightly-sunday\""
 
 
 def qa_benchmark_env():
@@ -117,13 +117,17 @@ def qa_benchmark_task():
             ],
             "skip": qa_benchmark_condition(),
             "env": qa_benchmark_env(),
-            "eks_container": base_image_container_builder(memory="14G", cpu="16"),
+            "eks_container": base_image_container_builder(memory="20G", cpu="16"),
             "gradle_cache": gradle_cache(),
             "gradle_wrapper_cache": gradle_wrapper_cache(),
             "set_orchestrator_home_script": set_orchestrator_home_script(),
             "mkdir_orchestrator_home_script": mkdir_orchestrator_home_script(),
             "orchestrator_cache": orchestrator_cache(reupload_on_changes=False),
             "run_benchmark_script": run_its_script(),
+            # Full benchmark logs are difficult to display on Cirrus, so we log summary in a separate step
+            "log_benchmark_results_script": [
+                "grep -A 5 'Analysis result for project' private/its/benchmark/build/reports/tests/integrationTest/classes/com.sonarsource.text.BenchmarkTest.html"
+            ],
             "cleanup_gradle_script": cleanup_gradle_script(),
             "on_failure": default_gradle_on_failure(),
         }
