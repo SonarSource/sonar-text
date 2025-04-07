@@ -32,6 +32,7 @@ dependencies {
     implementation(libs.gradle.shadow)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.assertj.core)
+    testImplementation(kotlin("test"))
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 

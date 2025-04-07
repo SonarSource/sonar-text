@@ -8,7 +8,7 @@
 
 ## Adding a secret
 
-### Common errors
+### Common errors (potentially outdated)
 
 - Modifying code from the GitHub UI and not validating it with the schema
   - It will raise tons of exceptions, and `"DeserializationException: Could not load specification from file: slack.yaml"`  
@@ -80,6 +80,30 @@ provider:
             BLABLA
           containsSecret: false
 ```
+
+### Reusing common blocks in secret specification
+You can reuse common blocks in the secret specification files. Common blocks are placed in separate files in the `common` directory of the `configuration` directory. A common block is represented as `${common/fileName.yaml}`; it will be substituted with the content of the file during build time. The block will have the same indentation as the `${common/fileName.yaml}` line.
+
+For example, if you have a common `patternNot` block that you want to use across multiple specifications, you can define it once and reference it in your specifications.
+
+``` yaml
+# common/patternNot.yaml
+- "(\\w)\\1{6,}"
+- "(?i)rightcloud"
+- "(?i)testkey|(s|ex)ample"
+```
+
+Then, in your specification file, you can reference it like this:
+
+```yaml
+provider:
+  detection:
+    post:
+      patternNot:
+        ${common/patternNot.yaml}
+```
+
+Note: resulting full YAML files are generated during build time and stored in the `build/resources/main` directory. During debugging, you can check the generated files to see what the final output looks like.
 
 ## RSpec writing
 
