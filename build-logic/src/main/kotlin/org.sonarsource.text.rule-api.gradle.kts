@@ -34,7 +34,7 @@ repositories {
 }
 
 val ruleApi = configurations.create("ruleApi")
-val ruleApiVersion = "2.9.0.4061"
+val ruleApiVersion = "2.10.0.4287"
 
 dependencies {
     ruleApi("com.sonarsource.rule-api:rule-api:$ruleApiVersion")
