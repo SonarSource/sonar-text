@@ -27,6 +27,7 @@ tasks.named<ProcessResources>("processResources") {
         file.name to file.readText()
     } ?: emptyMap()
 
+    filteringCharset = Charsets.UTF_8.name()
     filesMatching("$configurationPath/configuration/*.yaml") {
         filter { line -> line.expandCommonBlock(commonSections) }
     }
