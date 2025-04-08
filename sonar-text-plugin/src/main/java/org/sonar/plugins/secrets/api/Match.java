@@ -16,12 +16,17 @@
  */
 package org.sonar.plugins.secrets.api;
 
+import java.util.Map;
+
 /**
+ * Result of applying pattern matcher to a text.
+ *
  * @param text            matched text
  * @param fileStartOffset inclusive start offset
  * @param fileEndOffset   exclusive end offset
+ * @param groups          map containing matches per named group
  */
-public record Match(String text, int fileStartOffset, int fileEndOffset) {
+public record Match(String text, int fileStartOffset, int fileEndOffset, Map<String, Match> groups) {
 
   @Override
   public String toString() {

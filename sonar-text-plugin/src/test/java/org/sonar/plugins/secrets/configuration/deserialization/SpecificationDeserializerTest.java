@@ -16,8 +16,14 @@
  */
 package org.sonar.plugins.secrets.configuration.deserialization;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.sonar.plugins.secrets.configuration.model.Specification;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -66,5 +72,73 @@ class SpecificationDeserializerTest {
       .isThrownBy(() -> SpecificationDeserializer.deserialize(specificationStream, specificationFileName))
       .withMessage(String.format(
         "Deserialization of specification failed for file because it was not found: %s", specificationFileName));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+    """
+      provider:
+        detection:
+          post:
+            name: base
+            patternNot:
+              - test
+      """,
+    """
+      provider:
+        detection:
+          post:
+            name: base
+            patternNot:
+              - test
+            groups:
+              - name: sub
+                patternNot:
+                  - test
+      """,
+  })
+  void shouldThrowExceptionOnNamedTopLevelPostModule(String spec) {
+    var specificationStream = new ByteArrayInputStream(spec.getBytes(StandardCharsets.UTF_8));
+
+    assertThatExceptionOfType(DeserializationException.class)
+      .isThrownBy(() -> SpecificationDeserializer.deserialize(specificationStream, "test.yaml"))
+      .withMessage("Deserialization of specification failed for file: %s".formatted("test.yaml"))
+      .havingCause()
+      .isInstanceOf(UnrecognizedPropertyException.class)
+      .withMessageContaining("Unrecognized field \"name\"");
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+    """
+      provider:
+        detection:
+          post:
+            groups:
+              - patternNot:
+                  - test
+      """,
+    """
+      provider:
+        detection:
+          post:
+            groups:
+              - name: sub
+                patternNot:
+                  - test
+                groups:
+                  - name: subsub
+                    patternNot:
+                      - test
+      """
+  })
+  void shouldThrowExceptionMalformedGroupElement(String spec) {
+    var specificationStream = new ByteArrayInputStream(spec.getBytes(StandardCharsets.UTF_8));
+
+    assertThatExceptionOfType(DeserializationException.class)
+      .isThrownBy(() -> SpecificationDeserializer.deserialize(specificationStream, "test.yaml"))
+      .withMessage("Deserialization of specification failed for file: %s".formatted("test.yaml"))
+      .havingCause()
+      .isInstanceOf(JsonMappingException.class);
   }
 }

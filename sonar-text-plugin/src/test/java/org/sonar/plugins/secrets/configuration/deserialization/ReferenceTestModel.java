@@ -32,9 +32,10 @@ import org.sonar.plugins.secrets.configuration.model.matching.Match;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.FileFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.HeuristicsFilter;
-import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.NamedPostModule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.StatisticalFilter;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.TopLevelPostModule;
 import org.sonar.plugins.secrets.configuration.model.metadata.Metadata;
 import org.sonar.plugins.secrets.configuration.model.metadata.ProviderMetadata;
 import org.sonar.plugins.secrets.configuration.model.metadata.Reference;
@@ -212,9 +213,7 @@ public class ReferenceTestModel {
     return preModule;
   }
 
-  public static PostModule constructPostModule() {
-    PostModule postModule = new PostModule();
-
+  public static TopLevelPostModule constructPostModule() {
     StatisticalFilter statisticalFilter = new StatisticalFilter();
     statisticalFilter.setInputString("groupName");
     statisticalFilter.setThreshold(4.2f);
@@ -223,11 +222,10 @@ public class ReferenceTestModel {
     heuristicsFilter.setHeuristics(List.of("uri"));
     heuristicsFilter.setInputString("groupName");
 
-    postModule.setStatisticalFilter(statisticalFilter);
-    postModule.setPatternNot(List.of("EXAMPLEKEY", "0"));
-    postModule.setHeuristicFilter(heuristicsFilter);
+    var groups = List.of(
+      new NamedPostModule("base", null, List.of("EXAMPLESUBKEY"), null));
 
-    return postModule;
+    return new TopLevelPostModule(heuristicsFilter, List.of("EXAMPLEKEY", "0"), statisticalFilter, groups);
   }
 
   private static void enrichRuleMetadata(RuleMetadata ruleMetadata) {

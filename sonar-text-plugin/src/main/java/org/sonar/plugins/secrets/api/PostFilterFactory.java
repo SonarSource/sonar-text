@@ -21,8 +21,8 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.AbstractPostModule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.HeuristicsFilter;
-import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.StatisticalFilter;
 
 /**
@@ -39,7 +39,7 @@ public final class PostFilterFactory {
    * @param matching deserialized matching configuration
    * @return a predicate to filter out potential secrets based on the post module configuration
    */
-  public static Predicate<String> createPredicate(@Nullable PostModule post, @Nullable Matching matching) {
+  public static Predicate<String> createPredicate(@Nullable AbstractPostModule post, @Nullable Matching matching) {
     Predicate<String> postFilter = s -> true;
     if (post != null) {
       if (post.getStatisticalFilter() != null) {

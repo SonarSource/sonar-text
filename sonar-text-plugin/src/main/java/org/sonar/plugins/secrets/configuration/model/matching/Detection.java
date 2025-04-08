@@ -20,8 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 import org.sonar.plugins.secrets.configuration.model.Rule;
-import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.TopLevelPostModule;
 
 public class Detection {
 
@@ -30,9 +30,13 @@ public class Detection {
   @Nullable
   private PreModule pre;
   @Nullable
-  private PostModule post;
+  private TopLevelPostModule post;
   @JsonIgnore
   private Rule rule;
+
+  public Detection() {
+    // empty constructor to be used by Jackson
+  }
 
   private boolean associatedProviderDetectionExists() {
     return rule != null && rule.getProvider().getDetection() != null;
@@ -63,14 +67,14 @@ public class Detection {
   }
 
   @CheckForNull
-  public PostModule getPost() {
+  public TopLevelPostModule getPost() {
     if (post == null && associatedProviderDetectionExists()) {
       return rule.getProvider().getDetection().getPost();
     }
     return post;
   }
 
-  public void setPost(@Nullable PostModule post) {
+  public void setPost(@Nullable TopLevelPostModule post) {
     this.post = post;
   }
 

@@ -28,16 +28,46 @@ class PostModuleTest {
   private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
 
   @Test
-  void shouldDeserializeToEmptyCollection() throws JsonProcessingException {
-    String input = """
+  void shouldHaveDefaultConstructor() {
+    var topLevelPostModule = new TopLevelPostModule();
+    assertThat(topLevelPostModule).isNotNull();
+
+    var namedPostModule = new NamedPostModule();
+    assertThat(namedPostModule).isNotNull();
+  }
+
+  @Test
+  void shouldDeserializePostModules() throws JsonProcessingException {
+    var input = """
+      patternNot:
+        - example
+      groups:
+        - name: prefix
+          patternNot:
+            - ex
+      """;
+
+    var postModule = MAPPER.readValue(input, TopLevelPostModule.class);
+
+    assertThat(postModule).isNotNull();
+    assertThat(postModule.getPatternNot()).containsExactly("example");
+    assertThat(postModule.getGroups()).hasSize(1);
+    assertThat(postModule.getGroups().get(0).getName()).isEqualTo("prefix");
+    assertThat(postModule.getGroups().get(0).getPatternNot()).containsExactly("ex");
+  }
+
+  @Test
+  void shouldDeserializeAbsentFieldsOfTopLevelPostModuleToEmptyCollection() throws JsonProcessingException {
+    var input = """
       statisticalFilter:
         threshold: 4
       """;
-    PostModule postModule = MAPPER.readValue(input, PostModule.class);
+    var postModule = MAPPER.readValue(input, TopLevelPostModule.class);
 
     assertThat(postModule.getPatternNot()).isEmpty();
     assertThat(postModule.getHeuristicFilter()).isNull();
     assertThat(postModule.getStatisticalFilter().getThreshold()).isEqualTo(4);
+    assertThat(postModule.getGroups()).isEmpty();
   }
 
 }

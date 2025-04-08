@@ -88,6 +88,10 @@ provider:
             heuristics:
               - "uri"
             inputString: "groupName"
+          groups:
+            - name: base
+              patternNot:
+                - "EXAMPLESUBKEY"
       examples:
         - text: >
             example

@@ -18,6 +18,7 @@ package org.sonar.plugins.secrets.api;
 
 import org.junit.jupiter.api.Test;
 
+import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MatchTest {
@@ -27,7 +28,7 @@ class MatchTest {
     String text = "text";
     int fileStartOffset = 10;
     int fileEndOffset = 20;
-    Match match = new Match(text, fileStartOffset, fileEndOffset);
+    Match match = new Match(text, fileStartOffset, fileEndOffset, emptyMap());
 
     assertThat(match.text()).isEqualTo(text);
     assertThat(match.fileStartOffset()).isEqualTo(fileStartOffset);

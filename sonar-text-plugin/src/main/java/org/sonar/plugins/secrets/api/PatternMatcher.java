@@ -17,8 +17,9 @@
 package org.sonar.plugins.secrets.api;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -27,6 +28,10 @@ import org.sonar.plugins.secrets.api.task.InterruptibleCharSequence;
 import org.sonar.plugins.secrets.api.task.RegexMatchingManager;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
+
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
+import static java.util.stream.Collectors.toMap;
 
 /**
  * Used to match regular expressions in Strings.
@@ -75,13 +80,26 @@ public class PatternMatcher {
 
   /**
    * Returns a list of {@link Match matches} which are detected using the {@link Pattern pattern} field.
-   * @param content to be matched on
-   * @param ruleId of the {@link org.sonar.plugins.secrets.configuration.model.Rule}, for logging purposes.
+   *
+   * @param content     to be matched on
+   * @param ruleId      of the {@link org.sonar.plugins.secrets.configuration.model.Rule}, for logging purposes.
    * @return list of {@link Match matches} detected in the content
    */
   public List<Match> findIn(String content, String ruleId) {
+    return findIn(content, ruleId, emptyList());
+  }
+
+  /**
+   * Returns a list of {@link Match matches} which are detected using the {@link Pattern pattern} field.
+   *
+   * @param content     to be matched on
+   * @param ruleId      of the {@link org.sonar.plugins.secrets.configuration.model.Rule}, for logging purposes.
+   * @param expectedNamedGroups set of names of named capturing groups to be returned in the {@link Match} object
+   * @return list of {@link Match matches} detected in the content
+   */
+  public List<Match> findIn(String content, String ruleId, Collection<String> expectedNamedGroups) {
     if (pattern == null) {
-      return Collections.emptyList();
+      return emptyList();
     }
     List<Match> matches = new ArrayList<>();
     var matcher = pattern.matcher(new InterruptibleCharSequence(content));
@@ -90,9 +108,17 @@ public class PatternMatcher {
       while (matcher.find()) {
         var matchResult = matcher.toMatchResult();
         if (matcher.groupCount() == 0) {
-          matches.add(new Match(matchResult.group(), matchResult.start(), matchResult.end()));
+          matches.add(new Match(matchResult.group(), matchResult.start(), matchResult.end(), emptyMap()));
+        } else if (expectedNamedGroups.isEmpty()) {
+          // backward compatibility with existing rules that rely on match of named group only and don't use any `groups:` post filter
+          // TODO SONARTEXT-441 Migrate existing rules to postFilters per named group
+          matches.add(new Match(matchResult.group(1), matchResult.start(1), matchResult.end(1), emptyMap()));
         } else {
-          matches.add(new Match(matchResult.group(1), matchResult.start(1), matchResult.end(1)));
+          var namedMatches = expectedNamedGroups.stream()
+            .filter(it -> matcher.group(it) != null)
+            .collect(toMap(Function.identity(), it -> new Match(matcher.group(it), matcher.start(it), matcher.end(it), emptyMap())));
+
+          matches.add(new Match(matchResult.group(), matchResult.start(), matchResult.end(), namedMatches));
         }
       }
     }, pattern.pattern(), ruleId);

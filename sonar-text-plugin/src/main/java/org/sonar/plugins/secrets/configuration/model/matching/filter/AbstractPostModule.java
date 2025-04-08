@@ -16,23 +16,30 @@
  */
 package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
-import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
-public class PostModule {
+public abstract sealed class AbstractPostModule permits NamedPostModule,TopLevelPostModule {
 
   @Nullable
   private HeuristicsFilter heuristicFilter;
-  @JsonSetter(nulls = Nulls.SKIP)
-  private List<String> patternNot = Collections.emptyList();
+  private List<String> patternNot;
   @Nullable
   private StatisticalFilter statisticalFilter;
 
-  public PostModule() {
-    // Default constructor for deserializing with Jackson
+  protected AbstractPostModule() {
+  }
+
+  protected AbstractPostModule(
+    @JsonProperty("heuristicFilter") @Nullable HeuristicsFilter heuristicFilter,
+    @JsonProperty("patternNot") @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> patternNot,
+    @JsonProperty("statisticalFilter") @Nullable StatisticalFilter statisticalFilter) {
+    this.heuristicFilter = heuristicFilter;
+    this.patternNot = patternNot;
+    this.statisticalFilter = statisticalFilter;
   }
 
   @Nullable

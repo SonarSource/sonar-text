@@ -22,6 +22,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.secrets.api.DistanceValidation.inDistanceOf;
 import static org.sonar.plugins.secrets.api.DistanceValidation.isAfter;
@@ -31,8 +32,8 @@ class DistanceValidationTest {
 
   @Test
   void testFirstBeforeSecondMatch() {
-    Match first = new Match("text", 10, 21);
-    Match second = new Match("text", 21, 30);
+    Match first = new Match("text", 10, 21, emptyMap());
+    Match second = new Match("text", 21, 30, emptyMap());
 
     assertThat(isBefore(first, second)).isTrue();
     assertThat(isAfter(first, second)).isFalse();
@@ -43,8 +44,8 @@ class DistanceValidationTest {
   @ParameterizedTest(name = "{0}")
   @MethodSource
   void matchesShouldNotBeBeforeAndAfter(String testName, int secondMatchStartOffset, int secondMatchEndOffset) {
-    Match first = new Match("text", 10, 20);
-    Match second = new Match("text", secondMatchStartOffset, secondMatchEndOffset);
+    Match first = new Match("text", 10, 20, emptyMap());
+    Match second = new Match("text", secondMatchStartOffset, secondMatchEndOffset, emptyMap());
 
     assertThat(isBefore(first, second)).isFalse();
     assertThat(isAfter(first, second)).isFalse();
@@ -62,8 +63,8 @@ class DistanceValidationTest {
   @ParameterizedTest(name = "{0}")
   @MethodSource
   void testInDistanceOfIsCalculatedCorrect(String testName, int secondMatchStartOffset, int secondMatchEndOffset, boolean isInRange) {
-    Match first = new Match("text", 10, 20);
-    Match second = new Match("text", secondMatchStartOffset, secondMatchEndOffset);
+    Match first = new Match("text", 10, 20, emptyMap());
+    Match second = new Match("text", secondMatchStartOffset, secondMatchEndOffset, emptyMap());
 
     int maxDistance = 3;
     assertThat(inDistanceOf(first, second, maxDistance)).isEqualTo(isInRange);

@@ -49,6 +49,7 @@ public class SecretMatcherAssert extends AbstractAssert<SecretMatcherAssert, Sec
     usingRecursiveComparison()
       .ignoringFields("preFilter")
       .ignoringFields("postFilter")
+      .ignoringFields("postFilterByGroup")
       .ignoringFields("durationStatistics")
       .withEqualsForType(patternEquals, Pattern.class)
       .isEqualTo(expectedMatcher);
@@ -60,6 +61,21 @@ public class SecretMatcherAssert extends AbstractAssert<SecretMatcherAssert, Sec
     for (String string : testStringsForPostFilter) {
       if (actual.getPostFilter().test(string) != expectedMatcher.getPostFilter().test(string)) {
         failWithMessage("Expected post filter to behave identical, but found different behavior on \"%s\"", string);
+      }
+    }
+    var actualPostFiltersByGroup = actual.getPostFilterByGroup();
+    var expectedPostFiltersByGroup = expectedMatcher.getPostFilterByGroup();
+    if (!actualPostFiltersByGroup.keySet().equals(expectedPostFiltersByGroup.keySet())) {
+      failWithMessage("Expected post filter groups to have identical keys, but found different keys");
+    }
+    for (var entry : actualPostFiltersByGroup.entrySet()) {
+      var key = entry.getKey();
+      var actualPredicate = entry.getValue();
+      var expectedPredicate = expectedPostFiltersByGroup.get(key);
+      for (var string : testStringsForPostFilter) {
+        if (actualPredicate.test(string) != expectedPredicate.test(string)) {
+          failWithMessage("Expected post filter for group \"%s\" to behave identical, but found different behavior on \"%s\"", key, string);
+        }
       }
     }
     return this;

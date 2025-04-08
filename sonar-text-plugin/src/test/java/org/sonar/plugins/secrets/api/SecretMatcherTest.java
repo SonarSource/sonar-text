@@ -19,6 +19,7 @@ package org.sonar.plugins.secrets.api;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,6 +33,7 @@ import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.RuleScope;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
+import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.inputFileContext;
@@ -55,6 +57,7 @@ class SecretMatcherTest {
       AuxiliaryPatternMatcher.NO_FILTERING_AUXILIARY_MATCHER,
       file -> true,
       s -> true,
+      emptyMap(),
       mockDurationStatistics());
 
     SecretMatcher actualMatcher = SecretMatcher.build(rule, mockDurationStatistics(), SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED);
@@ -75,6 +78,10 @@ class SecretMatcherTest {
     };
     Predicate<String> statisticalFilter = candidateSecret -> !EntropyChecker.hasLowEntropy(candidateSecret, 4.2f);
     expectedPredicate = expectedPredicate.and(statisticalFilter).and(patternNotFilter);
+    var expectedGroupPredicate = (Predicate<String>) candidateSecret -> {
+      var matcher = Pattern.compile("EXAMPLESUBKEY").matcher(candidateSecret);
+      return !matcher.find();
+    };
     SecretMatcher expectedMatcher = new SecretMatcher(
       rule.getId(),
       rule.getMetadata().getMessage(),
@@ -82,6 +89,7 @@ class SecretMatcherTest {
       constructReferenceAuxiliaryMatcher(),
       file -> true,
       expectedPredicate,
+      Map.of("base", expectedGroupPredicate),
       mockDurationStatistics());
 
     SecretMatcher actualMatcher = SecretMatcher.build(rule, mockDurationStatistics(), SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED);
@@ -101,6 +109,7 @@ class SecretMatcherTest {
       AuxiliaryPatternMatcher.NO_FILTERING_AUXILIARY_MATCHER,
       file -> true,
       s -> true,
+      emptyMap(),
       mockDurationStatistics());
 
     SecretMatcher actualMatcher = SecretMatcher.build(rule, mockDurationStatistics(), SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED);

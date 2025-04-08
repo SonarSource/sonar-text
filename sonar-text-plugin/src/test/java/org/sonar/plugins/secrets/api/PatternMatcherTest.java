@@ -23,6 +23,7 @@ import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.plugins.secrets.api.task.RegexMatchingManager;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 
+import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PatternMatcherTest {
@@ -80,5 +81,37 @@ class PatternMatcherTest {
     var matches = patternMatcher.findIn("line with pattern", "<test-rule-id>");
 
     assertThat(matches).hasSize(1);
+  }
+
+  @Test
+  void shouldReturnMatchedNamedGroups() {
+    var patternMatcher = PatternMatcher.build("(?<prefix>\\w+) (?<suffix>\\w+)");
+    var content = "Match1 Match2";
+    var ruleId = "<test-rule-id>";
+    var namedGroups = List.of("prefix", "suffix");
+
+    var matches = patternMatcher.findIn(content, ruleId, namedGroups);
+
+    assertThat(matches).hasSize(1);
+    assertThat(matches.get(0).groups())
+      .hasSize(2)
+      .containsEntry("prefix", new Match("Match1", 0, 6, emptyMap()))
+      .containsEntry("suffix", new Match("Match2", 7, 13, emptyMap()));
+  }
+
+  @Test
+  void shouldNotReturnUnmatchedCaptureGroup() {
+    var patternMatcher = PatternMatcher.build("(?<prefix>\\w+) (?<suffix>\\w+)?");
+    var content = "Match1 ...";
+    var ruleId = "<test-rule-id>";
+    var namedGroups = List.of("prefix", "suffix");
+
+    var matches = patternMatcher.findIn(content, ruleId, namedGroups);
+
+    assertThat(matches).hasSize(1);
+    assertThat(matches.get(0).groups())
+      .hasSize(1)
+      .containsEntry("prefix", new Match("Match1", 0, 6, emptyMap()))
+      .doesNotContainKey("suffix");
   }
 }

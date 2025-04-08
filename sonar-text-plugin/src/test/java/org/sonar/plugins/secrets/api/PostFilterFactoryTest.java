@@ -28,7 +28,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
-import org.sonar.plugins.secrets.configuration.model.matching.filter.PostModule;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -37,14 +36,14 @@ class PostFilterFactoryTest {
   private static Matching matching;
 
   @BeforeAll
-  public static void initialize() {
+  static void initialize() {
     matching = new Matching();
     matching.setPattern("\\b(?<groupName>candidate) secret\\b");
   }
 
   @Test
   void postFilterShouldReturnTrueOnHighEntropy() {
-    PostModule postModule = ReferenceTestModel.constructPostModule();
+    var postModule = ReferenceTestModel.constructPostModule();
     postModule.getStatisticalFilter().setInputString(null);
 
     Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule, matching);
@@ -59,7 +58,7 @@ class PostFilterFactoryTest {
     "candidate secret with high entropy: lasdij2338f,.q29cm2acasd has patternNot:EXAMPLEKEY"
   })
   void postFilterShouldReturnFalse(String input) {
-    PostModule postModule = ReferenceTestModel.constructPostModule();
+    var postModule = ReferenceTestModel.constructPostModule();
     postModule.getStatisticalFilter().setInputString(null);
 
     Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule, matching);
@@ -69,7 +68,7 @@ class PostFilterFactoryTest {
 
   @Test
   void postFilterShouldReturnFalseOnLowEntropyWhenPatternNotIsNull() {
-    PostModule postModule = ReferenceTestModel.constructPostModule();
+    var postModule = ReferenceTestModel.constructPostModule();
     postModule.getStatisticalFilter().setInputString(null);
     postModule.setPatternNot(Collections.emptyList());
 
@@ -80,7 +79,7 @@ class PostFilterFactoryTest {
 
   @Test
   void postFilterShouldReturnTrueOnHighEntropyWhenPatternNotIsNull() {
-    PostModule postModule = ReferenceTestModel.constructPostModule();
+    var postModule = ReferenceTestModel.constructPostModule();
     postModule.getStatisticalFilter().setInputString(null);
     postModule.setPatternNot(Collections.emptyList());
 
@@ -91,7 +90,7 @@ class PostFilterFactoryTest {
 
   @Test
   void postFilterShouldReturnFalseOnLowEntropyWhenStatisticalFilterIsNull() {
-    PostModule postModule = ReferenceTestModel.constructPostModule();
+    var postModule = ReferenceTestModel.constructPostModule();
     postModule.getStatisticalFilter().setInputString(null);
     postModule.setStatisticalFilter(null);
 
@@ -102,7 +101,7 @@ class PostFilterFactoryTest {
 
   @Test
   void postFilterShouldReturnTrueOnHighEntropyWhenStatisticalFilterIsNull() {
-    PostModule postModule = ReferenceTestModel.constructPostModule();
+    var postModule = ReferenceTestModel.constructPostModule();
     postModule.getStatisticalFilter().setInputString(null);
     postModule.setStatisticalFilter(null);
 
@@ -113,7 +112,7 @@ class PostFilterFactoryTest {
 
   @Test
   void statisticalFilterShouldReturnFalseOnLowEntropy() {
-    PostModule postModule = ReferenceTestModel.constructPostModule();
+    var postModule = ReferenceTestModel.constructPostModule();
     postModule.getStatisticalFilter().setInputString(null);
 
     Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter(), matching);
@@ -123,7 +122,7 @@ class PostFilterFactoryTest {
 
   @Test
   void statisticalFilterShouldReturnTrueOnHighEntropy() {
-    PostModule postModule = ReferenceTestModel.constructPostModule();
+    var postModule = ReferenceTestModel.constructPostModule();
     postModule.getStatisticalFilter().setInputString(null);
 
     Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter(), matching);
@@ -133,7 +132,7 @@ class PostFilterFactoryTest {
 
   @Test
   void statisticalFilterShouldReturnFalseOnNamedGroup() {
-    PostModule postModule = ReferenceTestModel.constructPostModule();
+    var postModule = ReferenceTestModel.constructPostModule();
 
     Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter(), matching);
 
@@ -142,7 +141,7 @@ class PostFilterFactoryTest {
 
   @Test
   void statisticalFilterShouldReturnTrueOnNamedGroup() {
-    PostModule postModule = ReferenceTestModel.constructPostModule();
+    var postModule = ReferenceTestModel.constructPostModule();
     postModule.getStatisticalFilter().setThreshold(1f);
 
     Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter(), matching);
@@ -152,7 +151,7 @@ class PostFilterFactoryTest {
 
   @Test
   void statisticalFilterShouldReturnTrueBecauseMatchingIsNull() {
-    PostModule postModule = ReferenceTestModel.constructPostModule();
+    var postModule = ReferenceTestModel.constructPostModule();
     postModule.getStatisticalFilter().setThreshold(1f);
 
     Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter(), null);
@@ -183,7 +182,7 @@ class PostFilterFactoryTest {
 
   @Test
   void heuristicFilterShouldReturnTrue() {
-    PostModule postModule = ReferenceTestModel.constructPostModule();
+    var postModule = ReferenceTestModel.constructPostModule();
 
     Predicate<String> predicate = PostFilterFactory.filterForHeuristicsFilter(postModule.getHeuristicFilter());
 
@@ -192,7 +191,7 @@ class PostFilterFactoryTest {
 
   @Test
   void heuristicFilterShouldReturnFalse() {
-    PostModule postModule = ReferenceTestModel.constructPostModule();
+    var postModule = ReferenceTestModel.constructPostModule();
 
     Predicate<String> predicate = PostFilterFactory.filterForHeuristicsFilter(postModule.getHeuristicFilter());
 
@@ -219,7 +218,7 @@ class PostFilterFactoryTest {
     "candidate secret with high entropy: lasdij2338f,.q29cm2acasd"
   })
   void postFilterShouldAlwaysEvaluateToTrueRegardlessOfInputWhenStatFilterAndPatternNotIsNull(String input) {
-    PostModule postModule = ReferenceTestModel.constructPostModule();
+    var postModule = ReferenceTestModel.constructPostModule();
     postModule.setStatisticalFilter(null);
     postModule.setPatternNot(Collections.emptyList());
     Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule, matching);
