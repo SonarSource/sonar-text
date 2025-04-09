@@ -78,20 +78,16 @@ provider:
                       pattern: "\\b(pattern-maxCharDistance-around)\\b"
                       maxCharDistance: 100
         post:
-          statisticalFilter:
-            threshold: 4.2
-            inputString: "groupName"
           patternNot:
             - "EXAMPLEKEY"
             - "0"
-          heuristicFilter:
-            heuristics:
-              - "uri"
-            inputString: "groupName"
+          statisticalFilter:
+            threshold: 4.2
           groups:
-            - name: base
-              patternNot:
-                - "EXAMPLESUBKEY"
+            - name: "groupName"
+              heuristicFilter:
+                heuristics:
+                  - "uri"
       examples:
         - text: >
             example

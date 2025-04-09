@@ -19,12 +19,9 @@ package org.sonar.plugins.secrets.api;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
@@ -44,9 +41,8 @@ class PostFilterFactoryTest {
   @Test
   void postFilterShouldReturnTrueOnHighEntropy() {
     var postModule = ReferenceTestModel.constructPostModule();
-    postModule.getStatisticalFilter().setInputString(null);
 
-    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule, matching);
+    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule);
 
     assertThat(postFilter.test("candidate secret with high entropy: lasdij2338f,.q29cm2acasd")).isTrue();
   }
@@ -59,9 +55,8 @@ class PostFilterFactoryTest {
   })
   void postFilterShouldReturnFalse(String input) {
     var postModule = ReferenceTestModel.constructPostModule();
-    postModule.getStatisticalFilter().setInputString(null);
 
-    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule, matching);
+    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule);
 
     assertThat(postFilter.test(input)).isFalse();
   }
@@ -69,10 +64,9 @@ class PostFilterFactoryTest {
   @Test
   void postFilterShouldReturnFalseOnLowEntropyWhenPatternNotIsNull() {
     var postModule = ReferenceTestModel.constructPostModule();
-    postModule.getStatisticalFilter().setInputString(null);
     postModule.setPatternNot(Collections.emptyList());
 
-    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule, matching);
+    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule);
 
     assertThat(postFilter.test("string with low entropy")).isFalse();
   }
@@ -80,10 +74,9 @@ class PostFilterFactoryTest {
   @Test
   void postFilterShouldReturnTrueOnHighEntropyWhenPatternNotIsNull() {
     var postModule = ReferenceTestModel.constructPostModule();
-    postModule.getStatisticalFilter().setInputString(null);
     postModule.setPatternNot(Collections.emptyList());
 
-    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule, matching);
+    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule);
 
     assertThat(postFilter.test("rule matching EXAMPLEKEY pattern with high entropy: lasdij2338f,.q29cm2acasd")).isTrue();
   }
@@ -91,10 +84,9 @@ class PostFilterFactoryTest {
   @Test
   void postFilterShouldReturnFalseOnLowEntropyWhenStatisticalFilterIsNull() {
     var postModule = ReferenceTestModel.constructPostModule();
-    postModule.getStatisticalFilter().setInputString(null);
     postModule.setStatisticalFilter(null);
 
-    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule, matching);
+    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule);
 
     assertThat(postFilter.test("rule matching EXAMPLEKEY pattern")).isFalse();
   }
@@ -102,10 +94,9 @@ class PostFilterFactoryTest {
   @Test
   void postFilterShouldReturnTrueOnHighEntropyWhenStatisticalFilterIsNull() {
     var postModule = ReferenceTestModel.constructPostModule();
-    postModule.getStatisticalFilter().setInputString(null);
     postModule.setStatisticalFilter(null);
 
-    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule, matching);
+    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule);
 
     assertThat(postFilter.test("string with high entropy: lasdij2338f,.q29cm2acasd")).isTrue();
   }
@@ -113,9 +104,8 @@ class PostFilterFactoryTest {
   @Test
   void statisticalFilterShouldReturnFalseOnLowEntropy() {
     var postModule = ReferenceTestModel.constructPostModule();
-    postModule.getStatisticalFilter().setInputString(null);
 
-    Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter(), matching);
+    Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter());
 
     assertThat(predicate.test("rule matching pattern")).isFalse();
   }
@@ -123,9 +113,8 @@ class PostFilterFactoryTest {
   @Test
   void statisticalFilterShouldReturnTrueOnHighEntropy() {
     var postModule = ReferenceTestModel.constructPostModule();
-    postModule.getStatisticalFilter().setInputString(null);
 
-    Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter(), matching);
+    Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter());
 
     assertThat(predicate.test("string with high entropy: lasdij2338f,.q29cm2acasd")).isTrue();
   }
@@ -134,7 +123,7 @@ class PostFilterFactoryTest {
   void statisticalFilterShouldReturnFalseOnNamedGroup() {
     var postModule = ReferenceTestModel.constructPostModule();
 
-    Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter(), matching);
+    Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter());
 
     assertThat(predicate.test("candidate secret")).isFalse();
   }
@@ -144,7 +133,7 @@ class PostFilterFactoryTest {
     var postModule = ReferenceTestModel.constructPostModule();
     postModule.getStatisticalFilter().setThreshold(1f);
 
-    Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter(), matching);
+    Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter());
 
     assertThat(predicate.test("candidate secret")).isTrue();
   }
@@ -154,7 +143,7 @@ class PostFilterFactoryTest {
     var postModule = ReferenceTestModel.constructPostModule();
     postModule.getStatisticalFilter().setThreshold(1f);
 
-    Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter(), null);
+    Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter());
 
     assertThat(predicate.test("candidate secret")).isTrue();
   }
@@ -184,7 +173,7 @@ class PostFilterFactoryTest {
   void heuristicFilterShouldReturnTrue() {
     var postModule = ReferenceTestModel.constructPostModule();
 
-    Predicate<String> predicate = PostFilterFactory.filterForHeuristicsFilter(postModule.getHeuristicFilter());
+    Predicate<String> predicate = PostFilterFactory.filterForHeuristicsFilter(postModule.getGroups().get(0).getHeuristicFilter());
 
     assertThat(predicate.test("not a valid uri")).isTrue();
   }
@@ -193,7 +182,7 @@ class PostFilterFactoryTest {
   void heuristicFilterShouldReturnFalse() {
     var postModule = ReferenceTestModel.constructPostModule();
 
-    Predicate<String> predicate = PostFilterFactory.filterForHeuristicsFilter(postModule.getHeuristicFilter());
+    Predicate<String> predicate = PostFilterFactory.filterForHeuristicsFilter(postModule.getGroups().get(0).getHeuristicFilter());
 
     assertThat(predicate.test("https://sonarsource.com")).isFalse();
   }
@@ -206,7 +195,7 @@ class PostFilterFactoryTest {
     "candidate secret with high entropy: lasdij2338f,.q29cm2acasd"
   })
   void postFilterShouldEvaluateToTrueRegardlessOfInputWhenInputIsNull(String input) {
-    Predicate<String> postFilter = PostFilterFactory.createPredicate(null, matching);
+    Predicate<String> postFilter = PostFilterFactory.createPredicate(null);
     assertThat(postFilter.test(input)).isTrue();
   }
 
@@ -221,28 +210,7 @@ class PostFilterFactoryTest {
     var postModule = ReferenceTestModel.constructPostModule();
     postModule.setStatisticalFilter(null);
     postModule.setPatternNot(Collections.emptyList());
-    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule, matching);
+    Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule);
     assertThat(postFilter.test(input)).isTrue();
   }
-
-  @MethodSource
-  @ParameterizedTest(name = "{0}")
-  void testEntropyInputCalculation(String testName, String statisticalFilterInputString, String candidateSecret,
-    String expectedEntropyInput) {
-    String calculatedEntropyInput = PostFilterFactory.calculateEntropyInputBasedOnNamedGroup(statisticalFilterInputString,
-      candidateSecret, matching);
-
-    assertThat(calculatedEntropyInput).isEqualTo(expectedEntropyInput);
-  }
-
-  static Stream<Arguments> testEntropyInputCalculation() {
-    return Stream.of(
-      Arguments.of("should return captured group as groupName exists in pattern", "groupName", "candidate secret", "candidate"),
-      Arguments.of("should fallback to candidate secret as groupName doesn't exist", "notExistingGroupName", "candidate secret",
-        "candidate secret"),
-
-      // this should not happen in real detection cases
-      Arguments.of("candidate secret couldn't be found with pattern", "groupName", "something else", "something else"));
-  }
-
 }

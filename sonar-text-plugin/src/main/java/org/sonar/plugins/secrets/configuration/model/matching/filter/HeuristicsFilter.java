@@ -17,13 +17,10 @@
 package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
 import java.util.List;
-import javax.annotation.Nullable;
 
 public class HeuristicsFilter {
 
   private List<String> heuristics;
-  @Nullable
-  private String inputString;
 
   public List<String> getHeuristics() {
     return heuristics;
@@ -31,14 +28,5 @@ public class HeuristicsFilter {
 
   public void setHeuristics(List<String> heuristics) {
     this.heuristics = heuristics;
-  }
-
-  @Nullable
-  public String getInputString() {
-    return inputString;
-  }
-
-  public void setInputString(@Nullable String inputString) {
-    this.inputString = inputString;
   }
 }

@@ -109,16 +109,13 @@ public class PatternMatcher {
         var matchResult = matcher.toMatchResult();
         if (matcher.groupCount() == 0) {
           matches.add(new Match(matchResult.group(), matchResult.start(), matchResult.end(), emptyMap()));
-        } else if (expectedNamedGroups.isEmpty()) {
-          // backward compatibility with existing rules that rely on match of named group only and don't use any `groups:` post filter
-          // TODO SONARTEXT-441 Migrate existing rules to postFilters per named group
-          matches.add(new Match(matchResult.group(1), matchResult.start(1), matchResult.end(1), emptyMap()));
         } else {
           var namedMatches = expectedNamedGroups.stream()
             .filter(it -> matcher.group(it) != null)
             .collect(toMap(Function.identity(), it -> new Match(matcher.group(it), matcher.start(it), matcher.end(it), emptyMap())));
 
-          matches.add(new Match(matchResult.group(), matchResult.start(), matchResult.end(), namedMatches));
+          // convention for issue location: the first group takes precedence
+          matches.add(new Match(matchResult.group(1), matchResult.start(1), matchResult.end(1), namedMatches));
         }
       }
     }, pattern.pattern(), ruleId);

@@ -78,10 +78,7 @@ class SecretMatcherTest {
     };
     Predicate<String> statisticalFilter = candidateSecret -> !EntropyChecker.hasLowEntropy(candidateSecret, 4.2f);
     expectedPredicate = expectedPredicate.and(statisticalFilter).and(patternNotFilter);
-    var expectedGroupPredicate = (Predicate<String>) candidateSecret -> {
-      var matcher = Pattern.compile("EXAMPLESUBKEY").matcher(candidateSecret);
-      return !matcher.find();
-    };
+    var expectedGroupPredicate = (Predicate<String>) candidateSecret -> !Heuristics.matchesHeuristics(candidateSecret, List.of("uri"));
     SecretMatcher expectedMatcher = new SecretMatcher(
       rule.getId(),
       rule.getMetadata().getMessage(),
@@ -89,7 +86,7 @@ class SecretMatcherTest {
       constructReferenceAuxiliaryMatcher(),
       file -> true,
       expectedPredicate,
-      Map.of("base", expectedGroupPredicate),
+      Map.of("groupName", expectedGroupPredicate),
       mockDurationStatistics());
 
     SecretMatcher actualMatcher = SecretMatcher.build(rule, mockDurationStatistics(), SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED);

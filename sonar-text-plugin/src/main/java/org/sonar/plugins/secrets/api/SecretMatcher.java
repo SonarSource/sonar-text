@@ -21,11 +21,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import org.sonar.plugins.common.DurationStatistics;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.NamedPostModule;
+
+import static java.util.stream.Collectors.toMap;
 
 /**
  * Checks if the file contains some secrets.
@@ -71,9 +72,10 @@ public class SecretMatcher implements Matcher {
   public static SecretMatcher build(Rule rule, DurationStatistics durationStatistics, SpecificationConfiguration specificationConfiguration) {
     var patternMatcher = PatternMatcher.build(rule.getDetection().getMatching());
     Predicate<InputFileContext> preFilter = PreFilterFactory.createPredicate(rule.getDetection().getPre(), specificationConfiguration);
-    Predicate<String> postFilter = PostFilterFactory.createPredicate(rule.getDetection().getPost(), rule.getDetection().getMatching());
-    var postFilterByGroup = Optional.ofNullable(rule.getDetection().getPost()).stream().flatMap(it -> it.getGroups().stream())
-      .collect(Collectors.toMap(NamedPostModule::getName, postModule -> PostFilterFactory.createPredicate(postModule, rule.getDetection().getMatching())));
+    Predicate<String> postFilter = PostFilterFactory.createPredicate(rule.getDetection().getPost());
+    var postFilterByGroup = Optional.ofNullable(rule.getDetection().getPost()).stream()
+      .flatMap(it -> it.getGroups().stream())
+      .collect(toMap(NamedPostModule::getName, PostFilterFactory::createPredicate));
 
     var auxiliaryMatcher = AuxiliaryPatternMatcherFactory.build(rule.getDetection().getMatching());
     return new SecretMatcher(

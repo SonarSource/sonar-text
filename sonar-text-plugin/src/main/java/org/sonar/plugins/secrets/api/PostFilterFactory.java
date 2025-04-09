@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
-import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.AbstractPostModule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.HeuristicsFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.StatisticalFilter;
@@ -36,14 +35,13 @@ public final class PostFilterFactory {
   /**
    * Entry method of this class to create a predicate based on the post module configuration.
    * @param post deserialized post module configuration
-   * @param matching deserialized matching configuration
    * @return a predicate to filter out potential secrets based on the post module configuration
    */
-  public static Predicate<String> createPredicate(@Nullable AbstractPostModule post, @Nullable Matching matching) {
+  public static Predicate<String> createPredicate(@Nullable AbstractPostModule post) {
     Predicate<String> postFilter = s -> true;
     if (post != null) {
       if (post.getStatisticalFilter() != null) {
-        postFilter = postFilter.and(filterForStatisticalFilter(post.getStatisticalFilter(), matching));
+        postFilter = postFilter.and(filterForStatisticalFilter(post.getStatisticalFilter()));
       }
       if (!post.getPatternNot().isEmpty()) {
         postFilter = postFilter.and(filterForPatternNot(post.getPatternNot()));
@@ -78,27 +76,8 @@ public final class PostFilterFactory {
     return sb.toString();
   }
 
-  static Predicate<String> filterForStatisticalFilter(StatisticalFilter statisticalFilter, @Nullable Matching matching) {
-    return (String candidateSecret) -> {
-      var entropyInputString = candidateSecret;
-      if (statisticalFilter.getInputString() != null && matching != null) {
-        entropyInputString = calculateEntropyInputBasedOnNamedGroup(statisticalFilter.getInputString(), candidateSecret, matching);
-      }
-      return !EntropyChecker.hasLowEntropy(entropyInputString, statisticalFilter.getThreshold());
-    };
-  }
-
-  static String calculateEntropyInputBasedOnNamedGroup(String groupName, String candidateSecret, Matching matching) {
-    var matcher = Pattern.compile(matching.getPattern()).matcher(candidateSecret);
-    if (matcher.find()) {
-      try {
-        return matcher.group(groupName);
-      } catch (IllegalArgumentException e) {
-        // expected behavior to do nothing, as the fallback is candidate secret
-      }
-    }
-    // matched group for the name not found, fallback to candidate secret
-    return candidateSecret;
+  static Predicate<String> filterForStatisticalFilter(StatisticalFilter statisticalFilter) {
+    return (String candidateSecret) -> !EntropyChecker.hasLowEntropy(candidateSecret, statisticalFilter.getThreshold());
   }
 
   static Predicate<String> filterForHeuristicsFilter(HeuristicsFilter heuristicFilter) {

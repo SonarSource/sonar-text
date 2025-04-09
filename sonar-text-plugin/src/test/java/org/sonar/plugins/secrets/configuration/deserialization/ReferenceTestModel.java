@@ -214,18 +214,16 @@ public class ReferenceTestModel {
   }
 
   public static TopLevelPostModule constructPostModule() {
-    StatisticalFilter statisticalFilter = new StatisticalFilter();
-    statisticalFilter.setInputString("groupName");
+    var statisticalFilter = new StatisticalFilter();
     statisticalFilter.setThreshold(4.2f);
 
-    HeuristicsFilter heuristicsFilter = new HeuristicsFilter();
+    var heuristicsFilter = new HeuristicsFilter();
     heuristicsFilter.setHeuristics(List.of("uri"));
-    heuristicsFilter.setInputString("groupName");
 
     var groups = List.of(
-      new NamedPostModule("base", null, List.of("EXAMPLESUBKEY"), null));
+      new NamedPostModule("groupName", heuristicsFilter, List.of(), null));
 
-    return new TopLevelPostModule(heuristicsFilter, List.of("EXAMPLEKEY", "0"), statisticalFilter, groups);
+    return new TopLevelPostModule(null, List.of("EXAMPLEKEY", "0"), statisticalFilter, groups);
   }
 
   private static void enrichRuleMetadata(RuleMetadata ruleMetadata) {

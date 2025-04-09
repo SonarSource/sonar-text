@@ -16,13 +16,9 @@
  */
 package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
-import javax.annotation.Nullable;
-
 public class StatisticalFilter {
 
   private float threshold;
-  @Nullable
-  private String inputString;
 
   public float getThreshold() {
     return threshold;
@@ -30,14 +26,5 @@ public class StatisticalFilter {
 
   public void setThreshold(float threshold) {
     this.threshold = threshold;
-  }
-
-  @Nullable
-  public String getInputString() {
-    return inputString;
-  }
-
-  public void setInputString(@Nullable String inputString) {
-    this.inputString = inputString;
   }
 }
