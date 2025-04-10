@@ -16,10 +16,10 @@
  */
 package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import java.util.List;
+import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 
 public abstract sealed class AbstractPostModule permits NamedPostModule,TopLevelPostModule {
@@ -29,20 +29,23 @@ public abstract sealed class AbstractPostModule permits NamedPostModule,TopLevel
   private List<String> patternNot;
   @Nullable
   private StatisticalFilter statisticalFilter;
+  private DecodedBase64Module decodedBase64Module;
 
   protected AbstractPostModule() {
   }
 
   protected AbstractPostModule(
-    @JsonProperty("heuristicFilter") @Nullable HeuristicsFilter heuristicFilter,
-    @JsonProperty("patternNot") @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> patternNot,
-    @JsonProperty("statisticalFilter") @Nullable StatisticalFilter statisticalFilter) {
+    @Nullable DecodedBase64Module decodedBase64Module,
+    @Nullable HeuristicsFilter heuristicFilter,
+    @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> patternNot,
+    @Nullable StatisticalFilter statisticalFilter) {
+    this.decodedBase64Module = decodedBase64Module;
     this.heuristicFilter = heuristicFilter;
     this.patternNot = patternNot;
     this.statisticalFilter = statisticalFilter;
   }
 
-  @Nullable
+  @CheckForNull
   public HeuristicsFilter getHeuristicFilter() {
     return heuristicFilter;
   }
@@ -59,12 +62,17 @@ public abstract sealed class AbstractPostModule permits NamedPostModule,TopLevel
     this.patternNot = patternNot;
   }
 
-  @Nullable
+  @CheckForNull
   public StatisticalFilter getStatisticalFilter() {
     return statisticalFilter;
   }
 
   public void setStatisticalFilter(@Nullable StatisticalFilter statisticalFilter) {
     this.statisticalFilter = statisticalFilter;
+  }
+
+  @CheckForNull
+  public DecodedBase64Module getDecodedBase64Module() {
+    return decodedBase64Module;
   }
 }

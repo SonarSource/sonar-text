@@ -30,6 +30,7 @@ import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombination
 import org.sonar.plugins.secrets.configuration.model.matching.Detection;
 import org.sonar.plugins.secrets.configuration.model.matching.Match;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.DecodedBase64Module;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.FileFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.HeuristicsFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.NamedPostModule;
@@ -220,10 +221,12 @@ public class ReferenceTestModel {
     var heuristicsFilter = new HeuristicsFilter();
     heuristicsFilter.setHeuristics(List.of("uri"));
 
-    var groups = List.of(
-      new NamedPostModule("groupName", heuristicsFilter, List.of(), null));
+    var decodedBase64Module = new DecodedBase64Module(List.of("\"alg\":"));
 
-    return new TopLevelPostModule(null, List.of("EXAMPLEKEY", "0"), statisticalFilter, groups);
+    var groups = List.of(
+      new NamedPostModule("groupName", decodedBase64Module, heuristicsFilter, List.of(), null));
+
+    return new TopLevelPostModule(null, null, List.of("EXAMPLEKEY", "0"), statisticalFilter, groups);
   }
 
   private static void enrichRuleMetadata(RuleMetadata ruleMetadata) {

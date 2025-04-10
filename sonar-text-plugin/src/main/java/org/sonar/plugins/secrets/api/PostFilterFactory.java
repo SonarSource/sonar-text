@@ -16,11 +16,16 @@
  */
 package org.sonar.plugins.secrets.api;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.AbstractPostModule;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.DecodedBase64Module;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.HeuristicsFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.StatisticalFilter;
 
@@ -28,6 +33,7 @@ import org.sonar.plugins.secrets.configuration.model.matching.filter.Statistical
  * Factory class to create a predicate based on the post module configuration.
  */
 public final class PostFilterFactory {
+  private static final Logger LOG = LoggerFactory.getLogger(PostFilterFactory.class);
 
   private PostFilterFactory() {
   }
@@ -40,6 +46,9 @@ public final class PostFilterFactory {
   public static Predicate<String> createPredicate(@Nullable AbstractPostModule post) {
     Predicate<String> postFilter = s -> true;
     if (post != null) {
+      if (post.getDecodedBase64Module() != null) {
+        postFilter = postFilter.and(input -> matchBase64Decoded(post.getDecodedBase64Module(), input));
+      }
       if (post.getStatisticalFilter() != null) {
         postFilter = postFilter.and(filterForStatisticalFilter(post.getStatisticalFilter()));
       }
@@ -82,5 +91,18 @@ public final class PostFilterFactory {
 
   static Predicate<String> filterForHeuristicsFilter(HeuristicsFilter heuristicFilter) {
     return candidateSecret -> !Heuristics.matchesHeuristics(candidateSecret, heuristicFilter.getHeuristics());
+  }
+
+  static boolean matchBase64Decoded(DecodedBase64Module decodedBase64Module, String candidateSecret) {
+    byte[] decodedBytes;
+    try {
+      decodedBytes = Base64.getDecoder().decode(candidateSecret);
+    } catch (IllegalArgumentException iae) {
+      LOG.debug("Base64 decoding failed for input: {}", candidateSecret);
+      // If decoding failed, then this is not what we were looking for
+      return false;
+    }
+    var decoded = new String(decodedBytes, StandardCharsets.UTF_8);
+    return decodedBase64Module.matchEach().stream().allMatch(decoded::contains);
   }
 }

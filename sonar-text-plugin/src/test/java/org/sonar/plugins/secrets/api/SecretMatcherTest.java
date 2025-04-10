@@ -17,12 +17,14 @@
 package org.sonar.plugins.secrets.api;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.eclipse.jgit.util.Base64;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -78,7 +80,14 @@ class SecretMatcherTest {
     };
     Predicate<String> statisticalFilter = candidateSecret -> !EntropyChecker.hasLowEntropy(candidateSecret, 4.2f);
     expectedPredicate = expectedPredicate.and(statisticalFilter).and(patternNotFilter);
-    var expectedGroupPredicate = (Predicate<String>) candidateSecret -> !Heuristics.matchesHeuristics(candidateSecret, List.of("uri"));
+    var expectedGroupPredicate = (Predicate<String>) candidateSecret -> {
+      String base64Decoded = null;
+      try {
+        base64Decoded = new String(Base64.decode(candidateSecret), StandardCharsets.UTF_8);
+      } catch (Exception e) {
+      }
+      return !Heuristics.matchesHeuristics(candidateSecret, List.of("uri")) && base64Decoded != null && base64Decoded.equals("\"alg\":");
+    };
     SecretMatcher expectedMatcher = new SecretMatcher(
       rule.getId(),
       rule.getMetadata().getMessage(),

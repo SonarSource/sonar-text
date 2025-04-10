@@ -114,4 +114,19 @@ class PatternMatcherTest {
       .containsEntry("prefix", new Match("Match1", 0, 6, emptyMap()))
       .doesNotContainKey("suffix");
   }
+
+  @Test
+  void shouldReturnFirstCaptureGroupAsMainLocation() {
+    var patternMatcher = PatternMatcher.build("((?<prefix>\\w+)-\\d+)-(?<suffix>\\w+)");
+    var content = "Match1-123-Match2";
+    var ruleId = "<test-rule-id>";
+    var namedGroups = List.of("prefix", "suffix");
+
+    var matches = patternMatcher.findIn(content, ruleId, namedGroups);
+
+    assertThat(matches).hasSize(1);
+    assertThat(matches.get(0).text())
+      .describedAs("Should only include the first capturing group as main location")
+      .isEqualTo("Match1-123");
+  }
 }

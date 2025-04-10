@@ -16,31 +16,9 @@
  */
 package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import java.util.List;
-import javax.annotation.Nullable;
 
-public final class NamedPostModule extends AbstractPostModule {
-  private String name;
-
-  public NamedPostModule() {
-  }
-
-  @JsonCreator
-  public NamedPostModule(
-    @JsonProperty("name") @JsonSetter(nulls = Nulls.FAIL) String name,
-    @JsonProperty("decodedBase64") @Nullable DecodedBase64Module decodedBase64Module,
-    @JsonProperty("heuristicFilter") @Nullable HeuristicsFilter heuristicFilter,
-    @JsonProperty("patternNot") @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> patternNot,
-    @JsonProperty("statisticalFilter") @Nullable StatisticalFilter statisticalFilter) {
-    super(decodedBase64Module, heuristicFilter, patternNot, statisticalFilter);
-    this.name = name;
-  }
-
-  public String getName() {
-    return name;
-  }
+public record DecodedBase64Module(@JsonSetter(nulls = Nulls.AS_EMPTY) List<String> matchEach) {
 }

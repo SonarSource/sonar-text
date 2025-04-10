@@ -31,11 +31,12 @@ public final class TopLevelPostModule extends AbstractPostModule {
 
   @JsonCreator
   public TopLevelPostModule(
+    @JsonProperty("decodedBase64") @Nullable DecodedBase64Module decodedBase64Module,
     @JsonProperty("heuristicFilter") @Nullable HeuristicsFilter heuristicFilter,
     @JsonProperty("patternNot") @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> patternNot,
     @JsonProperty("statisticalFilter") @Nullable StatisticalFilter statisticalFilter,
     @JsonProperty("groups") @JsonSetter(nulls = Nulls.AS_EMPTY) List<NamedPostModule> groups) {
-    super(heuristicFilter, patternNot, statisticalFilter);
+    super(decodedBase64Module, heuristicFilter, patternNot, statisticalFilter);
     this.groups = groups;
   }
 

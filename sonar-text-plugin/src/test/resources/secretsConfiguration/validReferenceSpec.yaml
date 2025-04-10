@@ -85,6 +85,9 @@ provider:
             threshold: 4.2
           groups:
             - name: "groupName"
+              decodedBase64:
+                matchEach:
+                  - '"alg":'
               heuristicFilter:
                 heuristics:
                   - "uri"

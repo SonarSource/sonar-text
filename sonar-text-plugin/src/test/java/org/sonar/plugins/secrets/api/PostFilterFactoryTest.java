@@ -16,16 +16,20 @@
  */
 package org.sonar.plugins.secrets.api;
 
-import java.util.Collections;
+import java.util.Base64;
 import java.util.List;
 import java.util.function.Predicate;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.DecodedBase64Module;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.TopLevelPostModule;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PostFilterFactoryTest {
@@ -64,7 +68,7 @@ class PostFilterFactoryTest {
   @Test
   void postFilterShouldReturnFalseOnLowEntropyWhenPatternNotIsNull() {
     var postModule = ReferenceTestModel.constructPostModule();
-    postModule.setPatternNot(Collections.emptyList());
+    postModule.setPatternNot(emptyList());
 
     Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule);
 
@@ -74,7 +78,7 @@ class PostFilterFactoryTest {
   @Test
   void postFilterShouldReturnTrueOnHighEntropyWhenPatternNotIsNull() {
     var postModule = ReferenceTestModel.constructPostModule();
-    postModule.setPatternNot(Collections.emptyList());
+    postModule.setPatternNot(emptyList());
 
     Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule);
 
@@ -117,35 +121,6 @@ class PostFilterFactoryTest {
     Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter());
 
     assertThat(predicate.test("string with high entropy: lasdij2338f,.q29cm2acasd")).isTrue();
-  }
-
-  @Test
-  void statisticalFilterShouldReturnFalseOnNamedGroup() {
-    var postModule = ReferenceTestModel.constructPostModule();
-
-    Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter());
-
-    assertThat(predicate.test("candidate secret")).isFalse();
-  }
-
-  @Test
-  void statisticalFilterShouldReturnTrueOnNamedGroup() {
-    var postModule = ReferenceTestModel.constructPostModule();
-    postModule.getStatisticalFilter().setThreshold(1f);
-
-    Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter());
-
-    assertThat(predicate.test("candidate secret")).isTrue();
-  }
-
-  @Test
-  void statisticalFilterShouldReturnTrueBecauseMatchingIsNull() {
-    var postModule = ReferenceTestModel.constructPostModule();
-    postModule.getStatisticalFilter().setThreshold(1f);
-
-    Predicate<String> predicate = PostFilterFactory.filterForStatisticalFilter(postModule.getStatisticalFilter());
-
-    assertThat(predicate.test("candidate secret")).isTrue();
   }
 
   @Test
@@ -209,8 +184,40 @@ class PostFilterFactoryTest {
   void postFilterShouldAlwaysEvaluateToTrueRegardlessOfInputWhenStatFilterAndPatternNotIsNull(String input) {
     var postModule = ReferenceTestModel.constructPostModule();
     postModule.setStatisticalFilter(null);
-    postModule.setPatternNot(Collections.emptyList());
+    postModule.setPatternNot(emptyList());
     Predicate<String> postFilter = PostFilterFactory.createPredicate(postModule);
     assertThat(postFilter.test(input)).isTrue();
+  }
+
+  @Test
+  void shouldMatchOnBase64DecodedParts() {
+    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("\"alg\":")), null, emptyList(), null, emptyList());
+    var postFilter = PostFilterFactory.createPredicate(postModule);
+
+    assertThat(postFilter.test("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")).isTrue();
+  }
+
+  @Test
+  void shouldNotMatchOnMalformedBase64DecodedParts() {
+    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("\"alg\":")), null, emptyList(), null, emptyList());
+    var postFilter = PostFilterFactory.createPredicate(postModule);
+
+    assertThat(postFilter.test("1248163264128")).isFalse();
+  }
+
+  @ParameterizedTest
+  @CsvSource(textBlock = """
+    {"alg":"SHA256","info":"test secret"};true
+    {"alg":"SHA256"};false
+    {"key1":"value1","key2":"value2"};false
+    "alg":"info":;true
+    "alg"info";false
+    """, delimiter = ';')
+  void shouldMatchEachOnBase64DecodedParts(String input, boolean shouldMatch) {
+    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("\"alg\":", "\"info\":")), null, emptyList(), null, emptyList());
+    var postFilter = PostFilterFactory.createPredicate(postModule);
+    var encodedInput = Base64.getEncoder().encodeToString(input.getBytes());
+
+    assertThat(postFilter.test(encodedInput)).isEqualTo(shouldMatch);
   }
 }
