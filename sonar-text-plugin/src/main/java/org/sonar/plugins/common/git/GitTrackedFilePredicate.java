@@ -72,7 +72,11 @@ public class GitTrackedFilePredicate implements FilePredicate {
   public void logSummary() {
     var numberOfIgnoredFiles = ignoredFileNames.size();
     if (numberOfIgnoredFiles > 0) {
-      LOG.info("{} files are ignored because they are untracked by git", numberOfIgnoredFiles);
+      if (numberOfIgnoredFiles == 1) {
+        LOG.info("1 file is ignored because it is untracked by git");
+      } else {
+        LOG.info("{} files are ignored because they are untracked by git", numberOfIgnoredFiles);
+      }
       var fileList = ignoredFileNames.stream().sorted().collect(Collectors.joining("\n\t"));
       LOG.debug("Files untracked by git:\n\t{}", fileList);
     }

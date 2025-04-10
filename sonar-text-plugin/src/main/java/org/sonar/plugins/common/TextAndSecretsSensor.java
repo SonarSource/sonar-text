@@ -189,9 +189,9 @@ public class TextAndSecretsSensor implements Sensor {
     var pathPatternPredicate = includedPathPatternsFilePredicate(sensorContext);
 
     LOG.info("Analyzing language associated files and files included via \"{}\" that are tracked by git", TEXT_INCLUSIONS_KEY);
-    return predicates.and(
-      predicates.or(LANGUAGE_FILE_PREDICATE, pathPatternPredicate),
-      trackedByGitPredicate);
+    return predicates.or(
+      LANGUAGE_FILE_PREDICATE,
+      predicates.and(pathPatternPredicate, trackedByGitPredicate));
   }
 
   /**

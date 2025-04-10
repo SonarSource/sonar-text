@@ -497,7 +497,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
   }
 
   @Test
-  void shouldNotAnalyzeUntrackedFiles() {
+  void shouldNotAnalyzeUntrackedFilesNotBelongingToALanguage() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     context.setRuntime(SONARQUBE_RUNTIME);
@@ -506,20 +506,26 @@ public abstract class AbstractTextAndSecretsSensorTest {
     String relativePathFooJava = "src" + File.pathSeparator + "foo.java";
     var gitService = mock(GitService.class);
     when(gitService.retrieveUntrackedFileNames(any()))
-      .thenReturn(new GitService.Result(true, Set.of("a.txt", relativePathFooJava)));
+      .thenReturn(new GitService.Result(true, Set.of("c.txt", "d.txt", relativePathFooJava)));
     when(sensorSpy.getGitService()).thenReturn(gitService);
 
     analyse(sensorSpy, context,
+      // tracked files
       inputFile(Path.of("a.txt"), "{}", "secrets"),
-      inputFile(Path.of("b.txt"), "{}", "secrets"),
-      inputFile(Path.of("src", "foo.java")));
+      inputFile(Path.of("b.txt"), "{}"),
+
+      // untracked files
+      inputFile(Path.of("c.txt"), "{}", "secrets"),
+      inputFile(Path.of("d.txt"), "{}"),
+      // no language assigned to file and not part of the included path patterns
+      inputFile(Path.of("src", "foo.java"), "{}"));
 
     Collection<Issue> issues = context.allIssues();
     assertThat(issues)
-      .hasSize(1)
+      .hasSize(3)
       .map(it -> ((InputFile) it.primaryLocation().inputComponent()).filename())
-      .containsExactly("b.txt");
-    assertCorrectLogs(logTester.logs(), 1, "1 files are ignored because they are untracked by git");
+      .containsExactlyInAnyOrder("a.txt", "b.txt", "c.txt");
+    assertCorrectLogs(logTester.logs(), 3, "1 file is ignored because it is untracked by git");
   }
 
   static Set<SonarRuntime> shouldNotLeakThreads() {
