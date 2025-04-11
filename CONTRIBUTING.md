@@ -85,7 +85,7 @@ provider:
 By default, the entire region matched by `matching.pattern` is highlighted as an issue. If pattern contains capturing groups (doesn't matter if they are named or not), the first capturing group is used to highlight the issue. So, if you are adding capturing groups (for example, to add a post filter for a named group representing part of a secret), make sure to also surround the entire pattern with parentheses. Otherwise, only the first capturing group will be highlighted.
 
 ### Reusing common blocks in secret specification
-You can reuse common blocks in the secret specification files. Common blocks are placed in separate files in the `common` directory of the `configuration` directory. A common block is represented as `${common/fileName.yaml}`; it will be substituted with the content of the file during build time. The block will have the same indentation as the `${common/fileName.yaml}` line.
+You can reuse common blocks in the secret specification files. Common blocks are placed in separate files in the `common` directory of the `plugins/secrets` directory. A common block is represented as `${common/fileName.yaml}`; it will be substituted with the content of the file during build time. The block will have the same indentation as the `${common/fileName.yaml}` line.
 
 For example, if you have a common `patternNot` block that you want to use across multiple specifications, you can define it once and reference it in your specifications.
 

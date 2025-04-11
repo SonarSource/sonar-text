@@ -20,6 +20,7 @@ plugins {
     id("org.sonarsource.text.plugin")
     id("org.sonarsource.text.code-generation")
     id("org.sonarsource.text.artifactory-configuration")
+    id("org.sonarsource.text.specification-files-processing")
     `java-library`
     `java-test-fixtures`
 }
