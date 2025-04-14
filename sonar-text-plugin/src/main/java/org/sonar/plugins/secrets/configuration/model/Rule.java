@@ -25,11 +25,16 @@ public class Rule {
 
   private String id;
   private String rspecKey;
+  private Selectivity selectivity = Selectivity.SPECIFIC;
   private RuleMetadata metadata;
   private Detection detection;
   private List<RuleExample> examples;
   @JsonIgnore
   private Provider provider;
+
+  public Rule() {
+    // default constructor to be used by Jackson
+  }
 
   public String getId() {
     return id;
@@ -79,5 +84,13 @@ public class Rule {
 
   public void setProvider(Provider provider) {
     this.provider = provider;
+  }
+
+  public Selectivity getSelectivity() {
+    return selectivity;
+  }
+
+  public void setSelectivity(Selectivity selectivity) {
+    this.selectivity = selectivity;
   }
 }

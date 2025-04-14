@@ -24,6 +24,7 @@ import java.util.function.Predicate;
 import org.sonar.plugins.common.DurationStatistics;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.configuration.model.Rule;
+import org.sonar.plugins.secrets.configuration.model.Selectivity;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.NamedPostModule;
 
 import static java.util.stream.Collectors.toMap;
@@ -34,6 +35,7 @@ import static java.util.stream.Collectors.toMap;
 public class SecretMatcher implements Matcher {
 
   private final String ruleId;
+  private final Selectivity ruleSelectivity;
   private final String ruleMessage;
   private final PatternMatcher patternMatcher;
   private final AuxiliaryPatternMatcher auxiliaryPatternMatcher;
@@ -45,6 +47,7 @@ public class SecretMatcher implements Matcher {
 
   SecretMatcher(String ruleId,
     String ruleMessage,
+    Selectivity ruleSelectivity,
     PatternMatcher patternMatcher,
     AuxiliaryPatternMatcher auxiliaryPatternMatcher,
     Predicate<InputFileContext> preFilter,
@@ -52,6 +55,7 @@ public class SecretMatcher implements Matcher {
     Map<String, Predicate<String>> postFilterByGroup,
     DurationStatistics durationStatistics) {
     this.ruleId = ruleId;
+    this.ruleSelectivity = ruleSelectivity;
     this.ruleMessage = ruleMessage;
     this.patternMatcher = patternMatcher;
     this.auxiliaryPatternMatcher = auxiliaryPatternMatcher;
@@ -81,6 +85,7 @@ public class SecretMatcher implements Matcher {
     return new SecretMatcher(
       rule.getId(),
       rule.getMetadata().getMessage(),
+      rule.getSelectivity(),
       patternMatcher,
       auxiliaryMatcher,
       preFilter,
@@ -132,5 +137,9 @@ public class SecretMatcher implements Matcher {
 
   AuxiliaryPatternMatcher getAuxiliaryPatternMatcher() {
     return auxiliaryPatternMatcher;
+  }
+
+  public Selectivity getRuleSelectivity() {
+    return ruleSelectivity;
   }
 }

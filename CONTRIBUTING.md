@@ -57,6 +57,10 @@ provider:
     # will output a new rule ID (rspec key)
     - rspecKey: SXXXX
       id: fakecloud-api-key
+      # The `selectivity` field can be either `specific` or `generic`.
+      # In case two rules match on the same text,
+      # the one with the `specific` selectivity will be used.
+      selectivity: specific
       metadata:
         # This does not influence the rule name
         name: FakeCloud API Key

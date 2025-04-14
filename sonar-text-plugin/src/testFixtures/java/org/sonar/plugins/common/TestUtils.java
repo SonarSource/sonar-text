@@ -69,6 +69,7 @@ public class TestUtils {
     SensorContextTester context = sensorContext(check);
     InputFileContext inputFileContext = new InputFileContext(context, inputFile);
     check.analyze(inputFileContext);
+    inputFileContext.flushIssues();
     return asString(context.allIssues());
   }
 

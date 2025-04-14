@@ -22,6 +22,7 @@ import org.sonar.plugins.secrets.configuration.model.Provider;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.RuleExample;
 import org.sonar.plugins.secrets.configuration.model.RuleScope;
+import org.sonar.plugins.secrets.configuration.model.Selectivity;
 import org.sonar.plugins.secrets.configuration.model.Specification;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPatternType;
@@ -74,6 +75,7 @@ public class ReferenceTestModel {
     Rule rule = new Rule();
     rule.setId("exampleId");
     rule.setRspecKey("exampleKey");
+    rule.setSelectivity(Selectivity.SPECIFIC);
     rule.setMetadata(constructRuleMetadata());
     rule.setDetection(constructBasicDetection("\\b(rule matching pattern)\\b"));
     rule.setExamples(List.of(constructRuleExample()));

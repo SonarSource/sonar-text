@@ -129,6 +129,7 @@ public abstract class AbstractRuleExampleTest {
       var inputFileContext = new InputFileContext(context, inputFile(Path.of(exampleFileName), ruleExample.getText()));
 
       check.analyze(inputFileContext, rule.getId());
+      inputFileContext.flushIssues();
 
       var issues = context.allIssues();
       if (ruleExample.isContainsSecret()) {

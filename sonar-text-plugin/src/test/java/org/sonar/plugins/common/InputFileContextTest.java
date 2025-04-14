@@ -19,19 +19,23 @@ package org.sonar.plugins.common;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.Collection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.event.Level;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
-import org.sonar.api.batch.sensor.issue.Issue;
+import org.sonar.api.batch.sensor.issue.IssueLocation;
 import org.sonar.api.rule.RuleKey;
+import org.sonar.api.testfixtures.log.LogTesterJUnit5;
+import org.sonar.plugins.secrets.configuration.model.Selectivity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.from;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.sonar.plugins.common.TestUtils.inputFile;
@@ -39,6 +43,8 @@ import static org.sonar.plugins.common.TestUtils.inputFile;
 class InputFileContextTest {
 
   private SensorContextTester sensorContext;
+  @RegisterExtension
+  LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
   @BeforeEach
   void beforeEach() {
@@ -142,23 +148,110 @@ class InputFileContextTest {
     assertThat(path).isEqualTo("build/classes/java/test/org/sonar/plugins/common/InputFileContextTest.class");
   }
 
-  @Test
-  void shouldNotRaiseAnIssueOnOverlappingTextRange() throws IOException {
-    InputFileContext ctx = inputFileContext("{some content inside this file}");
-    TextRange range1 = ctx.newTextRangeFromFileOffsets(2, 6);
+  @ParameterizedTest
+  @ValueSource(strings = {"GENERIC", "SPECIFIC"})
+  void shouldRaiseExactlyOneIssueOnOverlappingTextRange(Selectivity selectivity) throws IOException {
+    var ctx = inputFileContext("{some content inside this file}");
+    var range1 = ctx.newTextRangeFromFileOffsets(2, 6);
 
-    ctx.reportIssueOnTextRange(RuleKey.parse("s:42"), range1, "report secret issue 1");
-    ctx.reportIssueOnTextRange(RuleKey.parse("s:1337"), ctx.newTextRangeFromFileOffsets(0, 4), "overlapping secret");
-    ctx.reportIssueOnTextRange(RuleKey.parse("s:1337"), ctx.newTextRangeFromFileOffsets(4, 8), "overlapping secret");
-    ctx.reportIssueOnTextRange(RuleKey.parse("s:1337"), ctx.newTextRangeFromFileOffsets(3, 5), "overlapping secret");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:42"), selectivity, range1, "report secret issue 1");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:1337"), selectivity, ctx.newTextRangeFromFileOffsets(0, 4), "overlapping secret 1");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:1337"), selectivity, ctx.newTextRangeFromFileOffsets(4, 8), "overlapping secret 2");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:1337"), selectivity, ctx.newTextRangeFromFileOffsets(3, 5), "overlapping secret 3");
+    ctx.flushIssues();
 
-    Collection<Issue> actual = sensorContext.allIssues();
+    var actual = sensorContext.allIssues();
 
     assertThat(actual)
       .hasSize(1)
-      .anyMatch(issue -> issue.primaryLocation().message().equals("report secret issue 1"))
-      .anyMatch(issue -> issue.primaryLocation().textRange().equals(range1));
+      .anySatisfy(issue -> assertThat(issue.primaryLocation()).returns("report secret issue 1", from(IssueLocation::message)))
+      .anySatisfy(issue -> assertThat(issue.primaryLocation().textRange()).isEqualTo(range1));
+  }
 
+  @Test
+  void shouldRetainSingleIssueWhenNoOverlaps() throws IOException {
+    var ctx = inputFileContext("content with no overlaps");
+    var range1 = ctx.newTextRangeFromFileOffsets(0, 5);
+    var range2 = ctx.newTextRangeFromFileOffsets(6, 10);
+
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:1"), Selectivity.GENERIC, range1, "Issue 1");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:2"), Selectivity.GENERIC, range2, "Issue 2");
+    ctx.flushIssues();
+
+    var actual = sensorContext.allIssues();
+
+    assertThat(actual)
+      .hasSize(2)
+      .anySatisfy(issue -> assertThat(issue.primaryLocation()).returns("Issue 1", from(IssueLocation::message)))
+      .anySatisfy(issue -> assertThat(issue.primaryLocation()).returns("Issue 2", from(IssueLocation::message)));
+  }
+
+  @Test
+  void shouldRetainLowestSelectivityIssueWhenOverlapping() throws IOException {
+    var ctx = inputFileContext("overlapping content");
+    var range1 = ctx.newTextRangeFromFileOffsets(0, 5);
+    var range2 = ctx.newTextRangeFromFileOffsets(3, 8);
+
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:1"), Selectivity.GENERIC, range1, "Generic Issue");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:2"), Selectivity.SPECIFIC, range2, "Specific Issue");
+    ctx.flushIssues();
+
+    var actual = sensorContext.allIssues();
+
+    assertThat(actual)
+      .hasSize(1)
+      .anySatisfy(issue -> assertThat(issue.primaryLocation()).returns("Specific Issue", from(IssueLocation::message)));
+  }
+
+  @Test
+  void shouldHandleMultipleOverlappingBuckets() throws IOException {
+    var ctx = inputFileContext("multiple overlapping ranges");
+    var range1 = ctx.newTextRangeFromFileOffsets(0, 5);
+    var range2 = ctx.newTextRangeFromFileOffsets(3, 8);
+    var range3 = ctx.newTextRangeFromFileOffsets(10, 15);
+    var range4 = ctx.newTextRangeFromFileOffsets(12, 18);
+
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:1"), Selectivity.GENERIC, range1, "Generic Issue 1");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:2"), Selectivity.SPECIFIC, range2, "Specific Issue 1");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:3"), Selectivity.GENERIC, range3, "Generic Issue 2");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:4"), Selectivity.SPECIFIC, range4, "Specific Issue 2");
+    ctx.flushIssues();
+
+    var actual = sensorContext.allIssues();
+
+    assertThat(actual)
+      .hasSize(2)
+      .anySatisfy(issue -> assertThat(issue.primaryLocation()).returns("Specific Issue 1", from(IssueLocation::message)))
+      .anySatisfy(issue -> assertThat(issue.primaryLocation()).returns("Specific Issue 2", from(IssueLocation::message)));
+  }
+
+  @Test
+  void shouldLogOverlappingIssuesWhenDebugEnabled() throws IOException {
+    logTester.setLevel(Level.DEBUG);
+
+    var ctx = inputFileContext("debug overlapping issues");
+    var range1 = ctx.newTextRangeFromFileOffsets(0, 5);
+    var range2 = ctx.newTextRangeFromFileOffsets(3, 8);
+
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:1"), Selectivity.GENERIC, range1, "Generic Issue");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:2"), Selectivity.SPECIFIC, range2, "Strict Issue");
+
+    ctx.flushIssues();
+
+    assertThat(logTester.getLogs(Level.DEBUG))
+      .anyMatch(it -> it.getFormattedMsg().contains("Overlapping issues detected: reported on ranges " +
+        "[Range[from [line=1, lineOffset=0] to [line=1, lineOffset=5]], Range[from [line=1, lineOffset=3] to [line=1, lineOffset=8]]] " +
+        "on file file.txt and for ruleKeys [s:1(GENERIC), s:2(SPECIFIC)]"));
+  }
+
+  @Test
+  void shouldHandleEmptyReportedIssues() throws IOException {
+    var ctx = inputFileContext("no issues reported");
+    ctx.flushIssues();
+
+    var actual = sensorContext.allIssues();
+
+    assertThat(actual).isEmpty();
   }
 
   private InputFileContext inputFileContext(String content) throws IOException {

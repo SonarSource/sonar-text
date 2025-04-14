@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.TreeSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,10 @@ import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.rule.RuleKey;
+import org.sonar.plugins.secrets.configuration.model.Selectivity;
+
+import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.joining;
 
 public class InputFileContext {
 
@@ -47,21 +52,19 @@ public class InputFileContext {
   private final List<String> lines;
 
   // sorted set of the start offset of each line
-  private final TreeSet<Integer> lineStartOffsets;
+  private final NavigableSet<Integer> lineStartOffsets = new TreeSet<>();
 
   // maps the start offset of a line to the line number
-  private final Map<Integer, Integer> offsetToLine;
+  private final Map<Integer, Integer> offsetToLine = new HashMap<>();
 
   private final String normalizedContent;
 
-  // Used to verify, that we don't raise more than one issue for any overlapping text range, regardless of the rule
-  private final List<TextRange> reportedIssues = new ArrayList<>();
+  // list of issues that were detected and should be reported after filtering out overlaps
+  private final List<CandidateIssue> candidateIssues = new ArrayList<>();
 
   public InputFileContext(SensorContext sensorContext, InputFile inputFile) throws IOException {
     this.sensorContext = sensorContext;
     this.inputFile = inputFile;
-    this.lineStartOffsets = new TreeSet<>();
-    this.offsetToLine = new HashMap<>();
     List<String> contentLines = new ArrayList<>();
     boolean checkNonTextCharacters = inputFile.language() == null;
     try (var in = inputFile.inputStream()) {
@@ -104,15 +107,31 @@ public class InputFileContext {
     createAndSaveIssue(sensorContext, ruleKey, inputFile, textRange, message);
   }
 
-  public void reportIssueOnTextRange(RuleKey ruleKey, TextRange textRange, String message) {
-    // Validation of overlapping textRange and adding to reportedIssues does not create race-conditions, as we don't run checks in
-    // parallel
-    if (!overlappingIssueAlreadyReported(textRange)) {
-      reportedIssues.add(textRange);
-      createAndSaveIssue(sensorContext, ruleKey, inputFile, textRange, message);
-    } else {
-      LOG.debug("Overlapping issue already reported {} on file {} and ruleKey {}", textRange, inputFile, ruleKey);
+  public void reportIssueOnTextRange(RuleKey ruleKey, Selectivity ruleSelectivity, TextRange textRange, String message) {
+    candidateIssues.add(new CandidateIssue(ruleKey, ruleSelectivity, textRange, message));
+  }
+
+  /**
+   * Detect overlapping issues in {@link #candidateIssues}, remove them and report only the remaining issues.
+   * Note: this is not prone to race-conditions, as we don't run checks in parallel.
+   */
+  public void flushIssues() {
+    // Each group contains issues where at least one issue overlaps with another issue in the same group.
+    // In theory, this could mean that there are issues that do not overlap if we remove e.g. one wide text range.
+    // However, in practice we don't expect many issues to overlap, so this is a reasonable approximation.
+    var issueGroups = groupOverlappingIssues();
+    if (LOG.isDebugEnabled()) {
+      logOverlappingIssues(issueGroups);
     }
+    // Raise issues only on a single issue in each group, preferably the one with the lowest selectivity
+    issueGroups.stream()
+      .filter(group -> !group.isEmpty())
+      .map(group -> group.stream()
+        .min(comparing(it -> it.selectivity.priority()))
+        .get())
+      .forEach(issue -> createAndSaveIssue(sensorContext, issue.ruleKey, inputFile, issue.textRange, issue.message));
+
+    candidateIssues.clear();
   }
 
   private static synchronized void createAndSaveIssue(SensorContext sensorContext, RuleKey ruleKey, InputFile inputFile, TextRange textRange, String message) {
@@ -167,10 +186,6 @@ public class InputFileContext {
     return offsetToLine.get(floor);
   }
 
-  public boolean overlappingIssueAlreadyReported(TextRange textRange) {
-    return reportedIssues.stream().anyMatch(textRange::overlap);
-  }
-
   public boolean hasNonTextCharacters() {
     return hasNonTextCharacters;
   }
@@ -194,5 +209,36 @@ public class InputFileContext {
 
   public FileSystem getFileSystem() {
     return sensorContext.fileSystem();
+  }
+
+  private List<List<CandidateIssue>> groupOverlappingIssues() {
+    var groups = new ArrayList<List<CandidateIssue>>();
+    for (var candidateIssue : candidateIssues) {
+      groups.stream()
+        .filter(group -> group.stream().anyMatch(it -> it.textRange.overlap(candidateIssue.textRange)))
+        .findFirst()
+        .ifPresentOrElse(group -> group.add(candidateIssue), () -> {
+          var newGroup = new ArrayList<CandidateIssue>();
+          newGroup.add(candidateIssue);
+          groups.add(newGroup);
+        });
+    }
+    return groups;
+  }
+
+  private void logOverlappingIssues(List<List<CandidateIssue>> issueGroups) {
+    issueGroups.stream()
+      .filter(group -> group.size() > 1)
+      .forEach(group -> LOG.debug("Overlapping issues detected: reported on ranges {} on file {} and for ruleKeys [{}]",
+        group.stream().map(CandidateIssue::textRange).toList(),
+        inputFile,
+        group.stream().map(it -> it.ruleKey + "(" + it.selectivity + ")").collect(joining(", "))));
+  }
+
+  private record CandidateIssue(
+    RuleKey ruleKey,
+    Selectivity selectivity,
+    TextRange textRange,
+    String message) {
   }
 }

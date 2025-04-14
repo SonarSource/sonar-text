@@ -164,6 +164,7 @@ public final class Analyzer {
       for (Check check : activeChecks) {
         check.analyze(inputFileContext);
       }
+      inputFileContext.flushIssues();
     } catch (RuntimeException e) {
       logAnalysisError(inputFileContext.getInputFile(), e);
     }

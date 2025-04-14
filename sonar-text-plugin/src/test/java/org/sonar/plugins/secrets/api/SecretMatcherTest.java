@@ -55,6 +55,7 @@ class SecretMatcherTest {
     SecretMatcher expectedMatcher = new SecretMatcher(
       rule.getId(),
       rule.getMetadata().getMessage(),
+      rule.getSelectivity(),
       patternMatcher,
       AuxiliaryPatternMatcher.NO_FILTERING_AUXILIARY_MATCHER,
       file -> true,
@@ -91,6 +92,7 @@ class SecretMatcherTest {
     SecretMatcher expectedMatcher = new SecretMatcher(
       rule.getId(),
       rule.getMetadata().getMessage(),
+      rule.getSelectivity(),
       patternMatcher,
       constructReferenceAuxiliaryMatcher(),
       file -> true,
@@ -111,6 +113,7 @@ class SecretMatcherTest {
     SecretMatcher expectedMatcher = new SecretMatcher(
       rule.getId(),
       rule.getMetadata().getMessage(),
+      rule.getSelectivity(),
       patternMatcher,
       AuxiliaryPatternMatcher.NO_FILTERING_AUXILIARY_MATCHER,
       file -> true,
