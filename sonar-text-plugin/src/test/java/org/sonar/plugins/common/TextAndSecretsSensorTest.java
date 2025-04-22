@@ -16,24 +16,25 @@
  */
 package org.sonar.plugins.common;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.SensorContext;
 
 import static org.sonar.plugins.common.TestUtils.activeRules;
+import static org.sonar.plugins.common.TestUtils.toRuleKeys;
 
 public class TextAndSecretsSensorTest extends AbstractTextAndSecretsSensorTest {
 
   private static final TestUtils TEST_UTILS = new TestUtils();
 
   @Override
-  protected TextAndSecretsSensor sensor(Check check) {
-    CheckFactory checkFactory = new CheckFactory(activeRules(check.getRuleKey().toString()));
+  protected TextAndSecretsSensor sensor(Check... checks) {
+    CheckFactory checkFactory = new CheckFactory(activeRules(toRuleKeys(checks)));
     return new TextAndSecretsSensor(checkFactory) {
       @Override
       protected List<Check> getActiveChecks() {
-        return Collections.singletonList(check);
+        return Arrays.stream(checks).toList();
       }
     };
   }

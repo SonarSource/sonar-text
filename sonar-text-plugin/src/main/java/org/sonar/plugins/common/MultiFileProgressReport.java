@@ -33,10 +33,11 @@ public class MultiFileProgressReport implements Runnable {
 
   // data structure is chosen because of the preservation of insertion order. This allows us to display the longest running files first.
   private final Collection<String> currentFileNames = new ConcurrentLinkedDeque<>();
-  private long size;
-  private long numberOfFinishedFiles;
   private final Thread thread;
   private final long progressUpdatePeriod;
+  private final String analysisName;
+  private long size;
+  private long numberOfFinishedFiles;
   private boolean success;
 
   /**
@@ -49,22 +50,23 @@ public class MultiFileProgressReport implements Runnable {
    */
   private final AtomicBoolean interrupted = new AtomicBoolean();
 
-  public MultiFileProgressReport() {
-    this(DEFAULT_PROGRESS_UPDATE_PERIOD_MILLIS);
+  public MultiFileProgressReport(String analysisName) {
+    this(DEFAULT_PROGRESS_UPDATE_PERIOD_MILLIS, analysisName);
   }
 
-  public MultiFileProgressReport(long progressUpdatePeriod) {
+  public MultiFileProgressReport(long progressUpdatePeriod, String analysisName) {
     this.progressUpdatePeriod = progressUpdatePeriod;
+    this.analysisName = analysisName;
     interrupted.set(false);
     thread = new Thread(this);
-    ThreadUtils.setThreadName(thread, "Progress of the text and secrets analysis");
+    ThreadUtils.setThreadName(thread, "Progress of the %s".formatted(analysisName));
     thread.setDaemon(true);
     thread.setUncaughtExceptionHandler((thread, throwable) -> LOG.debug("Uncaught exception in the progress report thread: {}", throwable.getClass().getCanonicalName()));
   }
 
   @Override
   public void run() {
-    log(size + " source " + pluralizeFile(size) + " to be analyzed", false);
+    LOG.info("{} source {} to be analyzed for the {}", size, pluralizeFile(size), analysisName);
     while (!(interrupted.get() || Thread.currentThread().isInterrupted())) {
       try {
         Thread.sleep(progressUpdatePeriod);
@@ -76,7 +78,7 @@ public class MultiFileProgressReport implements Runnable {
       }
     }
     if (success) {
-      log(size + "/" + size + " source " + pluralizeFile(size) + " " + pluralizeHas(size) + " been analyzed", false);
+      LOG.info("{}/{} source {} {} been analyzed for the {}", size, size, pluralizeFile(size), pluralizeHas(size), analysisName);
     }
   }
 
@@ -164,10 +166,10 @@ public class MultiFileProgressReport implements Runnable {
       }
     }
 
-    log(sb.toString(), debugEnabled);
+    logSynchronized(sb.toString(), debugEnabled);
   }
 
-  private static void log(String message, boolean debug) {
+  private static void logSynchronized(String message, boolean debug) {
     synchronized (LOG) {
       if (debug) {
         LOG.debug(message);

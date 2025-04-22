@@ -31,6 +31,8 @@ import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
+import org.sonar.plugins.common.analyzer.BinaryFileAnalyzer;
+import org.sonar.plugins.common.analyzer.TextAndSecretsAnalyzer;
 import org.sonar.plugins.common.git.GitService;
 import org.sonar.plugins.common.git.GitTrackedFilePredicate;
 import org.sonar.plugins.common.thread.ParallelizationManager;
@@ -97,71 +99,43 @@ public class TextAndSecretsSensor implements Sensor {
     if (!isActive(sensorContext)) {
       return;
     }
+    initialize(sensorContext);
 
-    initializeParallelizationManager(sensorContext);
-
-    // Retrieve list of checks
     List<Check> activeChecks = getActiveChecks();
-    durationStatistics = new DurationStatistics(sensorContext.config());
-    initializeSpecificationBasedChecks(activeChecks, sensorContext);
     if (activeChecks.isEmpty()) {
       return;
     }
 
+    runTextAndSecretsAnalysis(sensorContext, activeChecks);
+    runBinaryFileAnalysis(sensorContext, activeChecks);
+
+    logGeneralStatistics();
+    cleanUp();
+  }
+
+  private void runTextAndSecretsAnalysis(SensorContext sensorContext, List<Check> activeChecks) {
+    initializeSpecificationBasedChecks(activeChecks, sensorContext);
+
     // Retrieve list of files to analyse using the right FilePredicate
-    boolean analyzeAllFiles = isSonarLintContext(sensorContext) || analyzeAllFiles(sensorContext);
+    boolean shouldAnalyzeAllFiles = shouldAnalyzeAllFiles(sensorContext);
     var notBinaryFilePredicate = notBinaryFilePredicate(sensorContext);
-    var filePredicate = constructFilePredicate(sensorContext, notBinaryFilePredicate, analyzeAllFiles);
+    var filePredicate = constructGeneralFilePredicate(sensorContext, notBinaryFilePredicate, shouldAnalyzeAllFiles);
 
     List<InputFile> inputFiles = getInputFiles(sensorContext, filePredicate);
-    if (gitTrackedFilePredicate != null) {
-      gitTrackedFilePredicate.logSummary();
-    }
-    if (inputFiles.isEmpty()) {
-      LOG.debug("There are no files to be analyzed");
-      return;
-    }
 
-    configureRegexEngineTimeout(sensorContext, REGEX_MATCH_TIMEOUT_KEY, RegexMatchingManager::setTimeoutMs);
-    configureRegexEngineTimeout(sensorContext, REGEX_EXECUTION_TIMEOUT_KEY, RegexMatchingManager::setUninterruptibleTimeoutMs);
-
-    var analyzer = new Analyzer(sensorContext, parallelizationManager, durationStatistics, activeChecks, notBinaryFilePredicate, analyzeAllFiles);
+    var analyzer = new TextAndSecretsAnalyzer(sensorContext, parallelizationManager, durationStatistics, activeChecks, notBinaryFilePredicate, shouldAnalyzeAllFiles);
     durationStatistics.timed("analyzerTotal" + DurationStatistics.SUFFIX_GENERAL, () -> analyzer.analyzeFiles(inputFiles));
-    logStatistics(activeChecks);
-    parallelizationManager.shutdown();
-    RegexMatchingManager.shutdown();
+    logCheckBasedStatistics(activeChecks);
   }
 
-  private void initializeParallelizationManager(SensorContext sensorContext) {
-    int availableProcessors = Runtime.getRuntime().availableProcessors();
-    Optional<Integer> threadOption = sensorContext.config().getInt(THREAD_NUMBER_KEY);
-    int threads = availableProcessors;
+  private void runBinaryFileAnalysis(SensorContext sensorContext, List<Check> activeChecks) {
+    List<InputFile> inputFiles = retrieveBinaryFiles(sensorContext);
 
-    var logMessageSuffix = "";
-    if (threadOption.isPresent()) {
-      threads = threadOption.get();
-      logMessageSuffix = ", according to the value of \"" + THREAD_NUMBER_KEY + "\" property";
-      if (threads > availableProcessors) {
-        if (isSonarCloudContext(sensorContext)) {
-          threads = availableProcessors;
-          logMessageSuffix = ", \"" + THREAD_NUMBER_KEY + "\" is ignored";
-        } else {
-          logWarningConsoleUI("\"" + THREAD_NUMBER_KEY + "\" property was set to " + threads + ", " +
-            "which is greater than the number of available processors: " + availableProcessors + ".\n" +
-            "It is recommended to let the analyzer detect the number of threads automatically by not setting the property.\n" +
-            "For more information, visit the documentation page.");
-        }
-      }
-    }
-
-    LOG.info("Available processors: {}", availableProcessors);
-    LOG.info("Using {} {} for analysis{}.", threads, (threads != 1 ? "threads" : "thread"), logMessageSuffix);
-
-    parallelizationManager = new ParallelizationManager(threads);
-    RegexMatchingManager.initialize(threads);
+    var binaryFileAnalyzer = new BinaryFileAnalyzer(sensorContext, parallelizationManager, durationStatistics, activeChecks);
+    durationStatistics.timed("analyzerTotal" + DurationStatistics.SUFFIX_GENERAL, () -> binaryFileAnalyzer.analyzeFiles(inputFiles));
   }
 
-  private FilePredicate constructFilePredicate(SensorContext sensorContext, FilePredicate notBinaryFilePredicate, boolean analyzeAllFiles) {
+  private FilePredicate constructGeneralFilePredicate(SensorContext sensorContext, FilePredicate notBinaryFilePredicate, boolean analyzeAllFiles) {
     if (analyzeAllFiles) {
       // if we're in a sonarlint context, we return this predicate as well
       LOG.info("Analyzing all except non binary files");
@@ -169,16 +143,13 @@ public class TextAndSecretsSensor implements Sensor {
     }
 
     // if the property is inactive, we prevent jgit from being initialized
-    if (!isJGitAndInclusionsActive(sensorContext)) {
+    if (!isGitAndInclusionsActive(sensorContext)) {
       LOG.info("Analyzing only language associated files, \"{}\" property is deactivated", INCLUSIONS_ACTIVATION_KEY);
       return LANGUAGE_FILE_PREDICATE;
     }
 
-    gitTrackedFilePredicate = new GitTrackedFilePredicate(sensorContext.fileSystem().baseDir().toPath(), getGitService(), LANGUAGE_FILE_PREDICATE);
-    var trackedByGitPredicate = durationStatistics.timed(
-      "trackedByGitPredicate" + DurationStatistics.SUFFIX_GENERAL,
-      () -> gitTrackedFilePredicate);
-    if (!trackedByGitPredicate.isGitStatusSuccessful()) {
+    initializeGitPredicate(sensorContext);
+    if (!gitTrackedFilePredicate.isGitStatusSuccessful()) {
       LOG.warn("Analyzing only language associated files, " +
         "make sure to run the analysis inside a git repository to make use of inclusions specified via \"{}\"",
         TEXT_INCLUSIONS_KEY);
@@ -191,7 +162,31 @@ public class TextAndSecretsSensor implements Sensor {
     LOG.info("Analyzing language associated files and files included via \"{}\" that are tracked by git", TEXT_INCLUSIONS_KEY);
     return predicates.or(
       LANGUAGE_FILE_PREDICATE,
-      predicates.and(pathPatternPredicate, trackedByGitPredicate));
+      predicates.and(pathPatternPredicate, gitTrackedFilePredicate));
+  }
+
+  private List<InputFile> retrieveBinaryFiles(SensorContext sensorContext) {
+    var predicates = sensorContext.fileSystem().predicates();
+
+    // We only retrieve `jks` and `keystore` files as we currently only have checks for these binary files
+    var extensionsPredicate = predicates.or(
+      predicates.hasExtension("jks"),
+      predicates.hasExtension("keystore"));
+
+    List<InputFile> inputFiles = getInputFiles(sensorContext, extensionsPredicate);
+    if (inputFiles.isEmpty()) {
+      return inputFiles;
+    }
+
+    // We only want to run the git predicate if we're certain that there are binary files we want to analyze
+    initializeGitPredicate(sensorContext);
+
+    // In case we aren't able to locate a git repository, we will just analyze every jks and keystore file
+    if (gitTrackedFilePredicate.isGitStatusSuccessful()) {
+      inputFiles.removeIf(inputFile -> !gitTrackedFilePredicate.apply(inputFile));
+    }
+
+    return inputFiles;
   }
 
   /**
@@ -220,26 +215,6 @@ public class TextAndSecretsSensor implements Sensor {
       pathPatternsPredicates.add(filePredicate);
     }
     return sensorContext.fileSystem().predicates().or(pathPatternsPredicates);
-  }
-
-  private static boolean isActive(SensorContext sensorContext) {
-    return sensorContext.config().getBoolean(ANALYZER_ACTIVATION_KEY).orElse(ANALYZER_ACTIVATION_DEFAULT_VALUE);
-  }
-
-  private static boolean isJGitAndInclusionsActive(SensorContext sensorContext) {
-    return sensorContext.config().getBoolean(INCLUSIONS_ACTIVATION_KEY).orElse(INCLUSIONS_ACTIVATION_DEFAULT_VALUE);
-  }
-
-  private static boolean isSonarLintContext(SensorContext sensorContext) {
-    return sensorContext.runtime().getProduct() == SonarProduct.SONARLINT;
-  }
-
-  private static boolean isSonarCloudContext(SensorContext sensorContext) {
-    return !isSonarLintContext(sensorContext) && sensorContext.runtime().getEdition() == SonarEdition.SONARCLOUD;
-  }
-
-  private static boolean analyzeAllFiles(SensorContext sensorContext) {
-    return "true".equals(sensorContext.config().get(ANALYZE_ALL_FILES_KEY).orElse("false"));
   }
 
   protected static boolean enableAutomaticTestFileDetection(SensorContext sensorContext) {
@@ -276,10 +251,45 @@ public class TextAndSecretsSensor implements Sensor {
     List<Check> checks = new ArrayList<>(checkFactory.<Check>create(TextRuleDefinition.REPOSITORY_KEY)
       .addAnnotatedChecks(new TextCheckList().checks()).all());
 
-    List<Class<?>> secretChecks = new SecretsCheckList().checks();
     checks.addAll(checkFactory.<Check>create(SecretsRulesDefinition.REPOSITORY_KEY)
-      .addAnnotatedChecks(secretChecks).all());
+      .addAnnotatedChecks(new SecretsCheckList().checks()).all());
     return checks;
+  }
+
+  private void initialize(SensorContext sensorContext) {
+    durationStatistics = new DurationStatistics(sensorContext.config());
+    initializeParallelizationManager(sensorContext);
+    initializeOptionalConfigValue(sensorContext, REGEX_MATCH_TIMEOUT_KEY, RegexMatchingManager::setTimeoutMs);
+    initializeOptionalConfigValue(sensorContext, REGEX_EXECUTION_TIMEOUT_KEY, RegexMatchingManager::setUninterruptibleTimeoutMs);
+  }
+
+  private void initializeParallelizationManager(SensorContext sensorContext) {
+    int availableProcessors = Runtime.getRuntime().availableProcessors();
+    Optional<Integer> threadOption = sensorContext.config().getInt(THREAD_NUMBER_KEY);
+    int threads = availableProcessors;
+
+    var logMessageSuffix = "";
+    if (threadOption.isPresent()) {
+      threads = threadOption.get();
+      logMessageSuffix = ", according to the value of \"" + THREAD_NUMBER_KEY + "\" property";
+      if (threads > availableProcessors) {
+        if (isSonarCloudContext(sensorContext)) {
+          threads = availableProcessors;
+          logMessageSuffix = ", \"" + THREAD_NUMBER_KEY + "\" is ignored";
+        } else {
+          logWarningConsoleUI("\"" + THREAD_NUMBER_KEY + "\" property was set to " + threads + ", " +
+            "which is greater than the number of available processors: " + availableProcessors + ".\n" +
+            "It is recommended to let the analyzer detect the number of threads automatically by not setting the property.\n" +
+            "For more information, visit the documentation page.");
+        }
+      }
+    }
+
+    LOG.info("Available processors: {}", availableProcessors);
+    LOG.info("Using {} {} for analysis{}.", threads, (threads != 1 ? "threads" : "thread"), logMessageSuffix);
+
+    parallelizationManager = new ParallelizationManager(threads);
+    RegexMatchingManager.initialize(threads);
   }
 
   protected void initializeSpecificationBasedChecks(List<Check> checks, SensorContext sensorContext) {
@@ -296,13 +306,21 @@ public class TextAndSecretsSensor implements Sensor {
     });
   }
 
-  private static void configureRegexEngineTimeout(SensorContext sensorContext, String key, Consumer<Integer> setTimeoutMs) {
+  private static void initializeOptionalConfigValue(SensorContext sensorContext, String key, Consumer<Integer> setConfigValue) {
     try {
       Optional<Integer> valueAsInt = sensorContext.config().getInt(key);
-      valueAsInt.ifPresent(setTimeoutMs);
+      valueAsInt.ifPresent(setConfigValue);
     } catch (IllegalStateException e) {
       // provided value not in the expected format - do nothing
       LOG.debug("Provided value with key \"{}\" is not parseable as an integer", key, e);
+    }
+  }
+
+  private void initializeGitPredicate(SensorContext sensorContext) {
+    if (gitTrackedFilePredicate == null) {
+      gitTrackedFilePredicate = durationStatistics.timed(
+        "trackedByGitPredicate" + DurationStatistics.SUFFIX_GENERAL,
+        () -> new GitTrackedFilePredicate(sensorContext.fileSystem().baseDir().toPath(), getGitService(), LANGUAGE_FILE_PREDICATE));
     }
   }
 
@@ -319,7 +337,40 @@ public class TextAndSecretsSensor implements Sensor {
     return new GitService();
   }
 
-  protected void logStatistics(List<Check> activeChecks) {
-    durationStatistics.log();
+  protected void logCheckBasedStatistics(List<Check> activeChecks) {
+    // nothing to do here for this class
   }
+
+  private void logGeneralStatistics() {
+    durationStatistics.log();
+    if (gitTrackedFilePredicate != null) {
+      gitTrackedFilePredicate.logSummary();
+    }
+  }
+
+  private void cleanUp() {
+    parallelizationManager.shutdown();
+    RegexMatchingManager.shutdown();
+  }
+
+  private static boolean isActive(SensorContext sensorContext) {
+    return sensorContext.config().getBoolean(ANALYZER_ACTIVATION_KEY).orElse(ANALYZER_ACTIVATION_DEFAULT_VALUE);
+  }
+
+  private static boolean isGitAndInclusionsActive(SensorContext sensorContext) {
+    return sensorContext.config().getBoolean(INCLUSIONS_ACTIVATION_KEY).orElse(INCLUSIONS_ACTIVATION_DEFAULT_VALUE);
+  }
+
+  private static boolean isSonarLintContext(SensorContext sensorContext) {
+    return sensorContext.runtime().getProduct() == SonarProduct.SONARLINT;
+  }
+
+  private static boolean isSonarCloudContext(SensorContext sensorContext) {
+    return !isSonarLintContext(sensorContext) && sensorContext.runtime().getEdition() == SonarEdition.SONARCLOUD;
+  }
+
+  private static boolean shouldAnalyzeAllFiles(SensorContext sensorContext) {
+    return isSonarLintContext(sensorContext) || sensorContext.config().getBoolean(ANALYZE_ALL_FILES_KEY).orElse(false);
+  }
+
 }

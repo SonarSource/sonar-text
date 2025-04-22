@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.TreeSet;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.FileSystem;
@@ -111,6 +112,10 @@ public class InputFileContext {
     candidateIssues.add(new CandidateIssue(ruleKey, ruleSelectivity, textRange, message));
   }
 
+  public void reportIssueOnFile(RuleKey ruleKey, String message) {
+    createAndSaveIssue(sensorContext, ruleKey, inputFile, null, message);
+  }
+
   /**
    * Detect overlapping issues in {@link #candidateIssues}, remove them and report only the remaining issues.
    * Note: this is not prone to race-conditions, as we don't run checks in parallel.
@@ -134,15 +139,18 @@ public class InputFileContext {
     candidateIssues.clear();
   }
 
-  private static synchronized void createAndSaveIssue(SensorContext sensorContext, RuleKey ruleKey, InputFile inputFile, TextRange textRange, String message) {
+  private static synchronized void createAndSaveIssue(SensorContext sensorContext, RuleKey ruleKey, InputFile inputFile, @Nullable TextRange textRange, String message) {
     // saving issues is not multi-thread safe in sonarAPI (all InputFileContext are using the same sensorContext)
     var issue = sensorContext.newIssue();
+    var issueLocation = issue.newLocation()
+      .on(inputFile)
+      .message(message);
+    if (textRange != null) {
+      issueLocation.at(textRange);
+    }
     issue
       .forRule(ruleKey)
-      .at(issue.newLocation()
-        .on(inputFile)
-        .at(textRange)
-        .message(message))
+      .at(issueLocation)
       .save();
   }
 

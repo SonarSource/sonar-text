@@ -35,6 +35,7 @@ import static org.assertj.core.api.Assertions.atIndex;
 class MultiFileProgressReportTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(MultiFileProgressReport.class);
+  private static final String TEST_ANALYSIS_NAME = "test analysis";
 
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
@@ -42,153 +43,137 @@ class MultiFileProgressReportTest {
   @Test
   @Timeout(5)
   void shouldDisplayMessagePluralized() throws InterruptedException {
-    var report = new MultiFileProgressReport(100);
+    var report = new MultiFileProgressReport(100, TEST_ANALYSIS_NAME);
     report.start(3);
-    // Wait for start message
-    waitForMessage();
     // Wait for at least one progress message
     waitForMessage();
 
     report.stop();
 
     assertThat(logTester.logs())
-      .contains("3 source files to be analyzed", atIndex(0))
+      .contains("3 source files to be analyzed for the test analysis", atIndex(0))
       .contains("0/3 files analyzed, current files: none")
-      .last().isEqualTo("3/3 source files have been analyzed");
+      .last().isEqualTo("3/3 source files have been analyzed for the test analysis");
   }
 
   @Test
   @Timeout(5)
   void shouldDisplayMessageSingular() throws InterruptedException {
-    var report = new MultiFileProgressReport(100);
+    var report = new MultiFileProgressReport(100, TEST_ANALYSIS_NAME);
     report.start(1);
-    // Wait for start message
-    waitForMessage();
     // Wait for at least one progress message
     waitForMessage();
 
     report.stop();
 
     assertThat(logTester.logs())
-      .contains("1 source file to be analyzed", atIndex(0))
+      .contains("1 source file to be analyzed for the test analysis", atIndex(0))
       .contains("0/1 files analyzed, current files: none")
-      .last().isEqualTo("1/1 source file has been analyzed");
+      .last().isEqualTo("1/1 source file has been analyzed for the test analysis");
   }
 
   @Test
   @Timeout(5)
   void shouldDisplayMessageForOneCurrentlyAnalyzedFile() throws InterruptedException {
-    var report = new MultiFileProgressReport(100);
+    var report = new MultiFileProgressReport(100, TEST_ANALYSIS_NAME);
     report.start(1);
     report.startAnalysisFor("file1");
-    // Wait for start message
-    waitForMessage();
     // Wait for at least one progress message
     waitForMessage();
 
     report.stop();
 
     assertThat(logTester.logs())
-      .contains("1 source file to be analyzed", atIndex(0))
+      .contains("1 source file to be analyzed for the test analysis", atIndex(0))
       .contains("0/1 files analyzed, current file: file1")
-      .last().isEqualTo("1/1 source file has been analyzed");
+      .last().isEqualTo("1/1 source file has been analyzed for the test analysis");
   }
 
   @Test
   @Timeout(5)
   void shouldDisplayMessageForTwoCurrentlyAnalyzedFiles() throws InterruptedException {
-    var report = new MultiFileProgressReport(100);
+    var report = new MultiFileProgressReport(100, TEST_ANALYSIS_NAME);
     report.start(2);
     report.startAnalysisFor("file1");
     report.startAnalysisFor("file2");
-    // Wait for start message
-    waitForMessage();
     // Wait for at least one progress message
     waitForMessage();
 
     report.stop();
 
     assertThat(logTester.logs())
-      .contains("2 source files to be analyzed", atIndex(0))
+      .contains("2 source files to be analyzed for the test analysis", atIndex(0))
       .contains("0/2 files analyzed, current files: file1, file2")
-      .last().isEqualTo("2/2 source files have been analyzed");
+      .last().isEqualTo("2/2 source files have been analyzed for the test analysis");
   }
 
   @Test
   @Timeout(5)
   void shouldDisplayMessageForTwoCurrentlyAnalyzedFilesWhenOneAlreadyFinished() throws InterruptedException {
-    var report = new MultiFileProgressReport(100);
+    var report = new MultiFileProgressReport(100, TEST_ANALYSIS_NAME);
     report.start(3);
     report.startAnalysisFor("file1");
     report.startAnalysisFor("file2");
     report.startAnalysisFor("file3");
     report.finishAnalysisFor("file2");
-    // Wait for start message
-    waitForMessage();
     // Wait for at least one progress message
     waitForMessage();
 
     report.stop();
 
     assertThat(logTester.logs())
-      .contains("3 source files to be analyzed", atIndex(0))
+      .contains("3 source files to be analyzed for the test analysis", atIndex(0))
       .contains("1/3 files analyzed, current files: file1, file3")
-      .last().isEqualTo("3/3 source files have been analyzed");
+      .last().isEqualTo("3/3 source files have been analyzed for the test analysis");
   }
 
   @Test
   @Timeout(5)
   void shouldAbbreviateLogMessageInInfoLogLevel() throws InterruptedException {
-    var report = new MultiFileProgressReport(100);
+    var report = new MultiFileProgressReport(100, TEST_ANALYSIS_NAME);
     report.start(4);
     report.startAnalysisFor("file1");
     report.startAnalysisFor("file2");
     report.startAnalysisFor("file3");
     report.startAnalysisFor("file4");
-    // Wait for start message
-    waitForMessage();
     // Wait for at least one progress message
     waitForMessage();
 
     report.stop();
 
     assertThat(logTester.logs())
-      .contains("4 source files to be analyzed", atIndex(0))
+      .contains("4 source files to be analyzed for the test analysis", atIndex(0))
       .contains("0/4 files analyzed, current files: file1, file2, file3, ...")
-      .last().isEqualTo("4/4 source files have been analyzed");
+      .last().isEqualTo("4/4 source files have been analyzed for the test analysis");
   }
 
   @Test
   @Timeout(5)
   void shouldNotAbbreviateLogMessageInInfoLogLevel() throws InterruptedException {
-    var report = new MultiFileProgressReport(100);
+    var report = new MultiFileProgressReport(100, TEST_ANALYSIS_NAME);
     logTester.setLevel(Level.DEBUG);
     report.start(4);
     report.startAnalysisFor("file1");
     report.startAnalysisFor("file2");
     report.startAnalysisFor("file3");
     report.startAnalysisFor("file4");
-    // Wait for start message
-    waitForMessage();
     // Wait for at least one progress message
     waitForMessage();
 
     report.stop();
 
     assertThat(logTester.logs())
-      .contains("4 source files to be analyzed", atIndex(0))
+      .contains("4 source files to be analyzed for the test analysis", atIndex(0))
       .contains("0/4 files analyzed, current files: file1, file2, file3, file4")
-      .last().isEqualTo("4/4 source files have been analyzed");
+      .last().isEqualTo("4/4 source files have been analyzed for the test analysis");
   }
 
   @Test
   @Timeout(5)
   void shouldDisplayLogWhenExceedingInitialNumberOfAnalyzedFiles() throws InterruptedException {
-    var report = new MultiFileProgressReport(100);
+    var report = new MultiFileProgressReport(100, TEST_ANALYSIS_NAME);
     logTester.setLevel(Level.DEBUG);
     report.start(2);
-    // Wait for start message
-    waitForMessage();
     report.startAnalysisFor("file1");
     report.finishAnalysisFor("file1");
     report.startAnalysisFor("file2");
@@ -201,53 +186,48 @@ class MultiFileProgressReportTest {
     report.stop();
 
     assertThat(logTester.logs())
-      .contains("2 source files to be analyzed", atIndex(0))
-      .contains("2/2 files analyzed, current files: none",
-        "Reported finished analysis on more files than expected")
-      .last().isEqualTo("2/2 source files have been analyzed");
+      .containsExactlyInAnyOrder("2 source files to be analyzed for the test analysis",
+        "2/2 files analyzed, current files: none",
+        "Reported finished analysis on more files than expected",
+        "2/2 source files have been analyzed for the test analysis");
   }
 
   @Test
   @Timeout(5)
   void shouldDisplayLogWhenFinishingAnalysisOnNotStartedFile() throws InterruptedException {
-    var report = new MultiFileProgressReport(100);
+    var report = new MultiFileProgressReport(100, TEST_ANALYSIS_NAME);
     logTester.setLevel(Level.DEBUG);
     report.start(2);
     report.finishAnalysisFor("file1");
-    // Wait for start message
-    waitForMessage();
     // Wait for at least one progress message
     waitForMessage();
 
     report.stop();
 
-    assertThat(logTester.logs()).contains("2 source files to be analyzed")
+    assertThat(logTester.logs()).contains("2 source files to be analyzed for the test analysis")
       .contains("0/2 files analyzed, current files: none",
         "Couldn't finish progress report of file \"file1\", as it was not in the list of files being analyzed")
-      .last().isEqualTo("2/2 source files have been analyzed");
+      .last().isEqualTo("2/2 source files have been analyzed for the test analysis");
   }
 
   @Test
   @Timeout(5)
   void shouldCancelCorrectly() throws InterruptedException {
-    var report = new MultiFileProgressReport(100);
+    var report = new MultiFileProgressReport(100, TEST_ANALYSIS_NAME);
     report.start(1);
-    // Wait for start message
-    waitForMessage();
 
     report.cancel();
 
-    assertThat(logTester.logs()).containsExactly(
-      "1 source file to be analyzed");
+    assertThat(logTester.logs())
+      .containsExactly(
+        "1 source file to be analyzed for the test analysis");
   }
 
   @Test
   @Timeout(5)
   void shouldPreserveInterruptFlagOnStop() throws InterruptedException {
-    var report = new MultiFileProgressReport(100);
+    var report = new MultiFileProgressReport(100, TEST_ANALYSIS_NAME);
     report.start(1);
-    // Wait for start message
-    waitForMessage();
 
     AtomicBoolean interruptFlagPreserved = new AtomicBoolean(false);
 
@@ -270,13 +250,13 @@ class MultiFileProgressReportTest {
     waitForMessage();
     assertThat(interruptFlagPreserved.get()).isTrue();
 
-    assertThat(logTester.logs()).contains("1/1 source file has been analyzed");
+    assertThat(logTester.logs()).contains("1/1 source file has been analyzed for the test analysis");
   }
 
   @Test
   @Timeout(1)
   void interruptingTheThreadShouldNeverCreateADeadlock() {
-    var report = new MultiFileProgressReport();
+    var report = new MultiFileProgressReport(TEST_ANALYSIS_NAME);
     long start = System.currentTimeMillis();
     report.start(0);
     report.stop();
@@ -292,7 +272,7 @@ class MultiFileProgressReportTest {
   @Test
   @Timeout(1)
   void interruptedThreadShouldExitImmediately() throws InterruptedException {
-    var report = new MultiFileProgressReport();
+    var report = new MultiFileProgressReport(TEST_ANALYSIS_NAME);
     AtomicLong time = new AtomicLong(10000);
     Thread selfInterruptedThread = new Thread(() -> {
       // set the thread as interrupted
@@ -313,7 +293,7 @@ class MultiFileProgressReportTest {
   void shouldNotThrowConcurrentModificationException() throws InterruptedException {
     logTester.setLevel(Level.DEBUG);
     var progressUpdatePeriodMillis = 10;
-    var report = new MultiFileProgressReport(progressUpdatePeriodMillis);
+    var report = new MultiFileProgressReport(progressUpdatePeriodMillis, TEST_ANALYSIS_NAME);
     var numFiles = 500;
     report.start(numFiles);
 
@@ -329,12 +309,14 @@ class MultiFileProgressReportTest {
     executor.shutdownNow();
 
     assertThat(logTester.logs())
-      .contains("500 source files to be analyzed")
+      .contains("500 source files to be analyzed for the test analysis")
       .doesNotContain("Uncaught exception in the progress report thread: java.util.ConcurrentModificationException");
 
     logTester.setLevel(Level.INFO);
   }
 
+  // Waits on the next notification on the lock of the logger
+  // Starting / Finishing the analysis of a file will notify the logger
   private static void waitForMessage() throws InterruptedException {
     synchronized (LOG) {
       LOG.wait(1000);

@@ -83,23 +83,28 @@ tasks.register(CHECK_LIST_GENERATION_TASK_NAME) {
             FileFilterUtils.notFileFilter(FileFilterUtils.prefixFileFilter("Abstract"))
         )
 
+        val checkBaseDir = projectDir.resolve("src/main/java/${constants.checksLocation}/")
+
         val files = FileUtils.listFiles(
-            projectDir.resolve("src/main/java/${constants.checksLocation}/"),
+            checkBaseDir,
             filter,
             FileFilterUtils.trueFileFilter()
         )
 
-        val classNames = files
-            .map { it.name.removeSuffix(".java") }
+        val classNamesRelativeToCheckDir = files
+            .map { it.relativeTo(checkBaseDir).invariantSeparatorsPath.replace("/", ".").removeSuffix(".java") }
             .sorted()
 
         val result = with(codeGenerationConfiguration) {
             constants.template
                 .replace("//<LICENSE_HEADER>", loadLicenseHeader(licenseHeaderFile.asFile.get()))
-                .replace("//<REPLACE-WITH-IMPORTS-OF-ALL-CHECKS>", generateImportsFor(constants.checksPackage, classNames))
+                .replace(
+                    "//<REPLACE-WITH-IMPORTS-OF-ALL-CHECKS>",
+                    generateImportsFor(constants.checksPackage, classNamesRelativeToCheckDir)
+                )
                 .replace(
                     "//<REPLACE-WITH-LIST-OF-CHECKS>",
-                    generateSecretChecksFieldFor(classNames, checkListClassesToEmbed.get())
+                    generateSecretChecksFieldFor(classNamesRelativeToCheckDir, checkListClassesToEmbed.get())
                 )
                 .replace("//<REPLACE-WITH-CHECKS-METHOD>", generateChecksMethod(checkListClassesToEmbed.get()))
                 .replace("//<REPLACE-WITH-ADDITIONAL-METHODS>", generateAdditionalMethods(codeGenerationConfiguration))
@@ -120,7 +125,7 @@ fun generateSecretChecksFieldFor(
 ): String =
     buildString {
         append("private static final List<Class<?>> SECRET_CHECKS = List.of($lineSeparator")
-        append(checkNames.joinToString(",$lineSeparator", postfix = ");") { "    $it.class" })
+        append(checkNames.joinToString(",$lineSeparator", postfix = ");") { "    ${it.substringAfterLast(".")}.class" })
         for (checkListName in checkListClassesToEmbed) {
             val checkListFieldName = checkListClassToFieldName(checkListName)
             append(lineSeparator)

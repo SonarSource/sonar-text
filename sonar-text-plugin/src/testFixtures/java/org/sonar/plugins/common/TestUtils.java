@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -80,6 +81,9 @@ public class TestUtils {
   public static String asString(Issue issue) {
     IssueLocation location = issue.primaryLocation();
     TextRange range = location.textRange();
+    if (range == null) {
+      return String.format("%s [] %s", issue.ruleKey(), location.message());
+    }
     return String.format("%s [%d:%d-%d:%d] %s", issue.ruleKey(), range.start().line(), range.start().lineOffset(),
       range.end().line(), range.end().lineOffset(), location.message());
   }
@@ -145,6 +149,10 @@ public class TestUtils {
       .toArray(String[]::new);
   }
 
+  public static String[] toRuleKeys(Check... checks) {
+    return Arrays.stream(checks).map(check -> check.getRuleKey().toString()).toArray(String[]::new);
+  }
+
   public static InputFileContext inputFileContext(String fileContent) throws IOException {
     return inputFileContext(inputFile(fileContent));
   }
@@ -154,8 +162,8 @@ public class TestUtils {
     return new InputFileContext(sensorContext, inputFile);
   }
 
-  public static SensorContextTester sensorContext(Check check) {
-    return sensorContext(check.getRuleKey().toString());
+  public static SensorContextTester sensorContext(Check... checks) {
+    return sensorContext(toRuleKeys(checks));
   }
 
   public SensorContextTester defaultSensorContext() {

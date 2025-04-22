@@ -52,7 +52,10 @@ class SecretsSpecificationLoaderTest {
       .as("No errors are expected during loading of specifications")
       .isEmpty();
 
-    assertThat(rulesMappedToKey.values()).hasSize(new SecretsCheckList().checks().size());
+    var numberOfSpecificationBasedChecks = new SecretsCheckList().checks().stream()
+      .filter(SpecificationBasedCheck.class::isAssignableFrom)
+      .count();
+    assertThat(rulesMappedToKey.values()).hasSize((int) numberOfSpecificationBasedChecks);
     assertThat(logTester.getLogs()).isEmpty();
   }
 
