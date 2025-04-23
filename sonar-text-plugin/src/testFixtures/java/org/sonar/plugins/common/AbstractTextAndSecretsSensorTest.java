@@ -198,8 +198,9 @@ public abstract class AbstractTextAndSecretsSensorTest {
     assertThat(logTester.logs()).containsExactly(
       EXPECTED_PROCESSOR_LOG_LINE,
       DEFAULT_THREAD_USAGE_LOG_LINE,
-      "Analyzing all except non binary files",
-      "Starting text and secrets analysis",
+      "Start fetching files for the text and secrets analysis",
+      "Retrieving all except non binary files",
+      "Starting the text and secrets analysis",
       "1 source file to be analyzed for the text and secrets analysis");
   }
 
@@ -607,7 +608,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     Collection<Issue> issues = context.allIssues();
     assertThat(issues).hasSize(1);
     assertCorrectLogsForTextAndSecretsAnalysis(logTester.logs(), 1,
-      "Analyzing language associated files and files included via \"sonar.text.inclusions\" that are tracked by git",
+      "Retrieving language associated files and files included via \"sonar.text.inclusions\" that are tracked by git",
       "3 files are ignored because they are untracked by git",
       """
         Files untracked by git:
@@ -637,7 +638,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     Collection<Issue> issues = context.allIssues();
     assertThat(issues).hasSize(2);
     assertCorrectLogsForTextAndSecretsAnalysis(logTester.logs(), 2,
-      "Analyzing only language associated files, \"sonar.text.inclusions.activate\" property is deactivated");
+      "Retrieving only language associated files, \"sonar.text.inclusions.activate\" property is deactivated");
     verify(gitService, times(0)).retrieveUntrackedFileNames(context.fileSystem().baseDirPath());
     verify(sensorSpy, times(0)).getGitService();
   }
@@ -661,7 +662,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     Collection<Issue> issues = context.allIssues();
     assertThat(issues).hasSize(1);
     assertCorrectLogsForTextAndSecretsAnalysis(logTester.logs(), 1,
-      "Analyzing only language associated files, make sure to run the analysis " +
+      "Retrieving only language associated files, make sure to run the analysis " +
         "inside a git repository to make use of inclusions specified via \"sonar.text.inclusions\"");
   }
 
@@ -731,8 +732,9 @@ public abstract class AbstractTextAndSecretsSensorTest {
     assertThat(logTester.logs()).containsExactlyInAnyOrder(
       "Available processors: " + Runtime.getRuntime().availableProcessors(),
       "Using 1 thread for analysis, according to the value of \"sonar.text.threads\" property.",
-      "Starting text and secrets analysis",
-      "Analyzing all except non binary files",
+      "Start fetching files for the text and secrets analysis",
+      "Starting the text and secrets analysis",
+      "Retrieving all except non binary files",
       "3 source files to be analyzed for the text and secrets analysis",
       "3/3 source files have been analyzed for the text and secrets analysis");
   }
@@ -756,8 +758,9 @@ public abstract class AbstractTextAndSecretsSensorTest {
       "\"sonar.text.threads\" property was set to " + usedThreads + ", which is greater than the number of available processors: " + availableProcessors + ".\n" +
         "It is recommended to let the analyzer detect the number of threads automatically by not setting the property.\n" +
         "For more information, visit the documentation page.",
-      "Starting text and secrets analysis",
-      "Analyzing all except non binary files",
+      "Start fetching files for the text and secrets analysis",
+      "Starting the text and secrets analysis",
+      "Retrieving all except non binary files",
       "3 source files to be analyzed for the text and secrets analysis",
       "3/3 source files have been analyzed for the text and secrets analysis");
   }
@@ -778,9 +781,10 @@ public abstract class AbstractTextAndSecretsSensorTest {
     assertThat(logTester.logs()).containsExactlyInAnyOrder(
       "Available processors: " + availableProcessors,
       "Using " + availableProcessors + " threads for analysis, \"sonar.text.threads\" is ignored.",
-      "Starting text and secrets analysis",
+      "Start fetching files for the text and secrets analysis",
+      "Starting the text and secrets analysis",
       "Using git CLI to retrieve untracked files",
-      "Analyzing language associated files and files included via \"sonar.text.inclusions\" that are tracked by git",
+      "Retrieving language associated files and files included via \"sonar.text.inclusions\" that are tracked by git",
       "3 source files to be analyzed for the text and secrets analysis",
       "3/3 source files have been analyzed for the text and secrets analysis",
       EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
@@ -862,16 +866,14 @@ public abstract class AbstractTextAndSecretsSensorTest {
     assertThat(logTester.logs()).containsExactly(
       EXPECTED_PROCESSOR_LOG_LINE,
       DEFAULT_THREAD_USAGE_LOG_LINE,
-      EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE,
-      "Using git CLI to retrieve untracked files",
-      "Analyzing language associated files and files included via \"sonar.text.inclusions\" that are tracked by git",
-      "Starting binary file analysis",
+      "Start fetching files for the binary file analysis",
+      "Starting the binary file analysis",
       "3 source files to be analyzed for the binary file analysis",
       "3/3 source files have been analyzed for the binary file analysis");
   }
 
   @Test
-  void shouldAnalyzeAllKeystoreAndJksFilesInBinaryFileAnalysisWhenGitStatusCallFails() {
+  void retrievalOfBinaryFilesShouldNotBeInfluencedByFailedGitStatusCall() {
     Check binaryFileCheck = new TestBinaryFileCheck();
     SensorContextTester context = sensorContext(binaryFileCheck);
     context.setRuntime(SONARQUBE_RUNTIME);
@@ -889,43 +891,36 @@ public abstract class AbstractTextAndSecretsSensorTest {
     assertThat(logTester.logs()).containsExactly(
       EXPECTED_PROCESSOR_LOG_LINE,
       DEFAULT_THREAD_USAGE_LOG_LINE,
-      EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE,
-      "Analyzing only language associated files, make sure to run the analysis inside a git " +
-        "repository to make use of inclusions specified via \"sonar.text.inclusions\"",
-      "Starting binary file analysis",
+      "Start fetching files for the binary file analysis",
+      "Starting the binary file analysis",
       "2 source files to be analyzed for the binary file analysis",
       "2/2 source files have been analyzed for the binary file analysis");
   }
 
   @Test
-  void shouldFilterOutUntrackedKeystoreAndJksFilesInBinaryFileAnalysisWhenGitStatusCallIsSuccessful() {
+  void shouldNotFilterOutGitUntrackedKeystoreAndJksFilesInBinaryFileAnalysis() {
     Check binaryFileCheck = new TestBinaryFileCheck();
     SensorContextTester context = sensorContext(binaryFileCheck);
     context.setRuntime(SONARQUBE_RUNTIME);
     var sensorSpy = Mockito.spy(sensor(binaryFileCheck));
     var gitService = mock(GitService.class);
-    when(gitService.retrieveUntrackedFileNames(any())).thenReturn(new GitService.Result(true, Set.of("b.jks", "d.keystore")));
+    when(gitService.retrieveUntrackedFileNames(any())).thenReturn(new GitService.Result(true, Set.of("a.jks", "b.keystore")));
     when(sensorSpy.getGitService()).thenReturn(gitService);
 
     analyse(sensorSpy, context,
-      inputFile(Path.of("a.jks"), SENSITIVE_BIDI_CHARS),
-      inputFile(Path.of("c.keystore"), SENSITIVE_BIDI_CHARS),
-
       // untracked files
-      inputFile(Path.of("b.jks"), SENSITIVE_BIDI_CHARS),
-      inputFile(Path.of("d.keystore"), SENSITIVE_BIDI_CHARS));
+      inputFile(Path.of("a.jks"), SENSITIVE_BIDI_CHARS),
+      inputFile(Path.of("b.keystore"), SENSITIVE_BIDI_CHARS));
 
     assertThat(context.allIssues()).hasSize(2);
 
     assertThat(logTester.logs()).containsExactly(
       EXPECTED_PROCESSOR_LOG_LINE,
       DEFAULT_THREAD_USAGE_LOG_LINE,
-      EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE,
-      "Analyzing language associated files and files included via \"sonar.text.inclusions\" that are tracked by git",
-      "Starting binary file analysis",
+      "Start fetching files for the binary file analysis",
+      "Starting the binary file analysis",
       "2 source files to be analyzed for the binary file analysis",
-      "2/2 source files have been analyzed for the binary file analysis",
-      "2 files are ignored because they are untracked by git");
+      "2/2 source files have been analyzed for the binary file analysis");
   }
 
   @Test
@@ -953,12 +948,14 @@ public abstract class AbstractTextAndSecretsSensorTest {
       EXPECTED_PROCESSOR_LOG_LINE,
       DEFAULT_THREAD_USAGE_LOG_LINE,
       EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE,
+      "Start fetching files for the text and secrets analysis",
       "Using git CLI to retrieve untracked files",
-      "Analyzing language associated files and files included via \"sonar.text.inclusions\" that are tracked by git",
-      "Starting text and secrets analysis",
+      "Retrieving language associated files and files included via \"sonar.text.inclusions\" that are tracked by git",
+      "Starting the text and secrets analysis",
       "2 source files to be analyzed for the text and secrets analysis",
       "2/2 source files have been analyzed for the text and secrets analysis",
-      "Starting binary file analysis",
+      "Start fetching files for the binary file analysis",
+      "Starting the binary file analysis",
       "2 source files to be analyzed for the binary file analysis",
       "2/2 source files have been analyzed for the binary file analysis");
   }

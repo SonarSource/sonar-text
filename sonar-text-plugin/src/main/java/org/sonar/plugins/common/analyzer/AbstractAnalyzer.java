@@ -36,19 +36,19 @@ public abstract class AbstractAnalyzer {
   private final SensorContext sensorContext;
   private final ParallelizationManager parallelizationManager;
   private final DurationStatistics durationStatistics;
-  private final List<Check> activeChecks;
+  private final List<Check> suitableChecks;
   private final String analysisName;
 
   protected AbstractAnalyzer(
     SensorContext sensorContext,
     ParallelizationManager parallelizationManager,
     DurationStatistics durationStatistics,
-    List<Check> activeChecks,
+    List<Check> suitableChecks,
     String analysisName) {
     this.sensorContext = sensorContext;
     this.parallelizationManager = parallelizationManager;
     this.durationStatistics = durationStatistics;
-    this.activeChecks = activeChecks;
+    this.suitableChecks = suitableChecks;
     this.analysisName = analysisName;
   }
 
@@ -62,10 +62,10 @@ public abstract class AbstractAnalyzer {
         .toList());
 
     if (analyzableFiles.isEmpty()) {
-      LOG.debug("There are no files to be analyzed for the {}", analysisName);
+      LOG.info("There are no files to be analyzed for the {}", analysisName);
       return;
     }
-    LOG.info("Starting {}", analysisName);
+    LOG.info("Starting the {}", analysisName);
 
     durationStatistics.timed("analyzingAllChecks" + DurationStatistics.SUFFIX_GENERAL, () -> analyzeAllFiles(analyzableFiles));
   }
@@ -137,10 +137,8 @@ public abstract class AbstractAnalyzer {
     // deterministic analysis results
     // The main reason is because of the calculation of overlapping reported secrets in InputFileContext
     try {
-      for (Check check : activeChecks) {
-        if (shouldRunCheck(check)) {
-          check.analyze(inputFileContext);
-        }
+      for (Check check : suitableChecks) {
+        check.analyze(inputFileContext);
       }
       inputFileContext.flushIssues();
     } catch (RuntimeException e) {
@@ -158,6 +156,4 @@ public abstract class AbstractAnalyzer {
     // TODO SECRETS-114: remove print of stacktrace
     LOG.debug("{}: ", e, e);
   }
-
-  abstract boolean shouldRunCheck(Check check);
 }

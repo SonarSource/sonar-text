@@ -16,6 +16,7 @@
  */
 package org.sonar.plugins.common.analyzer;
 
+import java.util.Collection;
 import java.util.List;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
@@ -31,17 +32,18 @@ public final class BinaryFileAnalyzer extends AbstractAnalyzer {
     SensorContext sensorContext,
     ParallelizationManager parallelizationManager,
     DurationStatistics durationStatistics,
-    List<Check> activeChecks) {
-    super(sensorContext, parallelizationManager, durationStatistics, activeChecks, ANALYSIS_NAME);
-  }
-
-  @Override
-  protected boolean shouldRunCheck(Check check) {
-    return check instanceof BinaryFileCheck;
+    List<Check> suitableChecks) {
+    super(sensorContext, parallelizationManager, durationStatistics, suitableChecks, ANALYSIS_NAME);
   }
 
   @Override
   protected void sortInputFiles(List<InputFile> inputFiles) {
     // we don't need to sort binary files as they don't have valid line numbers
+  }
+
+  public static List<Check> filterSuitableChecks(Collection<Check> checks) {
+    return checks.stream()
+      .filter(BinaryFileCheck.class::isInstance)
+      .toList();
   }
 }

@@ -114,7 +114,12 @@ public class TextAndSecretsSensor implements Sensor {
   }
 
   private void runTextAndSecretsAnalysis(SensorContext sensorContext, List<Check> activeChecks) {
-    initializeSpecificationBasedChecks(activeChecks, sensorContext);
+    var suitableChecks = TextAndSecretsAnalyzer.filterSuitableChecks(activeChecks);
+    if (suitableChecks.isEmpty()) {
+      return;
+    }
+
+    initializeSpecificationBasedChecks(suitableChecks, sensorContext);
 
     // Retrieve list of files to analyse using the right FilePredicate
     boolean shouldAnalyzeAllFiles = shouldAnalyzeAllFiles(sensorContext);
@@ -123,34 +128,40 @@ public class TextAndSecretsSensor implements Sensor {
 
     List<InputFile> inputFiles = getInputFiles(sensorContext, filePredicate);
 
-    var analyzer = new TextAndSecretsAnalyzer(sensorContext, parallelizationManager, durationStatistics, activeChecks, notBinaryFilePredicate, shouldAnalyzeAllFiles);
+    var analyzer = new TextAndSecretsAnalyzer(sensorContext, parallelizationManager, durationStatistics, suitableChecks, notBinaryFilePredicate, shouldAnalyzeAllFiles);
     durationStatistics.timed("analyzerTotal" + DurationStatistics.SUFFIX_GENERAL, () -> analyzer.analyzeFiles(inputFiles));
-    logCheckBasedStatistics(activeChecks);
+    logCheckBasedStatistics(suitableChecks);
   }
 
   private void runBinaryFileAnalysis(SensorContext sensorContext, List<Check> activeChecks) {
+    var suitableChecks = BinaryFileAnalyzer.filterSuitableChecks(activeChecks);
+    if (suitableChecks.isEmpty()) {
+      return;
+    }
+
     List<InputFile> inputFiles = retrieveBinaryFiles(sensorContext);
 
-    var binaryFileAnalyzer = new BinaryFileAnalyzer(sensorContext, parallelizationManager, durationStatistics, activeChecks);
+    var binaryFileAnalyzer = new BinaryFileAnalyzer(sensorContext, parallelizationManager, durationStatistics, suitableChecks);
     durationStatistics.timed("analyzerTotal" + DurationStatistics.SUFFIX_GENERAL, () -> binaryFileAnalyzer.analyzeFiles(inputFiles));
   }
 
   private FilePredicate constructGeneralFilePredicate(SensorContext sensorContext, FilePredicate notBinaryFilePredicate, boolean analyzeAllFiles) {
+    LOG.info("Start fetching files for the text and secrets analysis");
     if (analyzeAllFiles) {
       // if we're in a sonarlint context, we return this predicate as well
-      LOG.info("Analyzing all except non binary files");
+      LOG.info("Retrieving all except non binary files");
       return notBinaryFilePredicate;
     }
 
     // if the property is inactive, we prevent jgit from being initialized
     if (!isGitAndInclusionsActive(sensorContext)) {
-      LOG.info("Analyzing only language associated files, \"{}\" property is deactivated", INCLUSIONS_ACTIVATION_KEY);
+      LOG.info("Retrieving only language associated files, \"{}\" property is deactivated", INCLUSIONS_ACTIVATION_KEY);
       return LANGUAGE_FILE_PREDICATE;
     }
 
     initializeGitPredicate(sensorContext);
     if (!gitTrackedFilePredicate.isGitStatusSuccessful()) {
-      LOG.warn("Analyzing only language associated files, " +
+      LOG.warn("Retrieving only language associated files, " +
         "make sure to run the analysis inside a git repository to make use of inclusions specified via \"{}\"",
         TEXT_INCLUSIONS_KEY);
       return LANGUAGE_FILE_PREDICATE;
@@ -159,13 +170,14 @@ public class TextAndSecretsSensor implements Sensor {
     // Retrieve list of files to analyse using the right FilePredicate
     var pathPatternPredicate = includedPathPatternsFilePredicate(sensorContext);
 
-    LOG.info("Analyzing language associated files and files included via \"{}\" that are tracked by git", TEXT_INCLUSIONS_KEY);
+    LOG.info("Retrieving language associated files and files included via \"{}\" that are tracked by git", TEXT_INCLUSIONS_KEY);
     return predicates.or(
       LANGUAGE_FILE_PREDICATE,
       predicates.and(pathPatternPredicate, gitTrackedFilePredicate));
   }
 
   private List<InputFile> retrieveBinaryFiles(SensorContext sensorContext) {
+    LOG.info("Start fetching files for the binary file analysis");
     var predicates = sensorContext.fileSystem().predicates();
 
     // We only retrieve `jks` and `keystore` files as we currently only have checks for these binary files
@@ -173,20 +185,7 @@ public class TextAndSecretsSensor implements Sensor {
       predicates.hasExtension("jks"),
       predicates.hasExtension("keystore"));
 
-    List<InputFile> inputFiles = getInputFiles(sensorContext, extensionsPredicate);
-    if (inputFiles.isEmpty()) {
-      return inputFiles;
-    }
-
-    // We only want to run the git predicate if we're certain that there are binary files we want to analyze
-    initializeGitPredicate(sensorContext);
-
-    // In case we aren't able to locate a git repository, we will just analyze every jks and keystore file
-    if (gitTrackedFilePredicate.isGitStatusSuccessful()) {
-      inputFiles.removeIf(inputFile -> !gitTrackedFilePredicate.apply(inputFile));
-    }
-
-    return inputFiles;
+    return getInputFiles(sensorContext, extensionsPredicate);
   }
 
   /**

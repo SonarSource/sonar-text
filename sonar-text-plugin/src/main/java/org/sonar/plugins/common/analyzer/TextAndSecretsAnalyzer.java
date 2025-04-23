@@ -16,6 +16,7 @@
  */
 package org.sonar.plugins.common.analyzer;
 
+import java.util.Collection;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,17 +41,12 @@ public final class TextAndSecretsAnalyzer extends AbstractAnalyzer {
     SensorContext sensorContext,
     ParallelizationManager parallelizationManager,
     DurationStatistics durationStatistics,
-    List<Check> activeChecks,
+    List<Check> suitableChecks,
     NotBinaryFilePredicate notBinaryFilePredicate,
     boolean analyzeAllFilesMode) {
-    super(sensorContext, parallelizationManager, durationStatistics, activeChecks, ANALYSIS_NAME);
+    super(sensorContext, parallelizationManager, durationStatistics, suitableChecks, ANALYSIS_NAME);
     this.notBinaryFilePredicate = notBinaryFilePredicate;
     this.analyzeAllFilesMode = analyzeAllFilesMode;
-  }
-
-  @Override
-  protected boolean shouldRunCheck(Check check) {
-    return !(check instanceof BinaryFileCheck);
   }
 
   @Override
@@ -101,5 +97,11 @@ public final class TextAndSecretsAnalyzer extends AbstractAnalyzer {
           TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY);
       }
     }
+  }
+
+  public static List<Check> filterSuitableChecks(Collection<Check> checks) {
+    return checks.stream()
+      .filter(check -> !(check instanceof BinaryFileCheck))
+      .toList();
   }
 }
