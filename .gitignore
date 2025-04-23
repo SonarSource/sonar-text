@@ -44,7 +44,7 @@ Thumbs.db
 Desktop.ini
 
 # ---- RSPEC
-*rule-api*
+*rule-api-*
 
 # ---- Orchestrator cache on CI
 /orchestrator/

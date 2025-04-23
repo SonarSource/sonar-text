@@ -38,7 +38,7 @@ def build_script():
     return [
         "source cirrus-env BUILD-PRIVATE",
         "source .cirrus/use-gradle-wrapper.sh",
-        "regular_gradle_build_deploy_analyze :build-logic:test ${BUILD_ARGUMENTS}",
+        "regular_gradle_build_deploy_analyze :build-logic-text:test ${BUILD_ARGUMENTS}",
         "source set_gradle_build_version ${BUILD_NUMBER}",
         "echo export PROJECT_VERSION=${PROJECT_VERSION} >> ~/.profile",
     ]

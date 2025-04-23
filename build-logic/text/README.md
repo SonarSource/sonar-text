@@ -1,7 +1,7 @@
 ## Verification of the code generation logic
 1. Ensure that the unit test is passing:
     ```bash
-    ./gradlew :build-logic:test
+    ./gradlew :build-logic-text:test
     ```
 2. Create a placeholder specification:
    ```bash

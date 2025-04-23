@@ -39,12 +39,12 @@ spotless {
     // Mainly used to define spotless configuration for the build-logic
     encoding(Charsets.UTF_8)
     java {
-        target("/build-logic/src/**/*.java")
+        target("/build-logic/text/src/**/*.java")
         licenseHeaderFile(rootProject.file("LICENSE_HEADER")).updateYearWithLatest(true)
     }
     kotlinGradle {
         ktlint().setEditorConfigPath("$rootDir/.editorconfig")
-        target("*.gradle.kts", "build-logic/*.gradle.kts", "/build-logic/src/**/*.gradle.kts")
+        target("*.gradle.kts", "build-logic/text/*.gradle.kts", "/build-logic/text/src/**/*.gradle.kts")
         licenseHeaderFile(
             rootProject.file("LICENSE_HEADER"),
             KOTLIN_GRADLE_DELIMITER
@@ -52,11 +52,11 @@ spotless {
     }
     kotlin {
         ktlint().setEditorConfigPath("$rootDir/.editorconfig")
-        target("/build-logic/src/**/*.kt")
+        target("/build-logic/text/src/**/*.kt")
         licenseHeaderFile(rootProject.file("LICENSE_HEADER")).updateYearWithLatest(true)
     }
     format("javaMisc") {
-        target("/build-logic/src/**/package-info.java")
+        target("/build-logic/text/src/**/package-info.java")
         licenseHeaderFile(rootProject.file("LICENSE_HEADER"), "@javax.annotation").updateYearWithLatest(true)
     }
 }
@@ -73,14 +73,14 @@ tasks.register("ruleApiUpdate") {
 sonar {
     properties {
         properties["sonar.sources"] as MutableCollection<String> +=
-            gradle.includedBuild("build-logic").projectDir.resolve("src/main/java").toString()
+            gradle.includedBuild("build-logic-text").projectDir.resolve("src/main/java").toString()
 
         val binaries = properties["sonar.java.binaries"] as? MutableCollection<String> ?: mutableSetOf()
         properties["sonar.java.binaries"] = binaries +
-            gradle.includedBuild("build-logic").projectDir.resolve("build/classes/java/main").toString()
+            gradle.includedBuild("build-logic-text").projectDir.resolve("build/classes/java/main").toString()
         val libraries = properties["sonar.java.libraries"] as? MutableCollection<String> ?: mutableSetOf()
         properties["sonar.java.libraries"] = libraries + buildscript.configurations.getByName("classpath")
         properties["sonar.coverage.jacoco.xmlReportPaths"] =
-            gradle.includedBuild("build-logic").projectDir.resolve("build/reports/jacoco/test/jacocoTestReport.xml").toString()
+            gradle.includedBuild("build-logic-text").projectDir.resolve("build/reports/jacoco/test/jacocoTestReport.xml").toString()
     }
 }

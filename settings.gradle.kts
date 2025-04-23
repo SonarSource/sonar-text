@@ -15,6 +15,9 @@
  * along with this program; if not, see https://sonarsource.com/license/ssal/
  */
 pluginManagement {
+    includeBuild("build-logic/text") {
+        name = "build-logic-text"
+    }
     repositories {
         mavenCentral()
         gradlePluginPortal()
@@ -45,7 +48,6 @@ plugins {
 }
 
 rootProject.name = "text"
-includeBuild("build-logic")
 include(":sonar-text-plugin")
 
 dependencyResolutionManagement {
