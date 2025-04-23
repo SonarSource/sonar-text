@@ -212,7 +212,7 @@ class MultiFileProgressReportTest {
 
   @Test
   @Timeout(5)
-  void shouldCancelCorrectly() throws InterruptedException {
+  void shouldCancelCorrectly() {
     var report = new MultiFileProgressReport(100, TEST_ANALYSIS_NAME);
     report.start(1);
 

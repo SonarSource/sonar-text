@@ -124,16 +124,14 @@ public class InputFileContext {
     // Each group contains issues where at least one issue overlaps with another issue in the same group.
     // In theory, this could mean that there are issues that do not overlap if we remove e.g. one wide text range.
     // However, in practice we don't expect many issues to overlap, so this is a reasonable approximation.
-    var issueGroups = groupOverlappingIssues();
+    var sortedIssueGroups = groupAndPrioritizeOverlappingIssues();
     if (LOG.isDebugEnabled()) {
-      logOverlappingIssues(issueGroups);
+      logOverlappingIssues(sortedIssueGroups);
     }
-    // Raise issues only on a single issue in each group, preferably the one with the lowest selectivity
-    issueGroups.stream()
+    // Raise issues only on a single issue in each group, assuming issues within a group are already sorted by selectivity
+    sortedIssueGroups.stream()
       .filter(group -> !group.isEmpty())
-      .map(group -> group.stream()
-        .min(comparing(it -> it.selectivity.priority()))
-        .get())
+      .map(group -> group.get(0))
       .forEach(issue -> createAndSaveIssue(sensorContext, issue.ruleKey, inputFile, issue.textRange, issue.message));
 
     candidateIssues.clear();
@@ -219,7 +217,7 @@ public class InputFileContext {
     return sensorContext.fileSystem();
   }
 
-  private List<List<CandidateIssue>> groupOverlappingIssues() {
+  private List<List<CandidateIssue>> groupAndPrioritizeOverlappingIssues() {
     var groups = new ArrayList<List<CandidateIssue>>();
     for (var candidateIssue : candidateIssues) {
       groups.stream()
@@ -231,16 +229,20 @@ public class InputFileContext {
           groups.add(newGroup);
         });
     }
+    for (List<CandidateIssue> group : groups) {
+      // This is not the most efficient way, but the sizes of the groups are small enough to not make a difference
+      group.sort(comparing(it -> it.selectivity.priority()));
+    }
     return groups;
   }
 
   private void logOverlappingIssues(List<List<CandidateIssue>> issueGroups) {
     issueGroups.stream()
       .filter(group -> group.size() > 1)
-      .forEach(group -> LOG.debug("Overlapping issues detected: reported on ranges {} on file {} and for ruleKeys [{}]",
-        group.stream().map(CandidateIssue::textRange).toList(),
+      .forEach(group -> LOG.debug("Overlapping issues detected for file {}: Issue {} prioritized over {}",
         inputFile,
-        group.stream().map(it -> it.ruleKey + "(" + it.selectivity + ")").collect(joining(", "))));
+        group.get(0).keyAndRange(),
+        group.stream().skip(1).map(CandidateIssue::keyAndRange).collect(joining(", "))));
   }
 
   private record CandidateIssue(
@@ -248,5 +250,9 @@ public class InputFileContext {
     Selectivity selectivity,
     TextRange textRange,
     String message) {
+
+    public String keyAndRange() {
+      return "[" + ruleKey + ", " + textRange + "]";
+    }
   }
 }

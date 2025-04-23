@@ -176,7 +176,7 @@ public class TextAndSecretsSensor implements Sensor {
       predicates.and(pathPatternPredicate, gitTrackedFilePredicate));
   }
 
-  private List<InputFile> retrieveBinaryFiles(SensorContext sensorContext) {
+  private static List<InputFile> retrieveBinaryFiles(SensorContext sensorContext) {
     LOG.info("Start fetching files for the binary file analysis");
     var predicates = sensorContext.fileSystem().predicates();
 

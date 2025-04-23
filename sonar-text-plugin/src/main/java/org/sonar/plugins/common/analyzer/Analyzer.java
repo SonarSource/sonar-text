@@ -31,15 +31,15 @@ import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.common.MultiFileProgressReport;
 import org.sonar.plugins.common.thread.ParallelizationManager;
 
-public abstract class AbstractAnalyzer {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractAnalyzer.class);
+public class Analyzer {
+  private static final Logger LOG = LoggerFactory.getLogger(Analyzer.class);
   private final SensorContext sensorContext;
   private final ParallelizationManager parallelizationManager;
   private final DurationStatistics durationStatistics;
   private final List<Check> suitableChecks;
   private final String analysisName;
 
-  protected AbstractAnalyzer(
+  Analyzer(
     SensorContext sensorContext,
     ParallelizationManager parallelizationManager,
     DurationStatistics durationStatistics,
@@ -71,7 +71,7 @@ public abstract class AbstractAnalyzer {
   }
 
   /**
-   * In order to fully utilize threads, we want to analyze the files with the highest number of lines first
+   * In order to fully utilize threads we want to analyze the files with the highest number of lines first
    */
   protected void sortInputFiles(List<InputFile> inputFiles) {
     inputFiles.sort(Comparator.comparingInt(inputFile -> -inputFile.lines()));

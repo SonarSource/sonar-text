@@ -239,9 +239,9 @@ class InputFileContextTest {
     ctx.flushIssues();
 
     assertThat(logTester.getLogs(Level.DEBUG))
-      .anyMatch(it -> it.getFormattedMsg().contains("Overlapping issues detected: reported on ranges " +
-        "[Range[from [line=1, lineOffset=0] to [line=1, lineOffset=5]], Range[from [line=1, lineOffset=3] to [line=1, lineOffset=8]]] " +
-        "on file file.txt and for ruleKeys [s:1(GENERIC), s:2(SPECIFIC)]"));
+      .anyMatch(it -> it.getFormattedMsg().contains(
+        "Overlapping issues detected for file file.txt: Issue [s:2, Range[from [line=1, lineOffset=3] to [line=1, lineOffset=8]]] " +
+          "prioritized over [s:1, Range[from [line=1, lineOffset=0] to [line=1, lineOffset=5]]]"));
   }
 
   @Test

@@ -30,7 +30,7 @@ import org.sonar.plugins.common.TextAndSecretsSensor;
 import org.sonar.plugins.common.thread.ParallelizationManager;
 import org.sonar.plugins.secrets.BinaryFileCheck;
 
-public final class TextAndSecretsAnalyzer extends AbstractAnalyzer {
+public final class TextAndSecretsAnalyzer extends Analyzer {
   private static final Logger LOG = LoggerFactory.getLogger(TextAndSecretsAnalyzer.class);
   private static final String ANALYSIS_NAME = "text and secrets analysis";
   private final NotBinaryFilePredicate notBinaryFilePredicate;

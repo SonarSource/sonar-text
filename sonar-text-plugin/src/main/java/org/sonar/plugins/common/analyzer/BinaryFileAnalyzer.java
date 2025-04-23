@@ -25,7 +25,7 @@ import org.sonar.plugins.common.DurationStatistics;
 import org.sonar.plugins.common.thread.ParallelizationManager;
 import org.sonar.plugins.secrets.BinaryFileCheck;
 
-public final class BinaryFileAnalyzer extends AbstractAnalyzer {
+public final class BinaryFileAnalyzer extends Analyzer {
   private static final String ANALYSIS_NAME = "binary file analysis";
 
   public BinaryFileAnalyzer(
