@@ -4,6 +4,7 @@ load(
     "cirrus_env",
     "next_env",
     "gradle_base_env",
+    "gradle_develocity_env",
 )
 
 def project_version_env():
@@ -15,6 +16,7 @@ def env():
     vars = artifactory_env()
     vars |= cirrus_env()
     vars |= gradle_base_env()
+    vars |= gradle_develocity_env()
     vars |= next_env()
     vars |= project_version_env()
     return {"env": vars}
