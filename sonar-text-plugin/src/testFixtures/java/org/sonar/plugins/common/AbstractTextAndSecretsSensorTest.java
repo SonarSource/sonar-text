@@ -50,7 +50,7 @@ import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.check.Rule;
 import org.sonar.plugins.common.git.GitService;
-import org.sonar.plugins.secrets.BinaryFileCheck;
+import org.sonar.plugins.secrets.AbstractBinaryFileCheck;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
@@ -827,7 +827,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     var numberOfSecretChecksWithoutTemplateRules = testUtils().secretCheckClassList().stream()
       .filter(check -> Arrays.stream(check.getInterfaces())
         .noneMatch(i -> i.getName().contains("TemplateRule")))
-      .filter(check -> !BinaryFileCheck.class.isAssignableFrom(check))
+      .filter(check -> !AbstractBinaryFileCheck.class.isAssignableFrom(check))
       .count();
 
     assertThat(numberOfSecretSpecificationRSPECKeys).isEqualTo(numberOfSecretChecksWithoutTemplateRules);
@@ -843,7 +843,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
   }
 
   @Rule(key = "BinaryCheck")
-  public static class TestBinaryFileCheck extends BinaryFileCheck {
+  public static class TestBinaryFileCheck extends AbstractBinaryFileCheck {
     public void analyze(InputFileContext ctx) {
       ctx.reportIssueOnFile(getRuleKey(), "binaryIssue");
     }
@@ -861,15 +861,24 @@ public abstract class AbstractTextAndSecretsSensorTest {
       inputFile(Path.of("b.keystore"), SENSITIVE_BIDI_CHARS),
       inputFile(Path.of("src", "test", "resources", "keystoreFiles", "myKeystoreFile.jks")));
 
-    assertThat(context.allIssues()).hasSize(3);
-
-    assertThat(logTester.logs()).containsExactly(
+    var expectedIssuesSize = 0;
+    var expectedLogs = List.of(
       EXPECTED_PROCESSOR_LOG_LINE,
-      DEFAULT_THREAD_USAGE_LOG_LINE,
-      "Start fetching files for the binary file analysis",
-      "Starting the binary file analysis",
-      "3 source files to be analyzed for the binary file analysis",
-      "3/3 source files have been analyzed for the binary file analysis");
+      DEFAULT_THREAD_USAGE_LOG_LINE);
+
+    if (!isPublicSensor()) {
+      expectedIssuesSize = 3;
+
+      expectedLogs = new ArrayList<>(expectedLogs);
+      expectedLogs.addAll(List.of(
+        "Start fetching files for the binary file analysis",
+        "Starting the binary file analysis",
+        "3 source files to be analyzed for the binary file analysis",
+        "3/3 source files have been analyzed for the binary file analysis"));
+    }
+
+    assertThat(asString(context.allIssues())).hasSize(expectedIssuesSize);
+    assertThat(logTester.logs()).containsExactly(expectedLogs.toArray(new String[0]));
   }
 
   @Test
@@ -886,15 +895,24 @@ public abstract class AbstractTextAndSecretsSensorTest {
       inputFile(Path.of("a.jks"), SENSITIVE_BIDI_CHARS),
       inputFile(Path.of("b.keystore"), SENSITIVE_BIDI_CHARS));
 
-    assertThat(context.allIssues()).hasSize(2);
-
-    assertThat(logTester.logs()).containsExactly(
+    var expectedIssuesSize = 0;
+    var expectedLogs = List.of(
       EXPECTED_PROCESSOR_LOG_LINE,
-      DEFAULT_THREAD_USAGE_LOG_LINE,
-      "Start fetching files for the binary file analysis",
-      "Starting the binary file analysis",
-      "2 source files to be analyzed for the binary file analysis",
-      "2/2 source files have been analyzed for the binary file analysis");
+      DEFAULT_THREAD_USAGE_LOG_LINE);
+
+    if (!isPublicSensor()) {
+      expectedIssuesSize = 2;
+
+      expectedLogs = new ArrayList<>(expectedLogs);
+      expectedLogs.addAll(List.of(
+        "Start fetching files for the binary file analysis",
+        "Starting the binary file analysis",
+        "2 source files to be analyzed for the binary file analysis",
+        "2/2 source files have been analyzed for the binary file analysis"));
+    }
+
+    assertThat(asString(context.allIssues())).hasSize(expectedIssuesSize);
+    assertThat(logTester.logs()).containsExactly(expectedLogs.toArray(new String[0]));
   }
 
   @Test
@@ -912,15 +930,24 @@ public abstract class AbstractTextAndSecretsSensorTest {
       inputFile(Path.of("a.jks"), SENSITIVE_BIDI_CHARS),
       inputFile(Path.of("b.keystore"), SENSITIVE_BIDI_CHARS));
 
-    assertThat(context.allIssues()).hasSize(2);
-
-    assertThat(logTester.logs()).containsExactly(
+    var expectedIssuesSize = 0;
+    var expectedLogs = List.of(
       EXPECTED_PROCESSOR_LOG_LINE,
-      DEFAULT_THREAD_USAGE_LOG_LINE,
-      "Start fetching files for the binary file analysis",
-      "Starting the binary file analysis",
-      "2 source files to be analyzed for the binary file analysis",
-      "2/2 source files have been analyzed for the binary file analysis");
+      DEFAULT_THREAD_USAGE_LOG_LINE);
+
+    if (!isPublicSensor()) {
+      expectedIssuesSize = 2;
+
+      expectedLogs = new ArrayList<>(expectedLogs);
+      expectedLogs.addAll(List.of(
+        "Start fetching files for the binary file analysis",
+        "Starting the binary file analysis",
+        "2 source files to be analyzed for the binary file analysis",
+        "2/2 source files have been analyzed for the binary file analysis"));
+    }
+
+    assertThat(asString(context.allIssues())).hasSize(expectedIssuesSize);
+    assertThat(logTester.logs()).containsExactly(expectedLogs.toArray(new String[0]));
   }
 
   @Test
@@ -937,14 +964,10 @@ public abstract class AbstractTextAndSecretsSensorTest {
       inputFile(Path.of("c.java"), "{}", "java"),
       inputFile(Path.of("d.txt"), "{}"));
 
-    assertThat(context.allIssues()).hasSize(4);
-    assertThat(asString(context.allIssues())).containsExactly(
+    var expectedIssues = List.of(
       "text:IssueAtLineOne [1:0-1:2] testIssue",
-      "text:IssueAtLineOne [1:0-1:2] testIssue",
-      "secrets:BinaryCheck [] binaryIssue",
-      "secrets:BinaryCheck [] binaryIssue");
-
-    assertThat(logTester.logs()).containsExactly(
+      "text:IssueAtLineOne [1:0-1:2] testIssue");
+    var expectedLogs = List.of(
       EXPECTED_PROCESSOR_LOG_LINE,
       DEFAULT_THREAD_USAGE_LOG_LINE,
       EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE,
@@ -953,11 +976,23 @@ public abstract class AbstractTextAndSecretsSensorTest {
       "Retrieving language associated files and files included via \"sonar.text.inclusions\" that are tracked by git",
       "Starting the text and secrets analysis",
       "2 source files to be analyzed for the text and secrets analysis",
-      "2/2 source files have been analyzed for the text and secrets analysis",
-      "Start fetching files for the binary file analysis",
-      "Starting the binary file analysis",
-      "2 source files to be analyzed for the binary file analysis",
-      "2/2 source files have been analyzed for the binary file analysis");
+      "2/2 source files have been analyzed for the text and secrets analysis");
+
+    if (!isPublicSensor()) {
+      expectedIssues = new ArrayList<>(expectedIssues);
+      expectedIssues.add("secrets:BinaryCheck [] binaryIssue");
+      expectedIssues.add("secrets:BinaryCheck [] binaryIssue");
+
+      expectedLogs = new ArrayList<>(expectedLogs);
+      expectedLogs.addAll(List.of(
+        "Start fetching files for the binary file analysis",
+        "Starting the binary file analysis",
+        "2 source files to be analyzed for the binary file analysis",
+        "2/2 source files have been analyzed for the binary file analysis"));
+    }
+
+    assertThat(asString(context.allIssues())).containsExactly(expectedIssues.toArray(new String[0]));
+    assertThat(logTester.logs()).containsExactly(expectedLogs.toArray(new String[0]));
   }
 
   protected void assertCorrectLogsForTextAndSecretsAnalysis(List<String> logs, int numberOfAnalyzedFiles, String... additionalLogs) {
@@ -1001,5 +1036,9 @@ public abstract class AbstractTextAndSecretsSensorTest {
       context.fileSystem().add(inputFile);
     }
     sensor.execute(context);
+  }
+
+  private boolean isPublicSensor() {
+    return this.getClass().getName().startsWith("org");
   }
 }

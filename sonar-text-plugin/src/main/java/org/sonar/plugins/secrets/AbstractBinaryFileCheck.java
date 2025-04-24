@@ -14,17 +14,14 @@
  * You should have received a copy of the Sonar Source-Available License
  * along with this program; if not, see https://sonarsource.com/license/ssal/
  */
-package org.sonar.plugins.secrets.checks.binary;
+package org.sonar.plugins.secrets;
 
-import org.sonar.check.Rule;
-import org.sonar.plugins.common.InputFileContext;
-import org.sonar.plugins.secrets.BinaryFileCheck;
+import org.sonar.plugins.common.Check;
 
-@Rule(key = "S7203")
-public class KeyStoreCheck extends BinaryFileCheck {
+public abstract class AbstractBinaryFileCheck extends Check {
 
   @Override
-  public void analyze(InputFileContext ctx) {
-    // TODO Implement SONARTEXT-350 and replace with actual logic
+  protected String repositoryKey() {
+    return SecretsRulesDefinition.REPOSITORY_KEY;
   }
 }

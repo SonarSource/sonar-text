@@ -31,7 +31,6 @@ import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
-import org.sonar.plugins.common.analyzer.BinaryFileAnalyzer;
 import org.sonar.plugins.common.analyzer.TextAndSecretsAnalyzer;
 import org.sonar.plugins.common.git.GitService;
 import org.sonar.plugins.common.git.GitTrackedFilePredicate;
@@ -72,7 +71,7 @@ public class TextAndSecretsSensor implements Sensor {
 
   protected final AnalysisWarningsWrapper analysisWarnings;
   protected DurationStatistics durationStatistics;
-  private ParallelizationManager parallelizationManager;
+  protected ParallelizationManager parallelizationManager;
   private GitTrackedFilePredicate gitTrackedFilePredicate;
 
   public TextAndSecretsSensor(CheckFactory checkFactory) {
@@ -106,11 +105,14 @@ public class TextAndSecretsSensor implements Sensor {
       return;
     }
 
-    runTextAndSecretsAnalysis(sensorContext, activeChecks);
-    runBinaryFileAnalysis(sensorContext, activeChecks);
+    runAnalysis(sensorContext, activeChecks);
 
     logGeneralStatistics();
     cleanUp();
+  }
+
+  protected void runAnalysis(SensorContext sensorContext, List<Check> activeChecks) {
+    runTextAndSecretsAnalysis(sensorContext, activeChecks);
   }
 
   private void runTextAndSecretsAnalysis(SensorContext sensorContext, List<Check> activeChecks) {
@@ -131,18 +133,6 @@ public class TextAndSecretsSensor implements Sensor {
     var analyzer = new TextAndSecretsAnalyzer(sensorContext, parallelizationManager, durationStatistics, suitableChecks, notBinaryFilePredicate, shouldAnalyzeAllFiles);
     durationStatistics.timed("analyzerTotal" + DurationStatistics.SUFFIX_GENERAL, () -> analyzer.analyzeFiles(inputFiles));
     logCheckBasedStatistics(suitableChecks);
-  }
-
-  private void runBinaryFileAnalysis(SensorContext sensorContext, List<Check> activeChecks) {
-    var suitableChecks = BinaryFileAnalyzer.filterSuitableChecks(activeChecks);
-    if (suitableChecks.isEmpty()) {
-      return;
-    }
-
-    List<InputFile> inputFiles = retrieveBinaryFiles(sensorContext);
-
-    var binaryFileAnalyzer = new BinaryFileAnalyzer(sensorContext, parallelizationManager, durationStatistics, suitableChecks);
-    durationStatistics.timed("analyzerTotal" + DurationStatistics.SUFFIX_GENERAL, () -> binaryFileAnalyzer.analyzeFiles(inputFiles));
   }
 
   private FilePredicate constructGeneralFilePredicate(SensorContext sensorContext, FilePredicate notBinaryFilePredicate, boolean analyzeAllFiles) {
@@ -174,18 +164,6 @@ public class TextAndSecretsSensor implements Sensor {
     return predicates.or(
       LANGUAGE_FILE_PREDICATE,
       predicates.and(pathPatternPredicate, gitTrackedFilePredicate));
-  }
-
-  private static List<InputFile> retrieveBinaryFiles(SensorContext sensorContext) {
-    LOG.info("Start fetching files for the binary file analysis");
-    var predicates = sensorContext.fileSystem().predicates();
-
-    // We only retrieve `jks` and `keystore` files as we currently only have checks for these binary files
-    var extensionsPredicate = predicates.or(
-      predicates.hasExtension("jks"),
-      predicates.hasExtension("keystore"));
-
-    return getInputFiles(sensorContext, extensionsPredicate);
   }
 
   /**
@@ -237,7 +215,7 @@ public class TextAndSecretsSensor implements Sensor {
    * To avoid analyzing all non-binary files to reduce time and memory consumption in a non SonarLint context only files assigned to a
    * language OR file with a text extension are analyzed.
    */
-  private static List<InputFile> getInputFiles(SensorContext sensorContext, FilePredicate filePredicate) {
+  protected static List<InputFile> getInputFiles(SensorContext sensorContext, FilePredicate filePredicate) {
     List<InputFile> inputFiles = new ArrayList<>();
     var fileSystem = sensorContext.fileSystem();
     for (InputFile inputFile : fileSystem.inputFiles(filePredicate)) {

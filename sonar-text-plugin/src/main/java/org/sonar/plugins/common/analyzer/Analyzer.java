@@ -39,7 +39,7 @@ public class Analyzer {
   private final List<Check> suitableChecks;
   private final String analysisName;
 
-  Analyzer(
+  protected Analyzer(
     SensorContext sensorContext,
     ParallelizationManager parallelizationManager,
     DurationStatistics durationStatistics,

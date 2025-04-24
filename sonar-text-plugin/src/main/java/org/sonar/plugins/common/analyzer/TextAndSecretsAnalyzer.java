@@ -28,7 +28,7 @@ import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.common.NotBinaryFilePredicate;
 import org.sonar.plugins.common.TextAndSecretsSensor;
 import org.sonar.plugins.common.thread.ParallelizationManager;
-import org.sonar.plugins.secrets.BinaryFileCheck;
+import org.sonar.plugins.secrets.AbstractBinaryFileCheck;
 
 public final class TextAndSecretsAnalyzer extends Analyzer {
   private static final Logger LOG = LoggerFactory.getLogger(TextAndSecretsAnalyzer.class);
@@ -101,7 +101,7 @@ public final class TextAndSecretsAnalyzer extends Analyzer {
 
   public static List<Check> filterSuitableChecks(Collection<Check> checks) {
     return checks.stream()
-      .filter(check -> !(check instanceof BinaryFileCheck))
+      .filter(check -> !(check instanceof AbstractBinaryFileCheck))
       .toList();
   }
 }
