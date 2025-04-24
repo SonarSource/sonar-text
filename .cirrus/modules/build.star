@@ -1,5 +1,6 @@
 load(
     "github.com/SonarSource/cirrus-modules/cloud-native/env.star@analysis/master",
+    "gradle_signing_env",
     "pgp_signing_env",
     "whitesource_api_env"
 )
@@ -24,6 +25,7 @@ load(
 # Looks like : https://github.com/SonarSource/sonar-iac/blob/153aed5008efac5ff1bbb0014672e653194ee79b/.cirrus/modules/build.star#L48
 def build_env():
     env = pgp_signing_env()
+    env |= gradle_signing_env()
     env |= {
         "DEPLOY_PULL_REQUEST": "true",
         "BUILD_ARGUMENTS": "--profile"
@@ -36,11 +38,10 @@ def build_env():
 # Which in turn makes it hard to share the build script with a standard gradle build like Sonar IaC
 def build_script():
     return [
+        "git submodule update --init --depth 1 -- build-logic/common",
         "source cirrus-env BUILD-PRIVATE",
         "source .cirrus/use-gradle-wrapper.sh",
         "regular_gradle_build_deploy_analyze :build-logic-text:test ${BUILD_ARGUMENTS}",
-        "source set_gradle_build_version ${BUILD_NUMBER}",
-        "echo export PROJECT_VERSION=${PROJECT_VERSION} >> ~/.profile",
     ]
 
 
@@ -90,9 +91,10 @@ def build_task():
 # In any case, parameterizing the script would be a good idea to make it more reusable
 def whitesource_script():
     return [
+        "git submodule update --init --depth 1 -- build-logic/common",
         "source cirrus-env QA",
+        "export PROJECT_VERSION=$(cat ${PROJECT_VERSION_CACHE_DIR}/evaluated_project_version.txt)",
         "GRADLE_OPTS=\"-Xmx64m -Dorg.gradle.jvmargs='-Xmx3G' -Dorg.gradle.daemon=false\" ./gradlew ${GRADLE_COMMON_FLAGS} :sonar-text-plugin:processResources -Pkotlin.compiler.execution.strategy=in-process",
-        "source ./export_ws_variables.sh",
         "source ws_scan.sh",
     ]
 

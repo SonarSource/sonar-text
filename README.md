@@ -26,13 +26,38 @@ This component helps you prevent the leakage of secrets even before you push the
 
 - Java 17
 
+### Setup
+To configure build dependencies, run the following command:
+
+```bash
+git submodule update --init -- build-logic/common
+```
+To always get the latest version of the build logic during git operations, set the following configuration:
+
+```
+git config submodule.recurse true
+```
+For more information see [README.md](https://github.com/SonarSource/cloud-native-gradle-modules/blob/master/README.md) of cloud-native-gradle-modules.
+
 Simple build skipping integration tests.
 
+### Build and run unit tests:
 ```shell
 ./gradlew build
 ```
 
-### Apply code formatting.
+### Build without running unit tests:
+
+```shell
+./gradlew build -x test
+```
+
+### Fix code formatting issues
+
+During the Gradle build, a spotless formatting check is executed.
+This check can also be triggered manually with `./gradlew spotlessCheck`.
+It checks if the code is correctly formatted using standard Sonar rules.
+If your build failed, you can fix the formatting just by running:
 
 ```shell
 ./gradlew spotlessApply

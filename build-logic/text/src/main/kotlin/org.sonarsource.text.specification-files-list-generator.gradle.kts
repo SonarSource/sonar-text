@@ -81,8 +81,7 @@ tasks.register(SPEC_LIST_GENERATION_TASK_NAME) {
     }
 }
 
-fun discoverSpecFiles(files: List<File>): String {
-    return files.joinToString(",\n", postfix = ");") { file ->
+fun discoverSpecFiles(files: List<File>): String =
+    files.joinToString(",\n", postfix = ");") { file ->
         "      \"${file.name}\""
     }
-}

@@ -10,3 +10,6 @@
 	path = private/its/benchmark/src/integrationTest/resources/sources/cloudCustodian
 	url = https://github.com/cloud-custodian/cloud-custodian.git
 	ignore = dirty
+[submodule "build-logic/common"]
+	path = build-logic/common
+	url = https://github.com/SonarSource/cloud-native-gradle-modules

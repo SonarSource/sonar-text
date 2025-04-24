@@ -153,6 +153,5 @@ fun generateAdditionalMethods(codeGenerationConfiguration: CodeGenerationConfigu
         }
     }
 
-private fun checkListClassToFieldName(checkListClass: String): String {
-    return checkListClass.substringAfterLast('.').toSnakeCase().uppercase() + "_CHECKS"
-}
+private fun checkListClassToFieldName(checkListClass: String): String =
+    checkListClass.substringAfterLast('.').toSnakeCase().uppercase() + "_CHECKS"

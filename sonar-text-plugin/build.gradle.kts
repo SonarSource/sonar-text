@@ -14,12 +14,11 @@
  * You should have received a copy of the Sonar Source-Available License
  * along with this program; if not, see https://sonarsource.com/license/ssal/
  */
-import org.sonarsource.text.enforceJarSize
+import org.sonarsource.cloudnative.gradle.enforceJarSize
 
 plugins {
-    id("org.sonarsource.text.plugin")
+    id("org.sonarsource.cloud-native.sonar-plugin")
     id("org.sonarsource.text.code-generation")
-    id("org.sonarsource.text.artifactory-configuration")
     id("org.sonarsource.text.specification-files-processing")
     `java-library`
     `java-test-fixtures`
@@ -104,20 +103,15 @@ publishing {
     }
 }
 
-artifactoryConfiguration {
+publishingConfiguration {
+    pomName = "SonarSource Text Analyzer"
+    scmUrl = "https://github.com/SonarSource/sonar-text"
+
     license {
         name = "SSALv1"
         url = "https://sonarsource.com/license/ssal/"
         distribution = "repo"
     }
-
-    repoKeyEnv = "ARTIFACTORY_DEPLOY_REPO"
-    usernameEnv = "ARTIFACTORY_DEPLOY_USERNAME"
-    passwordEnv = "ARTIFACTORY_DEPLOY_PASSWORD"
-}
-
-codeStyleConvention {
-    licenseHeaderFile.set(rootProject.file("LICENSE_HEADER"))
 }
 
 codeGeneration {

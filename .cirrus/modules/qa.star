@@ -44,7 +44,7 @@ def qa_task(env, memory="14G", cpu="4", orchestrator_cache_reupload_on_changes=T
 
 def run_its_script():
     return [
-        "if [ \"$INIT_SUBMODULES\" == \"true\" ]; then git submodule update --init --depth 1; fi",
+        "git submodule update --init --depth 1",
         "source cirrus-env QA",
         "source .cirrus/use-gradle-wrapper.sh",
         "./gradlew \"${GRADLE_TASK}\" \"-Dsonar.runtimeVersion=${SQ_VERSION}\" --build-cache --console plain --no-daemon"
@@ -103,7 +103,6 @@ def qa_benchmark_env():
         "GITHUB_TOKEN": "VAULT[development/github/token/licenses-ro token]",
         "SQ_VERSION": QA_QUBE_LATEST_RELEASE,
         "BENCHMARK_SETTINGS": "$CIRRUS_PR_LABELS",
-        "INIT_SUBMODULES": "true",
     }
 
 
@@ -148,6 +147,7 @@ def qa_win_env():
 def qa_win_script():
     return [
         "source cirrus-env CI",
+        "git submodule update --init --depth 1 -- build-logic/common",
         "./gradlew ${GRADLE_COMMON_FLAGS} --info --no-parallel --build-cache test integrationTest -x :private:its:benchmark:integrationTest",
     ]
 
@@ -185,7 +185,7 @@ def qa_sqs_edition_test_task():
         "GRADLE_TASK": "sonarQubeEditionTest",
         "SQ_VERSION": QA_QUBE_DEV,
         "GITHUB_TOKEN": "VAULT[development/github/token/licenses-ro token]", },
-        memory="16G",
+        memory="18G",
         cpu="4",
         # The orchestrator_cache after task execution may be > 5GB (all SQS editions) and requires more memory to upload it and
         # other jobs will not benefit from it

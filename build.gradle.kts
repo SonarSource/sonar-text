@@ -14,20 +14,17 @@
  * You should have received a copy of the Sonar Source-Available License
  * along with this program; if not, see https://sonarsource.com/license/ssal/
  */
-import org.sonarsource.text.KOTLIN_GRADLE_DELIMITER
-import org.sonarsource.text.registerRuleApiTasks
-
 plugins {
-    alias(libs.plugins.spotless)
-    id("org.sonarsource.text.artifactory-configuration")
-    id("org.sonarsource.text.rule-api")
+    id("org.sonarsource.cloud-native.code-style-conventions")
+    id("org.sonarsource.cloud-native.artifactory-configuration")
+    id("org.sonarsource.cloud-native.rule-api")
     id("org.sonarsource.text.sonarqube")
-    id("com.diffplug.blowdryer")
 }
 
 tasks.artifactoryPublish { skip = true }
 
 artifactoryConfiguration {
+    buildName = providers.environmentVariable("CIRRUS_REPO_NAME").orElse("sonar-text")
     artifactsToPublish = "org.sonarsource.text:sonar-text-plugin:jar"
     artifactsToDownload = ""
     repoKeyEnv = "ARTIFACTORY_DEPLOY_REPO"
@@ -40,34 +37,23 @@ spotless {
     encoding(Charsets.UTF_8)
     java {
         target("/build-logic/text/src/**/*.java")
-        licenseHeaderFile(rootProject.file("LICENSE_HEADER")).updateYearWithLatest(true)
+        targetExclude("**/templates/*.java")
     }
     kotlinGradle {
-        ktlint().setEditorConfigPath("$rootDir/.editorconfig")
         target("*.gradle.kts", "build-logic/text/*.gradle.kts", "/build-logic/text/src/**/*.gradle.kts")
-        licenseHeaderFile(
-            rootProject.file("LICENSE_HEADER"),
-            KOTLIN_GRADLE_DELIMITER
-        ).updateYearWithLatest(true)
     }
     kotlin {
-        ktlint().setEditorConfigPath("$rootDir/.editorconfig")
+        ktlint().setEditorConfigPath("$rootDir/build-logic/common/.editorconfig")
         target("/build-logic/text/src/**/*.kt")
         licenseHeaderFile(rootProject.file("LICENSE_HEADER")).updateYearWithLatest(true)
     }
-    format("javaMisc") {
-        target("/build-logic/text/src/**/package-info.java")
-        licenseHeaderFile(rootProject.file("LICENSE_HEADER"), "@javax.annotation").updateYearWithLatest(true)
-    }
 }
 
-registerRuleApiTasks("Secrets", file("$projectDir/sonar-text-plugin/sonarpedia-secrets"))
-registerRuleApiTasks("Text", file("$projectDir/sonar-text-plugin/sonarpedia-text"))
-
-tasks.register("ruleApiUpdate") {
-    description = "Update ALL rules description"
-    group = "Rule API"
-    dependsOn("ruleApiUpdateSecrets", "ruleApiUpdateText")
+ruleApi {
+    languageToSonarpediaDirectory = mapOf(
+        "Secrets" to "sonar-text-plugin/sonarpedia-secrets",
+        "Text" to "sonar-text-plugin/sonarpedia-text"
+    )
 }
 
 sonar {

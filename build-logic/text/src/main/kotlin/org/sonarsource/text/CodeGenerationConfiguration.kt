@@ -23,7 +23,9 @@ import org.gradle.api.provider.SetProperty
 import org.gradle.kotlin.dsl.property
 import org.gradle.kotlin.dsl.setProperty
 
-open class CodeGenerationConfiguration(objects: ObjectFactory) {
+open class CodeGenerationConfiguration(
+    objects: ObjectFactory,
+) {
     val packagePrefix: Property<String> = objects.property<String>()
     val baseTestClass: Property<String> = objects.property<String>()
     val excludedKeys: SetProperty<String> = objects.setProperty<String>()
