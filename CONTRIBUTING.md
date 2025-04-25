@@ -81,7 +81,7 @@ provider:
           containsSecret: true
           match: fakecloud-W1QrzMjSp5hYtO0KEvIU3C2dlx4GAfbn
         - text: |
-            BLABLA
+            foobar
           containsSecret: false
 ```
 
