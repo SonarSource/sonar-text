@@ -92,16 +92,6 @@ public class TestUtils {
     return inputFile(Path.of("file.txt"), fileContent);
   }
 
-  public static InputFile inputFile(Path path) {
-    String content = null;
-    try {
-      content = Files.readString(path, UTF_8);
-    } catch (IOException e) {
-      // ignored, so InputFile.inputStream() will fail
-    }
-    return inputFile(path, content);
-  }
-
   public static InputFile inputFile(Path path, @Nullable String content) {
     return inputFile(path, content, null);
   }
@@ -122,6 +112,20 @@ public class TestUtils {
       builder.setType(type);
     }
     return builder.build();
+  }
+
+  public static InputFile inputFileFromPath(Path path) {
+    return inputFileFromPath(path, InputFile.Type.MAIN);
+  }
+
+  public static InputFile inputFileFromPath(Path path, InputFile.Type type) {
+    String content = null;
+    try {
+      content = Files.readString(path, UTF_8);
+    } catch (IOException e) {
+      // ignored, so InputFile.inputStream() will fail
+    }
+    return inputFile(path, content, null, type);
   }
 
   public static DefaultActiveRules activeRules(String... ruleKeys) {
@@ -149,10 +153,6 @@ public class TestUtils {
       .toArray(String[]::new);
   }
 
-  public static String[] toRuleKeys(Check... checks) {
-    return Arrays.stream(checks).map(check -> check.getRuleKey().toString()).toArray(String[]::new);
-  }
-
   public static InputFileContext inputFileContext(String fileContent) throws IOException {
     return inputFileContext(inputFile(fileContent));
   }
@@ -164,6 +164,10 @@ public class TestUtils {
 
   public static SensorContextTester sensorContext(Check... checks) {
     return sensorContext(toRuleKeys(checks));
+  }
+
+  public static String[] toRuleKeys(Check... checks) {
+    return Arrays.stream(checks).map(check -> check.getRuleKey().toString()).toArray(String[]::new);
   }
 
   public SensorContextTester defaultSensorContext() {

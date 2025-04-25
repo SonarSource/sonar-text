@@ -27,12 +27,11 @@ import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.InputFileContext;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonar.plugins.common.TestUtils.analyze;
-import static org.sonar.plugins.common.TestUtils.inputFile;
+import static org.sonar.plugins.common.TestUtils.inputFileFromPath;
 import static org.sonar.plugins.text.checks.BIDICharacterCheck.isAndroidI18nFile;
 
 class BIDICharacterCheckTest {
@@ -41,7 +40,7 @@ class BIDICharacterCheckTest {
 
   @Test
   void shouldCheckFile() throws IOException {
-    InputFile file = inputFile(Path.of("src", "test", "resources", "checks", "BIDICharacterCheck", "test.php"));
+    InputFile file = inputFileFromPath(Path.of("src", "test", "resources", "checks", "BIDICharacterCheck", "test.php"));
     assertThat(analyze(check, file)).containsExactly(
       "text:S6389 [3:0-3:20] This line contains a bidirectional character in column 12. Make sure that using bidirectional characters is safe here.",
       "text:S6389 [4:0-4:20] This line contains a bidirectional character in column 12. Make sure that using bidirectional characters is safe here.",
@@ -60,7 +59,7 @@ class BIDICharacterCheckTest {
 
   @Test
   void shouldNotAnalyzeAndroidI18nFiles() throws IOException {
-    InputFile file = inputFile(Path.of("src", "test", "resources", "checks", "BIDICharacterCheck", "res", "values-pl", "strings.xml"));
+    InputFile file = inputFileFromPath(Path.of("src", "test", "resources", "checks", "BIDICharacterCheck", "res", "values-pl", "strings.xml"));
     assertThat(analyze(check, file)).isEmpty();
   }
 

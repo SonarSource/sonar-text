@@ -31,12 +31,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.sonar.plugins.common.TestUtils.inputFile;
+import static org.sonar.plugins.common.TestUtils.inputFileFromPath;
 
 class GitTrackedFilePredicateTest {
 
   // Workaround to get the base directory of the project
-  private static final Path BASE_DIR = inputFile(Paths.get("")).path();
+  private static final Path BASE_DIR = inputFileFromPath(Paths.get("")).path();
 
   @ParameterizedTest
   @MethodSource
@@ -48,7 +48,7 @@ class GitTrackedFilePredicateTest {
     for (Map.Entry<String, Boolean> entry : fileToExpectedMatch.entrySet()) {
       String file = entry.getKey();
       Boolean shouldMatch = entry.getValue();
-      assertThat(predicate.apply(inputFile(Path.of(file)))).isEqualTo(shouldMatch);
+      assertThat(predicate.apply(inputFileFromPath(Path.of(file)))).isEqualTo(shouldMatch);
     }
   }
 

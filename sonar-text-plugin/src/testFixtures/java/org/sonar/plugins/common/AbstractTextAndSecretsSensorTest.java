@@ -69,6 +69,7 @@ import static org.sonar.plugins.common.TestUtils.SONARCLOUD_RUNTIME;
 import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME;
 import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.inputFile;
+import static org.sonar.plugins.common.TestUtils.inputFileFromPath;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
 import static org.sonar.plugins.common.TextAndSecretsSensor.SONAR_TESTS_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.TEXT_INCLUSIONS_DEFAULT_VALUE;
@@ -125,7 +126,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void shouldNotStartAnalysisWhenNoRuleIsActive() {
     String[] emptyActiveRuleList = {};
     SensorContextTester context = sensorContext(emptyActiveRuleList);
-    context.fileSystem().add(inputFile(Path.of("src", "test", "resources", "checks", "GoogleCloudAccountKeyCheck",
+    context.fileSystem().add(inputFileFromPath(Path.of("src", "test", "resources", "checks", "GoogleCloudAccountKeyCheck",
       "GoogleCloudAccountPositive.json")));
     sensor(context).execute(context);
 
@@ -145,7 +146,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
   @Test
   void shouldNotRaiseAnIssueOrErrorWhenTheInputFileDoesNotExist() {
     SensorContextTester context = testUtils().defaultSensorContext();
-    context.fileSystem().add(inputFile(Path.of("invalid-path.txt")));
+    context.fileSystem().add(inputFileFromPath(Path.of("invalid-path.txt")));
 
     sensor(context).execute(context);
 
@@ -547,7 +548,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     analyse(sensor, context,
       inputFile(Path.of("a.txt"), "{}", "secrets"),
       inputFile(Path.of("b.txt"), "{}", "secrets"),
-      inputFile(Path.of("src", "foo.java")));
+      inputFileFromPath(Path.of("src", "foo.java")));
 
     var threadsAfter = activeCreatedThreadsNames();
     threadsAfter.removeAll(threadsBefore);
@@ -821,7 +822,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void numberOfSecretChecksShouldBeIdenticalToLoadedSecretSpecificationRSPECKeys() {
     var sensor = sensor(testUtils().defaultSensorContext());
     SecretsSpecificationLoader secretsSpecificationLoader = sensor.constructSpecificationLoader();
-    int numberOfSecretSpecificationRSPECKeys = secretsSpecificationLoader.getRulesMappedToKey().keySet().size();
+    int numberOfSecretSpecificationRSPECKeys = secretsSpecificationLoader.getRulesMappedToKey().size();
 
     // TemplateRule is an interface that is not implemented by the secret checks that are loaded from the secret specification
     var numberOfSecretChecksWithoutTemplateRules = testUtils().secretCheckClassList().stream()
@@ -859,7 +860,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     analyse(sensor, context,
       inputFile(Path.of("a.jks"), SENSITIVE_BIDI_CHARS),
       inputFile(Path.of("b.keystore"), SENSITIVE_BIDI_CHARS),
-      inputFile(Path.of("src", "test", "resources", "keystoreFiles", "myKeystoreFile.jks")));
+      inputFileFromPath(Path.of("src", "test", "resources", "keystoreFiles", "myKeystoreFile.jks")));
 
     var expectedIssuesSize = 0;
     var expectedLogs = List.of(
@@ -1026,7 +1027,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
 
   private void analyseDirectory(Sensor sensor, SensorContextTester context, Path directory) throws IOException {
     try (Stream<Path> list = Files.list(directory)) {
-      list.sorted().forEach(file -> context.fileSystem().add(inputFile(file)));
+      list.sorted().forEach(file -> context.fileSystem().add(inputFileFromPath(file)));
     }
     sensor.execute(context);
   }

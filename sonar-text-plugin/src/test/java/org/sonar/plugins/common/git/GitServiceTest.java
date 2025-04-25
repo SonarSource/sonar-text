@@ -49,14 +49,14 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
-import static org.sonar.plugins.common.TestUtils.inputFile;
+import static org.sonar.plugins.common.TestUtils.inputFileFromPath;
 
 public class GitServiceTest {
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
   // Workaround to get the base directory of the project
-  private static final Path BASE_DIR = inputFile(Paths.get("")).path();
+  private static final Path BASE_DIR = inputFileFromPath(Paths.get("")).path();
 
   @Test
   void shouldRetrieveUntrackedFromRealJgit() throws IOException {

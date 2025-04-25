@@ -39,6 +39,7 @@ import static org.assertj.core.api.Assertions.from;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import static org.sonar.plugins.common.TestUtils.inputFile;
+import static org.sonar.plugins.common.TestUtils.inputFileFromPath;
 
 class InputFileContextTest {
 
@@ -121,7 +122,7 @@ class InputFileContextTest {
 
   @Test
   void shouldFailToLoadContentIfFileDoesNotExist() {
-    InputFile inputFile = inputFile(Path.of("invalid-path.txt"));
+    InputFile inputFile = inputFileFromPath(Path.of("invalid-path.txt"));
     assertThatThrownBy(() -> new InputFileContext(sensorContext, inputFile))
       .isInstanceOf(NoSuchFileException.class)
       .hasMessageContaining("invalid-path");
@@ -139,7 +140,7 @@ class InputFileContextTest {
   @Test
   void shouldIdentifyBinaryFile() throws IOException {
     Path binaryFile = Path.of("build", "classes", "java", "test", "org", "sonar", "plugins", "common", "InputFileContextTest.class");
-    InputFile inputFile = inputFile(binaryFile);
+    InputFile inputFile = inputFileFromPath(binaryFile);
     InputFileContext ctx = new InputFileContext(sensorContext, inputFile);
     assertThat(ctx.hasNonTextCharacters()).isTrue();
     assertThat(ctx.lines()).isEmpty();
