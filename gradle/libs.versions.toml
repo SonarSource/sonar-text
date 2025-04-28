@@ -14,11 +14,9 @@ logback = "1.5.18"
 jackson = "2.18.3"
 json-schema-validator = "1.5.6"
 junit = "5.12.2"
+junit-platform-suite = "1.12.2"
 assertj = "3.27.3"
 mockito = "5.17.0"
-jfrog-gradle = "5.2.5"
-spotless-gradle = "6.25.0"
-blowdryer-gradle = "1.7.1"
 yguard = "4.1.1"
 eclipse-jgit = "7.2.0.202503040940-r"
 commons-io = "2.19.0"
@@ -35,9 +33,7 @@ sonar-ws = { module = "org.sonarsource.sonarqube:sonar-ws", version.ref = "sonar
 sonar-java-checks = { module = "org.sonarsource.java:java-checks", version.ref = "sonar-java" }
 sonar-scanner-gradle = { module = "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin", version.ref = "sonar-scanner-gradle" }
 sonar-orchestrator-junit5 = { module = "org.sonarsource.orchestrator:sonar-orchestrator-junit5", version.ref = "sonar-orchestrator" }
-sonar-lint-analysis-engine = { module = "org.sonarsource.sonarlint.core:sonarlint-analysis-engine", version.ref = "sonar-lint" }
 sonar-lint-core = { module = "org.sonarsource.sonarlint.core:sonarlint-core", version.ref = "sonar-lint" }
-sonar-lint-plugin-api = { module = "org.sonarsource.sonarlint.core:sonarlint-plugin-api", version.ref = "sonar-lint" }
 sonar-lint-rpc-java-client = { module = "org.sonarsource.sonarlint.core:sonarlint-rpc-java-client", version.ref = "sonar-lint" }
 sonar-lint-rpc-impl = { module = "org.sonarsource.sonarlint.core:sonarlint-rpc-impl", version.ref = "sonar-lint" }
 jackson-dataformat-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jackson" }
@@ -45,13 +41,11 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 com-networknt-jsonSchemaValidator = { module = "com.networknt:json-schema-validator", version.ref = "json-schema-validator" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+junit-platform-suite = { module = "org.junit.platform:junit-platform-suite", version.ref = "junit-platform-suite" }
 # Version of JUnit Platform is taken from the JUnit BOM that is imported by junit-jupiter
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
-jfrog-buildinfo-gradle = { module = "org.jfrog.buildinfo:build-info-extractor-gradle", version.ref = "jfrog-gradle" }
-diffplug-spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless-gradle" }
-diffplug-blowdryer = { module = "com.diffplug:blowdryer", version.ref = "blowdryer-gradle" }
 sonar-license-api = { module = "com.sonarsource.license:license-api", version.ref = "sonar-license-api" }
 yguard = { module = "com.yworks:yguard", version.ref = "yguard"}
 eclipse-jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "eclipse-jgit" }
@@ -59,6 +53,3 @@ commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
 google-re2j = { module = "com.google.re2j:re2j", version.ref = "re2j" }
 gradle-shadow = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "gradle-shadow" }
 awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility"}
-
-[plugins]
-spotless = { id = "com.diffplug.spotless", version.ref = "spotless-gradle" }
