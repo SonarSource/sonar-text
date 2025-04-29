@@ -37,7 +37,6 @@ import org.sonar.plugins.secrets.configuration.model.matching.Detection;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -164,25 +163,25 @@ class PreFilterFactoryTest {
   }
 
   @ParameterizedTest
-  @MethodSource("inputsForTestingMainScopeAndSonarTest")
+  @MethodSource("org.sonar.plugins.secrets.api.ScopeBasedFileFilterTest#inputsForTestingMainScopeAndSonarTest")
   void shouldTestMainScopeWhenSonarTestIsNotSet(String filePath, boolean shouldMatch) {
     testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.MAIN, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, shouldMatch);
   }
 
   @ParameterizedTest
-  @MethodSource("inputsForTestingMainScopeAndSonarTest")
+  @MethodSource("org.sonar.plugins.secrets.api.ScopeBasedFileFilterTest#inputsForTestingMainScopeAndSonarTest")
   void shouldTestMainScopeWhenSonarTestIsNotSetAndBaseDirectoryContainsTest(String filePath, boolean shouldMatch) {
     testPredicateWithScopeAndConfiguration(filePath, "/base/directory/with/test/in/it/", RuleScope.MAIN, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, shouldMatch);
   }
 
   @ParameterizedTest
-  @MethodSource("inputsForTestingMainScopeAndSonarTest")
+  @MethodSource("org.sonar.plugins.secrets.api.ScopeBasedFileFilterTest#inputsForTestingMainScopeAndSonarTest")
   void shouldTestMainScopeWhenSonarTestIsSet(String filePath, boolean ignored) {
-    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.MAIN, new SpecificationConfiguration(false), true);
+    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.MAIN, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_DISABLED, true);
   }
 
   @ParameterizedTest
-  @MethodSource("inputsForTestingMainScopeAndSonarTest")
+  @MethodSource("org.sonar.plugins.secrets.api.ScopeBasedFileFilterTest#inputsForTestingMainScopeAndSonarTest")
   void shouldTestMainScopeWhenSonarTestIsNotSetAndScopeTest(String filePath, boolean ignored) {
     testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.TEST, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, false);
   }
@@ -210,45 +209,8 @@ class PreFilterFactoryTest {
       .isEqualTo(expected);
   }
 
-  static Stream<Arguments> inputsForTestingMainScopeAndSonarTest() {
-    return Stream.of(
-      arguments("testutils.go", false),
-      arguments("Testutils.go", false),
-      arguments("test_example.py", false),
-      arguments("Someutils.go", true),
-      arguments("src/main/ExampleFilterTest.java", false),
-      arguments("src/main/examplefiltertest.java", false),
-      arguments("src/main/ExampleFilterTestt.java", true),
-      arguments("docker-compose-api-test.yaml", false),
-      arguments("conftest.py", false),
-      arguments("example_test.go", false),
-      arguments("appsettings.Test.json", false),
-      arguments("docker-compose-tests.yaml", false),
-      arguments("docker-compose-Tests.yaml", false),
-      arguments("docker-compose-Testss.yaml", true),
-      arguments("doc/examples/Example.java", false),
-      arguments("doc/examples/example.go", false),
-      arguments("documentation/examples/example.go", true),
-      arguments("examples/docs/example.go", false),
-      arguments("examples/docs/example.go", false),
-      arguments("examples/docs/src/main/example.go", false),
-      arguments("src/test/java/org/sonar/appsettings.json", false),
-      arguments("src/Test/java/org/sonar/appsettings.json", false),
-      arguments("tests/appsettings.json", false),
-      arguments("a/b/c/tests/appsettings.json", false),
-      arguments("a/b/c/doc", true), // doc is a filename here
-      arguments("libraries/kotlin.test/js/it/js/jest-reporter.js", false),
-      arguments("libraries/kotlin.Test/js/it/js/jest-reporter.js", false),
-      arguments("native/native.tests/driver/testData/driver0.kt", false),
-      arguments("native/native.Tests/driver/testData/driver0.kt", false),
-      arguments("latestnews.html", true),
-      arguments("abc/latestnews.html", true),
-      arguments("contestresults.js", true),
-      arguments("Protester.java", true));
-  }
-
   @ParameterizedTest
-  @MethodSource("inputsForTestingMainScopeWithWrongBaseDirectory")
+  @MethodSource("org.sonar.plugins.secrets.api.ScopeBasedFileFilterTest#inputsForTestingMainScopeWithWrongBaseDirectory")
   void shouldTestMainScopeWhenFileSystemBaseDirPathTypeIsWrong(String filePath, boolean shouldMatch) {
     var preModule = new PreModule();
     preModule.setScopes(List.of(RuleScope.MAIN));
@@ -265,42 +227,5 @@ class PreFilterFactoryTest {
 
     var predicate = PreFilterFactory.createPredicate(preModule, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED);
     assertThat(predicate.test(ctx)).isEqualTo(shouldMatch);
-  }
-
-  static Stream<Arguments> inputsForTestingMainScopeWithWrongBaseDirectory() {
-    return Stream.of(
-      arguments("testutils.go", false),
-      arguments("Testutils.go", false),
-      arguments("test_example.py", false),
-      arguments("Someutils.go", true),
-      arguments("src/main/ExampleFilterTest.java", false),
-      arguments("src/main/examplefiltertest.java", false),
-      arguments("src/main/ExampleFilterTestt.java", true),
-      arguments("docker-compose-api-test.yaml", false),
-      arguments("conftest.py", false),
-      arguments("example_test.go", false),
-      arguments("appsettings.Test.json", false),
-      arguments("docker-compose-tests.yaml", false),
-      arguments("docker-compose-Tests.yaml", false),
-      arguments("docker-compose-Testss.yaml", true),
-      arguments("doc/examples/Example.java", true),
-      arguments("doc/examples/example.go", true),
-      arguments("documentation/examples/example.go", true),
-      arguments("examples/docs/example.go", true),
-      arguments("examples/docs/example.go", true),
-      arguments("examples/docs/src/main/example.go", true),
-      arguments("src/test/java/org/sonar/appsettings.json", true),
-      arguments("src/Test/java/org/sonar/appsettings.json", true),
-      arguments("tests/appsettings.json", true),
-      arguments("a/b/c/tests/appsettings.json", true),
-      arguments("a/b/c/doc", true), // doc is a filename here
-      arguments("libraries/kotlin.test/js/it/js/jest-reporter.js", true),
-      arguments("libraries/kotlin.Test/js/it/js/jest-reporter.js", true),
-      arguments("native/native.tests/driver/testData/driver0.kt", true),
-      arguments("native/native.Tests/driver/testData/driver0.kt", true),
-      arguments("latestnews.html", true),
-      arguments("abc/latestnews.html", true),
-      arguments("contestresults.js", true),
-      arguments("Protester.java", true));
   }
 }

@@ -104,6 +104,7 @@ public class TextAndSecretsSensor implements Sensor {
     if (activeChecks.isEmpty()) {
       return;
     }
+    initializeChecks(activeChecks, new SpecificationConfiguration(enableAutomaticTestFileDetection(sensorContext)));
 
     runAnalysis(sensorContext, activeChecks);
 
@@ -120,8 +121,6 @@ public class TextAndSecretsSensor implements Sensor {
     if (suitableChecks.isEmpty()) {
       return;
     }
-
-    initializeSpecificationBasedChecks(suitableChecks, sensorContext);
 
     // Retrieve list of files to analyse using the right FilePredicate
     boolean shouldAnalyzeAllFiles = shouldAnalyzeAllFiles(sensorContext);
@@ -269,11 +268,10 @@ public class TextAndSecretsSensor implements Sensor {
     RegexMatchingManager.initialize(threads);
   }
 
-  protected void initializeSpecificationBasedChecks(List<Check> checks, SensorContext sensorContext) {
+  protected void initializeChecks(List<Check> checks, SpecificationConfiguration specificationConfiguration) {
     var specificationLoader = durationStatistics.timed("deserializingSpecifications" + DurationStatistics.SUFFIX_GENERAL,
       this::constructSpecificationLoader);
 
-    var specificationConfiguration = new SpecificationConfiguration(enableAutomaticTestFileDetection(sensorContext));
     durationStatistics.timed("initializingSecretMatchers" + DurationStatistics.SUFFIX_GENERAL, () -> {
       for (Check activeCheck : checks) {
         if (activeCheck instanceof SpecificationBasedCheck specificationBasedCheck) {

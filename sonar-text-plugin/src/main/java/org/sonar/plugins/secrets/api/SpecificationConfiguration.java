@@ -23,4 +23,5 @@ package org.sonar.plugins.secrets.api;
 public record SpecificationConfiguration(boolean automaticTestFileDetection) {
 
   public static final SpecificationConfiguration AUTO_TEST_FILE_DETECTION_ENABLED = new SpecificationConfiguration(true);
+  public static final SpecificationConfiguration AUTO_TEST_FILE_DETECTION_DISABLED = new SpecificationConfiguration(false);
 }
