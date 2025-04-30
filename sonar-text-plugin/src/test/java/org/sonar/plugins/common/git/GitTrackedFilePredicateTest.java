@@ -28,7 +28,6 @@ import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.plugins.common.TextAndSecretsSensor;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonar.plugins.common.TestUtils.inputFileFromPath;
@@ -42,7 +41,7 @@ class GitTrackedFilePredicateTest {
   @MethodSource
   void shouldMatchSomeFilesWhenSomeUntracked(boolean isGitStatusSuccessful, Set<String> untrackedFiles, Map<String, Boolean> fileToExpectedMatch) {
     var gitService = mock(GitService.class);
-    when(gitService.retrieveUntrackedFileNames(any())).thenReturn(new GitService.Result(isGitStatusSuccessful, untrackedFiles));
+    when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(isGitStatusSuccessful, untrackedFiles));
     FilePredicate predicate = new GitTrackedFilePredicate(BASE_DIR, gitService, TextAndSecretsSensor.LANGUAGE_FILE_PREDICATE);
 
     for (Map.Entry<String, Boolean> entry : fileToExpectedMatch.entrySet()) {

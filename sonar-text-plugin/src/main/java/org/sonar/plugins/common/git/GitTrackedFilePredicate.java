@@ -34,9 +34,14 @@ public class GitTrackedFilePredicate implements FilePredicate {
   private final FilePredicate defaultFilePredicate;
 
   public GitTrackedFilePredicate(Path baseDir, GitService gitService, FilePredicate defaultFilePredicate) {
-    var gitResult = gitService.retrieveUntrackedFileNames(baseDir);
+    var gitResult = gitService.retrieveUntrackedFileNames();
     this.untrackedFileNames = gitResult.untrackedFileNames();
     this.isGitStatusSuccessful = gitResult.isGitStatusSuccessful();
+    try {
+      gitService.close();
+    } catch (Exception e) {
+      LOG.debug("Failed to close GitService", e);
+    }
     this.projectRootPath = baseDir;
     if (!isGitStatusSuccessful) {
       LOG.debug("Unable to retrieve git status");

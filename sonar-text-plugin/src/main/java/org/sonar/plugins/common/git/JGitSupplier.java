@@ -22,7 +22,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryBuilder;
 
-public class JgitSupplier {
+public class JGitSupplier {
   public Git getGit(Path baseDir) {
     Repository repository;
     try {
@@ -34,13 +34,13 @@ public class JgitSupplier {
         .build();
     } catch (IOException | RuntimeException e) {
       // Jgit will throw RuntimeException when there is no git working-folder available
-      throw new JgitInitializationException(e);
+      throw new JGitInitializationException(e);
     }
     return new Git(repository);
   }
 
-  public static class JgitInitializationException extends RuntimeException {
-    public JgitInitializationException(Throwable cause) {
+  public static class JGitInitializationException extends RuntimeException {
+    public JGitInitializationException(Throwable cause) {
       super(cause);
     }
   }

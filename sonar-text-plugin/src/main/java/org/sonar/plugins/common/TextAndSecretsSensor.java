@@ -16,6 +16,7 @@
  */
 package org.sonar.plugins.common;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +33,7 @@ import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.plugins.common.analyzer.TextAndSecretsAnalyzer;
+import org.sonar.plugins.common.git.GitCliAndJGitService;
 import org.sonar.plugins.common.git.GitService;
 import org.sonar.plugins.common.git.GitTrackedFilePredicate;
 import org.sonar.plugins.common.thread.ParallelizationManager;
@@ -293,9 +295,10 @@ public class TextAndSecretsSensor implements Sensor {
 
   private void initializeGitPredicate(SensorContext sensorContext) {
     if (gitTrackedFilePredicate == null) {
+      var baseDir = sensorContext.fileSystem().baseDir().toPath();
       gitTrackedFilePredicate = durationStatistics.timed(
         "trackedByGitPredicate" + DurationStatistics.SUFFIX_GENERAL,
-        () -> new GitTrackedFilePredicate(sensorContext.fileSystem().baseDir().toPath(), getGitService(), LANGUAGE_FILE_PREDICATE));
+        () -> new GitTrackedFilePredicate(baseDir, createGitService(baseDir), LANGUAGE_FILE_PREDICATE));
     }
   }
 
@@ -308,8 +311,8 @@ public class TextAndSecretsSensor implements Sensor {
     return new SecretsSpecificationLoader();
   }
 
-  public GitService getGitService() {
-    return new GitService();
+  public GitService createGitService(Path baseDir) {
+    return new GitCliAndJGitService(baseDir);
   }
 
   protected void logCheckBasedStatistics(List<Check> activeChecks) {

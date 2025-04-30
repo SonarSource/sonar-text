@@ -508,9 +508,9 @@ public abstract class AbstractTextAndSecretsSensorTest {
     var sensorSpy = spy(sensor);
     String relativePathFooJava = "src" + File.pathSeparator + "foo.java";
     var gitService = mock(GitService.class);
-    when(gitService.retrieveUntrackedFileNames(any()))
-      .thenReturn(new GitService.Result(true, Set.of("c.txt", "d.txt", relativePathFooJava)));
-    when(sensorSpy.getGitService()).thenReturn(gitService);
+    when(gitService.retrieveUntrackedFileNames())
+      .thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of("c.txt", "d.txt", relativePathFooJava)));
+    when(sensorSpy.createGitService(any())).thenReturn(gitService);
 
     analyse(sensorSpy, context,
       // tracked files
@@ -573,7 +573,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     var sensor = sensor(check);
     var sensorSpy = spy(sensor);
     var gitService = mock(GitService.class);
-    when(sensorSpy.getGitService()).thenReturn(gitService);
+    when(sensorSpy.createGitService(any())).thenReturn(gitService);
 
     analyse(sensorSpy, context,
       inputFile(Path.of("a.txt"), "{}"),
@@ -582,8 +582,8 @@ public abstract class AbstractTextAndSecretsSensorTest {
     Collection<Issue> issues = context.allIssues();
     assertThat(issues).hasSize(2);
     assertCorrectLogsForTextAndSecretsAnalysis(logTester.logs(), 2, false);
-    verify(gitService, times(0)).retrieveUntrackedFileNames(context.fileSystem().baseDirPath());
-    verify(sensorSpy, times(0)).getGitService();
+    verify(gitService, times(0)).retrieveUntrackedFileNames();
+    verify(sensorSpy, times(0)).createGitService(context.fileSystem().baseDirPath());
   }
 
   @Test
@@ -595,9 +595,9 @@ public abstract class AbstractTextAndSecretsSensorTest {
     var sensor = sensor(check);
     var sensorSpy = spy(sensor);
     var gitService = mock(GitService.class);
-    when(gitService.retrieveUntrackedFileNames(any()))
-      .thenReturn(new GitService.Result(true, Set.of("a.txt", "c.txt", "d.txt")));
-    when(sensorSpy.getGitService()).thenReturn(gitService);
+    when(gitService.retrieveUntrackedFileNames())
+      .thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of("a.txt", "c.txt", "d.txt")));
+    when(sensorSpy.createGitService(any())).thenReturn(gitService);
 
     analyse(sensorSpy, context,
       inputFile(Path.of("a.txt"), "{}"),
@@ -628,8 +628,8 @@ public abstract class AbstractTextAndSecretsSensorTest {
     var sensor = sensor(check);
     var sensorSpy = spy(sensor);
     var gitService = mock(GitService.class);
-    when(gitService.retrieveUntrackedFileNames(any())).thenReturn(new GitService.Result(true, Set.of("a.txt")));
-    when(sensorSpy.getGitService()).thenReturn(gitService);
+    when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of("a.txt")));
+    when(sensorSpy.createGitService(any())).thenReturn(gitService);
 
     analyse(sensorSpy, context,
       inputFile(Path.of("a.txt"), "{}", "secrets"),
@@ -639,8 +639,8 @@ public abstract class AbstractTextAndSecretsSensorTest {
     assertThat(issues).hasSize(2);
     assertCorrectLogsForTextAndSecretsAnalysis(logTester.logs(), 2,
       "Retrieving only language associated files, \"sonar.text.inclusions.activate\" property is deactivated");
-    verify(gitService, times(0)).retrieveUntrackedFileNames(context.fileSystem().baseDirPath());
-    verify(sensorSpy, times(0)).getGitService();
+    verify(gitService, times(0)).retrieveUntrackedFileNames();
+    verify(sensorSpy, times(0)).createGitService(context.fileSystem().baseDirPath());
   }
 
   @Test
@@ -652,8 +652,8 @@ public abstract class AbstractTextAndSecretsSensorTest {
     var sensor = sensor(check);
     var sensorSpy = spy(sensor);
     var gitService = mock(GitService.class);
-    when(gitService.retrieveUntrackedFileNames(any())).thenReturn(new GitService.Result(false, Set.of()));
-    when(sensorSpy.getGitService()).thenReturn(gitService);
+    when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(false, Set.of()));
+    when(sensorSpy.createGitService(any())).thenReturn(gitService);
 
     analyse(sensorSpy, context,
       inputFile(Path.of("a.txt"), "{}", "secrets"),
@@ -783,7 +783,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
       "Using " + availableProcessors + " threads for analysis, \"sonar.text.threads\" is ignored.",
       "Start fetching files for the text and secrets analysis",
       "Starting the text and secrets analysis",
-      "Using git CLI to retrieve untracked files",
+      "Using Git CLI to retrieve untracked files",
       "Retrieving language associated files and files included via \"sonar.text.inclusions\" that are tracked by git",
       "3 source files to be analyzed for the text and secrets analysis",
       "3/3 source files have been analyzed for the text and secrets analysis",
@@ -889,8 +889,8 @@ public abstract class AbstractTextAndSecretsSensorTest {
     context.setRuntime(SONARQUBE_RUNTIME);
     var sensorSpy = spy(sensor(binaryFileCheck));
     var gitService = mock(GitService.class);
-    when(gitService.retrieveUntrackedFileNames(any())).thenReturn(new GitService.Result(false, Set.of()));
-    when(sensorSpy.getGitService()).thenReturn(gitService);
+    when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(false, Set.of()));
+    when(sensorSpy.createGitService(any())).thenReturn(gitService);
 
     analyse(sensorSpy, context,
       inputFile(Path.of("a.jks"), SENSITIVE_BIDI_CHARS),
@@ -924,8 +924,8 @@ public abstract class AbstractTextAndSecretsSensorTest {
     context.setRuntime(SONARQUBE_RUNTIME);
     var sensorSpy = spy(sensor(binaryFileCheck));
     var gitService = mock(GitService.class);
-    when(gitService.retrieveUntrackedFileNames(any())).thenReturn(new GitService.Result(true, Set.of("a.jks", "b.keystore")));
-    when(sensorSpy.getGitService()).thenReturn(gitService);
+    when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of("a.jks", "b.keystore")));
+    when(sensorSpy.createGitService(any())).thenReturn(gitService);
 
     analyse(sensorSpy, context,
       // untracked files
@@ -975,7 +975,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
       DEFAULT_THREAD_USAGE_LOG_LINE,
       EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE,
       "Start fetching files for the text and secrets analysis",
-      "Using git CLI to retrieve untracked files",
+      "Using Git CLI to retrieve untracked files",
       "Retrieving language associated files and files included via \"sonar.text.inclusions\" that are tracked by git",
       "Starting the text and secrets analysis",
       "2 source files to be analyzed for the text and secrets analysis",
