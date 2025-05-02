@@ -20,6 +20,8 @@ import java.nio.file.Paths;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 
@@ -30,6 +32,16 @@ class DurationStatisticsTest {
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
   private static final Pattern REPORT_PATTERN = Pattern.compile(".*Statistics\\s+ {2}.*::.* \\d+ ms \\d+ times \\(mean [\\d']+ us\\)(.|\\s)*");
+
+  @ParameterizedTest
+  @ValueSource(strings = {"true", "false"})
+  void shouldEnableCorrectlyBasedOnConfig(boolean isEnabled) {
+    var sensorContext = SensorContextTester.create(Paths.get("."));
+    sensorContext.settings().setProperty("sonar.text.duration.statistics", isEnabled);
+    DurationStatistics durationStatistics = new DurationStatistics(sensorContext.config());
+
+    assertThat(durationStatistics.isRecordingEnabled()).isEqualTo(isEnabled);
+  }
 
   @Test
   void shouldRecordSimpleStatistics() {

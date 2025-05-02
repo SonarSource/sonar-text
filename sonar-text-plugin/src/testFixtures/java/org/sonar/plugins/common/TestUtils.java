@@ -201,14 +201,15 @@ public class TestUtils {
   }
 
   public static DurationStatistics mockDurationStatistics() {
-    var mock = mock(DurationStatistics.class);
-    when(mock.timed(anyString(), any(Supplier.class)))
+    var statistics = mock(DurationStatistics.class);
+    when(statistics.timed(anyString(), any(Supplier.class)))
       .then(invocation -> invocation.getArgument(1, Supplier.class).get());
     Mockito.doAnswer((Answer<Void>) invocation -> {
       invocation.getArgument(1, Runnable.class).run();
       return null;
-    }).when(mock).timed(anyString(), any(Runnable.class));
-    return mock;
+    }).when(statistics).timed(anyString(), any(Runnable.class));
+    when(statistics.isRecordingEnabled()).thenReturn(true);
+    return statistics;
   }
 
   public static AnalysisWarningsWrapper mockAnalysisWarning() {

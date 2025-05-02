@@ -58,6 +58,10 @@ public class DurationStatistics {
     this.format = new DecimalFormat("#,###", symbols);
   }
 
+  public boolean isRecordingEnabled() {
+    return isRecordingEnabled.get();
+  }
+
   public void timed(String id, Runnable runnable) {
     timed(id, () -> {
       runnable.run();
