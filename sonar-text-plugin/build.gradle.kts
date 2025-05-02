@@ -46,6 +46,7 @@ dependencies {
     testFixturesImplementation(libs.sonar.plugin.api.test.fixtures)
     testFixturesImplementation(libs.sonar.plugin.api.impl)
     testFixturesImplementation(libs.mockito.core)
+    testFixturesImplementation(libs.awaitility)
     testFixturesImplementation(libs.sonar.java.checks)
     testFixturesRuntimeOnly(libs.junit.platform.launcher)
 }

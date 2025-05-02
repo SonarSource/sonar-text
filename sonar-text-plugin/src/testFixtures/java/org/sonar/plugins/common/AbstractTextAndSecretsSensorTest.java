@@ -23,11 +23,14 @@ import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -58,6 +61,8 @@ import org.sonar.plugins.text.api.TextCheck;
 import org.sonar.plugins.text.checks.BIDICharacterCheck;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -549,9 +554,18 @@ public abstract class AbstractTextAndSecretsSensorTest {
       inputFile(Path.of("b.txt"), "{}", "secrets"),
       inputFileFromPath(Path.of("src", "foo.java")));
 
-    var threadsAfter = activeCreatedThreadsNames();
-    threadsAfter.removeAll(threadsBefore);
-    assertThat(threadsAfter).isEmpty();
+    Callable<Boolean> noThreadsAreStillRunning = () -> {
+      var threadsAfter = activeCreatedThreadsNames();
+      threadsAfter.removeAll(threadsBefore);
+      return threadsAfter.isEmpty();
+    };
+
+    await().atMost(Duration.of(2, ChronoUnit.SECONDS)).until(noThreadsAreStillRunning);
+    try {
+      assertThat(noThreadsAreStillRunning.call()).isTrue();
+    } catch (Exception e) {
+      fail("Unexpected exception occurred: " + e.getMessage(), e);
+    }
   }
 
   static List<String> activeCreatedThreadsNames() {
@@ -559,7 +573,8 @@ public abstract class AbstractTextAndSecretsSensorTest {
     ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
     for (ThreadInfo threadInfo : threadMXBean.dumpAllThreads(true, true)) {
       // the demon threads don't block the application termination
-      if (!threadInfo.isDaemon()) {
+      // the "awaitility-thread" threads are created by the Awaitility test library
+      if (!threadInfo.isDaemon() && !threadInfo.getThreadName().equals("awaitility-thread")) {
         result.add(threadInfo.getThreadName());
       }
     }
