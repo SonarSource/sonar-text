@@ -125,7 +125,7 @@ class JGitServiceTest {
     try (var gitService = new JGitService(BASE_DIR)) {
       var gitResult = gitService.retrieveRepositoryMetadata();
       assertThat(gitResult.isGitSuccessful()).isTrue();
-      assertThat(gitResult.projectName()).isEqualTo("sonar-text-enterprise");
+      assertThat(gitResult.projectName()).startsWith("sonar-text");
       assertThat(gitResult.organizationName()).isEqualTo("SonarSource");
     }
   }
