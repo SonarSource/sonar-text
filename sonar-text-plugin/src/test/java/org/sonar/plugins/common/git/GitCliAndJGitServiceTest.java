@@ -29,6 +29,7 @@ import static org.mockito.Mockito.when;
 import static org.sonar.plugins.common.TestUtils.inputFileFromPath;
 
 class GitCliAndJGitServiceTest {
+
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
@@ -39,7 +40,7 @@ class GitCliAndJGitServiceTest {
   void shouldRetrieveUntracked() {
     try (var gitService = new GitCliAndJGitService(BASE_DIR)) {
       var gitResult = gitService.retrieveUntrackedFileNames();
-      assertThat(gitResult.isGitStatusSuccessful()).isTrue();
+      assertThat(gitResult.isGitSuccessful()).isTrue();
       assertThat(gitResult.untrackedFileNames()).isEmpty();
     }
   }
@@ -53,7 +54,7 @@ class GitCliAndJGitServiceTest {
       var gitResult = gitService.retrieveUntrackedFileNames();
       assertThat(logTester.logs())
         .anySatisfy(line -> assertThat(line).contains("Using Git CLI to retrieve untracked files"));
-      assertThat(gitResult.isGitStatusSuccessful()).isTrue();
+      assertThat(gitResult.isGitSuccessful()).isTrue();
       assertThat(gitResult.untrackedFileNames()).contains("a.txt");
     }
   }
@@ -68,8 +69,39 @@ class GitCliAndJGitServiceTest {
       var gitResult = gitService.retrieveUntrackedFileNames();
       assertThat(logTester.logs())
         .anySatisfy(line -> assertThat(line).contains("Using JGit to retrieve untracked files"));
-      assertThat(gitResult.isGitStatusSuccessful()).isTrue();
+      assertThat(gitResult.isGitSuccessful()).isTrue();
       assertThat(gitResult.untrackedFileNames()).contains("a.txt");
+    }
+  }
+
+  @Test
+  void shouldRetrieveRepositoryMetadataFromCliWhenAvailable() {
+    var gitCliService = spy(GitCliService.createOsSpecificInstance());
+    when(gitCliService.retrieveRepositoryMetadata()).thenReturn(new GitService.RepositoryMetadataResult(true, "project", "org"));
+    var jGitService = new JGitService(BASE_DIR);
+    try (var gitService = new GitCliAndJGitService(gitCliService, jGitService)) {
+      var gitResult = gitService.retrieveRepositoryMetadata();
+      assertThat(logTester.logs())
+        .anySatisfy(line -> assertThat(line).contains("Using Git CLI to retrieve repository metadata"));
+      assertThat(gitResult.isGitSuccessful()).isTrue();
+      assertThat(gitResult.projectName()).isEqualTo("project");
+      assertThat(gitResult.organizationName()).isEqualTo("org");
+    }
+  }
+
+  @Test
+  void shouldRetrieveRepositoryMetadataFromJGitWhenCliNotAvailable() {
+    var gitCliService = spy(GitCliService.createOsSpecificInstance());
+    when(gitCliService.isAvailable()).thenReturn(false);
+    var jGitService = spy(new JGitService(BASE_DIR));
+    when(jGitService.retrieveRepositoryMetadata()).thenReturn(new GitService.RepositoryMetadataResult(true, "project", "org"));
+    try (var gitService = new GitCliAndJGitService(gitCliService, jGitService)) {
+      var gitResult = gitService.retrieveRepositoryMetadata();
+      assertThat(logTester.logs())
+        .anySatisfy(line -> assertThat(line).contains("Using JGit to retrieve repository metadata"));
+      assertThat(gitResult.isGitSuccessful()).isTrue();
+      assertThat(gitResult.projectName()).isEqualTo("project");
+      assertThat(gitResult.organizationName()).isEqualTo("org");
     }
   }
 }

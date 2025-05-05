@@ -17,6 +17,7 @@
 package org.sonar.plugins.common.git;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -28,7 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.plugins.common.git.utils.ProcessBuilderWrapper;
 
-public final class GitCliService implements GitService {
+public final class GitCliService extends GitService {
   private static final Logger LOG = LoggerFactory.getLogger(GitCliService.class);
   private static final String GIT_PORCELAIN_UNTRACKED_FILE_MARKER = "??";
   private static final String WHERE_EXE_LOCATION = System.getenv("systemroot") + "\\System32\\where.exe";
@@ -69,9 +70,10 @@ public final class GitCliService implements GitService {
   @Override
   public UntrackedFileNamesResult retrieveUntrackedFileNames() {
     if (!available) {
-      return new UntrackedFileNamesResult(false, Set.of());
+      return UntrackedFileNamesResult.UNSUCCESSFUL;
     }
     Set<String> untrackedFiles = ConcurrentHashMap.newKeySet();
+
     try {
       var status = execute(List.of(gitCommand, "status", "--untracked-files=all", "--porcelain"), (String line) -> {
         if (line.startsWith(GIT_PORCELAIN_UNTRACKED_FILE_MARKER)) {
@@ -79,13 +81,53 @@ public final class GitCliService implements GitService {
         }
       });
       if (status != ProcessBuilderWrapper.Status.SUCCESS) {
-        return new UntrackedFileNamesResult(false, Set.of());
+        return UntrackedFileNamesResult.UNSUCCESSFUL;
       }
     } catch (IOException e) {
-      return new UntrackedFileNamesResult(false, Set.of());
+      return UntrackedFileNamesResult.UNSUCCESSFUL;
     }
 
     return new UntrackedFileNamesResult(true, untrackedFiles);
+  }
+
+  @Override
+  public RepositoryMetadataResult retrieveRepositoryMetadata() {
+    if (!available) {
+      return RepositoryMetadataResult.UNSUCCESSFUL;
+    }
+
+    List<String> remotes = getGitRemotes();
+    if (remotes.isEmpty()) {
+      return RepositoryMetadataResult.UNSUCCESSFUL;
+    }
+
+    var defaultRemote = remotes.get(0);
+    return parseRepositoryMetadata(defaultRemote);
+  }
+
+  // Visible for testing
+  List<String> getGitRemotes() {
+    var remotes = new ArrayList<String>();
+    try {
+      var listRemotesCommand = List.of(gitCommand, "remote", "-v");
+      var status = execute(listRemotesCommand, remotes::add);
+      if (status != ProcessBuilderWrapper.Status.SUCCESS) {
+        return List.of();
+      }
+    } catch (IOException e) {
+      return List.of();
+    }
+    return remotes;
+  }
+
+  private static RepositoryMetadataResult parseRepositoryMetadata(String remote) {
+    try {
+      var remoteUrl = remote.split("\\s+")[1];
+      return parseRepositoryMetadataFromRemoteUri(remoteUrl);
+    } catch (Exception e) {
+      LOG.debug("Failed to parse repository metadata from remote '{}': {}", remote, e.getMessage());
+      return RepositoryMetadataResult.UNSUCCESSFUL;
+    }
   }
 
   public boolean isAvailable() {

@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.function.Predicate;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.InputFileContext;
+import org.sonar.plugins.common.git.GitService;
+import org.sonar.plugins.common.git.NullGitService;
 import org.sonar.plugins.secrets.api.ScopeBasedFileFilter;
 import org.sonar.plugins.secrets.api.SpecificationConfiguration;
 import org.sonar.plugins.secrets.configuration.model.RuleScope;
@@ -30,14 +32,18 @@ public abstract class AbstractBinaryFileCheck extends Check {
   private static final List<RuleScope> APPLICABLE_SCOPES = List.of(RuleScope.MAIN);
 
   protected Predicate<InputFileContext> scopedFilePredicate;
+  protected GitService gitService = NullGitService.INSTANCE;
 
   /**
-   * Initialize this check by creating a scope based file predicate.
+   * Initialize this check by creating a scope based file predicate and providing a {@link GitService} instance.
+   * This method should be called by the sensor before analyzing files.
    *
    * @param specificationConfiguration configuration if test files should be automatically detected
+   * @param gitService {@link GitService} instance to be used by checks like S7203
    */
-  public void initialize(SpecificationConfiguration specificationConfiguration) {
+  public void initialize(SpecificationConfiguration specificationConfiguration, GitService gitService) {
     this.scopedFilePredicate = ScopeBasedFileFilter.scopeBasedFilePredicate(APPLICABLE_SCOPES, specificationConfiguration);
+    this.gitService = gitService;
   }
 
   @Override

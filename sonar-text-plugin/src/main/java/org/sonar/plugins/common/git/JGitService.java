@@ -17,12 +17,13 @@
 package org.sonar.plugins.common.git;
 
 import java.nio.file.Path;
-import java.util.Set;
+import java.util.List;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.transport.RemoteConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JGitService implements GitService {
+public class JGitService extends GitService {
 
   private static final Logger LOG = LoggerFactory.getLogger(JGitService.class);
   private final Path baseDir;
@@ -45,7 +46,33 @@ public class JGitService implements GitService {
       return new UntrackedFileNamesResult(true, status.getUntracked());
     } catch (JGitSupplier.JGitInitializationException | GitAPIException e) {
       LOG.debug("Exception querying Git data: {}", e.getMessage());
-      return new UntrackedFileNamesResult(false, Set.of());
+      return UntrackedFileNamesResult.UNSUCCESSFUL;
+    }
+  }
+
+  @Override
+  public RepositoryMetadataResult retrieveRepositoryMetadata() {
+    List<RemoteConfig> remotes = getRemotes();
+    if (remotes.isEmpty()) {
+      return RepositoryMetadataResult.UNSUCCESSFUL;
+    }
+
+    var defaultRemoteURIs = remotes.get(0).getURIs();
+    if (defaultRemoteURIs.isEmpty()) {
+      return RepositoryMetadataResult.UNSUCCESSFUL;
+    }
+
+    var defaultRemoteUri = defaultRemoteURIs.get(0).getRawPath();
+    return parseRepositoryMetadataFromRemoteUri(defaultRemoteUri);
+  }
+
+  // Visible for testing
+  List<RemoteConfig> getRemotes() {
+    try (var git = jGitSupplier.getGit(baseDir)) {
+      return git.remoteList().call();
+    } catch (JGitSupplier.JGitInitializationException | GitAPIException e) {
+      LOG.debug("Exception querying Git data: {}", e.getMessage());
+      return List.of();
     }
   }
 

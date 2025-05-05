@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GitCliAndJGitService implements GitService {
+public class GitCliAndJGitService extends GitService {
   private static final Logger LOG = LoggerFactory.getLogger(GitCliAndJGitService.class);
   private final GitCliService gitCliService;
   private final JGitService jGitService;
@@ -43,6 +43,16 @@ public class GitCliAndJGitService implements GitService {
     }
     LOG.info("Using JGit to retrieve untracked files");
     return jGitService.retrieveUntrackedFileNames();
+  }
+
+  @Override
+  public RepositoryMetadataResult retrieveRepositoryMetadata() {
+    if (gitCliService.isAvailable()) {
+      LOG.info("Using Git CLI to retrieve repository metadata");
+      return gitCliService.retrieveRepositoryMetadata();
+    }
+    LOG.info("Using JGit to retrieve repository metadata");
+    return jGitService.retrieveRepositoryMetadata();
   }
 
   @Override

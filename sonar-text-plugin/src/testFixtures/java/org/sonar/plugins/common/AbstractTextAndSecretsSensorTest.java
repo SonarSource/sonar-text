@@ -598,7 +598,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     assertThat(issues).hasSize(2);
     assertCorrectLogsForTextAndSecretsAnalysis(logTester.logs(), 2, false);
     verify(gitService, times(0)).retrieveUntrackedFileNames();
-    verify(sensorSpy, times(0)).createGitService(context.fileSystem().baseDirPath());
   }
 
   @Test
@@ -655,7 +654,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     assertCorrectLogsForTextAndSecretsAnalysis(logTester.logs(), 2,
       "Retrieving only language associated files, \"sonar.text.inclusions.activate\" property is deactivated");
     verify(gitService, times(0)).retrieveUntrackedFileNames();
-    verify(sensorSpy, times(0)).createGitService(context.fileSystem().baseDirPath());
   }
 
   @Test
@@ -1029,7 +1027,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
       wantedInitialization = 1;
     }
 
-    verify(binaryFileCheck, times(wantedInitialization)).initialize(any());
+    verify(binaryFileCheck, times(wantedInitialization)).initialize(any(), any());
   }
 
   protected void assertCorrectLogsForTextAndSecretsAnalysis(List<String> logs, int numberOfAnalyzedFiles, String... additionalLogs) {

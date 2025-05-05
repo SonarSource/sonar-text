@@ -33,9 +33,11 @@ import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.plugins.common.analyzer.TextAndSecretsAnalyzer;
+import org.sonar.plugins.common.git.CachingGitService;
 import org.sonar.plugins.common.git.GitCliAndJGitService;
 import org.sonar.plugins.common.git.GitService;
 import org.sonar.plugins.common.git.GitTrackedFilePredicate;
+import org.sonar.plugins.common.git.LazyGitService;
 import org.sonar.plugins.common.thread.ParallelizationManager;
 import org.sonar.plugins.common.warnings.AnalysisWarningsWrapper;
 import org.sonar.plugins.common.warnings.DefaultAnalysisWarningsWrapper;
@@ -74,6 +76,7 @@ public class TextAndSecretsSensor implements Sensor {
   protected final AnalysisWarningsWrapper analysisWarnings;
   protected DurationStatistics durationStatistics;
   protected ParallelizationManager parallelizationManager;
+  protected GitService gitService;
   private GitTrackedFilePredicate gitTrackedFilePredicate;
 
   public TextAndSecretsSensor(CheckFactory checkFactory) {
@@ -106,6 +109,7 @@ public class TextAndSecretsSensor implements Sensor {
     if (activeChecks.isEmpty()) {
       return;
     }
+
     initializeChecks(activeChecks, new SpecificationConfiguration(enableAutomaticTestFileDetection(sensorContext)));
 
     runAnalysis(sensorContext, activeChecks);
@@ -237,6 +241,7 @@ public class TextAndSecretsSensor implements Sensor {
   private void initialize(SensorContext sensorContext) {
     durationStatistics = new DurationStatistics(sensorContext.config());
     initializeParallelizationManager(sensorContext);
+    initializeGitService(sensorContext);
     initializeOptionalConfigValue(sensorContext, REGEX_MATCH_TIMEOUT_KEY, RegexMatchingManager::setTimeoutMs);
     initializeOptionalConfigValue(sensorContext, REGEX_EXECUTION_TIMEOUT_KEY, RegexMatchingManager::setUninterruptibleTimeoutMs);
   }
@@ -270,6 +275,11 @@ public class TextAndSecretsSensor implements Sensor {
     RegexMatchingManager.initialize(threads);
   }
 
+  private void initializeGitService(SensorContext sensorContext) {
+    var baseDir = sensorContext.fileSystem().baseDir().toPath();
+    gitService = createGitService(baseDir);
+  }
+
   protected void initializeChecks(List<Check> checks, SpecificationConfiguration specificationConfiguration) {
     var specificationLoader = durationStatistics.timed("deserializingSpecifications" + DurationStatistics.SUFFIX_GENERAL,
       this::constructSpecificationLoader);
@@ -298,7 +308,7 @@ public class TextAndSecretsSensor implements Sensor {
       var baseDir = sensorContext.fileSystem().baseDir().toPath();
       gitTrackedFilePredicate = durationStatistics.timed(
         "trackedByGitPredicate" + DurationStatistics.SUFFIX_GENERAL,
-        () -> new GitTrackedFilePredicate(baseDir, createGitService(baseDir), LANGUAGE_FILE_PREDICATE));
+        () -> new GitTrackedFilePredicate(baseDir, gitService, LANGUAGE_FILE_PREDICATE));
     }
   }
 
@@ -312,7 +322,7 @@ public class TextAndSecretsSensor implements Sensor {
   }
 
   public GitService createGitService(Path baseDir) {
-    return new GitCliAndJGitService(baseDir);
+    return new LazyGitService(() -> new CachingGitService(new GitCliAndJGitService(baseDir)));
   }
 
   protected void logCheckBasedStatistics(List<Check> activeChecks) {
@@ -329,6 +339,11 @@ public class TextAndSecretsSensor implements Sensor {
   private void cleanUp() {
     parallelizationManager.shutdown();
     RegexMatchingManager.shutdown();
+    try {
+      gitService.close();
+    } catch (Exception e) {
+      LOG.debug("Error closing GitService", e);
+    }
   }
 
   private static boolean isActive(SensorContext sensorContext) {
