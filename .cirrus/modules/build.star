@@ -11,8 +11,7 @@ load(
     "gradle_cache",
     "gradle_wrapper_cache",
     "cleanup_gradle_script",
-    "project_version_cache",
-    "store_project_version_script"
+    "project_version_cache"
 )
 load(
     "github.com/SonarSource/cirrus-modules/cloud-native/actions.star@analysis/master",
@@ -28,7 +27,7 @@ def build_env():
     env |= gradle_signing_env()
     env |= {
         "DEPLOY_PULL_REQUEST": "true",
-        "BUILD_ARGUMENTS": "--profile"
+        "BUILD_ARGUMENTS": "--profile storeProjectVersion"
     }
     return env
 
@@ -56,7 +55,6 @@ def build_task():
             "gradle_wrapper_cache": gradle_wrapper_cache(),
             "build_script": build_script(),
             "cleanup_gradle_script": cleanup_gradle_script(),
-            "store_project_version_script": store_project_version_script(),
             "on_success": {
                 "profile_report_artifacts": {
                     "path": "build/reports/profile/profile-*.html"
