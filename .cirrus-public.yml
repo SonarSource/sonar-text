@@ -1,8 +1,5 @@
 env:
   CIRRUS_SHELL: bash
-  CIRRUS_VAULT_URL: https://vault.sonar.build:8200
-  CIRRUS_VAULT_AUTH_PATH: jwt-cirrusci
-  CIRRUS_VAULT_ROLE: cirrusci-${CIRRUS_REPO_OWNER}-${CIRRUS_REPO_NAME}
 
 build_task:
   skip: $CIRRUS_BRANCH == "public_master"
@@ -15,8 +12,6 @@ build_task:
     SONAR_TOKEN: ENCRYPTED[!7a28d43095ea7e33c5e581fa3a6592ed0ac609d512213590cf41ce096e0849f360eb2f0881d7728f30cb148bed866ca5!]
     GRADLE_USER_HOME: ${CIRRUS_WORKING_DIR}/.gradle
     GRADLE_VERSION: "8.14"
-    DEVELOCITY_TOKEN: VAULT[development/kv/data/develocity data.token]
-    DEVELOCITY_ACCESS_KEY: develocity.sonar.build=${DEVELOCITY_TOKEN}
   gradle_cache:
     folder: ${GRADLE_USER_HOME}/caches
     fingerprint_script: find -type f \( -name "*.gradle*" -or -name "gradle*.properties" \) | sort | xargs cat
