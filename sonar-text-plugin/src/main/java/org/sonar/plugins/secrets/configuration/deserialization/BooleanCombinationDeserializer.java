@@ -36,9 +36,9 @@ public class BooleanCombinationDeserializer extends JsonDeserializer<BooleanComb
   public BooleanCombination deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
     TreeNode treeNode = jsonParser.getCodec().readTree(jsonParser);
 
-    Iterator<Map.Entry<String, JsonNode>> fields = ((ObjectNode) treeNode).fields();
+    Iterator<Map.Entry<String, JsonNode>> properties = ((ObjectNode) treeNode).properties().iterator();
     // As the yaml is validated before, there is always one element!
-    Map.Entry<String, JsonNode> node = fields.next();
+    Map.Entry<String, JsonNode> node = properties.next();
 
     List<Match> modules = new ArrayList<>();
 

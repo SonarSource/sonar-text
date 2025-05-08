@@ -35,9 +35,9 @@ public class AuxiliaryPatternDeserializer extends JsonDeserializer<AuxiliaryPatt
   public AuxiliaryPattern deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
     TreeNode treeNode = jsonParser.getCodec().readTree(jsonParser);
 
-    Iterator<Map.Entry<String, JsonNode>> fields = ((ObjectNode) treeNode).fields();
+    Iterator<Map.Entry<String, JsonNode>> properties = ((ObjectNode) treeNode).properties().iterator();
     // As the yaml is validated before, there is always one element
-    Map.Entry<String, JsonNode> node = fields.next();
+    Map.Entry<String, JsonNode> node = properties.next();
 
     AuxiliaryPattern auxiliaryPattern = new AuxiliaryPattern();
     auxiliaryPattern.setType(AuxiliaryPatternType.valueOfLabel(node.getKey()));
