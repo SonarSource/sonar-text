@@ -49,7 +49,7 @@ def build_task():
     return {
         "build_task": {
             "env": build_env(),
-            "eks_container": base_image_container_builder(cpu=4, memory="8G"),
+            "eks_container": base_image_container_builder(cpu=4, memory="10G"),
             "project_version_cache": project_version_cache(),
             "gradle_cache": gradle_cache(),
             "gradle_wrapper_cache": gradle_wrapper_cache(),
