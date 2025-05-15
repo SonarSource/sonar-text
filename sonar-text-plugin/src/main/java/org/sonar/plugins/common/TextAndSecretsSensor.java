@@ -38,6 +38,7 @@ import org.sonar.plugins.common.git.GitCliAndJGitService;
 import org.sonar.plugins.common.git.GitService;
 import org.sonar.plugins.common.git.GitTrackedFilePredicate;
 import org.sonar.plugins.common.git.LazyGitService;
+import org.sonar.plugins.common.telemetry.TelemetryReporter;
 import org.sonar.plugins.common.thread.ParallelizationManager;
 import org.sonar.plugins.common.warnings.AnalysisWarningsWrapper;
 import org.sonar.plugins.common.warnings.DefaultAnalysisWarningsWrapper;
@@ -75,6 +76,7 @@ public class TextAndSecretsSensor implements Sensor {
 
   protected final AnalysisWarningsWrapper analysisWarnings;
   protected DurationStatistics durationStatistics;
+  protected TelemetryReporter telemetryReporter;
   protected ParallelizationManager parallelizationManager;
   protected GitService gitService;
   private GitTrackedFilePredicate gitTrackedFilePredicate;
@@ -114,7 +116,7 @@ public class TextAndSecretsSensor implements Sensor {
 
     runAnalysis(sensorContext, activeChecks);
 
-    logGeneralStatistics();
+    processMetrics();
     cleanUp();
   }
 
@@ -135,7 +137,8 @@ public class TextAndSecretsSensor implements Sensor {
 
     List<InputFile> inputFiles = getInputFiles(sensorContext, filePredicate);
 
-    var analyzer = new TextAndSecretsAnalyzer(sensorContext, parallelizationManager, durationStatistics, suitableChecks, notBinaryFilePredicate, shouldAnalyzeAllFiles);
+    var analyzer = new TextAndSecretsAnalyzer(sensorContext, parallelizationManager, durationStatistics, suitableChecks, telemetryReporter, notBinaryFilePredicate,
+      shouldAnalyzeAllFiles);
     durationStatistics.timed("analyzerTotal" + DurationStatistics.SUFFIX_GENERAL, () -> analyzer.analyzeFiles(inputFiles));
     logCheckBasedStatistics(suitableChecks);
   }
@@ -240,6 +243,7 @@ public class TextAndSecretsSensor implements Sensor {
 
   private void initialize(SensorContext sensorContext) {
     durationStatistics = new DurationStatistics(sensorContext.config());
+    telemetryReporter = new TelemetryReporter(sensorContext);
     initializeParallelizationManager(sensorContext);
     initializeGitService(sensorContext);
     initializeOptionalConfigValue(sensorContext, REGEX_MATCH_TIMEOUT_KEY, RegexMatchingManager::setTimeoutMs);
@@ -329,14 +333,17 @@ public class TextAndSecretsSensor implements Sensor {
     // nothing to do here for this class
   }
 
-  private void logGeneralStatistics() {
+  private void processMetrics() {
     durationStatistics.log();
     if (gitTrackedFilePredicate != null) {
       gitTrackedFilePredicate.logSummary();
     }
+    telemetryReporter.reportTelemetry();
   }
 
   private void cleanUp() {
+    durationStatistics = null;
+    telemetryReporter = null;
     parallelizationManager.shutdown();
     RegexMatchingManager.shutdown();
     try {

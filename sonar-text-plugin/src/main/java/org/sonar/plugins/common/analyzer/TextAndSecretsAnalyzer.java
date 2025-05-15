@@ -27,6 +27,7 @@ import org.sonar.plugins.common.DurationStatistics;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.common.NotBinaryFilePredicate;
 import org.sonar.plugins.common.TextAndSecretsSensor;
+import org.sonar.plugins.common.telemetry.TelemetryReporter;
 import org.sonar.plugins.common.thread.ParallelizationManager;
 import org.sonar.plugins.secrets.AbstractBinaryFileCheck;
 
@@ -42,9 +43,10 @@ public final class TextAndSecretsAnalyzer extends Analyzer {
     ParallelizationManager parallelizationManager,
     DurationStatistics durationStatistics,
     List<Check> suitableChecks,
+    TelemetryReporter telemetryReporter,
     NotBinaryFilePredicate notBinaryFilePredicate,
     boolean analyzeAllFilesMode) {
-    super(sensorContext, parallelizationManager, durationStatistics, suitableChecks, ANALYSIS_NAME);
+    super(sensorContext, parallelizationManager, durationStatistics, suitableChecks, ANALYSIS_NAME, telemetryReporter);
     this.notBinaryFilePredicate = notBinaryFilePredicate;
     this.analyzeAllFilesMode = analyzeAllFilesMode;
   }

@@ -57,10 +57,14 @@ import static org.mockito.Mockito.when;
 
 public class TestUtils {
 
-  public static final Version LATEST_SQ_VERSION = Version.create(10, 6);
-  public static final SonarRuntime SONARLINT_RUNTIME = SonarRuntimeImpl.forSonarLint(LATEST_SQ_VERSION);
-  public static final SonarRuntime SONARQUBE_RUNTIME = SonarRuntimeImpl.forSonarQube(LATEST_SQ_VERSION, SonarQubeSide.SERVER, SonarEdition.ENTERPRISE);
-  public static final SonarRuntime SONARCLOUD_RUNTIME = SonarRuntimeImpl.forSonarQube(LATEST_SQ_VERSION, SonarQubeSide.SERVER, SonarEdition.SONARCLOUD);
+  public static final Version LATEST_API_VERSION = Version.create(12, 0);
+  public static final SonarRuntime SONARLINT_RUNTIME = SonarRuntimeImpl.forSonarLint(LATEST_API_VERSION);
+  public static final SonarRuntime SONARQUBE_RUNTIME = SonarRuntimeImpl.forSonarQube(LATEST_API_VERSION, SonarQubeSide.SERVER, SonarEdition.ENTERPRISE);
+  public static final SonarRuntime SONARCLOUD_RUNTIME = SonarRuntimeImpl.forSonarQube(LATEST_API_VERSION, SonarQubeSide.SERVER, SonarEdition.SONARCLOUD);
+  public static final SonarRuntime SONARQUBE_RUNTIME_WITHOUT_TELEMETRY_SUPPORT = SonarRuntimeImpl.forSonarQube(Version.create(10, 8), SonarQubeSide.SERVER,
+    SonarEdition.ENTERPRISE);
+  public static final SonarRuntime SONARQUBE_RUNTIME_WITHOUT_HIDDEN_FILES_SUPPORT = SonarRuntimeImpl.forSonarQube(Version.create(11, 4), SonarQubeSide.SERVER,
+    SonarEdition.ENTERPRISE);
 
   public static List<String> analyze(Check check, String fileContent) throws IOException {
     return analyze(check, inputFile(fileContent));

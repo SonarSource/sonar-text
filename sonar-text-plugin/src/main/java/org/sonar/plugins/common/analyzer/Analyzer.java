@@ -23,33 +23,42 @@ import java.util.Objects;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonar.api.batch.fs.IndexedFile;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.api.utils.Version;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.DurationStatistics;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.common.MultiFileProgressReport;
+import org.sonar.plugins.common.telemetry.TelemetryReporter;
 import org.sonar.plugins.common.thread.ParallelizationManager;
 
 public class Analyzer {
+  public static final Version HIDDEN_FILES_SUPPORTED_API_VERSION = Version.create(12, 0);
+  public static final String ANALYZED_HIDDEN_FILES_TELEMETRY_KEY = "analyzed_hidden_files_count";
   private static final Logger LOG = LoggerFactory.getLogger(Analyzer.class);
+
   private final SensorContext sensorContext;
   private final ParallelizationManager parallelizationManager;
   private final DurationStatistics durationStatistics;
   private final List<Check> suitableChecks;
   private final String analysisName;
+  private final TelemetryReporter telemetryReporter;
 
   protected Analyzer(
     SensorContext sensorContext,
     ParallelizationManager parallelizationManager,
     DurationStatistics durationStatistics,
     List<Check> suitableChecks,
-    String analysisName) {
+    String analysisName,
+    TelemetryReporter telemetryReporter) {
     this.sensorContext = sensorContext;
     this.parallelizationManager = parallelizationManager;
     this.durationStatistics = durationStatistics;
     this.suitableChecks = suitableChecks;
     this.analysisName = analysisName;
+    this.telemetryReporter = telemetryReporter;
   }
 
   public void analyzeFiles(List<InputFile> inputFiles) {
@@ -108,6 +117,15 @@ public class Analyzer {
       } else {
         progressReport.stop();
       }
+    }
+    sendAnalyzedHiddenFilesTelemetry(analyzableFiles);
+  }
+
+  private void sendAnalyzedHiddenFilesTelemetry(List<InputFileContext> analyzedFiles) {
+    var runtimeVersion = sensorContext.runtime().getApiVersion();
+    if (runtimeVersion.isGreaterThanOrEqual(HIDDEN_FILES_SUPPORTED_API_VERSION)) {
+      var hiddenFilesCount = analyzedFiles.stream().map(InputFileContext::getInputFile).filter(IndexedFile::isHidden).count();
+      telemetryReporter.addNumericTelemetry(ANALYZED_HIDDEN_FILES_TELEMETRY_KEY, (int) hiddenFilesCount);
     }
   }
 

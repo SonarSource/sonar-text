@@ -51,7 +51,9 @@ import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.check.Rule;
+import org.sonar.plugins.common.analyzer.Analyzer;
 import org.sonar.plugins.common.git.GitService;
+import org.sonar.plugins.common.telemetry.TelemetryReporter;
 import org.sonar.plugins.secrets.AbstractBinaryFileCheck;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
@@ -64,13 +66,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonar.plugins.common.TestUtils.SONARCLOUD_RUNTIME;
 import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME;
+import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME_WITHOUT_HIDDEN_FILES_SUPPORT;
 import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.inputFileFromPath;
@@ -1028,6 +1033,64 @@ public abstract class AbstractTextAndSecretsSensorTest {
     }
 
     verify(binaryFileCheck, times(wantedInitialization)).initialize(any(), any());
+  }
+
+  @Test
+  void shouldSendHiddenFileTelemetryWhenRuntimeSupportsIt() {
+    var check = new ReportIssueAtLineOneCheck();
+    var binaryCheck = new TestBinaryFileCheck();
+    var context = spy(sensorContext(check, binaryCheck));
+    context.setRuntime(SONARQUBE_RUNTIME);
+    var sensor = sensor(check, binaryCheck);
+
+    var hiddenFile = spy(inputFile(Path.of(".env"), "{}", "secrets"));
+    when(hiddenFile.isHidden()).thenReturn(true);
+    var hiddenBinaryFile = spy(inputFile(Path.of(".keystore"), SENSITIVE_BIDI_CHARS));
+    when(hiddenBinaryFile.isHidden()).thenReturn(true);
+    analyse(sensor, context,
+      inputFile(Path.of("a.txt"), "{}", "secrets"),
+      hiddenFile,
+      hiddenBinaryFile);
+
+    var telemetryKey = TelemetryReporter.KEY_PREFIX + Analyzer.ANALYZED_HIDDEN_FILES_TELEMETRY_KEY;
+    var expectedHiddenFilesCount = isPublicSensor() ? "1" : "2";
+    verify(context).addTelemetryProperty(telemetryKey, expectedHiddenFilesCount);
+  }
+
+  @Test
+  void shouldSendHiddenFileTelemetryWhenRuntimeSupportsItAndThereIsNoHiddenFile() {
+    var check = new ReportIssueAtLineOneCheck();
+    var binaryCheck = new TestBinaryFileCheck();
+    var context = spy(sensorContext(check, binaryCheck));
+    context.setRuntime(SONARQUBE_RUNTIME);
+    var sensor = sensor(check, binaryCheck);
+
+    analyse(sensor, context, inputFile(Path.of("a.txt"), "{}", "secrets"));
+
+    var telemetryKey = TelemetryReporter.KEY_PREFIX + Analyzer.ANALYZED_HIDDEN_FILES_TELEMETRY_KEY;
+    verify(context).addTelemetryProperty(telemetryKey, "0");
+  }
+
+  @Test
+  void shouldNotSendHiddenFileTelemetryWhenRuntimeDoesNotSupportIt() {
+    var check = new ReportIssueAtLineOneCheck();
+    var binaryCheck = new TestBinaryFileCheck();
+    var context = spy(sensorContext(check, binaryCheck));
+    context.setRuntime(SONARQUBE_RUNTIME_WITHOUT_HIDDEN_FILES_SUPPORT);
+    var sensor = sensor(check, binaryCheck);
+
+    var hiddenFile = spy(inputFile(Path.of(".env"), "{}", "secrets"));
+    when(hiddenFile.isHidden()).thenReturn(true);
+    var hiddenBinaryFile = spy(inputFile(Path.of(".keystore"), SENSITIVE_BIDI_CHARS));
+    when(hiddenBinaryFile.isHidden()).thenReturn(true);
+    analyse(sensor, context,
+      inputFile(Path.of("a.txt"), "{}", "secrets"),
+      hiddenFile,
+      hiddenBinaryFile);
+
+    var telemetryKey = TelemetryReporter.KEY_PREFIX + Analyzer.ANALYZED_HIDDEN_FILES_TELEMETRY_KEY;
+    verify(hiddenFile, never()).isHidden();
+    verify(context, never()).addTelemetryProperty(eq(telemetryKey), any());
   }
 
   protected void assertCorrectLogsForTextAndSecretsAnalysis(List<String> logs, int numberOfAnalyzedFiles, String... additionalLogs) {
