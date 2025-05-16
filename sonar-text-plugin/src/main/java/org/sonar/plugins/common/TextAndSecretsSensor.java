@@ -26,12 +26,13 @@ import org.slf4j.LoggerFactory;
 import org.sonar.api.SonarEdition;
 import org.sonar.api.SonarProduct;
 import org.sonar.api.batch.fs.FilePredicate;
-import org.sonar.api.batch.fs.FilePredicates;
+import org.sonar.api.batch.fs.IndexedFile;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
+import org.sonar.plugins.common.analyzer.Analyzer;
 import org.sonar.plugins.common.analyzer.TextAndSecretsAnalyzer;
 import org.sonar.plugins.common.git.CachingGitService;
 import org.sonar.plugins.common.git.GitCliAndJGitService;
@@ -164,14 +165,19 @@ public class TextAndSecretsSensor implements Sensor {
         TEXT_INCLUSIONS_KEY);
       return LANGUAGE_FILE_PREDICATE;
     }
-    FilePredicates predicates = sensorContext.fileSystem().predicates();
+
     // Retrieve list of files to analyse using the right FilePredicate
-    var pathPatternPredicate = includedPathPatternsFilePredicate(sensorContext);
+    var includedFilesPredicate = includedPathPatternsFilePredicate(sensorContext);
+
+    var predicates = sensorContext.fileSystem().predicates();
+    if (shouldAnalyzeAllTrackedHiddenFiles(sensorContext)) {
+      includedFilesPredicate = predicates.or(IndexedFile::isHidden, includedFilesPredicate);
+    }
 
     LOG.info("Retrieving language associated files and files included via \"{}\" that are tracked by git", TEXT_INCLUSIONS_KEY);
     return predicates.or(
       LANGUAGE_FILE_PREDICATE,
-      predicates.and(pathPatternPredicate, gitTrackedFilePredicate));
+      predicates.and(includedFilesPredicate, gitTrackedFilePredicate));
   }
 
   /**
@@ -200,6 +206,10 @@ public class TextAndSecretsSensor implements Sensor {
       pathPatternsPredicates.add(filePredicate);
     }
     return sensorContext.fileSystem().predicates().or(pathPatternsPredicates);
+  }
+
+  private static boolean shouldAnalyzeAllTrackedHiddenFiles(SensorContext sensorContext) {
+    return sensorContext.runtime().getApiVersion().isGreaterThanOrEqual(Analyzer.HIDDEN_FILES_SUPPORTED_API_VERSION);
   }
 
   protected static boolean enableAutomaticTestFileDetection(SensorContext sensorContext) {

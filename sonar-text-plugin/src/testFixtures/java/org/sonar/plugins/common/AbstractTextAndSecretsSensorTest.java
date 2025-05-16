@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -1036,6 +1037,93 @@ public abstract class AbstractTextAndSecretsSensorTest {
   }
 
   @Test
+  void shouldAnalyzeAllTrackedHiddenFiles() {
+    Check binaryFileCheck = new TestBinaryFileCheck();
+    Check reportIssueAtLineOneCheck = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(binaryFileCheck, reportIssueAtLineOneCheck);
+    context.setRuntime(SONARQUBE_RUNTIME);
+
+    var sensor = spy(sensor(binaryFileCheck, reportIssueAtLineOneCheck));
+    var gitService = mock(GitService.class);
+    when(gitService.retrieveUntrackedFileNames())
+      .thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of(".untracked", ".hidden/untracked.jks")));
+    when(sensor.createGitService(any())).thenReturn(gitService);
+
+    var hiddenFile = hiddenInputFile(Path.of(".a"), "{}");
+    var hiddenDirectoryFile = hiddenInputFile(Path.of(".hidden", "b.txt"), "{}");
+    var untrackedHiddenFile = hiddenInputFile(Path.of(".untracked"), "{}");
+    var hiddenBinaryFile = hiddenInputFile(Path.of(".keystore"), SENSITIVE_BIDI_CHARS);
+    var untrackedHiddenBinaryFile = hiddenInputFile(Path.of(".hidden", "untracked.jks"), SENSITIVE_BIDI_CHARS);
+
+    analyse(sensor, context, hiddenFile, untrackedHiddenFile, hiddenDirectoryFile, hiddenBinaryFile, untrackedHiddenBinaryFile);
+
+    var expectedIssues = List.of(
+      "text:IssueAtLineOne [1:0-1:2] testIssue",
+      "text:IssueAtLineOne [1:0-1:2] testIssue");
+
+    if (!isPublicSensor()) {
+      expectedIssues = new ArrayList<>(expectedIssues);
+      expectedIssues.add("secrets:BinaryCheck [] binaryIssue");
+      // Binary files are analyzed based on extensions and do not have the file inclusions logic
+      // As long as the hidden keystore file is picked up by the sensor, it will be analyzed by the binary analyzer
+      // So ".hidden/untracked.jks" is analyzed
+      expectedIssues.add("secrets:BinaryCheck [] binaryIssue");
+    }
+
+    assertThat(asString(context.allIssues())).containsExactly(expectedIssues.toArray(new String[0]));
+    assertCorrectLogsForTextAndSecretsAnalysis(logTester.logs(), 2);
+  }
+
+  @Test
+  void shouldNotAnalyzeTrackedHiddenBinaryFilesInTextAndSecretsAnalysis() {
+    Check reportIssueAtLineOneCheck = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(reportIssueAtLineOneCheck);
+    context.setRuntime(SONARQUBE_RUNTIME);
+
+    var sensor = spy(sensor(reportIssueAtLineOneCheck));
+    var gitService = mock(GitService.class);
+    when(gitService.retrieveUntrackedFileNames())
+      .thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of()));
+    when(sensor.createGitService(any())).thenReturn(gitService);
+
+    var hiddenBinaryFile = hiddenInputFile(Path.of(".keystore"), SENSITIVE_BIDI_CHARS);
+
+    analyse(sensor, context, hiddenBinaryFile);
+
+    assertThat(asString(context.allIssues())).isEmpty();
+    assertCorrectLogsForTextAndSecretsAnalysis(logTester.logs(), 0);
+  }
+
+  @Test
+  void shouldNotAnalyzeTrackedHiddenFilesWhenRuntimeDoesNotSupportIt() {
+    Check binaryFileCheck = new TestBinaryFileCheck();
+    Check reportIssueAtLineOneCheck = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(binaryFileCheck, reportIssueAtLineOneCheck);
+    context.setRuntime(SONARQUBE_RUNTIME_WITHOUT_HIDDEN_FILES_SUPPORT);
+
+    var sensor = spy(sensor(binaryFileCheck, reportIssueAtLineOneCheck));
+    var gitService = mock(GitService.class);
+    when(gitService.retrieveUntrackedFileNames())
+      .thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of()));
+    when(sensor.createGitService(any())).thenReturn(gitService);
+
+    var hiddenFile = hiddenInputFile(Path.of(".a"), "{}");
+    var hiddenDirectoryFile = hiddenInputFile(Path.of(".hidden", "b.txt"), "{}");
+    var hiddenBinaryFile = hiddenInputFile(Path.of(".keystore"), SENSITIVE_BIDI_CHARS);
+
+    analyse(sensor, context, hiddenFile, hiddenDirectoryFile, hiddenBinaryFile);
+
+    // Binary files are analyzed based on extensions and do not have the file inclusions logic
+    // As long as the hidden keystore file is picked up by the sensor, it will be analyzed by the binary analyzer
+    List<String> expectedIssues = isPublicSensor() ? List.of() : List.of("secrets:BinaryCheck [] binaryIssue");
+
+    assertThat(asString(context.allIssues())).contains(expectedIssues.toArray(new String[0]));
+    verify(hiddenFile, never()).isHidden();
+    verify(hiddenDirectoryFile, never()).isHidden();
+    verify(hiddenBinaryFile, never()).isHidden();
+  }
+
+  @Test
   void shouldSendHiddenFileTelemetryWhenRuntimeSupportsIt() {
     var check = new ReportIssueAtLineOneCheck();
     var binaryCheck = new TestBinaryFileCheck();
@@ -1043,10 +1131,8 @@ public abstract class AbstractTextAndSecretsSensorTest {
     context.setRuntime(SONARQUBE_RUNTIME);
     var sensor = sensor(check, binaryCheck);
 
-    var hiddenFile = spy(inputFile(Path.of(".env"), "{}", "secrets"));
-    when(hiddenFile.isHidden()).thenReturn(true);
-    var hiddenBinaryFile = spy(inputFile(Path.of(".keystore"), SENSITIVE_BIDI_CHARS));
-    when(hiddenBinaryFile.isHidden()).thenReturn(true);
+    var hiddenFile = hiddenInputFile(Path.of(".env"), "{}", "secrets");
+    var hiddenBinaryFile = hiddenInputFile(Path.of(".keystore"), SENSITIVE_BIDI_CHARS);
     analyse(sensor, context,
       inputFile(Path.of("a.txt"), "{}", "secrets"),
       hiddenFile,
@@ -1079,10 +1165,8 @@ public abstract class AbstractTextAndSecretsSensorTest {
     context.setRuntime(SONARQUBE_RUNTIME_WITHOUT_HIDDEN_FILES_SUPPORT);
     var sensor = sensor(check, binaryCheck);
 
-    var hiddenFile = spy(inputFile(Path.of(".env"), "{}", "secrets"));
-    when(hiddenFile.isHidden()).thenReturn(true);
-    var hiddenBinaryFile = spy(inputFile(Path.of(".keystore"), SENSITIVE_BIDI_CHARS));
-    when(hiddenBinaryFile.isHidden()).thenReturn(true);
+    var hiddenFile = hiddenInputFile(Path.of(".env"), "{}", "secrets");
+    var hiddenBinaryFile = hiddenInputFile(Path.of(".keystore"), SENSITIVE_BIDI_CHARS);
     analyse(sensor, context,
       inputFile(Path.of("a.txt"), "{}", "secrets"),
       hiddenFile,
@@ -1138,5 +1222,15 @@ public abstract class AbstractTextAndSecretsSensorTest {
 
   private boolean isPublicSensor() {
     return this.getClass().getName().startsWith("org");
+  }
+
+  private InputFile hiddenInputFile(Path path, @Nullable String content, @Nullable String language) {
+    var inputFile = spy(inputFile(path, content, language));
+    when(inputFile.isHidden()).thenReturn(true);
+    return inputFile;
+  }
+
+  private InputFile hiddenInputFile(Path path, @Nullable String content) {
+    return hiddenInputFile(path, content, null);
   }
 }
