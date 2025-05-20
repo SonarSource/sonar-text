@@ -17,6 +17,7 @@
 package org.sonar.plugins.common.telemetry;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.utils.Version;
@@ -28,27 +29,39 @@ public class TelemetryReporter {
   private static final Version TELEMETRY_SUPPORTED_API_VERSION = Version.create(10, 9);
 
   private final SensorContext sensorContext;
-  private final Map<String, Integer> numericTelemetry;
+  private final Map<String, Integer> numericMeasures;
+  private long startRecordingTimeMs;
 
   public TelemetryReporter(SensorContext sensorContext) {
     this.sensorContext = sensorContext;
-    this.numericTelemetry = new HashMap<>();
+    this.numericMeasures = new HashMap<>();
   }
 
-  public void addNumericTelemetry(String key, int value) {
+  public void startRecordingSensorTime() {
+    startRecordingTimeMs = System.currentTimeMillis();
+  }
+
+  public void endRecordingSensorTime(String suffix) {
+    long endRecordingTimeMs = System.currentTimeMillis();
+    long durationMs = endRecordingTimeMs - startRecordingTimeMs;
+    var key = "sensor_time_ms_" + suffix.toLowerCase(Locale.ROOT);
+    addNumericMeasure(key, (int) durationMs);
+  }
+
+  public void addNumericMeasure(String key, int value) {
     if (value < 0) {
       return;
     }
     key = KEY_PREFIX + key;
-    numericTelemetry.merge(key, value, Integer::sum);
+    numericMeasures.merge(key, value, Integer::sum);
   }
 
-  public void reportTelemetry() {
+  public void report() {
     var isTelemetrySupported = sensorContext.runtime().getApiVersion().isGreaterThanOrEqual(TELEMETRY_SUPPORTED_API_VERSION);
     if (isTelemetrySupported) {
       // addTelemetryProperty is added in 10.9:
       // https://github.com/SonarSource/sonar-plugin-api/releases/tag/10.9.0.2362
-      numericTelemetry.forEach((key, numericValue) -> sensorContext.addTelemetryProperty(key, numericValue.toString()));
+      numericMeasures.forEach((key, numericValue) -> sensorContext.addTelemetryProperty(key, numericValue.toString()));
     }
   }
 }

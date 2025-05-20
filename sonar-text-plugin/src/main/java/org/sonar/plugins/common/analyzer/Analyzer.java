@@ -36,7 +36,8 @@ import org.sonar.plugins.common.thread.ParallelizationManager;
 
 public class Analyzer {
   public static final Version HIDDEN_FILES_SUPPORTED_API_VERSION = Version.create(12, 0);
-  public static final String ANALYZED_HIDDEN_FILES_TELEMETRY_KEY = "analyzed_hidden_files_count";
+  public static final String ANALYZED_FILES_MEASURE_KEY = "analyzed_files_count";
+  public static final String ANALYZED_HIDDEN_FILES_MEASURE_KEY = "analyzed_hidden_files_count";
   private static final Logger LOG = LoggerFactory.getLogger(Analyzer.class);
 
   private final SensorContext sensorContext;
@@ -118,14 +119,15 @@ public class Analyzer {
         progressReport.stop();
       }
     }
-    sendAnalyzedHiddenFilesTelemetry(analyzableFiles);
+    processFileTelemetryMeasures(analyzableFiles);
   }
 
-  private void sendAnalyzedHiddenFilesTelemetry(List<InputFileContext> analyzedFiles) {
+  private void processFileTelemetryMeasures(List<InputFileContext> analyzedFiles) {
+    telemetryReporter.addNumericMeasure(ANALYZED_FILES_MEASURE_KEY, analyzedFiles.size());
     var runtimeVersion = sensorContext.runtime().getApiVersion();
     if (runtimeVersion.isGreaterThanOrEqual(HIDDEN_FILES_SUPPORTED_API_VERSION)) {
       var hiddenFilesCount = analyzedFiles.stream().map(InputFileContext::getInputFile).filter(IndexedFile::isHidden).count();
-      telemetryReporter.addNumericTelemetry(ANALYZED_HIDDEN_FILES_TELEMETRY_KEY, (int) hiddenFilesCount);
+      telemetryReporter.addNumericMeasure(ANALYZED_HIDDEN_FILES_MEASURE_KEY, (int) hiddenFilesCount);
     }
   }
 

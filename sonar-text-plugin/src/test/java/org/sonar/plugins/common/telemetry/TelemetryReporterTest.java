@@ -41,11 +41,11 @@ class TelemetryReporterTest {
   void shouldReportNumericTelemetry(SonarRuntime runtime) {
     var context = spy(SensorContextTester.create(Path.of(".")).setRuntime(runtime));
     var sensorTelemetry = new TelemetryReporter(context);
-    sensorTelemetry.addNumericTelemetry("key1", 5);
-    sensorTelemetry.addNumericTelemetry("key1", 3);
-    sensorTelemetry.addNumericTelemetry("key2", 1);
-    sensorTelemetry.addNumericTelemetry("key3", 0);
-    sensorTelemetry.reportTelemetry();
+    sensorTelemetry.addNumericMeasure("key1", 5);
+    sensorTelemetry.addNumericMeasure("key1", 3);
+    sensorTelemetry.addNumericMeasure("key2", 1);
+    sensorTelemetry.addNumericMeasure("key3", 0);
+    sensorTelemetry.report();
 
     verify(context).addTelemetryProperty("text.key1", "8");
     verify(context).addTelemetryProperty("text.key2", "1");
@@ -60,10 +60,10 @@ class TelemetryReporterTest {
   void shouldNotReportNumericTelemetryWhenValueIsNegative() {
     var context = spy(SensorContextTester.create(Path.of(".")).setRuntime(SONARQUBE_RUNTIME));
     var sensorTelemetry = new TelemetryReporter(context);
-    sensorTelemetry.addNumericTelemetry("key1", -2);
-    sensorTelemetry.addNumericTelemetry("key2", 1);
-    sensorTelemetry.addNumericTelemetry("key2", -1);
-    sensorTelemetry.reportTelemetry();
+    sensorTelemetry.addNumericMeasure("key1", -2);
+    sensorTelemetry.addNumericMeasure("key2", 1);
+    sensorTelemetry.addNumericMeasure("key2", -1);
+    sensorTelemetry.report();
 
     verify(context, never()).addTelemetryProperty(eq("text.key1"), any());
     verify(context).addTelemetryProperty("text.key2", "1");
@@ -73,8 +73,8 @@ class TelemetryReporterTest {
   void shouldNotReportNumericTelemetryWhenTelemetryNotSupported() {
     var context = spy(SensorContextTester.create(Path.of(".")).setRuntime(SONARQUBE_RUNTIME_WITHOUT_TELEMETRY_SUPPORT));
     var sensorTelemetry = new TelemetryReporter(context);
-    sensorTelemetry.addNumericTelemetry("key1", 5);
-    sensorTelemetry.reportTelemetry();
+    sensorTelemetry.addNumericMeasure("key1", 5);
+    sensorTelemetry.report();
 
     verify(context, never()).addTelemetryProperty(any(), any());
   }

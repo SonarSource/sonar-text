@@ -254,6 +254,7 @@ public class TextAndSecretsSensor implements Sensor {
   private void initialize(SensorContext sensorContext) {
     durationStatistics = new DurationStatistics(sensorContext.config());
     telemetryReporter = new TelemetryReporter(sensorContext);
+    telemetryReporter.startRecordingSensorTime();
     initializeParallelizationManager(sensorContext);
     initializeGitService(sensorContext);
     initializeOptionalConfigValue(sensorContext, REGEX_MATCH_TIMEOUT_KEY, RegexMatchingManager::setTimeoutMs);
@@ -344,11 +345,16 @@ public class TextAndSecretsSensor implements Sensor {
   }
 
   private void processMetrics() {
+    telemetryReporter.endRecordingSensorTime(getEditionName());
+    telemetryReporter.report();
     durationStatistics.log();
     if (gitTrackedFilePredicate != null) {
       gitTrackedFilePredicate.logSummary();
     }
-    telemetryReporter.reportTelemetry();
+  }
+
+  protected String getEditionName() {
+    return SonarEdition.COMMUNITY.getLabel();
   }
 
   private void cleanUp() {
@@ -382,5 +388,4 @@ public class TextAndSecretsSensor implements Sensor {
   private static boolean shouldAnalyzeAllFiles(SensorContext sensorContext) {
     return isSonarLintContext(sensorContext) || sensorContext.config().getBoolean(ANALYZE_ALL_FILES_KEY).orElse(false);
   }
-
 }
