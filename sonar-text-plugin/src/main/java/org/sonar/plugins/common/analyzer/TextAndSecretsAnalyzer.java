@@ -82,7 +82,7 @@ public final class TextAndSecretsAnalyzer extends Analyzer {
   private static boolean shouldBeAnalyzedWhitelistMode(InputFileContext inputFileContext) {
     boolean hasNonTextCharacters = inputFileContext.hasNonTextCharacters();
     if (hasNonTextCharacters) {
-      LOG.warn("The file '{}' contains binary data and will not be analyzed.", inputFileContext.getInputFile());
+      LOG.warn("The file '{}' contains binary data and will not be included in the text and secrets analysis.", inputFileContext.getInputFile());
       LOG.warn("Please check this file and/or remove the extension from the '{}' property.", TextAndSecretsSensor.TEXT_INCLUSIONS_KEY);
     }
     return !hasNonTextCharacters;

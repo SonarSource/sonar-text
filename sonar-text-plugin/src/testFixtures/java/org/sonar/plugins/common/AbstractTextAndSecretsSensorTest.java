@@ -335,9 +335,9 @@ public abstract class AbstractTextAndSecretsSensorTest {
       inputFile(Path.of("Foo.csv"), SENSITIVE_BIDI_CHARS, null),
       inputFile(Path.of("Foo.nope"), "abc", null));
     assertCorrectLogsForTextAndSecretsAnalysis(logTester.logs(), 0,
-      "The file 'Foo.txt' contains binary data and will not be analyzed.",
+      "The file 'Foo.txt' contains binary data and will not be included in the text and secrets analysis.",
       "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.",
-      "The file 'Foo.csv' contains binary data and will not be analyzed.",
+      "The file 'Foo.csv' contains binary data and will not be included in the text and secrets analysis.",
       "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.");
   }
 
@@ -370,7 +370,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
       inputFile(Path.of(".environment"), SENSITIVE_BIDI_CHARS, null),
       inputFile(Path.of("Foo.environment"), SENSITIVE_BIDI_CHARS, null));
     assertCorrectLogsForTextAndSecretsAnalysis(logTester.logs(), 0,
-      "The file '.env' contains binary data and will not be analyzed.",
+      "The file '.env' contains binary data and will not be included in the text and secrets analysis.",
       "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.");
   }
 
@@ -388,7 +388,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
       inputFile(Path.of(".aws/configuration"), SENSITIVE_BIDI_CHARS, null),
       inputFile(Path.of("config"), SENSITIVE_BIDI_CHARS, null));
     assertCorrectLogsForTextAndSecretsAnalysis(logTester.logs(), 0,
-      "The file '.aws/config' contains binary data and will not be analyzed.",
+      "The file '.aws/config' contains binary data and will not be included in the text and secrets analysis.",
       "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.");
   }
 
@@ -417,17 +417,17 @@ public abstract class AbstractTextAndSecretsSensorTest {
       inputFile(Path.of("foo", "bar"), SENSITIVE_BIDI_CHARS, null));
     assertThat(logTester.logs()).contains(
       "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.",
-      "The file 'config/some.conf' contains binary data and will not be analyzed.",
-      "The file '.aws/config' contains binary data and will not be analyzed.",
-      "The file 'script/start.sh' contains binary data and will not be analyzed.",
-      "The file 'my.pem' contains binary data and will not be analyzed.",
-      "The file '.env' contains binary data and will not be analyzed.",
-      "The file 'win.ps1' contains binary data and will not be analyzed.",
-      "The file 'run.bash' contains binary data and will not be analyzed.",
-      "The file 'ccc.config' contains binary data and will not be analyzed.",
-      "The file 'a.zsh' contains binary data and will not be analyzed.",
-      "The file 'b.ksh' contains binary data and will not be analyzed.",
-      "The file 'gradle.properties' contains binary data and will not be analyzed.");
+      "The file 'config/some.conf' contains binary data and will not be included in the text and secrets analysis.",
+      "The file '.aws/config' contains binary data and will not be included in the text and secrets analysis.",
+      "The file 'script/start.sh' contains binary data and will not be included in the text and secrets analysis.",
+      "The file 'my.pem' contains binary data and will not be included in the text and secrets analysis.",
+      "The file '.env' contains binary data and will not be included in the text and secrets analysis.",
+      "The file 'win.ps1' contains binary data and will not be included in the text and secrets analysis.",
+      "The file 'run.bash' contains binary data and will not be included in the text and secrets analysis.",
+      "The file 'ccc.config' contains binary data and will not be included in the text and secrets analysis.",
+      "The file 'a.zsh' contains binary data and will not be included in the text and secrets analysis.",
+      "The file 'b.ksh' contains binary data and will not be included in the text and secrets analysis.",
+      "The file 'gradle.properties' contains binary data and will not be included in the text and secrets analysis.");
   }
 
   @Test
@@ -437,7 +437,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     context.setRuntime(SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null));
     assertCorrectLogsForTextAndSecretsAnalysis(logTester.logs(), 0,
-      "The file 'Foo.txt' contains binary data and will not be analyzed.",
+      "The file 'Foo.txt' contains binary data and will not be included in the text and secrets analysis.",
       "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.");
   }
 
@@ -463,7 +463,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
       inputFile(Path.of("FileWithoutExtension"), SENSITIVE_BIDI_CHARS, null));
 
     assertCorrectLogsForTextAndSecretsAnalysis(logTester.logs(), 0,
-      "The file 'Foo.txt' contains binary data and will not be analyzed.",
+      "The file 'Foo.txt' contains binary data and will not be included in the text and secrets analysis.",
       "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.");
   }
 
