@@ -19,8 +19,8 @@ package org.sonar.plugins.secrets.api;
 import java.util.List;
 import java.util.function.Predicate;
 import org.sonar.plugins.common.Check;
-import org.sonar.plugins.common.DurationStatistics;
 import org.sonar.plugins.common.InputFileContext;
+import org.sonar.plugins.common.measures.DurationStatistics;
 
 /**
  * A base Check class for all checks that load specification from files.

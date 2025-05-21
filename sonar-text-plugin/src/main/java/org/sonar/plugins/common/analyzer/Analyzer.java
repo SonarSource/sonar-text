@@ -28,10 +28,11 @@ import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.utils.Version;
 import org.sonar.plugins.common.Check;
-import org.sonar.plugins.common.DurationStatistics;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.common.MultiFileProgressReport;
-import org.sonar.plugins.common.telemetry.TelemetryReporter;
+import org.sonar.plugins.common.measures.DurationStatistics;
+import org.sonar.plugins.common.measures.MemoryMonitor;
+import org.sonar.plugins.common.measures.TelemetryReporter;
 import org.sonar.plugins.common.thread.ParallelizationManager;
 
 public class Analyzer {
@@ -46,6 +47,7 @@ public class Analyzer {
   private final List<Check> suitableChecks;
   private final String analysisName;
   private final TelemetryReporter telemetryReporter;
+  private final MemoryMonitor memoryMonitor;
 
   protected Analyzer(
     SensorContext sensorContext,
@@ -53,13 +55,15 @@ public class Analyzer {
     DurationStatistics durationStatistics,
     List<Check> suitableChecks,
     String analysisName,
-    TelemetryReporter telemetryReporter) {
+    TelemetryReporter telemetryReporter,
+    MemoryMonitor memoryMonitor) {
     this.sensorContext = sensorContext;
     this.parallelizationManager = parallelizationManager;
     this.durationStatistics = durationStatistics;
     this.suitableChecks = suitableChecks;
     this.analysisName = analysisName;
     this.telemetryReporter = telemetryReporter;
+    this.memoryMonitor = memoryMonitor;
   }
 
   public void analyzeFiles(List<InputFile> inputFiles) {
@@ -71,6 +75,8 @@ public class Analyzer {
         .filter(this::shouldAnalyzeFile)
         .toList());
 
+    memoryMonitor.addRecord("After preparation of input files for the " + analysisName);
+
     if (analyzableFiles.isEmpty()) {
       LOG.info("There are no files to be analyzed for the {}", analysisName);
       return;
@@ -78,6 +84,7 @@ public class Analyzer {
     LOG.info("Starting the {}", analysisName);
 
     durationStatistics.timed("analyzingAllChecks" + DurationStatistics.SUFFIX_GENERAL, () -> analyzeAllFiles(analyzableFiles));
+    memoryMonitor.addRecord("After the " + analysisName);
   }
 
   /**

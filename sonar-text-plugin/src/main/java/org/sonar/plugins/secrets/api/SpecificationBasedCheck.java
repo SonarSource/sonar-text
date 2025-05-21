@@ -20,8 +20,8 @@ import java.util.List;
 import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonar.plugins.common.DurationStatistics;
 import org.sonar.plugins.common.InputFileContext;
+import org.sonar.plugins.common.measures.DurationStatistics;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 

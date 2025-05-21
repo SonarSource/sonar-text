@@ -23,11 +23,12 @@ import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.plugins.common.Check;
-import org.sonar.plugins.common.DurationStatistics;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.common.NotBinaryFilePredicate;
 import org.sonar.plugins.common.TextAndSecretsSensor;
-import org.sonar.plugins.common.telemetry.TelemetryReporter;
+import org.sonar.plugins.common.measures.DurationStatistics;
+import org.sonar.plugins.common.measures.MemoryMonitor;
+import org.sonar.plugins.common.measures.TelemetryReporter;
 import org.sonar.plugins.common.thread.ParallelizationManager;
 import org.sonar.plugins.secrets.AbstractBinaryFileCheck;
 
@@ -44,9 +45,10 @@ public final class TextAndSecretsAnalyzer extends Analyzer {
     DurationStatistics durationStatistics,
     List<Check> suitableChecks,
     TelemetryReporter telemetryReporter,
+    MemoryMonitor memoryMonitor,
     NotBinaryFilePredicate notBinaryFilePredicate,
     boolean analyzeAllFilesMode) {
-    super(sensorContext, parallelizationManager, durationStatistics, suitableChecks, ANALYSIS_NAME, telemetryReporter);
+    super(sensorContext, parallelizationManager, durationStatistics, suitableChecks, ANALYSIS_NAME, telemetryReporter, memoryMonitor);
     this.notBinaryFilePredicate = notBinaryFilePredicate;
     this.analyzeAllFilesMode = analyzeAllFilesMode;
   }

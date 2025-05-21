@@ -39,7 +39,9 @@ import org.sonar.plugins.common.git.GitCliAndJGitService;
 import org.sonar.plugins.common.git.GitService;
 import org.sonar.plugins.common.git.GitTrackedFilePredicate;
 import org.sonar.plugins.common.git.LazyGitService;
-import org.sonar.plugins.common.telemetry.TelemetryReporter;
+import org.sonar.plugins.common.measures.DurationStatistics;
+import org.sonar.plugins.common.measures.MemoryMonitor;
+import org.sonar.plugins.common.measures.TelemetryReporter;
 import org.sonar.plugins.common.thread.ParallelizationManager;
 import org.sonar.plugins.common.warnings.AnalysisWarningsWrapper;
 import org.sonar.plugins.common.warnings.DefaultAnalysisWarningsWrapper;
@@ -78,6 +80,7 @@ public class TextAndSecretsSensor implements Sensor {
   protected final AnalysisWarningsWrapper analysisWarnings;
   protected DurationStatistics durationStatistics;
   protected TelemetryReporter telemetryReporter;
+  protected MemoryMonitor memoryMonitor;
   protected ParallelizationManager parallelizationManager;
   protected GitService gitService;
   private GitTrackedFilePredicate gitTrackedFilePredicate;
@@ -138,7 +141,7 @@ public class TextAndSecretsSensor implements Sensor {
 
     List<InputFile> inputFiles = getInputFiles(sensorContext, filePredicate);
 
-    var analyzer = new TextAndSecretsAnalyzer(sensorContext, parallelizationManager, durationStatistics, suitableChecks, telemetryReporter, notBinaryFilePredicate,
+    var analyzer = new TextAndSecretsAnalyzer(sensorContext, parallelizationManager, durationStatistics, suitableChecks, telemetryReporter, memoryMonitor, notBinaryFilePredicate,
       shouldAnalyzeAllFiles);
     durationStatistics.timed("analyzerTotal" + DurationStatistics.SUFFIX_GENERAL, () -> analyzer.analyzeFiles(inputFiles));
     logCheckBasedStatistics(suitableChecks);
@@ -252,6 +255,7 @@ public class TextAndSecretsSensor implements Sensor {
   }
 
   private void initialize(SensorContext sensorContext) {
+    memoryMonitor = new MemoryMonitor(sensorContext.config());
     durationStatistics = new DurationStatistics(sensorContext.config());
     telemetryReporter = new TelemetryReporter(sensorContext);
     telemetryReporter.startRecordingSensorTime();
@@ -351,6 +355,8 @@ public class TextAndSecretsSensor implements Sensor {
     if (gitTrackedFilePredicate != null) {
       gitTrackedFilePredicate.logSummary();
     }
+    memoryMonitor.addRecord("End of the sensor");
+    memoryMonitor.logMemory();
   }
 
   protected String getEditionName() {
@@ -360,6 +366,8 @@ public class TextAndSecretsSensor implements Sensor {
   private void cleanUp() {
     durationStatistics = null;
     telemetryReporter = null;
+    memoryMonitor = null;
+    gitTrackedFilePredicate = null;
     parallelizationManager.shutdown();
     RegexMatchingManager.shutdown();
     try {
