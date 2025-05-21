@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.SonarEdition;
 import org.sonar.api.SonarProduct;
+import org.sonar.api.SonarRuntime;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.IndexedFile;
 import org.sonar.api.batch.fs.InputFile;
@@ -77,6 +78,7 @@ public class TextAndSecretsSensor implements Sensor {
 
   protected final CheckFactory checkFactory;
 
+  protected final SonarRuntime sonarRuntime;
   protected final AnalysisWarningsWrapper analysisWarnings;
   protected DurationStatistics durationStatistics;
   protected TelemetryReporter telemetryReporter;
@@ -85,11 +87,12 @@ public class TextAndSecretsSensor implements Sensor {
   protected GitService gitService;
   private GitTrackedFilePredicate gitTrackedFilePredicate;
 
-  public TextAndSecretsSensor(CheckFactory checkFactory) {
-    this(checkFactory, DefaultAnalysisWarningsWrapper.NOOP_ANALYSIS_WARNINGS);
+  public TextAndSecretsSensor(SonarRuntime sonarRuntime, CheckFactory checkFactory) {
+    this(sonarRuntime, checkFactory, DefaultAnalysisWarningsWrapper.NOOP_ANALYSIS_WARNINGS);
   }
 
-  public TextAndSecretsSensor(CheckFactory checkFactory, AnalysisWarningsWrapper analysisWarnings) {
+  public TextAndSecretsSensor(SonarRuntime sonarRuntime, CheckFactory checkFactory, AnalysisWarningsWrapper analysisWarnings) {
+    this.sonarRuntime = sonarRuntime;
     this.checkFactory = checkFactory;
     this.analysisWarnings = analysisWarnings;
   }
@@ -102,6 +105,13 @@ public class TextAndSecretsSensor implements Sensor {
       .processesFilesIndependently()
       // Using global because implemented ProjectSensor doesn't work with the LITS Plugin we use in IntegrationTest
       .global();
+    activateHiddenFilesProcessing(descriptor);
+  }
+
+  protected void activateHiddenFilesProcessing(SensorDescriptor descriptor) {
+    if (isHiddenFilesAnalysisSupported(sonarRuntime)) {
+      descriptor.processesHiddenFiles();
+    }
   }
 
   @Override
@@ -139,7 +149,9 @@ public class TextAndSecretsSensor implements Sensor {
     var notBinaryFilePredicate = notBinaryFilePredicate(sensorContext);
     var filePredicate = constructGeneralFilePredicate(sensorContext, notBinaryFilePredicate, shouldAnalyzeAllFiles);
 
-    List<InputFile> inputFiles = getInputFiles(sensorContext, filePredicate);
+    List<InputFile> inputFiles = durationStatistics.timed(
+      "applyFilePredicate" + DurationStatistics.SUFFIX_GENERAL,
+      () -> getInputFiles(sensorContext, filePredicate));
 
     var analyzer = new TextAndSecretsAnalyzer(sensorContext, parallelizationManager, durationStatistics, suitableChecks, telemetryReporter, memoryMonitor, notBinaryFilePredicate,
       shouldAnalyzeAllFiles);
@@ -173,7 +185,7 @@ public class TextAndSecretsSensor implements Sensor {
     var includedFilesPredicate = includedPathPatternsFilePredicate(sensorContext);
 
     var predicates = sensorContext.fileSystem().predicates();
-    if (shouldAnalyzeAllTrackedHiddenFiles(sensorContext)) {
+    if (isHiddenFilesAnalysisSupported(sensorContext.runtime())) {
       includedFilesPredicate = predicates.or(IndexedFile::isHidden, includedFilesPredicate);
     }
 
@@ -211,13 +223,15 @@ public class TextAndSecretsSensor implements Sensor {
     return sensorContext.fileSystem().predicates().or(pathPatternsPredicates);
   }
 
-  private static boolean shouldAnalyzeAllTrackedHiddenFiles(SensorContext sensorContext) {
-    return sensorContext.runtime().getApiVersion().isGreaterThanOrEqual(Analyzer.HIDDEN_FILES_SUPPORTED_API_VERSION);
+  private static boolean isHiddenFilesAnalysisSupported(SonarRuntime sonarRuntime) {
+    // Temporarily exclude SonarLint context, as it's breaking integration tests, where sonar-plugin-api is retrieved from the classpath, and
+    // not from the SQ-IDE library
+    return !isSonarLintContext(sonarRuntime) && sonarRuntime.getApiVersion().isGreaterThanOrEqual(Analyzer.HIDDEN_FILES_SUPPORTED_API_VERSION);
   }
 
   protected static boolean enableAutomaticTestFileDetection(SensorContext sensorContext) {
     var value = sensorContext.config().get(SONAR_TESTS_KEY).orElse("");
-    if (value.isBlank() && !isSonarLintContext(sensorContext)) {
+    if (value.isBlank() && !isSonarLintContext(sensorContext.runtime())) {
       var message = """
         The property "%s" is not set. To improve the analysis accuracy, we categorize a file as a test file if any of the following is true:
           * The filename starts with "test"
@@ -385,15 +399,15 @@ public class TextAndSecretsSensor implements Sensor {
     return sensorContext.config().getBoolean(INCLUSIONS_ACTIVATION_KEY).orElse(INCLUSIONS_ACTIVATION_DEFAULT_VALUE);
   }
 
-  private static boolean isSonarLintContext(SensorContext sensorContext) {
-    return sensorContext.runtime().getProduct() == SonarProduct.SONARLINT;
+  private static boolean isSonarLintContext(SonarRuntime runtime) {
+    return runtime.getProduct() == SonarProduct.SONARLINT;
   }
 
   private static boolean isSonarCloudContext(SensorContext sensorContext) {
-    return !isSonarLintContext(sensorContext) && sensorContext.runtime().getEdition() == SonarEdition.SONARCLOUD;
+    return !isSonarLintContext(sensorContext.runtime()) && sensorContext.runtime().getEdition() == SonarEdition.SONARCLOUD;
   }
 
   private static boolean shouldAnalyzeAllFiles(SensorContext sensorContext) {
-    return isSonarLintContext(sensorContext) || sensorContext.config().getBoolean(ANALYZE_ALL_FILES_KEY).orElse(false);
+    return isSonarLintContext(sensorContext.runtime()) || sensorContext.config().getBoolean(ANALYZE_ALL_FILES_KEY).orElse(false);
   }
 }

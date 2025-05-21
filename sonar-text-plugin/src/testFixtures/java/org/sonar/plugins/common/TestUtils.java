@@ -194,7 +194,7 @@ public class TestUtils {
    */
   public static SensorContextTester sensorContext(File baseDir, String... activeRules) {
     return SensorContextTester.create(baseDir)
-      .setRuntime(SONARLINT_RUNTIME)
+      .setRuntime(SONARQUBE_RUNTIME)
       .setActiveRules(activeRules(activeRules))
       .setSettings(createDefaultSettings());
   }

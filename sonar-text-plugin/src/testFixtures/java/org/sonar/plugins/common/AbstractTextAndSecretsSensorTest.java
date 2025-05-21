@@ -48,6 +48,7 @@ import org.sonar.api.SonarRuntime;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.error.AnalysisError;
 import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
@@ -79,7 +80,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonar.plugins.common.TestUtils.SONARCLOUD_RUNTIME;
-import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME;
+import static org.sonar.plugins.common.TestUtils.SONARLINT_RUNTIME;
 import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME_WITHOUT_HIDDEN_FILES_SUPPORT;
 import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME_WITHOUT_TELEMETRY_SUPPORT;
 import static org.sonar.plugins.common.TestUtils.asString;
@@ -130,12 +131,51 @@ public abstract class AbstractTextAndSecretsSensorTest {
   @Test
   public void shouldDescribeWithoutErrors() {
     DefaultSensorDescriptor descriptor = new DefaultSensorDescriptor();
-    sensor(testUtils().defaultSensorContext()).describe(descriptor);
+    SensorContextTester sensorContext = testUtils().defaultSensorContext();
+    sensorContext.setRuntime(SONARQUBE_RUNTIME_WITHOUT_HIDDEN_FILES_SUPPORT);
+    sensor(sensorContext).describe(descriptor);
 
     assertThat(descriptor.name()).isEqualTo(sensorName());
     assertThat(descriptor.languages()).isEmpty();
     assertThat(descriptor.isProcessesFilesIndependently()).isTrue();
     assertThat(descriptor.ruleRepositories()).containsExactlyInAnyOrder("text", "secrets");
+    assertThat(logTester.logs()).isEmpty();
+  }
+
+  @Test
+  public void descriptorShouldNotSignalHiddenFileProcessingWhenAPIDoesNotSupportIt() {
+    // After release of SQS 25.3, we can use new DefaultSensorDescriptor() for this test, as then the mocking of SensorDescriptor is not needed
+    // anymore.
+    SensorDescriptor descriptor = mock(SensorDescriptor.class);
+    SensorContextTester sensorContext = testUtils().defaultSensorContext();
+    sensorContext.setRuntime(SONARQUBE_RUNTIME_WITHOUT_HIDDEN_FILES_SUPPORT);
+
+    when(descriptor.name(any())).thenReturn(descriptor);
+    when(descriptor.createIssuesForRuleRepository(any())).thenReturn(descriptor);
+    when(descriptor.createIssuesForRuleRepositories(any(), any())).thenReturn(descriptor);
+    when(descriptor.processesFilesIndependently()).thenReturn(descriptor);
+    when(descriptor.global()).thenReturn(descriptor);
+    sensor(sensorContext).describe(descriptor);
+
+    verify(descriptor, never()).processesHiddenFiles();
+    assertThat(logTester.logs()).isEmpty();
+  }
+
+  @Test
+  public void descriptorShouldSignalHiddenFileProcessingWhenAPIDoesSupportIt() {
+    // After release of SQS 25.3, we can integrate this test into shouldDescribeWithoutErrors(), as then the mocking of SensorDescriptor is not
+    // needed anymore.
+    SensorDescriptor descriptor = mock(SensorDescriptor.class);
+    SensorContextTester sensorContext = testUtils().defaultSensorContext();
+
+    when(descriptor.name(any())).thenReturn(descriptor);
+    when(descriptor.createIssuesForRuleRepository(any())).thenReturn(descriptor);
+    when(descriptor.createIssuesForRuleRepositories(any(), any())).thenReturn(descriptor);
+    when(descriptor.processesFilesIndependently()).thenReturn(descriptor);
+    when(descriptor.global()).thenReturn(descriptor);
+    sensor(sensorContext).describe(descriptor);
+
+    verify(descriptor).processesHiddenFiles();
     assertThat(logTester.logs()).isEmpty();
   }
 
@@ -210,12 +250,15 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void shouldStopOnCancellation() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
+    MapSettings mapSettings = context.settings();
+    mapSettings.setProperty("sonar.text.analyzeAllFiles", true);
     context.setCancelled(true);
     analyse(sensor(check), context, inputFile("{}"));
     assertThat(context.allIssues()).isEmpty();
     assertThat(logTester.logs()).containsExactly(
       EXPECTED_PROCESSOR_LOG_LINE,
       DEFAULT_THREAD_USAGE_LOG_LINE,
+      EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE,
       "Start fetching files for the text and secrets analysis",
       "Retrieving all except non binary files",
       "Starting the text and secrets analysis",
@@ -272,7 +315,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void shouldNotAnalyzeNonLanguageAssignedFilesInSonarQubeContext() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setRuntime(SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, null));
     assertCorrectLogsForTextAndSecretsAnalysis(0);
   }
@@ -281,7 +323,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void shouldAnalyzeLanguageAssignedFilesInSonarQubeContext() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setRuntime(SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, "java"));
     assertCorrectLogsForTextAndSecretsAnalysis(1);
   }
@@ -290,7 +331,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void shouldNotAnalyzeNonLanguageAssignedFilesInSonarQubeContextWhenPropertyIsSet() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setRuntime(SONARQUBE_RUNTIME);
     context.setSettings(context.settings().setProperty("sonar.text.analyzeAllFiles", true));
     analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, null));
     assertCorrectLogsForTextAndSecretsAnalysis(0,
@@ -312,7 +352,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void shouldExecuteChecksOnIncludedTextFileNames() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setRuntime(SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), "abc", null));
     assertCorrectLogsForTextAndSecretsAnalysis(1);
   }
@@ -321,7 +360,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void shouldNotExecuteChecksOnNonIncludedTextFileNames() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setRuntime(SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.csv"), "abc", null));
     assertCorrectLogsForTextAndSecretsAnalysis(0);
   }
@@ -333,7 +371,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     MapSettings mapSettings = context.settings();
     mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt,*.csv");
     context.setSettings(mapSettings);
-    context.setRuntime(SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
       inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null),
       inputFile(Path.of("Foo.csv"), SENSITIVE_BIDI_CHARS, null),
@@ -352,7 +389,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     MapSettings mapSettings = context.settings();
     mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, ".txt,.csv");
     context.setSettings(mapSettings);
-    context.setRuntime(SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
       inputFile(Path.of("Foo.txt"), "abc", null),
       inputFile(Path.of("Foo.csv"), "abc", null),
@@ -367,7 +403,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     MapSettings mapSettings = context.settings();
     mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, ".env");
     context.setSettings(mapSettings);
-    context.setRuntime(SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
       inputFile(Path.of(".env"), SENSITIVE_BIDI_CHARS, null),
       inputFile(Path.of("Foo.env"), SENSITIVE_BIDI_CHARS, null),
@@ -385,7 +420,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     MapSettings mapSettings = context.settings();
     mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, ".aws/config");
     context.setSettings(mapSettings);
-    context.setRuntime(SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
       inputFile(Path.of(".aws", "config"), SENSITIVE_BIDI_CHARS, null),
       inputFile(Path.of(".aws-config"), SENSITIVE_BIDI_CHARS, null),
@@ -404,7 +438,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     // INCLUDED_FILE_SUFFIXES_KEY is set to default value
     mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, TEXT_INCLUSIONS_DEFAULT_VALUE);
     context.setSettings(mapSettings);
-    context.setRuntime(SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
       inputFile(Path.of("script", "start.sh"), SENSITIVE_BIDI_CHARS, null),
       inputFile(Path.of("run.bash"), SENSITIVE_BIDI_CHARS, null),
@@ -438,7 +471,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void shouldExecuteChecksOnIncludedTextFileNamesWithBinaryData() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setRuntime(SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null));
     assertCorrectLogsForTextAndSecretsAnalysis(0,
       "The file 'Foo.txt' contains binary data and will not be included in the text and secrets analysis.",
@@ -449,7 +481,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void shouldNotExcludeBinaryFileContentIfLanguageIsNotNull() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = testUtils().defaultSensorContext();
-    context.setRuntime(SONARQUBE_RUNTIME);
     analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, "java"));
 
     assertThat(asString(context.allIssues())).containsExactly(
@@ -461,7 +492,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void shouldNotExcludeBinaryFileContentIfLanguageIsNullAndExtensionIncludedWithSonarqube() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = testUtils().defaultSensorContext();
-    context.setRuntime(SONARQUBE_RUNTIME);
     analyse(sensor(check), context,
       inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null),
       inputFile(Path.of("FileWithoutExtension"), SENSITIVE_BIDI_CHARS, null));
@@ -475,6 +505,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void shouldExcludeBinaryFileContentIfLanguageIsNullWithSonarlint() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = testUtils().defaultSensorContext();
+    context.setRuntime(SONARLINT_RUNTIME);
     analyse(sensor(check), context,
       inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null),
       inputFile(Path.of("FileWithoutExtension"), SENSITIVE_BIDI_CHARS, null));
@@ -489,6 +520,8 @@ public abstract class AbstractTextAndSecretsSensorTest {
   public void shouldExcludeBinaryFileExtensionDynamically() throws IOException {
     Check check = new BoomCheck();
     SensorContextTester context = sensorContext(check);
+    MapSettings mapSettings = context.settings();
+    mapSettings.setProperty("sonar.text.analyzeAllFiles", true);
     analyseDirectory(sensor(check), context, Path.of("src", "test", "resources", "binary-files"));
     assertCorrectLogsForTextAndSecretsAnalysis(0, false,
       "'unknown1' was added to the binary file filter because the file 'src/test/resources/binary-files/Foo.unknown1' is a binary file.",
@@ -502,7 +535,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void analysisErrorShouldBeRaisedOnCorruptedFile() throws IOException {
     Check check = new BIDICharacterCheck();
     SensorContextTester context = sensorContext(check);
-    context.setRuntime(SONARQUBE_RUNTIME);
     InputFile inputFile = spy(inputFile(Path.of("a.txt"), "{}", "secrets"));
     when(inputFile.inputStream()).thenThrow(new IOException("Fail to read file input stream"));
     analyse(sensor(check), context, inputFile);
@@ -521,7 +553,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void shouldNotAnalyzeUntrackedFilesNotBelongingToALanguage() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setRuntime(SONARQUBE_RUNTIME);
     var sensor = sensor(check);
     var sensorSpy = spy(sensor);
     String relativePathFooJava = "src" + File.pathSeparator + "foo.java";
@@ -598,6 +629,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void shouldNotCallGitFilePredicateInSonarlintContext() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
+    context.setRuntime(SONARLINT_RUNTIME);
     var sensor = sensor(check);
     var sensorSpy = spy(sensor);
     var gitService = mock(GitService.class);
@@ -618,7 +650,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     logTester.setLevel(Level.DEBUG);
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setRuntime(SONARQUBE_RUNTIME);
     var sensor = sensor(check);
     var sensorSpy = spy(sensor);
     var gitService = mock(GitService.class);
@@ -651,7 +682,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     SensorContextTester context = sensorContext(check);
     MapSettings settings = context.settings();
     settings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "false");
-    context.setRuntime(SONARQUBE_RUNTIME);
     var sensor = sensor(check);
     var sensorSpy = spy(sensor);
     var gitService = mock(GitService.class);
@@ -674,7 +704,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     logTester.setLevel(Level.DEBUG);
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
-    context.setRuntime(SONARQUBE_RUNTIME);
     var sensor = sensor(check);
     var sensorSpy = spy(sensor);
     var gitService = mock(GitService.class);
@@ -756,11 +785,13 @@ public abstract class AbstractTextAndSecretsSensorTest {
       inputFile(Path.of("b.java"), "bar", "java"),
       inputFile(Path.of("c.c"), "abc", "c"));
     assertThat(logTester.logs()).containsExactlyInAnyOrder(
+      EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE,
       "Available processors: " + Runtime.getRuntime().availableProcessors(),
       "Using 1 thread for analysis, according to the value of \"sonar.text.threads\" property.",
       "Start fetching files for the text and secrets analysis",
       "Starting the text and secrets analysis",
-      "Retrieving all except non binary files",
+      "Using Git CLI to retrieve untracked files",
+      "Retrieving language associated files and files included via \"sonar.text.inclusions\" that are tracked by git",
       "3 source files to be analyzed for the text and secrets analysis",
       "3/3 source files have been analyzed for the text and secrets analysis");
   }
@@ -779,6 +810,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
       inputFile(Path.of("b.java"), "bar", "java"),
       inputFile(Path.of("c.c"), "abc", "c"));
     assertThat(logTester.logs()).containsExactlyInAnyOrder(
+      EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE,
       "Available processors: " + availableProcessors,
       "Using " + usedThreads + " threads for analysis, according to the value of \"sonar.text.threads\" property.",
       "\"sonar.text.threads\" property was set to " + usedThreads + ", which is greater than the number of available processors: " + availableProcessors + ".\n" +
@@ -786,7 +818,8 @@ public abstract class AbstractTextAndSecretsSensorTest {
         "For more information, visit the documentation page.",
       "Start fetching files for the text and secrets analysis",
       "Starting the text and secrets analysis",
-      "Retrieving all except non binary files",
+      "Using Git CLI to retrieve untracked files",
+      "Retrieving language associated files and files included via \"sonar.text.inclusions\" that are tracked by git",
       "3 source files to be analyzed for the text and secrets analysis",
       "3/3 source files have been analyzed for the text and secrets analysis");
   }
@@ -819,6 +852,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
   @Test
   void shouldNotLogMessageWhenSonarTestIsNotSetWithSonarlint() {
     SensorContextTester context = testUtils().defaultSensorContext();
+    context.setRuntime(SONARLINT_RUNTIME);
     var settings = context.settings().setProperty(SONAR_TESTS_KEY, "");
     context.setSettings(settings);
     analyse(sensor(context), context, inputFile(""));
@@ -879,7 +913,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void shouldAnalyzeKeystoreAndJksFilesInBinaryFileAnalysis() {
     Check binaryFileCheck = new TestBinaryFileCheck();
     SensorContextTester context = sensorContext(binaryFileCheck);
-    context.setRuntime(SONARQUBE_RUNTIME);
     var sensor = sensor(binaryFileCheck);
 
     analyse(sensor, context,
@@ -912,7 +945,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void retrievalOfBinaryFilesShouldNotBeInfluencedByFailedGitStatusCall() {
     Check binaryFileCheck = new TestBinaryFileCheck();
     SensorContextTester context = sensorContext(binaryFileCheck);
-    context.setRuntime(SONARQUBE_RUNTIME);
     var sensorSpy = spy(sensor(binaryFileCheck));
     var gitService = mock(GitService.class);
     when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(false, Set.of()));
@@ -947,7 +979,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void shouldNotFilterOutGitUntrackedKeystoreAndJksFilesInBinaryFileAnalysis() {
     Check binaryFileCheck = new TestBinaryFileCheck();
     SensorContextTester context = sensorContext(binaryFileCheck);
-    context.setRuntime(SONARQUBE_RUNTIME);
     var sensorSpy = spy(sensor(binaryFileCheck));
     var gitService = mock(GitService.class);
     when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of("a.jks", "b.keystore")));
@@ -984,7 +1015,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     Check binaryFileCheck = new TestBinaryFileCheck();
     Check reportIssueAtLineOneCheck = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(binaryFileCheck, reportIssueAtLineOneCheck);
-    context.setRuntime(SONARQUBE_RUNTIME);
     var sensor = sensor(binaryFileCheck, reportIssueAtLineOneCheck);
 
     analyse(sensor, context,
@@ -1028,7 +1058,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void shouldInitializeBinaryFileCheck() {
     AbstractBinaryFileCheck binaryFileCheck = spy(new TestBinaryFileCheck());
     SensorContextTester context = sensorContext(binaryFileCheck);
-    context.setRuntime(SONARQUBE_RUNTIME);
     var sensor = sensor(binaryFileCheck);
 
     analyse(sensor, context,
@@ -1048,7 +1077,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     Check binaryFileCheck = new TestBinaryFileCheck();
     Check reportIssueAtLineOneCheck = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(binaryFileCheck, reportIssueAtLineOneCheck);
-    context.setRuntime(SONARQUBE_RUNTIME);
 
     var sensor = spy(sensor(binaryFileCheck, reportIssueAtLineOneCheck));
     var gitService = mock(GitService.class);
@@ -1085,7 +1113,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void shouldNotAnalyzeTrackedHiddenBinaryFilesInTextAndSecretsAnalysis() {
     Check reportIssueAtLineOneCheck = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(reportIssueAtLineOneCheck);
-    context.setRuntime(SONARQUBE_RUNTIME);
 
     var sensor = spy(sensor(reportIssueAtLineOneCheck));
     var gitService = mock(GitService.class);
@@ -1135,7 +1162,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     var check = new ReportIssueAtLineOneCheck();
     var binaryCheck = new TestBinaryFileCheck();
     var context = spy(sensorContext(check, binaryCheck));
-    context.setRuntime(SONARQUBE_RUNTIME);
     var sensor = sensor(check, binaryCheck);
 
     analyse(sensor, context,
@@ -1159,7 +1185,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     var check = new ReportIssueAtLineOneCheck();
     var binaryCheck = new TestBinaryFileCheck();
     var context = spy(sensorContext(check, binaryCheck));
-    context.setRuntime(SONARQUBE_RUNTIME);
     var sensor = sensor(check, binaryCheck);
 
     analyse(sensor, context, inputFile(Path.of("a.txt"), "{}", "secrets"));
