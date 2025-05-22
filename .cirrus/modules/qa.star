@@ -1,6 +1,11 @@
 load("github.com/SonarSource/cirrus-modules/cloud-native/platform.star@analysis/master", "base_image_container_builder",
      "ec2_instance_builder")
 load(
+    "github.com/SonarSource/cirrus-modules/cloud-native/conditions.star@analysis/master",
+    "is_branch_qa_eligible",
+    "are_changes_doc_only"
+)
+load(
     "github.com/SonarSource/cirrus-modules/cloud-native/cache.star@analysis/master",
     "gradle_cache",
     "gradle_wrapper_cache",
@@ -28,6 +33,7 @@ QA_QUBE_DEV = "DEV"
 
 def qa_task(env, memory="14G", cpu="4", orchestrator_cache_reupload_on_changes=True):
     return {
+        "only_if": "({}) && !({})".format(is_branch_qa_eligible(), are_changes_doc_only()),
         "depends_on": "build",
         "eks_container": base_image_container_builder(memory=memory, cpu=cpu),
         "env": env,
