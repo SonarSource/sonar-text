@@ -14,7 +14,6 @@ logback = "1.5.18"
 jackson = "2.19.0"
 json-schema-validator = "1.5.7"
 junit = "5.12.2"
-junit-platform-suite = "1.12.2"
 assertj = "3.27.3"
 mockito = "5.18.0"
 yguard = "4.1.1"
@@ -43,7 +42,6 @@ com-networknt-jsonSchemaValidator = { module = "com.networknt:json-schema-valida
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 # Version of JUnit Platform is taken from the JUnit BOM that is imported by junit-jupiter
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
-junit-platform-suite = { module = "org.junit.platform:junit-platform-suite" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 sonar-license-api = { module = "com.sonarsource.license:license-api", version.ref = "sonar-license-api" }
