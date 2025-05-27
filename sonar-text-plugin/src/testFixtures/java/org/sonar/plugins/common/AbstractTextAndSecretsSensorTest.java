@@ -41,8 +41,6 @@ import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 import org.sonar.api.SonarRuntime;
 import org.sonar.api.batch.fs.InputFile;
@@ -93,8 +91,6 @@ import static org.sonar.plugins.common.TextAndSecretsSensor.TEXT_INCLUSIONS_DEFA
 // The class is executed in isolation from other test classes, because of shouldNotLeakThreads() method.
 @Isolated
 public abstract class AbstractTextAndSecretsSensorTest {
-
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractTextAndSecretsSensorTest.class);
 
   private static final String SENSITIVE_BIDI_CHARS = "\u0002\u0004";
   private static final int AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();
@@ -1167,17 +1163,20 @@ public abstract class AbstractTextAndSecretsSensorTest {
     analyse(sensor, context,
       inputFile(Path.of("a.txt"), "{}", "secrets"),
       inputFile(Path.of("android.keystore"), SENSITIVE_BIDI_CHARS),
+      inputFile(Path.of("a.bc"), "{}"),
       hiddenInputFile(Path.of(".env"), "{}", "secrets"),
       hiddenInputFile(Path.of(".keystore"), SENSITIVE_BIDI_CHARS));
 
     var analysisTimeMeasureKey = TelemetryReporter.KEY_PREFIX + "sensor_time_ms_" + sensor.getEditionName().toLowerCase(Locale.ROOT);
     var fileMeasureKey = TelemetryReporter.KEY_PREFIX + Analyzer.ANALYZED_FILES_MEASURE_KEY;
     var hiddenFileMeasureKey = TelemetryReporter.KEY_PREFIX + Analyzer.ANALYZED_HIDDEN_FILES_MEASURE_KEY;
+    var allTrackedTextFilesMeasureKey = TelemetryReporter.KEY_PREFIX + TextAndSecretsSensor.ALL_TRACKED_TEXT_FILES_MEASURE_KEY;
     var expectedFilesCount = isPublicSensor() ? "2" : "4";
     var expectedHiddenFilesCount = isPublicSensor() ? "1" : "2";
     verify(context).addTelemetryProperty(eq(analysisTimeMeasureKey), argThat(value -> Integer.parseInt(value) > 0));
     verify(context).addTelemetryProperty(fileMeasureKey, expectedFilesCount);
     verify(context).addTelemetryProperty(hiddenFileMeasureKey, expectedHiddenFilesCount);
+    verify(context).addTelemetryProperty(allTrackedTextFilesMeasureKey, "3");
   }
 
   @Test
@@ -1236,6 +1235,22 @@ public abstract class AbstractTextAndSecretsSensorTest {
 
     var expectedFilesCount = isPublicSensor() ? "2" : "3";
     verify(context).addTelemetryProperty(fileMeasure, expectedFilesCount);
+  }
+
+  @Test
+  void shouldReportZeroTrackedTextFilesWhenGitStatusIsUnsuccessful() {
+    var check = new ReportIssueAtLineOneCheck();
+    var context = spy(sensorContext(check));
+    var sensor = spy(sensor(check));
+    var gitService = mock(GitService.class);
+    when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(false, Set.of()));
+    when(sensor.createGitService(any())).thenReturn(gitService);
+
+    analyse(sensor, context,
+      inputFile(Path.of("a.txt"), "{}", "secrets"),
+      inputFile(Path.of("b.txt"), "{}"));
+
+    verify(context).addTelemetryProperty(TelemetryReporter.KEY_PREFIX + TextAndSecretsSensor.ALL_TRACKED_TEXT_FILES_MEASURE_KEY, "0");
   }
 
   protected void assertCorrectLogsForTextAndSecretsAnalysis(int numberOfAnalyzedFiles, String... additionalLogs) {

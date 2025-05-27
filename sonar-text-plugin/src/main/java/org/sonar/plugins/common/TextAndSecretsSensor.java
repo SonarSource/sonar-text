@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.SonarEdition;
@@ -74,6 +75,7 @@ public class TextAndSecretsSensor implements Sensor {
   public static final String THREAD_NUMBER_KEY = "sonar.text.threads";
   public static final String TEXT_CATEGORY = "Secrets";
   public static final String SONAR_TESTS_KEY = "sonar.tests";
+  public static final String ALL_TRACKED_TEXT_FILES_MEASURE_KEY = "all_tracked_text_files_count";
   public static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
 
   protected final CheckFactory checkFactory;
@@ -157,6 +159,7 @@ public class TextAndSecretsSensor implements Sensor {
       shouldAnalyzeAllFiles);
     durationStatistics.timed("analyzerTotal" + DurationStatistics.SUFFIX_GENERAL, () -> analyzer.analyzeFiles(inputFiles));
     logCheckBasedStatistics(suitableChecks);
+    reportAllTrackedTextFilesMeasure(sensorContext, notBinaryFilePredicate);
   }
 
   private FilePredicate constructGeneralFilePredicate(SensorContext sensorContext, FilePredicate notBinaryFilePredicate, boolean analyzeAllFiles) {
@@ -193,6 +196,46 @@ public class TextAndSecretsSensor implements Sensor {
     return predicates.or(
       LANGUAGE_FILE_PREDICATE,
       predicates.and(includedFilesPredicate, gitTrackedFilePredicate));
+  }
+
+  /**
+   * Report the number of non-binary files tracked by git.
+   * For performance reasons, it does not take into account binary files excluded based on content, so the measure can be inflated.
+   */
+  private void reportAllTrackedTextFilesMeasure(SensorContext sensorContext, NotBinaryFilePredicate notBinaryFilePredicate) {
+    if (isSonarLintContext(sensorContext.runtime())) {
+      // In SQ IDE the file predicates are handled differently, and there is no telemetry anyway
+      return;
+    }
+
+    int allTrackedTextFilesCount = durationStatistics.timed(
+      "countAllTrackedTextFiles" + DurationStatistics.SUFFIX_GENERAL,
+      () -> countAllTrackedTextFiles(sensorContext, notBinaryFilePredicate));
+    telemetryReporter.addNumericMeasure(ALL_TRACKED_TEXT_FILES_MEASURE_KEY, allTrackedTextFilesCount);
+  }
+
+  private int countAllTrackedTextFiles(SensorContext sensorContext, NotBinaryFilePredicate notBinaryFilePredicate) {
+    if (gitTrackedFilePredicate == null) {
+      // If the tracked files have not been computed before, we do not want to compute it here as it can be expensive
+      return 0;
+    }
+
+    var baseDir = sensorContext.fileSystem().baseDir().toPath();
+    // Initializing a new one to not interfere with the logged "ignoredFileNames" of the main one
+    var trackedFilesPredicate = new GitTrackedFilePredicate(baseDir, gitService, LANGUAGE_FILE_PREDICATE);
+
+    if (!trackedFilesPredicate.isGitStatusSuccessful()) {
+      return 0;
+    }
+
+    var predicates = sensorContext.fileSystem().predicates();
+    var allTrackedTextFilesPredicate = predicates.and(trackedFilesPredicate, notBinaryFilePredicate);
+    // First check if any language is associated with the file to improve performances
+    allTrackedTextFilesPredicate = predicates.or(LANGUAGE_FILE_PREDICATE, allTrackedTextFilesPredicate);
+
+    return (int) StreamSupport
+      .stream(sensorContext.fileSystem().inputFiles(allTrackedTextFilesPredicate).spliterator(), false)
+      .count();
   }
 
   /**
