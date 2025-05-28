@@ -47,7 +47,7 @@ class GitCliAndJGitServiceTest {
 
   @Test
   void shouldRetrieveUntrackedFromCliWhenAvailable() {
-    var gitCliService = spy(GitCliService.createOsSpecificInstance());
+    var gitCliService = spy(GitCliService.createOsSpecificInstance(BASE_DIR));
     when(gitCliService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of("a.txt")));
     var jGitService = new JGitService(BASE_DIR);
     try (var gitService = new GitCliAndJGitService(gitCliService, jGitService)) {
@@ -61,7 +61,7 @@ class GitCliAndJGitServiceTest {
 
   @Test
   void shouldRetrieveUntrackedFromJGitWhenCliNotAvailable() {
-    var gitCliService = spy(GitCliService.createOsSpecificInstance());
+    var gitCliService = spy(GitCliService.createOsSpecificInstance(BASE_DIR));
     when(gitCliService.isAvailable()).thenReturn(false);
     var jGitService = spy(new JGitService(BASE_DIR));
     when(jGitService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of("a.txt")));
@@ -76,7 +76,7 @@ class GitCliAndJGitServiceTest {
 
   @Test
   void shouldRetrieveRepositoryMetadataFromCliWhenAvailable() {
-    var gitCliService = spy(GitCliService.createOsSpecificInstance());
+    var gitCliService = spy(GitCliService.createOsSpecificInstance(BASE_DIR));
     when(gitCliService.retrieveRepositoryMetadata()).thenReturn(new GitService.RepositoryMetadataResult(true, "project", "org"));
     var jGitService = new JGitService(BASE_DIR);
     try (var gitService = new GitCliAndJGitService(gitCliService, jGitService)) {
@@ -91,7 +91,7 @@ class GitCliAndJGitServiceTest {
 
   @Test
   void shouldRetrieveRepositoryMetadataFromJGitWhenCliNotAvailable() {
-    var gitCliService = spy(GitCliService.createOsSpecificInstance());
+    var gitCliService = spy(GitCliService.createOsSpecificInstance(BASE_DIR));
     when(gitCliService.isAvailable()).thenReturn(false);
     var jGitService = spy(new JGitService(BASE_DIR));
     when(jGitService.retrieveRepositoryMetadata()).thenReturn(new GitService.RepositoryMetadataResult(true, "project", "org"));

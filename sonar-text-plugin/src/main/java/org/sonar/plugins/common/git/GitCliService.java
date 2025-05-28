@@ -17,6 +17,7 @@
 package org.sonar.plugins.common.git;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,19 +37,21 @@ public final class GitCliService extends GitService {
   private String gitCommand = "git";
   private boolean available = false;
 
+  private final Path baseDir;
   private final ProcessBuilderWrapper processBuilderWrapper;
 
-  private GitCliService(ProcessBuilderWrapper processBuilderWrapper) {
+  private GitCliService(Path baseDir, ProcessBuilderWrapper processBuilderWrapper) {
+    this.baseDir = baseDir;
     this.processBuilderWrapper = processBuilderWrapper;
   }
 
-  public static GitCliService createOsSpecificInstance() {
-    return createOsSpecificInstance(new ProcessBuilderWrapper());
+  public static GitCliService createOsSpecificInstance(Path baseDir) {
+    return createOsSpecificInstance(baseDir, new ProcessBuilderWrapper());
   }
 
   // Visible for testing
-  static GitCliService createOsSpecificInstance(ProcessBuilderWrapper processBuilderWrapper) {
-    var instance = new GitCliService(processBuilderWrapper);
+  static GitCliService createOsSpecificInstance(Path baseDir, ProcessBuilderWrapper processBuilderWrapper) {
+    var instance = new GitCliService(baseDir, processBuilderWrapper);
     try {
       if (isWindows()) {
         var windowsGitCommand = instance.locateGitOnWindows();
@@ -75,7 +78,8 @@ public final class GitCliService extends GitService {
     Set<String> untrackedFiles = ConcurrentHashMap.newKeySet();
 
     try {
-      var status = execute(List.of(gitCommand, "status", "--untracked-files=all", "--porcelain"), (String line) -> {
+      var statusCommand = List.of(gitCommand, "-C", baseDir.toAbsolutePath().toString(), "status", "--untracked-files=all", "--porcelain");
+      var status = execute(statusCommand, (String line) -> {
         if (line.startsWith(GIT_PORCELAIN_UNTRACKED_FILE_MARKER)) {
           untrackedFiles.add(line.substring(GIT_PORCELAIN_UNTRACKED_FILE_MARKER.length()).trim());
         }
@@ -109,7 +113,7 @@ public final class GitCliService extends GitService {
   List<String> getGitRemotes() {
     var remotes = new ArrayList<String>();
     try {
-      var listRemotesCommand = List.of(gitCommand, "remote", "-v");
+      var listRemotesCommand = List.of(gitCommand, "-C", baseDir.toAbsolutePath().toString(), "remote", "-v");
       var status = execute(listRemotesCommand, remotes::add);
       if (status != ProcessBuilderWrapper.Status.SUCCESS) {
         return List.of();

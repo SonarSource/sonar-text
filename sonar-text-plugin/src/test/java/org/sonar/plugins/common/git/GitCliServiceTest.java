@@ -17,6 +17,8 @@
 package org.sonar.plugins.common.git;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -41,18 +43,22 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
+import static org.sonar.plugins.common.TestUtils.inputFileFromPath;
 
 class GitCliServiceTest {
 
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5().setLevel(Level.DEBUG);
 
+  // Workaround to get the base directory of the project
+  private static final Path BASE_DIR = inputFileFromPath(Paths.get("")).path();
+
   @Test
   void shouldNotBeAvailableWhenGitVersionFails() throws IOException {
     var wrapper = mock(ProcessBuilderWrapper.class);
     when(wrapper.execute(any(), any())).thenReturn(ProcessBuilderWrapper.Status.FAILURE);
 
-    try (var gitService = GitCliService.createOsSpecificInstance(wrapper)) {
+    try (var gitService = GitCliService.createOsSpecificInstance(BASE_DIR, wrapper)) {
       assertThat(gitService.isAvailable()).isFalse();
     }
     assertThatDebugLogsAreEmptyOrWindowsGitExeNotFound();
@@ -61,7 +67,7 @@ class GitCliServiceTest {
   @Test
   void shouldNotBeAvailableWhenGitVersionCrashes() throws IOException {
     var wrapper = mock(ProcessBuilderWrapper.class);
-    var gitService = spy(GitCliService.createOsSpecificInstance(wrapper));
+    var gitService = spy(GitCliService.createOsSpecificInstance(BASE_DIR, wrapper));
     when(gitService.execute(eq(List.of("--version")), any())).thenThrow(new IOException("boom"));
 
     assertThat(gitService.isAvailable()).isFalse();
@@ -70,7 +76,7 @@ class GitCliServiceTest {
 
   @Test
   void shouldRetrieveNoUntrackedFiles() {
-    try (var gitService = GitCliService.createOsSpecificInstance()) {
+    try (var gitService = GitCliService.createOsSpecificInstance(BASE_DIR)) {
       if (gitService.isAvailable()) {
         var gitResult = gitService.retrieveUntrackedFileNames();
         assertThat(gitResult.isGitSuccessful()).isTrue();
@@ -87,12 +93,12 @@ class GitCliServiceTest {
   @Test
   void shouldRetrieveUntrackedFiles() throws IOException {
     var processBuilderWrapper = spy(new ProcessBuilderWrapper());
-    var gitService = spy(GitCliService.createOsSpecificInstance(processBuilderWrapper));
+    var gitService = spy(GitCliService.createOsSpecificInstance(BASE_DIR, processBuilderWrapper));
     doAnswer(invocation -> processBuilderWrapper.execute(List.of("echo", """
       M staged.txt
       ?? untracked.txt
       ?? untracked2"""), invocation.getArgument(1)))
-      .when(gitService).execute(eq(List.of("git", "status", "--untracked-files=all", "--porcelain")), any());
+      .when(gitService).execute(eq(List.of("git", "-C", BASE_DIR.toAbsolutePath().toString(), "status", "--untracked-files=all", "--porcelain")), any());
     var gitResult = gitService.retrieveUntrackedFileNames();
     gitService.close();
     assertThat(gitResult.isGitSuccessful()).isTrue();
@@ -104,7 +110,7 @@ class GitCliServiceTest {
   void shouldReturnUnsuccessfulStatusWhenRetrievingUntrackedAndCliNotAvailable() throws IOException {
     var wrapper = mock(ProcessBuilderWrapper.class);
     when(wrapper.execute(any(), any())).thenReturn(ProcessBuilderWrapper.Status.FAILURE);
-    var gitService = GitCliService.createOsSpecificInstance(wrapper);
+    var gitService = GitCliService.createOsSpecificInstance(BASE_DIR, wrapper);
 
     var result = gitService.retrieveUntrackedFileNames();
     gitService.close();
@@ -117,7 +123,7 @@ class GitCliServiceTest {
   void shouldReturnUnsuccessfulStatusWhenRetrievingUntrackedAndGitStatusFails() throws IOException {
     var wrapper = mock(ProcessBuilderWrapper.class);
     when(wrapper.execute(any(), any())).thenReturn(ProcessBuilderWrapper.Status.SUCCESS);
-    var gitService = spy(GitCliService.createOsSpecificInstance(wrapper));
+    var gitService = spy(GitCliService.createOsSpecificInstance(BASE_DIR, wrapper));
 
     when(gitService.execute(any(), any())).thenReturn(ProcessBuilderWrapper.Status.FAILURE);
     var result = gitService.retrieveUntrackedFileNames();
@@ -131,7 +137,7 @@ class GitCliServiceTest {
   void shouldReturnUnsuccessfulStatusWhenRetrievingUntrackedAndGitStatusCrashes() throws IOException {
     var wrapper = mock(ProcessBuilderWrapper.class);
     when(wrapper.execute(any(), any())).thenReturn(ProcessBuilderWrapper.Status.SUCCESS);
-    var gitService = spy(GitCliService.createOsSpecificInstance(wrapper));
+    var gitService = spy(GitCliService.createOsSpecificInstance(BASE_DIR, wrapper));
 
     when(gitService.execute(any(), any())).thenThrow(new IOException("boom"));
     var result = gitService.retrieveUntrackedFileNames();
@@ -143,7 +149,7 @@ class GitCliServiceTest {
 
   @Test
   void shouldRetrieveRepositoryMetadata() {
-    try (var gitService = GitCliService.createOsSpecificInstance()) {
+    try (var gitService = GitCliService.createOsSpecificInstance(BASE_DIR)) {
       if (gitService.isAvailable()) {
         var gitResult = gitService.retrieveRepositoryMetadata();
         assertThat(gitResult.isGitSuccessful()).isTrue();
@@ -158,7 +164,7 @@ class GitCliServiceTest {
   @ParameterizedTest
   @MethodSource
   void shouldReturnRepositoryMetadataFromValidRemotes(String remote) {
-    var gitService = spy(GitCliService.createOsSpecificInstance());
+    var gitService = spy(GitCliService.createOsSpecificInstance(BASE_DIR));
 
     when(gitService.getGitRemotes()).thenReturn(Collections.singletonList(remote));
     var result = gitService.retrieveRepositoryMetadata();
@@ -190,7 +196,7 @@ class GitCliServiceTest {
   void shouldReturnUnsuccessfulStatusWhenRetrievingRepositoryMetadataAndCliNotAvailable() throws IOException {
     var wrapper = mock(ProcessBuilderWrapper.class);
     when(wrapper.execute(any(), any())).thenReturn(ProcessBuilderWrapper.Status.FAILURE);
-    var gitService = GitCliService.createOsSpecificInstance(wrapper);
+    var gitService = GitCliService.createOsSpecificInstance(BASE_DIR, wrapper);
 
     var result = gitService.retrieveRepositoryMetadata();
     gitService.close();
@@ -205,7 +211,7 @@ class GitCliServiceTest {
   void shouldReturnUnsuccessfulStatusWhenRetrievingRepositoryMetadataAndGitCommandFails() throws IOException {
     var wrapper = mock(ProcessBuilderWrapper.class);
     when(wrapper.execute(any(), any())).thenReturn(ProcessBuilderWrapper.Status.SUCCESS);
-    var gitService = spy(GitCliService.createOsSpecificInstance(wrapper));
+    var gitService = spy(GitCliService.createOsSpecificInstance(BASE_DIR, wrapper));
 
     when(gitService.execute(any(), any())).thenReturn(ProcessBuilderWrapper.Status.FAILURE);
     var result = gitService.retrieveRepositoryMetadata();
@@ -219,7 +225,7 @@ class GitCliServiceTest {
   void shouldReturnUnsuccessfulStatusWhenRetrievingRepositoryMetadataAndGitCommandCrashes() throws IOException {
     var wrapper = mock(ProcessBuilderWrapper.class);
     when(wrapper.execute(any(), any())).thenReturn(ProcessBuilderWrapper.Status.SUCCESS);
-    var gitService = spy(GitCliService.createOsSpecificInstance(wrapper));
+    var gitService = spy(GitCliService.createOsSpecificInstance(BASE_DIR, wrapper));
 
     when(gitService.execute(any(), any())).thenThrow(new IOException("boom"));
     var result = gitService.retrieveRepositoryMetadata();
@@ -232,7 +238,7 @@ class GitCliServiceTest {
   @ParameterizedTest
   @MethodSource
   void shouldReturnUnsuccessfulStatusWhenRetrievingRepositoryMetadataAndRemoteIsMalformed(String malformedRemote) {
-    var gitService = spy(GitCliService.createOsSpecificInstance());
+    var gitService = spy(GitCliService.createOsSpecificInstance(BASE_DIR));
 
     when(gitService.getGitRemotes()).thenReturn(Collections.singletonList(malformedRemote));
     var result = gitService.retrieveRepositoryMetadata();
@@ -260,7 +266,7 @@ class GitCliServiceTest {
       return ProcessBuilderWrapper.Status.SUCCESS;
     });
 
-    try (var gitService = GitCliService.createOsSpecificInstance(mockedWrapper)) {
+    try (var gitService = GitCliService.createOsSpecificInstance(BASE_DIR, mockedWrapper)) {
       assertThat(gitService.locateGitOnWindows()).endsWith("\\git.exe");
     }
   }
@@ -268,7 +274,7 @@ class GitCliServiceTest {
   @EnabledOnOs(OS.WINDOWS)
   @Test
   void shouldLocateGitOnWindows() {
-    try (var gitService = GitCliService.createOsSpecificInstance()) {
+    try (var gitService = GitCliService.createOsSpecificInstance(BASE_DIR)) {
       assertThat(gitService.getGitCommand()).endsWith("\\git.exe");
     }
   }

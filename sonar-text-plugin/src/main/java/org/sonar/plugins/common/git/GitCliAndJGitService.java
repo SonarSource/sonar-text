@@ -26,7 +26,7 @@ public class GitCliAndJGitService extends GitService {
   private final JGitService jGitService;
 
   public GitCliAndJGitService(Path baseDir) {
-    this(GitCliService.createOsSpecificInstance(), new JGitService(baseDir));
+    this(GitCliService.createOsSpecificInstance(baseDir), new JGitService(baseDir));
   }
 
   // Visible for testing
