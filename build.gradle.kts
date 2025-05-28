@@ -60,6 +60,7 @@ sonar {
     properties {
         properties["sonar.sources"] as MutableCollection<String> +=
             gradle.includedBuild("build-logic-text").projectDir.resolve("src/main/java").toString()
+        property("sonar.sca.exclusions", "private/its/**")
 
         val binaries = properties["sonar.java.binaries"] as? MutableCollection<String> ?: mutableSetOf()
         properties["sonar.java.binaries"] = binaries +
