@@ -20,8 +20,13 @@ import com.sun.management.OperatingSystemMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.Format;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.config.Configuration;
@@ -35,18 +40,26 @@ public final class MemoryMonitor {
 
   private static final Logger LOG = LoggerFactory.getLogger(MemoryMonitor.class);
   private static final String PROPERTY_KEY = "sonar.text.duration.statistics";
-  private final List<MemoryRecord> memoryRecords = new ArrayList<>();
   private final boolean recordingEnabled;
+  // Visible for testing
+  final List<MemoryRecord> memoryRecords = new ArrayList<>();
+  private long overallPeak;
+
+  private final NumberFormat format;
 
   public MemoryMonitor(Configuration config) {
-    recordingEnabled = config.getBoolean(PROPERTY_KEY).orElse(false);
+    recordingEnabled = config.getBoolean(PROPERTY_KEY).orElse(false) && LOG.isInfoEnabled();
     resetPeak();
     addRecord("Initial memory");
+
+    var symbols = new DecimalFormatSymbols(Locale.ROOT);
+    symbols.setGroupingSeparator('\'');
+    this.format = new DecimalFormat("#,###", symbols);
   }
 
   public void addRecord(String name) {
     if (recordingEnabled) {
-      memoryRecords.add(new MemoryRecord(name, getMemoryUsed(), getPeakMemoryUsed()));
+      memoryRecords.add(new MemoryRecord(name, getMemoryUsedInMB(), getPeakMemoryUsedInMB()));
       resetPeak();
     }
   }
@@ -60,9 +73,13 @@ public final class MemoryMonitor {
     sb.append(System.lineSeparator());
 
     for (MemoryRecord memoryRecord : memoryRecords) {
-      sb.append(memoryRecord)
+      sb.append(memoryRecord.toFormattedString(format))
         .append(System.lineSeparator());
     }
+    sb.append("Sensor peak memory: ");
+    sb.append(format.format(overallPeak));
+    sb.append("MB");
+    sb.append(System.lineSeparator());
     sb.append("Note that these values may not be accurate due to garbage collection; they should only be used to detect significant outliers.");
     LOG.info(sb.toString());
     logAvailableMemory(ManagementFactory.getOperatingSystemMXBean());
@@ -73,13 +90,22 @@ public final class MemoryMonitor {
     return value / (1024 * 1024);
   }
 
-  private static long getAvailableSystemMemory(java.lang.management.OperatingSystemMXBean operatingSystemMXBean) throws NoSuchMethodError, ClassCastException {
+  private static long getAvailableSystemMemoryInMB(java.lang.management.OperatingSystemMXBean operatingSystemMXBean) throws NoSuchMethodError, ClassCastException {
     OperatingSystemMXBean os = (OperatingSystemMXBean) operatingSystemMXBean;
-    return os.getTotalMemorySize();
+    return toMB(os.getTotalMemorySize());
   }
 
   private static long getAvailableRuntimeMemory() {
-    return Runtime.getRuntime().maxMemory();
+    return toMB(Runtime.getRuntime().maxMemory());
+  }
+
+  private String getAvailableRuntimeMemoryInMB() {
+    long runtimeMemory = getAvailableRuntimeMemory();
+    if (runtimeMemory == Long.MAX_VALUE) {
+      return "unlimited";
+    } else {
+      return format.format(runtimeMemory) + "MB";
+    }
   }
 
   void logAvailableMemory(java.lang.management.OperatingSystemMXBean operatingSystemMXBean) {
@@ -87,31 +113,26 @@ public final class MemoryMonitor {
       return;
     }
     try {
-      long runtimeMemory = getAvailableRuntimeMemory();
-      String runtimeMemoryInMB;
-      if (runtimeMemory == Long.MAX_VALUE) {
-        runtimeMemoryInMB = "unlimited";
-      } else {
-        runtimeMemoryInMB = toMB(runtimeMemory) + "MB";
-      }
-      LOG.info("Total system memory: {}, available runtime memory: {}", toMB(getAvailableSystemMemory(operatingSystemMXBean)) + "MB", runtimeMemoryInMB);
+      LOG.info("Total system memory: {}, available runtime memory: {}", format.format(getAvailableSystemMemoryInMB(operatingSystemMXBean)) + "MB", getAvailableRuntimeMemoryInMB());
     } catch (ClassCastException | NoSuchMethodError e) {
       LOG.info("Could not get total system memory: {}", e.getMessage());
     }
   }
 
-  private static long getMemoryUsed() {
-    return ManagementFactory.getMemoryPoolMXBeans().stream()
+  private static long getMemoryUsedInMB() {
+    return toMB(ManagementFactory.getMemoryPoolMXBeans().stream()
       .filter(p -> p.getType() == MemoryType.HEAP)
       .mapToLong(p -> p.getUsage().getUsed())
-      .sum();
+      .sum());
   }
 
-  private static long getPeakMemoryUsed() {
-    return ManagementFactory.getMemoryPoolMXBeans().stream()
+  private long getPeakMemoryUsedInMB() {
+    long currentPeak = toMB(ManagementFactory.getMemoryPoolMXBeans().stream()
       .filter(p -> p.getType() == MemoryType.HEAP)
       .mapToLong(p -> p.getPeakUsage().getUsed())
-      .sum();
+      .sum());
+    overallPeak = Math.max(overallPeak, currentPeak);
+    return currentPeak;
   }
 
   private static void resetPeak() {
@@ -120,10 +141,10 @@ public final class MemoryMonitor {
       .forEach(MemoryPoolMXBean::resetPeakUsage);
   }
 
-  private record MemoryRecord(String name, long used, long peak) {
-    @Override
-    public String toString() {
-      return name + ": " + toMB(used) + "MB, " + toMB(peak) + "MB";
+  // Visible for testing
+  record MemoryRecord(String name, long used, long peak) {
+    public String toFormattedString(Format format) {
+      return name + ": " + format.format(used) + "MB, " + peak + "MB";
     }
   }
 }

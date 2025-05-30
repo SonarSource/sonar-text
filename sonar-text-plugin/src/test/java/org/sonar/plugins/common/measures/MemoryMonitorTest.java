@@ -34,7 +34,8 @@ class MemoryMonitorTest {
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
-  private static final Pattern MEMORY_RECORD_PATTERN = Pattern.compile("[a-zA-Z\\s]+:\\s\\d+MB, \\d+MB");
+  private static final Pattern MEMORY_RECORD_PATTERN = Pattern.compile("[a-zA-Z\\s]+:\\s[\\d']+MB, [\\d']+MB");
+  private static final Pattern PEAK_MEMORY_PATTERN = Pattern.compile("Sensor peak memory:\\s[\\d']+MB");
 
   private MemoryMonitor memoryMonitor;
 
@@ -80,14 +81,34 @@ class MemoryMonitorTest {
     assertThat(logs).hasSize(2);
 
     String[] memoryRecordLog = logs.get(0).split(System.lineSeparator());
-    assertThat(memoryRecordLog).hasSize(7);
+    assertThat(memoryRecordLog).hasSize(8);
     assertThat(memoryRecordLog[0]).isEqualTo("Text and Secrets memory statistics (used, peak):");
     assertThat(memoryRecordLog[1]).startsWith("Initial memory: ").matches(MEMORY_RECORD_PATTERN);
     assertThat(memoryRecordLog[2]).startsWith("test: ").matches(MEMORY_RECORD_PATTERN);
     assertThat(memoryRecordLog[3]).startsWith("After the text and secrets analysis: ").matches(MEMORY_RECORD_PATTERN);
     assertThat(memoryRecordLog[4]).startsWith("After preparation of input files for the: ").matches(MEMORY_RECORD_PATTERN);
     assertThat(memoryRecordLog[5]).startsWith("End of the sensor: ").matches(MEMORY_RECORD_PATTERN);
-    assertThat(memoryRecordLog[6]).isEqualTo("Note that these values may not be accurate due to garbage collection; they should only be used to detect significant outliers.");
+    assertThat(memoryRecordLog[6]).matches(PEAK_MEMORY_PATTERN);
+    assertThat(memoryRecordLog[7]).isEqualTo("Note that these values may not be accurate due to garbage collection; they should only be used to detect significant outliers.");
+
+    assertThat(logs.get(1)).startsWith("Total system memory: ");
+  }
+
+  @Test
+  void shouldFormatCorrectlyOnHighValues() {
+    memoryMonitor.memoryRecords.add(new MemoryMonitor.MemoryRecord("highUsage", 123456789L, 9876543210L));
+    memoryMonitor.logMemory();
+
+    List<String> logs = logTester.logs();
+    assertThat(logs).hasSize(2);
+
+    String[] memoryRecordLog = logs.get(0).split(System.lineSeparator());
+    assertThat(memoryRecordLog).hasSize(5);
+    assertThat(memoryRecordLog[0]).isEqualTo("Text and Secrets memory statistics (used, peak):");
+    assertThat(memoryRecordLog[1]).startsWith("Initial memory: ").matches(MEMORY_RECORD_PATTERN);
+    assertThat(memoryRecordLog[2]).startsWith("highUsage: ").matches(MEMORY_RECORD_PATTERN);
+    assertThat(memoryRecordLog[3]).matches(PEAK_MEMORY_PATTERN);
+    assertThat(memoryRecordLog[4]).isEqualTo("Note that these values may not be accurate due to garbage collection; they should only be used to detect significant outliers.");
 
     assertThat(logs.get(1)).startsWith("Total system memory: ");
   }
