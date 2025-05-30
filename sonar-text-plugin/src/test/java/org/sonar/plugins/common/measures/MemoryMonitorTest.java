@@ -106,7 +106,7 @@ class MemoryMonitorTest {
     assertThat(memoryRecordLog).hasSize(5);
     assertThat(memoryRecordLog[0]).isEqualTo("Text and Secrets memory statistics (used, peak):");
     assertThat(memoryRecordLog[1]).startsWith("Initial memory: ").matches(MEMORY_RECORD_PATTERN);
-    assertThat(memoryRecordLog[2]).startsWith("highUsage: ").matches(MEMORY_RECORD_PATTERN);
+    assertThat(memoryRecordLog[2]).isEqualTo("highUsage: 123'456'789MB, 9'876'543'210MB");
     assertThat(memoryRecordLog[3]).matches(PEAK_MEMORY_PATTERN);
     assertThat(memoryRecordLog[4]).isEqualTo("Note that these values may not be accurate due to garbage collection; they should only be used to detect significant outliers.");
 

@@ -144,7 +144,7 @@ public final class MemoryMonitor {
   // Visible for testing
   record MemoryRecord(String name, long used, long peak) {
     public String toFormattedString(Format format) {
-      return name + ": " + format.format(used) + "MB, " + peak + "MB";
+      return name + ": " + format.format(used) + "MB, " + format.format(peak) + "MB";
     }
   }
 }
