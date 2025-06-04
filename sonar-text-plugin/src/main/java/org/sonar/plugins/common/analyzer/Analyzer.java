@@ -19,11 +19,10 @@ package org.sonar.plugins.common.analyzer;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Stream;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.CheckForNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonar.api.batch.fs.IndexedFile;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.utils.Version;
@@ -48,6 +47,9 @@ public class Analyzer {
   private final String analysisName;
   private final TelemetryReporter telemetryReporter;
   private final MemoryMonitor memoryMonitor;
+  private final boolean supportedHiddenFileAnalysis;
+  private final AtomicInteger analyzedFiles = new AtomicInteger(0);
+  private final AtomicInteger analyzedHiddenFiles = new AtomicInteger(0);
 
   protected Analyzer(
     SensorContext sensorContext,
@@ -64,26 +66,22 @@ public class Analyzer {
     this.analysisName = analysisName;
     this.telemetryReporter = telemetryReporter;
     this.memoryMonitor = memoryMonitor;
+    this.supportedHiddenFileAnalysis = sensorContext.runtime().getApiVersion().isGreaterThanOrEqual(HIDDEN_FILES_SUPPORTED_API_VERSION);
   }
 
   public void analyzeFiles(List<InputFile> inputFiles) {
-    sortInputFiles(inputFiles);
-
-    List<InputFileContext> analyzableFiles = durationStatistics.timed("preparingInputFiles" + DurationStatistics.SUFFIX_GENERAL,
-      () -> buildInputFileContexts(inputFiles)
-        .filter(Objects::nonNull)
-        .filter(this::shouldAnalyzeFile)
-        .toList());
-
-    memoryMonitor.addRecord("After preparation of input files for the " + analysisName);
-
-    if (analyzableFiles.isEmpty()) {
+    if (inputFiles.isEmpty()) {
       LOG.info("There are no files to be analyzed for the {}", analysisName);
       return;
     }
+
+    // Triggers metadata-generation for every inputFile in a single thread
+    // parallel generation is currently not supported / not guaranteed to work
+    sortInputFiles(inputFiles);
+
     LOG.info("Starting the {}", analysisName);
 
-    durationStatistics.timed("analyzingAllChecks" + DurationStatistics.SUFFIX_GENERAL, () -> analyzeAllFiles(analyzableFiles));
+    analyzeAllFiles(inputFiles);
     memoryMonitor.addRecord("After the " + analysisName);
   }
 
@@ -102,20 +100,21 @@ public class Analyzer {
     return true;
   }
 
-  private void analyzeAllFiles(List<InputFileContext> analyzableFiles) {
+  private void analyzeAllFiles(List<InputFile> inputFiles) {
     var cancelled = false;
     var progressReport = new MultiFileProgressReport(analysisName);
-    progressReport.start(analyzableFiles.size());
+    progressReport.start(inputFiles.size());
+
     try {
-      for (InputFileContext inputFileContext : analyzableFiles) {
+      for (InputFile inputFile : inputFiles) {
         if (sensorContext.isCancelled()) {
           cancelled = true;
           break;
         }
         parallelizationManager.submit(() -> {
-          progressReport.startAnalysisFor(inputFileContext.getInputFile().toString());
-          analyzeAllChecks(inputFileContext);
-          progressReport.finishAnalysisFor(inputFileContext.getInputFile().toString());
+          progressReport.startAnalysisFor(inputFile.toString());
+          prepareAndAnalyze(inputFile);
+          progressReport.finishAnalysisFor(inputFile.toString());
         });
       }
       parallelizationManager.drainThreads();
@@ -126,42 +125,31 @@ public class Analyzer {
         progressReport.stop();
       }
     }
-    processFileTelemetryMeasures(analyzableFiles);
+    processFileTelemetryMeasures();
   }
 
-  private void processFileTelemetryMeasures(List<InputFileContext> analyzedFiles) {
-    telemetryReporter.addNumericMeasure(ANALYZED_FILES_MEASURE_KEY, analyzedFiles.size());
-    var runtimeVersion = sensorContext.runtime().getApiVersion();
-    if (runtimeVersion.isGreaterThanOrEqual(HIDDEN_FILES_SUPPORTED_API_VERSION)) {
-      var hiddenFilesCount = analyzedFiles.stream().map(InputFileContext::getInputFile).filter(IndexedFile::isHidden).count();
-      telemetryReporter.addNumericMeasure(ANALYZED_HIDDEN_FILES_MEASURE_KEY, (int) hiddenFilesCount);
+  private void prepareAndAnalyze(InputFile inputFile) {
+    var inputFileContext = durationStatistics.timed("preparingInputFiles" + DurationStatistics.SUFFIX_GENERAL, () -> buildInputFileContext(inputFile));
+
+    if (inputFileContext != null && shouldAnalyzeFile(inputFileContext)) {
+      durationStatistics.timed("analyzingAllChecks" + DurationStatistics.SUFFIX_GENERAL, () -> analyzeAllChecks(inputFileContext));
+      countAnalyzedFile(inputFile);
     }
   }
 
-  private Stream<InputFileContext> buildInputFileContexts(List<InputFile> inputFiles) {
-    var analyzableFiles = new InputFileContext[inputFiles.size()];
-    var currentFileNumber = 0;
-    for (InputFile inputFile : inputFiles) {
-      // preserving the initial order of the files
-      var index = currentFileNumber;
-      currentFileNumber++;
-      parallelizationManager.submit(() -> {
-        try {
-          var inputFileContext = new InputFileContext(sensorContext, inputFile);
-          // will not create race conditions, as every thread is working on a different index
-          analyzableFiles[index] = inputFileContext;
-        } catch (IOException | RuntimeException e) {
-          logAnalysisError(inputFile, e);
-        }
-      });
+  @CheckForNull
+  private InputFileContext buildInputFileContext(InputFile inputFile) {
+    try {
+      return new InputFileContext(sensorContext, inputFile);
+    } catch (IOException | RuntimeException e) {
+      logAnalysisError(inputFile, e);
+      return null;
     }
-    parallelizationManager.drainThreads();
-    return Stream.of(analyzableFiles);
   }
 
   private void analyzeAllChecks(InputFileContext inputFileContext) {
-    // Currently not possible and desired to parallelize, as we rely on the sequential and always same order of the checks to achieve
-    // deterministic analysis results
+    // Currently not possible and desired to parallelize check execution per file, as we rely on the sequential and always same order of the
+    // checks to achieve deterministic analysis results
     // The main reason is because of the calculation of overlapping reported secrets in InputFileContext
     try {
       for (Check check : suitableChecks) {
@@ -182,5 +170,22 @@ public class Analyzer {
     LOG.warn(message);
     // TODO SECRETS-114: remove print of stacktrace
     LOG.debug("{}: ", e, e);
+  }
+
+  private void countAnalyzedFile(InputFile inputFile) {
+    analyzedFiles.incrementAndGet();
+    if (supportedHiddenFileAnalysis && inputFile.isHidden()) {
+      analyzedHiddenFiles.incrementAndGet();
+    }
+  }
+
+  private void processFileTelemetryMeasures() {
+    int numberOfAnalyzedFiles = this.analyzedFiles.get();
+    LOG.debug("Analyzed files for the {}: {}", analysisName, numberOfAnalyzedFiles);
+    telemetryReporter.addNumericMeasure(ANALYZED_FILES_MEASURE_KEY, numberOfAnalyzedFiles);
+
+    if (supportedHiddenFileAnalysis) {
+      telemetryReporter.addNumericMeasure(ANALYZED_HIDDEN_FILES_MEASURE_KEY, analyzedHiddenFiles.get());
+    }
   }
 }

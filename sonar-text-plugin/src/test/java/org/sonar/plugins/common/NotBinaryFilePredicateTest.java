@@ -70,7 +70,17 @@ class NotBinaryFilePredicateTest {
     assertThat(NotBinaryFilePredicate.extension("...c")).isEqualTo("c");
     assertThat(NotBinaryFilePredicate.extension("foo.")).isNull();
     assertThat(NotBinaryFilePredicate.extension("foo.bar.")).isNull();
-    ;
   }
 
+  @Test
+  void shouldReturnCorrectlyIfAnExtensionWasNewlyAdded() {
+    NotBinaryFilePredicate predicate = new NotBinaryFilePredicate(".foo");
+    boolean addFooExtension = predicate.addBinaryFileExtension("foo");
+    boolean addBarExtension1 = predicate.addBinaryFileExtension("bar");
+    boolean addBarExtension2 = predicate.addBinaryFileExtension("bar");
+
+    assertThat(addFooExtension).isFalse();
+    assertThat(addBarExtension1).isTrue();
+    assertThat(addBarExtension2).isFalse();
+  }
 }

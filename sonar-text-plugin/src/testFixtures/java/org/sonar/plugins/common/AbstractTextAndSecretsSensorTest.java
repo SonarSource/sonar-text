@@ -520,11 +520,13 @@ public abstract class AbstractTextAndSecretsSensorTest {
     mapSettings.setProperty("sonar.text.analyzeAllFiles", true);
     analyseDirectory(sensor(check), context, Path.of("src", "test", "resources", "binary-files"));
     assertCorrectLogsForTextAndSecretsAnalysis(0, false,
-      "'unknown1' was added to the binary file filter because the file 'src/test/resources/binary-files/Foo.unknown1' is a binary file.",
-      // Because of this warning about 'Foo.unknown1' we will not have any error about 'Bar.unknown1'
-      "'unknown2' was added to the binary file filter because the file 'src/test/resources/binary-files/Foo.unknown2' is a binary file.",
-      // help is displayed only once for '.unknown1'
-      "To remove the previous warning you can add the '.unknown1' extension to the 'sonar.text.excluded.file.suffixes' property.");
+      "'unknown2' was added to the binary file filter because the file 'src/test/resources/binary-files/Foo.unknown2' is a binary file.");
+
+    assertThat(logTester.logs())
+      // This warning is displayed only once either for 'Foo.unknown1' or for 'Bar.unknown1'
+      .satisfiesOnlyOnce(log -> assertThat(log).startsWith("'unknown1' was added to the binary file filter because the file 'src/test/resources/binary-files/"))
+      // help is displayed only once for either '.unknown1' or '.unknown2'
+      .satisfiesOnlyOnce(log -> assertThat(log).startsWith("To remove the previous warning you can add the '.unknown"));
   }
 
   @Test
@@ -1102,7 +1104,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     }
 
     assertThat(asString(context.allIssues())).containsExactly(expectedIssues.toArray(new String[0]));
-    assertCorrectLogsForTextAndSecretsAnalysis(2);
+    assertCorrectLogsForTextAndSecretsAnalysis(3);
   }
 
   @Test

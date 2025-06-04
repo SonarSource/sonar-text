@@ -17,9 +17,12 @@
 package org.sonar.plugins.common;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -29,7 +32,7 @@ import org.sonar.plugins.secrets.api.EntropyChecker;
 
 public class NotBinaryFilePredicate implements FilePredicate {
 
-  private static final Set<String> DEFAULT_BINARY_EXTENSIONS = new HashSet<>(Arrays.asList(
+  private static final List<String> DEFAULT_BINARY_EXTENSIONS = List.of(
     "3dm",
     "3ds",
     "3g2",
@@ -393,9 +396,9 @@ public class NotBinaryFilePredicate implements FilePredicate {
     "z",
     "zip",
     "zipx",
-    "zstd"));
+    "zstd");
 
-  private static final Set<String> DEFAULT_BINARY_SUFFIXES = Set.of("cacerts");
+  private static final List<String> DEFAULT_BINARY_SUFFIXES = List.of("cacerts");
 
   private static final Pattern HEX_REGEX = Pattern.compile("\\p{XDigit}++");
   private static final double MD5_AND_SHA_MIN_ENTROPY = 3.1;
@@ -404,8 +407,11 @@ public class NotBinaryFilePredicate implements FilePredicate {
   private final Set<String> binaryFileSuffixes;
 
   public NotBinaryFilePredicate(String... additionalBinarySuffixes) {
-    binaryFileExtensions = new HashSet<>(DEFAULT_BINARY_EXTENSIONS);
-    binaryFileSuffixes = new HashSet<>(DEFAULT_BINARY_SUFFIXES);
+    // initial capacity set the same as when calling new HashSet<>(DEFAULT_BINARY_EXTENSIONS)
+    binaryFileExtensions = ConcurrentHashMap.newKeySet((int) (DEFAULT_BINARY_EXTENSIONS.size() / .75F) + 1);
+    binaryFileExtensions.addAll(DEFAULT_BINARY_EXTENSIONS);
+
+    var modifiableBinaryFileSuffixes = new HashSet<>(DEFAULT_BINARY_SUFFIXES);
     Set<String> cleanedSuffixes = Arrays.stream(additionalBinarySuffixes)
       .map(String::trim)
       .filter(value -> !value.isEmpty())
@@ -415,9 +421,11 @@ public class NotBinaryFilePredicate implements FilePredicate {
       if (isExtension) {
         binaryFileExtensions.add(suffix.substring(1));
       } else {
-        binaryFileSuffixes.add(suffix);
+        modifiableBinaryFileSuffixes.add(suffix);
       }
     }
+    // Will be only read from, so thread-safe in an unmodifiable way
+    binaryFileSuffixes = Collections.unmodifiableSet(modifiableBinaryFileSuffixes);
   }
 
   @Override
@@ -436,8 +444,8 @@ public class NotBinaryFilePredicate implements FilePredicate {
       HEX_REGEX.matcher(filename).matches() && EntropyChecker.calculateShannonEntropy(filename) > MD5_AND_SHA_MIN_ENTROPY;
   }
 
-  public void addBinaryFileExtension(String extension) {
-    binaryFileExtensions.add(extension);
+  public boolean addBinaryFileExtension(String extension) {
+    return binaryFileExtensions.add(extension);
   }
 
   @Nullable

@@ -18,6 +18,7 @@ package org.sonar.plugins.common.analyzer;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.InputFile;
@@ -37,7 +38,7 @@ public final class TextAndSecretsAnalyzer extends Analyzer {
   private static final String ANALYSIS_NAME = "text and secrets analysis";
   private final NotBinaryFilePredicate notBinaryFilePredicate;
   private final boolean analyzeAllFilesMode;
-  private boolean displayHelpAboutExcludingBinaryFile = true;
+  private final AtomicBoolean displayHelpAboutExcludingBinaryFile = new AtomicBoolean(true);
 
   public TextAndSecretsAnalyzer(
     SensorContext sensorContext,
@@ -93,10 +94,10 @@ public final class TextAndSecretsAnalyzer extends Analyzer {
   private void excludeBinaryFileExtension(InputFile inputFile) {
     String extension = NotBinaryFilePredicate.extension(inputFile.filename());
     if (extension != null) {
-      notBinaryFilePredicate.addBinaryFileExtension(extension);
-      LOG.warn("'{}' was added to the binary file filter because the file '{}' is a binary file.", extension, inputFile);
-      if (displayHelpAboutExcludingBinaryFile) {
-        displayHelpAboutExcludingBinaryFile = false;
+      if (notBinaryFilePredicate.addBinaryFileExtension(extension)) {
+        LOG.warn("'{}' was added to the binary file filter because the file '{}' is a binary file.", extension, inputFile);
+      }
+      if (displayHelpAboutExcludingBinaryFile.compareAndSet(true, false)) {
         LOG.info("To remove the previous warning you can add the '.{}' extension to the '{}' property.", extension,
           TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY);
       }

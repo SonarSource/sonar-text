@@ -62,7 +62,6 @@ public class TextAndSecretsSensor implements Sensor {
   public static final String EXCLUDED_FILE_SUFFIXES_KEY = "sonar.text.excluded.file.suffixes";
   public static final String TEXT_INCLUSIONS_KEY = "sonar.text.inclusions";
 
-  // On UNIX systems, files or directories starting with a dot are not being retrieved by the scanner
   public static final String TEXT_INCLUSIONS_DEFAULT_VALUE = "**/*.sh,**/*.bash,**/*.zsh,**/*.ksh,**/*.ps1,**/*.properties," +
     "**/*.conf,**/*.pem,**/*.config,.env,.aws/config";
   private static final String ANALYZE_ALL_FILES_KEY = "sonar.text.analyzeAllFiles";
