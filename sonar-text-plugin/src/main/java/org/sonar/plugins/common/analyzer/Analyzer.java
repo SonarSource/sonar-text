@@ -17,7 +17,6 @@
 package org.sonar.plugins.common.analyzer;
 
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.CheckForNull;
@@ -75,21 +74,10 @@ public class Analyzer {
       return;
     }
 
-    // Triggers metadata-generation for every inputFile in a single thread
-    // parallel generation is currently not supported / not guaranteed to work
-    sortInputFiles(inputFiles);
-
     LOG.info("Starting the {}", analysisName);
 
     analyzeAllFiles(inputFiles);
     memoryMonitor.addRecord("After the " + analysisName);
-  }
-
-  /**
-   * In order to fully utilize threads we want to analyze the files with the highest number of lines first
-   */
-  protected void sortInputFiles(List<InputFile> inputFiles) {
-    inputFiles.sort(Comparator.comparingInt(inputFile -> -inputFile.lines()));
   }
 
   /**
@@ -129,12 +117,19 @@ public class Analyzer {
   }
 
   private void prepareAndAnalyze(InputFile inputFile) {
+    triggerMetadataGeneration(inputFile);
     var inputFileContext = durationStatistics.timed("preparingInputFiles" + DurationStatistics.SUFFIX_GENERAL, () -> buildInputFileContext(inputFile));
 
     if (inputFileContext != null && shouldAnalyzeFile(inputFileContext)) {
       durationStatistics.timed("analyzingAllChecks" + DurationStatistics.SUFFIX_GENERAL, () -> analyzeAllChecks(inputFileContext));
       countAnalyzedFile(inputFile);
     }
+  }
+
+  private static synchronized void triggerMetadataGeneration(InputFile inputFile) {
+    // Triggers metadata-generation for every inputFile synchronized
+    // parallel generation is currently not supported / not guaranteed to work
+    inputFile.lines();
   }
 
   @CheckForNull
