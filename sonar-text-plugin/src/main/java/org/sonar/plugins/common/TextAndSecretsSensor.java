@@ -154,8 +154,7 @@ public class TextAndSecretsSensor implements Sensor {
       "applyFilePredicate" + DurationStatistics.SUFFIX_GENERAL,
       () -> getInputFiles(sensorContext, filePredicate));
 
-    var analyzer = new TextAndSecretsAnalyzer(sensorContext, parallelizationManager, durationStatistics, suitableChecks, telemetryReporter, memoryMonitor, notBinaryFilePredicate,
-      shouldAnalyzeAllFiles);
+    var analyzer = new TextAndSecretsAnalyzer(sensorContext, parallelizationManager, durationStatistics, suitableChecks, telemetryReporter, memoryMonitor);
     durationStatistics.timed("analyzerTotal" + DurationStatistics.SUFFIX_GENERAL, () -> analyzer.analyzeFiles(inputFiles));
     logCheckBasedStatistics(suitableChecks);
     reportAllTrackedTextFilesMeasure(sensorContext, notBinaryFilePredicate);
