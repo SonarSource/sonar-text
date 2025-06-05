@@ -168,10 +168,12 @@ public class TextAndSecretsSensor implements Sensor {
       return notBinaryFilePredicate;
     }
 
+    var nonHiddenLanguageFilesPredicate = filterHiddenFiles(sensorContext, LANGUAGE_FILE_PREDICATE);
+
     // if the property is inactive, we prevent jgit from being initialized
     if (!isGitAndInclusionsActive(sensorContext)) {
       LOG.info("Retrieving only language associated files, \"{}\" property is deactivated", INCLUSIONS_ACTIVATION_KEY);
-      return LANGUAGE_FILE_PREDICATE;
+      return nonHiddenLanguageFilesPredicate;
     }
 
     initializeGitPredicate(sensorContext);
@@ -179,7 +181,7 @@ public class TextAndSecretsSensor implements Sensor {
       LOG.warn("Retrieving only language associated files, " +
         "make sure to run the analysis inside a git repository to make use of inclusions specified via \"{}\"",
         TEXT_INCLUSIONS_KEY);
-      return LANGUAGE_FILE_PREDICATE;
+      return nonHiddenLanguageFilesPredicate;
     }
 
     // Retrieve list of files to analyse using the right FilePredicate
@@ -192,7 +194,7 @@ public class TextAndSecretsSensor implements Sensor {
 
     LOG.info("Retrieving language associated files and files included via \"{}\" that are tracked by git", TEXT_INCLUSIONS_KEY);
     return predicates.or(
-      LANGUAGE_FILE_PREDICATE,
+      nonHiddenLanguageFilesPredicate,
       predicates.and(includedFilesPredicate, gitTrackedFilePredicate));
   }
 
@@ -262,6 +264,16 @@ public class TextAndSecretsSensor implements Sensor {
       pathPatternsPredicates.add(filePredicate);
     }
     return sensorContext.fileSystem().predicates().or(pathPatternsPredicates);
+  }
+
+  private static FilePredicate filterHiddenFiles(SensorContext sensorContext, FilePredicate filePredicate) {
+    if (isHiddenFilesAnalysisSupported(sensorContext.runtime())) {
+      var predicates = sensorContext.fileSystem().predicates();
+      FilePredicate onlyNonHiddenFiles = inputFile -> !inputFile.isHidden();
+      return predicates.and(onlyNonHiddenFiles, filePredicate);
+    }
+    // In SonarLint context, we do not support hidden files analysis
+    return filePredicate;
   }
 
   private static boolean isHiddenFilesAnalysisSupported(SonarRuntime sonarRuntime) {
@@ -382,7 +394,7 @@ public class TextAndSecretsSensor implements Sensor {
       var baseDir = sensorContext.fileSystem().baseDir().toPath();
       gitTrackedFilePredicate = durationStatistics.timed(
         "trackedByGitPredicate" + DurationStatistics.SUFFIX_GENERAL,
-        () -> new GitTrackedFilePredicate(baseDir, gitService, LANGUAGE_FILE_PREDICATE));
+        () -> new GitTrackedFilePredicate(baseDir, gitService, filterHiddenFiles(sensorContext, LANGUAGE_FILE_PREDICATE)));
     }
   }
 

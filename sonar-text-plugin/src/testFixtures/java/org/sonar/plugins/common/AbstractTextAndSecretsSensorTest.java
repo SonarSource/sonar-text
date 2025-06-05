@@ -694,7 +694,9 @@ public abstract class AbstractTextAndSecretsSensorTest {
 
     analyse(sensorSpy, context,
       inputFile(Path.of("a.txt"), "{}", "secrets"),
-      inputFile(Path.of("b.txt"), "{}", "secrets"));
+      inputFile(Path.of("b.txt"), "{}", "secrets"),
+      hiddenInputFile(Path.of("c.txt"), "{}", "secrets"),
+      hiddenInputFile(Path.of("d.txt"), "{}"));
 
     Collection<Issue> issues = context.allIssues();
     assertThat(issues).hasSize(2);
@@ -716,7 +718,9 @@ public abstract class AbstractTextAndSecretsSensorTest {
 
     analyse(sensorSpy, context,
       inputFile(Path.of("a.txt"), "{}", "secrets"),
-      inputFile(Path.of("b.txt"), "{}"));
+      inputFile(Path.of("b.txt"), "{}"),
+      hiddenInputFile(Path.of("c.txt"), "{}", "secrets"),
+      hiddenInputFile(Path.of("d.txt"), "{}"));
 
     Collection<Issue> issues = context.allIssues();
     assertThat(issues).hasSize(1);
@@ -1085,16 +1089,17 @@ public abstract class AbstractTextAndSecretsSensorTest {
     var sensor = spy(sensor(binaryFileCheck, reportIssueAtLineOneCheck));
     var gitService = mock(GitService.class);
     when(gitService.retrieveUntrackedFileNames())
-      .thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of(".untracked", ".hidden" + File.pathSeparator + "untracked.jks")));
+      .thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of(".untracked", ".hidden" + File.pathSeparator + "untracked.jks", ".untrackedSecrets")));
     when(sensor.createGitService(any())).thenReturn(gitService);
 
     var hiddenFile = hiddenInputFile(Path.of(".a"), "{}");
     var hiddenDirectoryFile = hiddenInputFile(Path.of(".hidden", "b.txt"), "{}");
     var untrackedHiddenFile = hiddenInputFile(Path.of(".untracked"), "{}");
+    var untrackedHiddenFileWithLanguage = hiddenInputFile(Path.of(".untrackedSecrets"), "{}", "secrets");
     var hiddenBinaryFile = hiddenInputFile(Path.of(".keystore"), SENSITIVE_BIDI_CHARS);
     var untrackedHiddenBinaryFile = hiddenInputFile(Path.of(".hidden", "untracked.jks"), SENSITIVE_BIDI_CHARS);
 
-    analyse(sensor, context, hiddenFile, untrackedHiddenFile, hiddenDirectoryFile, hiddenBinaryFile, untrackedHiddenBinaryFile);
+    analyse(sensor, context, hiddenFile, untrackedHiddenFile, hiddenDirectoryFile, untrackedHiddenFileWithLanguage, hiddenBinaryFile, untrackedHiddenBinaryFile);
 
     var expectedIssues = List.of(
       "text:IssueAtLineOne [1:0-1:2] testIssue",
@@ -1256,7 +1261,9 @@ public abstract class AbstractTextAndSecretsSensorTest {
 
     analyse(sensor, context,
       inputFile(Path.of("a.txt"), "{}", "secrets"),
-      inputFile(Path.of("b.txt"), "{}"));
+      inputFile(Path.of("b.txt"), "{}"),
+      hiddenInputFile(Path.of("c.txt"), "{}", "secrets"),
+      hiddenInputFile(Path.of("d.txt"), "{}"));
 
     verify(context).addTelemetryProperty(TelemetryReporter.KEY_PREFIX + TextAndSecretsSensor.ALL_TRACKED_TEXT_FILES_MEASURE_KEY, "0");
   }
