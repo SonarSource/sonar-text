@@ -331,7 +331,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, null));
     assertCorrectLogsForTextAndSecretsAnalysis(0,
       "The file 'Foo.java' contains binary data and will not be included in the text and secrets analysis.",
-      "Please check this file and/or exclude it from the analysis with sonar.exclusions property.");
+      "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.");
   }
 
   @Test
@@ -373,9 +373,9 @@ public abstract class AbstractTextAndSecretsSensorTest {
       inputFile(Path.of("Foo.nope"), "abc", null));
     assertCorrectLogsForTextAndSecretsAnalysis(0,
       "The file 'Foo.txt' contains binary data and will not be included in the text and secrets analysis.",
-      "Please check this file and/or exclude it from the analysis with sonar.exclusions property.",
+      "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.",
       "The file 'Foo.csv' contains binary data and will not be included in the text and secrets analysis.",
-      "Please check this file and/or exclude it from the analysis with sonar.exclusions property.");
+      "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.");
   }
 
   @Test
@@ -406,7 +406,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
       inputFile(Path.of("Foo.environment"), SENSITIVE_BIDI_CHARS, null));
     assertCorrectLogsForTextAndSecretsAnalysis(0,
       "The file '.env' contains binary data and will not be included in the text and secrets analysis.",
-      "Please check this file and/or exclude it from the analysis with sonar.exclusions property.");
+      "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.");
   }
 
   @Test
@@ -423,7 +423,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
       inputFile(Path.of("config"), SENSITIVE_BIDI_CHARS, null));
     assertCorrectLogsForTextAndSecretsAnalysis(0,
       "The file '.aws/config' contains binary data and will not be included in the text and secrets analysis.",
-      "Please check this file and/or exclude it from the analysis with sonar.exclusions property.");
+      "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.");
   }
 
   @Test
@@ -449,7 +449,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
       // doesn't mach the pattern
       inputFile(Path.of("foo", "bar"), SENSITIVE_BIDI_CHARS, null));
     assertThat(logTester.logs()).contains(
-      "Please check this file and/or exclude it from the analysis with sonar.exclusions property.",
+      "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.",
       "The file 'config/some.conf' contains binary data and will not be included in the text and secrets analysis.",
       "The file '.aws/config' contains binary data and will not be included in the text and secrets analysis.",
       "The file 'script/start.sh' contains binary data and will not be included in the text and secrets analysis.",
@@ -464,13 +464,21 @@ public abstract class AbstractTextAndSecretsSensorTest {
   }
 
   @Test
-  void shouldExecuteChecksOnIncludedTextFileNamesWithBinaryData() {
+  void shouldAdviceUsersToRemoveTheFileFromSonarTextInclusionsIfThereIsNoLanguageAssigned() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     analyse(sensor(check), context, inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null));
     assertCorrectLogsForTextAndSecretsAnalysis(0,
       "The file 'Foo.txt' contains binary data and will not be included in the text and secrets analysis.",
-      "Please check this file and/or exclude it from the analysis with sonar.exclusions property.");
+      "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.");
+  }
+
+  @Test
+  void shouldExecuteChecksOnIncludedTextFileNamesWithBidiCharacters() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, "java"));
+    assertCorrectLogsForTextAndSecretsAnalysis(1);
   }
 
   @Test
@@ -494,7 +502,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
 
     assertCorrectLogsForTextAndSecretsAnalysis(0,
       "The file 'Foo.txt' contains binary data and will not be included in the text and secrets analysis.",
-      "Please check this file and/or exclude it from the analysis with sonar.exclusions property.");
+      "Please check this file and/or remove the extension from the 'sonar.text.inclusions' property.");
   }
 
   @Test

@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.InputFileContext;
+import org.sonar.plugins.common.TextAndSecretsSensor;
 import org.sonar.plugins.common.measures.DurationStatistics;
 import org.sonar.plugins.common.measures.MemoryMonitor;
 import org.sonar.plugins.common.measures.TelemetryReporter;
@@ -56,7 +57,11 @@ public final class TextAndSecretsAnalyzer extends Analyzer {
     boolean hasNonTextCharacters = inputFileContext.hasNonTextCharacters();
     if (hasNonTextCharacters) {
       LOG.warn("The file '{}' contains binary data and will not be included in the text and secrets analysis.", inputFileContext.getInputFile());
-      LOG.warn("Please check this file and/or exclude it from the analysis with sonar.exclusions property.");
+      if (inputFileContext.getInputFile().language() != null) {
+        LOG.warn("Please check this file and/or exclude it from the analysis with sonar.exclusions property.");
+      } else {
+        LOG.warn("Please check this file and/or remove the extension from the '{}' property.", TextAndSecretsSensor.TEXT_INCLUSIONS_KEY);
+      }
     }
     return !hasNonTextCharacters;
   }
