@@ -14,7 +14,6 @@
  * You should have received a copy of the Sonar Source-Available License
  * along with this program; if not, see https://sonarsource.com/license/ssal/
  */
-import org.gradle.kotlin.dsl.invoke
 import org.sonarsource.text.CHECK_LIST_GENERATION_TASK_NAME
 import org.sonarsource.text.CodeGenerationConfiguration
 import org.sonarsource.text.GENERATED_SOURCES_DIR
@@ -50,6 +49,7 @@ tasks.register("updateCheckClasses") {
         // To be on a safe side, always rerun the generator
         false
     }
+    dependsOn("processResources")
 
     doLast {
         val config = project.extensions.getByName<CodeGenerationConfiguration>("codeGeneration")
