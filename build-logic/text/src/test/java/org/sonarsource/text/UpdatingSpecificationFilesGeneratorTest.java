@@ -145,8 +145,8 @@ class UpdatingSpecificationFilesGeneratorTest {
 
     assertThat(locations.checkPathPrefix()).isEqualTo(Path.of("src/main/java/io/sonar/plugins/secrets/checks"));
     assertThat(locations.checkTestsPathPrefix()).isEqualTo(Path.of("src/test/java/io/sonar/plugins/secrets/checks"));
-    assertThat(locations.specFilesPathPrefix()).isEqualTo(Path.of("src/main/resources/io/sonar/plugins/secrets/configuration"));
-    assertThat(locations.rspecFilesPath()).isEqualTo(Path.of("src/main/resources/io/sonar/l10n/secrets/rules/secrets"));
+    assertThat(locations.specFilesPathPrefix()).isEqualTo(Path.of("build/resources/main/io/sonar/plugins/secrets/configuration"));
+    assertThat(locations.rspecFilesPath()).isEqualTo(Path.of("build/resources/main/io/sonar/l10n/secrets/rules/secrets"));
   }
 
   @Test

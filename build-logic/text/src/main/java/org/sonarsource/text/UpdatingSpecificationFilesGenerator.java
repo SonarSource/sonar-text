@@ -66,7 +66,7 @@ public class UpdatingSpecificationFilesGenerator {
   record Locations(Path checkTestsPathPrefix, Path checkPathPrefix, Path rspecFilesPath, Path specFilesPathPrefix) {
     public static Locations from(String packagePrefix) {
       var secretsModulePathPrefix = Path.of("src/main/java", packagePrefix, "sonar/plugins/secrets");
-      var secretsModuleResourcePathPrefix = Path.of("src/main/resources", packagePrefix, "sonar");
+      var secretsModuleResourcePathPrefix = Path.of("build/resources/main", packagePrefix, "sonar");
 
       var checkTestsPathPrefix = Path.of("src/test/java", packagePrefix, "sonar/plugins/secrets/checks");
       var checkPathPrefix = secretsModulePathPrefix.resolve("checks");
