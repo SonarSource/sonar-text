@@ -778,7 +778,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     analyse(sensor(check), context, inputFile);
 
     assertThat(context.allIssues()).isEmpty();
-    assertThat(logTester.logs()).isEmpty();
+    assertThat(logTester.logs()).containsExactly("The text and secrets analysis was deactivated using the property \"sonar.text.activate\"");
   }
 
   @Test

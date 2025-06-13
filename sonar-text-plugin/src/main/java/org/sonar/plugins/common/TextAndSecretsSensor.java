@@ -118,6 +118,7 @@ public class TextAndSecretsSensor implements Sensor {
   @Override
   public void execute(SensorContext sensorContext) {
     if (!isActive(sensorContext)) {
+      LOG.info("The text and secrets analysis was deactivated using the property \"{}\"", ANALYZER_ACTIVATION_KEY);
       return;
     }
     initialize(sensorContext);
