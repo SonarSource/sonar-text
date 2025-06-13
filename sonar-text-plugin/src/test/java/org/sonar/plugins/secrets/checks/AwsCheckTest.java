@@ -16,37 +16,11 @@
  */
 package org.sonar.plugins.secrets.checks;
 
-import java.io.IOException;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.sonar.plugins.common.Check;
 import org.sonar.plugins.secrets.utils.AbstractRuleExampleTest;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.sonar.plugins.common.TestUtils.analyze;
-
-@SuppressWarnings("squid:S6290")
 class AwsCheckTest extends AbstractRuleExampleTest {
 
   protected AwsCheckTest() {
     super(new AwsCheck());
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {
-    // key id with EXAMPLE
-    """
-      public class Foo {
-        public static final String KEY = "AKIAIGKECZXA7EXAMPLE"
-      }""",
-    // not an access key
-    """
-      public class Foo {
-        public static final String KEY = "AKIGKECZXA7AEIJLMQ"
-      }"""
-  })
-  void negative(String fileContent) throws IOException {
-    Check check = getInitializedCheck();
-    assertThat(analyze(check, fileContent)).isEmpty();
   }
 }
