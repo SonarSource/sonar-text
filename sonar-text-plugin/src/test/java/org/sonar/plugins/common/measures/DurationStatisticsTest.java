@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.event.Level;
 import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 
@@ -29,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DurationStatisticsTest {
   @RegisterExtension
-  LogTesterJUnit5 logTester = new LogTesterJUnit5();
+  LogTesterJUnit5 logTester = new LogTesterJUnit5().setLevel(Level.DEBUG);
 
   private static final Pattern REPORT_PATTERN = Pattern.compile(".*Statistics\\s+ {2}.*::.* \\d+ ms \\d+ times \\(mean [\\d']+ us\\)(.|\\s)*");
 
@@ -90,9 +91,31 @@ class DurationStatisticsTest {
     durationStatistics.log();
 
     assertThat(logTester.logs()).hasSize(3);
+    assertThat(logTester.logs().get(0)).matches(REPORT_PATTERN);
+    assertThat(logTester.logs().get(0)).contains("preFilter::general", "postFilter::general", "matcher::general");
     assertThat(logTester.logs().get(1)).matches(REPORT_PATTERN);
-    assertThat(logTester.logs().get(1)).contains("preFilter::total", "postFilter::total", "matcher::total");
     assertThat(logTester.logs().get(2)).matches(REPORT_PATTERN);
+  }
+
+  @Test
+  void shouldOnlyLogGeneralInInfoLogLevel() {
+    logTester.setLevel(Level.INFO);
+    var sensorContext = SensorContextTester.create(Paths.get("."));
+    sensorContext.settings().setProperty("sonar.text.duration.statistics", "true");
+    DurationStatistics durationStatistics = new DurationStatistics(sensorContext.config());
+    durationStatistics.timed("test-1::total", () -> doNothingFor(100));
+    durationStatistics.timed("test-1::preFilter", () -> doNothingFor(50));
+    durationStatistics.timed("test-2::preFilter", () -> doNothingFor(30));
+    durationStatistics.timed("test-1::matcher", () -> doNothingFor(20));
+    durationStatistics.timed("test-2::matcher", () -> doNothingFor(40));
+    durationStatistics.timed("test-1::postFilter", () -> doNothingFor(10));
+    durationStatistics.timed("test-2::postFilter", () -> doNothingFor(20));
+    durationStatistics.timed("test-3::postFilter", () -> doNothingFor(10));
+    durationStatistics.log();
+
+    assertThat(logTester.logs()).hasSize(1);
+    assertThat(logTester.logs().get(0)).matches(REPORT_PATTERN);
+    assertThat(logTester.logs().get(0)).contains("preFilter::general", "postFilter::general", "matcher::general");
   }
 
   private static Object doNothingFor(long millis) {

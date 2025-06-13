@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.sonar.api.config.Configuration;
 
 public class DurationStatistics {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DurationStatistics.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DurationStatistics.class);
 
   private static final String PROPERTY_KEY = "sonar.text.duration.statistics";
 
@@ -91,29 +91,33 @@ public class DurationStatistics {
       var sbGeneral = new StringBuilder("Duration Statistics")
         .append(System.lineSeparator())
         .append(formatEntries(format, stats.entrySet().stream().filter(s -> s.getKey().endsWith(SUFFIX_GENERAL))));
-      LOGGER.info("{}", sbGeneral);
+      LOG.info("{}", sbGeneral);
+
+      if (!LOG.isDebugEnabled()) {
+        return;
+      }
 
       var sbMatcher = new StringBuilder("Secret Matcher Duration Statistics")
         .append(System.lineSeparator())
         .append(formatEntries(format, stats.entrySet().stream().filter(s -> s.getKey().endsWith(SUFFIX_TOTAL))));
-      LOGGER.info("{}", sbMatcher);
+      LOG.debug("{}", sbMatcher);
 
       var sbMatcherVerbose = new StringBuilder("Granular Secret Matcher Duration Statistics")
         .append(System.lineSeparator())
         .append(formatEntries(format,
           stats.entrySet().stream().filter(s -> !s.getKey().endsWith(SUFFIX_TOTAL) && !s.getKey().endsWith(SUFFIX_GENERAL))));
-      LOGGER.info("{}", sbMatcherVerbose);
+      LOG.debug("{}", sbMatcherVerbose);
     }
   }
 
   private void calculateSecretMatcherTotals() {
     for (Map.Entry<String, Measurement> entry : Collections.unmodifiableSet(stats.entrySet())) {
       if (entry.getKey().endsWith(SUFFIX_PRE)) {
-        addRecord("preFilter" + SUFFIX_TOTAL, entry.getValue().total.get());
+        addRecord("preFilter" + SUFFIX_GENERAL, entry.getValue().total.get());
       } else if (entry.getKey().endsWith(SUFFIX_MATCHER)) {
-        addRecord("matcher" + SUFFIX_TOTAL, entry.getValue().total.get());
+        addRecord("matcher" + SUFFIX_GENERAL, entry.getValue().total.get());
       } else if (entry.getKey().endsWith(SUFFIX_POST)) {
-        addRecord("postFilter" + SUFFIX_TOTAL, entry.getValue().total.get());
+        addRecord("postFilter" + SUFFIX_GENERAL, entry.getValue().total.get());
       }
     }
   }
