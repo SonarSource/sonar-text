@@ -52,12 +52,12 @@ class ParallelizationManagerTest {
   };
 
   @BeforeEach
-  public void init() {
+  void init() {
     executor = new ParallelizationManager(1);
   }
 
   @AfterEach
-  public void cleanUp() {
+  void cleanUp() {
     executor.shutdown();
   }
 
