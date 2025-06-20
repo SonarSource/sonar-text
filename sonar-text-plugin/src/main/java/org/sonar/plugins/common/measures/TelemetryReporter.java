@@ -48,12 +48,13 @@ public class TelemetryReporter {
     addNumericMeasure(key, (int) durationMs);
   }
 
-  public void addNumericMeasure(String key, int value) {
+  public TelemetryReporter addNumericMeasure(String key, int value) {
     if (value < 0) {
-      return;
+      return this;
     }
     key = KEY_PREFIX + key;
     numericMeasures.merge(key, value, Integer::sum);
+    return this;
   }
 
   public void report() {

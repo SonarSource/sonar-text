@@ -85,6 +85,8 @@ import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.inputFileFromPath;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
+import static org.sonar.plugins.common.TextAndSecretsSensor.ALL_TRACKED_TEXT_FILES_MEASURE_KEY;
+import static org.sonar.plugins.common.TextAndSecretsSensor.SENSOR_DISABLED_MEASURE_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.SONAR_TESTS_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.TEXT_INCLUSIONS_DEFAULT_VALUE;
 
@@ -771,14 +773,17 @@ public abstract class AbstractTextAndSecretsSensorTest {
     Check check = new ReportIssueAtLineOneCheck();
     InputFile inputFile = inputFile("foo");
 
-    SensorContextTester context = sensorContext(check);
+    SensorContextTester context = spy(sensorContext(check));
     MapSettings mapSettings = context.settings();
     mapSettings.setProperty(TextAndSecretsSensor.ANALYZER_ACTIVATION_KEY, "false");
     context.setSettings(mapSettings);
     analyse(sensor(check), context, inputFile);
 
     assertThat(context.allIssues()).isEmpty();
-    assertThat(logTester.logs()).containsExactly("The text and secrets analysis was deactivated using the property \"sonar.text.activate\"");
+    assertThat(logTester.logs()).containsExactly(
+      "The text and secrets analysis was deactivated using the property \"sonar.text.activate\"",
+      "Experiencing any issues with the text and secrets analysis? Please report them at https://community.sonarsource.com/tag/secrets - your feedback helps us improve the product!");
+    verify(context).addTelemetryProperty(TelemetryReporter.KEY_PREFIX + SENSOR_DISABLED_MEASURE_KEY, "1");
   }
 
   @Test
@@ -1183,7 +1188,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     var analysisTimeMeasureKey = TelemetryReporter.KEY_PREFIX + "sensor_time_ms_" + sensor.getEditionName().toLowerCase(Locale.ROOT);
     var fileMeasureKey = TelemetryReporter.KEY_PREFIX + Analyzer.ANALYZED_FILES_MEASURE_KEY;
     var hiddenFileMeasureKey = TelemetryReporter.KEY_PREFIX + Analyzer.ANALYZED_HIDDEN_FILES_MEASURE_KEY;
-    var allTrackedTextFilesMeasureKey = TelemetryReporter.KEY_PREFIX + TextAndSecretsSensor.ALL_TRACKED_TEXT_FILES_MEASURE_KEY;
+    var allTrackedTextFilesMeasureKey = TelemetryReporter.KEY_PREFIX + ALL_TRACKED_TEXT_FILES_MEASURE_KEY;
     var expectedFilesCount = isPublicSensor() ? "2" : "4";
     var expectedHiddenFilesCount = isPublicSensor() ? "1" : "2";
     verify(context).addTelemetryProperty(eq(analysisTimeMeasureKey), argThat(value -> Integer.parseInt(value) > 0));
@@ -1265,7 +1270,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
       hiddenInputFile(Path.of("c.txt"), "{}", "secrets"),
       hiddenInputFile(Path.of("d.txt"), "{}"));
 
-    verify(context).addTelemetryProperty(TelemetryReporter.KEY_PREFIX + TextAndSecretsSensor.ALL_TRACKED_TEXT_FILES_MEASURE_KEY, "0");
+    verify(context).addTelemetryProperty(TelemetryReporter.KEY_PREFIX + ALL_TRACKED_TEXT_FILES_MEASURE_KEY, "0");
   }
 
   protected void assertCorrectLogsForTextAndSecretsAnalysis(int numberOfAnalyzedFiles, String... additionalLogs) {

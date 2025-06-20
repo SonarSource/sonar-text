@@ -75,6 +75,7 @@ public class TextAndSecretsSensor implements Sensor {
   public static final String TEXT_CATEGORY = "Secrets";
   public static final String SONAR_TESTS_KEY = "sonar.tests";
   public static final String ALL_TRACKED_TEXT_FILES_MEASURE_KEY = "all_tracked_text_files_count";
+  public static final String SENSOR_DISABLED_MEASURE_KEY = "is_sensor_disabled";
   public static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
 
   protected final CheckFactory checkFactory;
@@ -119,6 +120,11 @@ public class TextAndSecretsSensor implements Sensor {
   public void execute(SensorContext sensorContext) {
     if (!isActive(sensorContext)) {
       LOG.info("The text and secrets analysis was deactivated using the property \"{}\"", ANALYZER_ACTIVATION_KEY);
+      LOG.info("Experiencing any issues with the text and secrets analysis? " +
+        "Please report them at https://community.sonarsource.com/tag/secrets - your feedback helps us improve the product!");
+      new TelemetryReporter(sensorContext)
+        .addNumericMeasure(SENSOR_DISABLED_MEASURE_KEY, 1)
+        .report();
       return;
     }
     initialize(sensorContext);
