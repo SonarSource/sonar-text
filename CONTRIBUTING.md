@@ -48,7 +48,7 @@ provider:
       # Avoid matching values found on SourceGraph that look like dummy
       # passwords or insertions like:
       patternNot: 
-        - "(\\w)\\1{6,}"
+        - "(?<char>\\w)\\k<char>{6,}"
         - "(?i)rightcloud"
         - "(?i)testkey|(s|ex)ample"
   rules:
@@ -95,7 +95,7 @@ For example, if you have a common `patternNot` block that you want to use across
 
 ``` yaml
 # common/patternNot.yaml
-- "(\\w)\\1{6,}"
+- "(?<char>\\w)\\k<char>{6,}"
 - "(?i)rightcloud"
 - "(?i)testkey|(s|ex)ample"
 ```
@@ -177,9 +177,9 @@ Common patterns:
 ``` yaml
 patternNot:
   # Character repeated X times like xxx, ..., \*\*\*
-  # it is important to place this to the very beginning of the patternNot
-  # because \1 will match the same text that was captured by the first capturing group
-  - "([\\w\\*\\.])\\1{X,}"
+  # it is important to use named capturing groups and not numbered capturing groups here
+  # because this pattern may end-up in a concatenated regex pattern with other capturing groups
+  - "(?<char>[\\w\\*\\.])\\k<char>{X,}"
 
   # Common text placeholders
   - "(?i)(?:s|ex)ample|foo|bar|test|abcd|redacted"
