@@ -17,14 +17,11 @@
 package org.sonar.plugins.secrets.api;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.plugins.secrets.SecretsCheckList;
 import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel;
 import org.sonar.plugins.secrets.configuration.model.Rule;
@@ -35,28 +32,18 @@ import static org.sonar.plugins.secrets.api.SecretsSpecificationLoader.DEFAULT_E
 import static org.sonar.plugins.secrets.api.SecretsSpecificationLoader.DEFAULT_SPECIFICATION_LOCATION;
 
 @Order(1)
-class SecretsSpecificationLoaderTest {
+class SecretsSpecificationLoaderTest extends AbstractSecretsSpecificationLoaderTest {
 
-  @RegisterExtension
-  LogTesterJUnit5 logTester = new LogTesterJUnit5();
+  @Override
+  public List<Class<?>> getSecretsCheckListWithSpecifications() {
+    return new SecretsCheckList().checks();
+  }
 
-  @Test
-  void shouldLoadRulesWithoutErrors() {
-    var errors = new HashSet<Throwable>();
-    var specificationLoader = new SecretsSpecificationLoader(
+  @Override
+  public SecretsSpecificationLoader getSecretsSpecificationLoader() {
+    return new SecretsSpecificationLoader(
       DEFAULT_SPECIFICATION_LOCATION, existingSecretSpecifications(),
-      (e, specificationFileName) -> errors.add(e));
-    Map<String, List<Rule>> rulesMappedToKey = specificationLoader.getRulesMappedToKey();
-
-    assertThat(errors)
-      .as("No errors are expected during loading of specifications")
-      .isEmpty();
-
-    var numberOfSpecificationBasedChecks = new SecretsCheckList().checks().stream()
-      .filter(SpecificationBasedCheck.class::isAssignableFrom)
-      .count();
-    assertThat(rulesMappedToKey.values()).hasSize((int) numberOfSpecificationBasedChecks);
-    assertThat(logTester.getLogs()).isEmpty();
+      exceptionCollector);
   }
 
   @Test
