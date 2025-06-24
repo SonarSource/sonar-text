@@ -223,7 +223,7 @@ public class ReferenceTestModel {
     var heuristicsFilter = new HeuristicsFilter();
     heuristicsFilter.setHeuristics(List.of("uri"));
 
-    var decodedBase64Module = new DecodedBase64Module(List.of("\"alg\":"));
+    var decodedBase64Module = new DecodedBase64Module(List.of("\"alg\":"), DecodedBase64Module.Alphabet.DEFAULT);
 
     var groups = List.of(
       new NamedPostModule("groupName", decodedBase64Module, heuristicsFilter, List.of(), null));

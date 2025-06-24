@@ -87,6 +87,7 @@ provider:
           groups:
             - name: "groupName"
               decodedBase64:
+                alphabet: default
                 matchEach:
                   - '"alg":'
               heuristicFilter:

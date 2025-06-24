@@ -191,7 +191,7 @@ class PostFilterFactoryTest {
 
   @Test
   void shouldMatchOnBase64DecodedParts() {
-    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("\"alg\":")), null, emptyList(), null, emptyList());
+    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("\"alg\":"), DecodedBase64Module.Alphabet.DEFAULT), null, emptyList(), null, emptyList());
     var postFilter = PostFilterFactory.createPredicate(postModule);
 
     assertThat(postFilter.test("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")).isTrue();
@@ -199,7 +199,7 @@ class PostFilterFactoryTest {
 
   @Test
   void shouldNotMatchOnMalformedBase64DecodedParts() {
-    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("\"alg\":")), null, emptyList(), null, emptyList());
+    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("\"alg\":"), DecodedBase64Module.Alphabet.DEFAULT), null, emptyList(), null, emptyList());
     var postFilter = PostFilterFactory.createPredicate(postModule);
 
     assertThat(postFilter.test("1248163264128")).isFalse();
@@ -214,10 +214,18 @@ class PostFilterFactoryTest {
     "alg"info";false
     """, delimiter = ';')
   void shouldMatchEachOnBase64DecodedParts(String input, boolean shouldMatch) {
-    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("\"alg\":", "\"info\":")), null, emptyList(), null, emptyList());
+    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("\"alg\":", "\"info\":"), DecodedBase64Module.Alphabet.DEFAULT), null, emptyList(), null, emptyList());
     var postFilter = PostFilterFactory.createPredicate(postModule);
     var encodedInput = Base64.getEncoder().encodeToString(input.getBytes());
 
     assertThat(postFilter.test(encodedInput)).isEqualTo(shouldMatch);
+  }
+
+  @Test
+  void shouldMatchOnBase64DecodedPartsInY64Mode() {
+    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("&s=consumersecret&"), DecodedBase64Module.Alphabet.Y64), null, emptyList(), null, emptyList());
+    var postFilter = PostFilterFactory.createPredicate(postModule);
+
+    assertThat(postFilter.test("dj0yJmk9VXNwOWg3R3NvRDkyJmQ9WVdrOU4xTlFhM1JVTlRRbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD0wYw--")).isTrue();
   }
 }

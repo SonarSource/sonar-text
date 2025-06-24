@@ -16,9 +16,24 @@
  */
 package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import java.util.List;
+import javax.annotation.Nullable;
 
-public record DecodedBase64Module(@JsonSetter(nulls = Nulls.AS_EMPTY) List<String> matchEach) {
+public record DecodedBase64Module(List<String> matchEach, Alphabet alphabet) {
+  public DecodedBase64Module(
+    @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> matchEach,
+    @Nullable Alphabet alphabet) {
+    this.matchEach = matchEach;
+    this.alphabet = alphabet == null ? Alphabet.DEFAULT : alphabet;
+  }
+
+  public enum Alphabet {
+    @JsonProperty("default")
+    DEFAULT,
+    @JsonProperty("y64")
+    Y64
+  }
 }

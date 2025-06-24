@@ -95,10 +95,14 @@ public final class PostFilterFactory {
 
   static boolean matchBase64Decoded(DecodedBase64Module decodedBase64Module, String candidateSecret) {
     byte[] decodedBytes;
+    var stringToDecode = switch (decodedBase64Module.alphabet()) {
+      case Y64 -> candidateSecret.replace('.', '+').replace('_', '/').replace('-', '=');
+      case DEFAULT -> candidateSecret;
+    };
     try {
-      decodedBytes = Base64.getDecoder().decode(candidateSecret);
+      decodedBytes = Base64.getDecoder().decode(stringToDecode);
     } catch (IllegalArgumentException iae) {
-      LOG.debug("Base64 decoding failed for input: {}", candidateSecret);
+      LOG.debug("Base64 decoding failed for input: {} (decoded with alphabet {})", stringToDecode, decodedBase64Module.alphabet());
       // If decoding failed, then this is not what we were looking for
       return false;
     }
