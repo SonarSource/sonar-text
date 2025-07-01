@@ -18,10 +18,11 @@ package org.sonar.plugins.text;
 
 import java.util.List;
 import org.sonar.plugins.text.checks.BIDICharacterCheck;
+import org.sonar.plugins.text.checks.TagBlockCheck;
 
 public class TextCheckList {
 
-  public static final List<Class<?>> TEXT_CHECKS = List.of(BIDICharacterCheck.class);
+  public static final List<Class<?>> TEXT_CHECKS = List.of(BIDICharacterCheck.class, TagBlockCheck.class);
 
   public List<Class<?>> checks() {
     return TEXT_CHECKS;

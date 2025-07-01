@@ -24,6 +24,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import org.sonar.check.Rule;
 import org.sonar.plugins.common.InputFileContext;
+import org.sonar.plugins.common.measures.DurationStatistics;
 import org.sonar.plugins.text.api.TextCheck;
 
 @Rule(key = "S6389")
@@ -52,8 +53,18 @@ public class BIDICharacterCheck extends TextCheck {
 
   private static final Predicate<String> ANDROID_I18N_FILE_PREDICATE = Pattern.compile("res/values-[a-zA-Z\\-]+/strings.xml$").asPredicate();
 
+  private DurationStatistics durationStatistics;
+
+  public void initialize(DurationStatistics durationStatistics) {
+    this.durationStatistics = durationStatistics;
+  }
+
   @Override
   public void analyze(InputFileContext ctx) {
+    durationStatistics.timed(getRuleKey().rule() + DurationStatistics.SUFFIX_TOTAL, () -> analyzeFile(ctx));
+  }
+
+  private void analyzeFile(InputFileContext ctx) {
     if (isAndroidI18nFile(ctx)) {
       // This rule should not analyze Android Internationalization files to not make rule noisy.
       // It is expected that those files contain BIDI characters.

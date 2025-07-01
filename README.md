@@ -7,6 +7,7 @@
 This SonarSource project is a static code analyzer made to detect:
 
 * BIDI Characters Vulnerabilities
+* Hidden Text Vulnerabilities
 * Leaking Secrets/Tokens
 
 It is a component of the
@@ -18,6 +19,7 @@ This component helps you prevent the leakage of secrets even before you push the
 
 * 140+ secret patterns supported and detected by [90+](https://rules.sonarsource.com/secrets/) rules
 * detection of [BIDI characters](https://rules.sonarsource.com/text/) that could lead to attacks
+* detection of Unicode hidden tag blocks that could lead to prompt injection
 * detection of secrets in all files indexed by Sonar products
 
 ## Build

@@ -32,15 +32,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.sonar.plugins.common.TestUtils.analyze;
 import static org.sonar.plugins.common.TestUtils.inputFileFromPath;
+import static org.sonar.plugins.common.TestUtils.mockDurationStatistics;
 import static org.sonar.plugins.text.checks.BIDICharacterCheck.isAndroidI18nFile;
 
 class BIDICharacterCheckTest {
 
-  Check check = new BIDICharacterCheck();
-
   @Test
   void shouldCheckFile() throws IOException {
-    InputFile file = inputFileFromPath(Path.of("src", "test", "resources", "checks", "BIDICharacterCheck", "test.php"));
+    var check = getCheck();
+    var file = inputFileFromPath(Path.of("src", "test", "resources", "checks", "BIDICharacterCheck", "test.php"));
     assertThat(analyze(check, file)).containsExactly(
       "text:S6389 [3:0-3:20] This line contains a bidirectional character in column 12. Make sure that using bidirectional characters is safe here.",
       "text:S6389 [4:0-4:20] This line contains a bidirectional character in column 12. Make sure that using bidirectional characters is safe here.",
@@ -59,7 +59,8 @@ class BIDICharacterCheckTest {
 
   @Test
   void shouldNotAnalyzeAndroidI18nFiles() throws IOException {
-    InputFile file = inputFileFromPath(Path.of("src", "test", "resources", "checks", "BIDICharacterCheck", "res", "values-pl", "strings.xml"));
+    var check = getCheck();
+    var file = inputFileFromPath(Path.of("src", "test", "resources", "checks", "BIDICharacterCheck", "res", "values-pl", "strings.xml"));
     assertThat(analyze(check, file)).isEmpty();
   }
 
@@ -99,6 +100,12 @@ class BIDICharacterCheckTest {
     var ctx = prepareInputFileContext(uri);
 
     assertThat(isAndroidI18nFile(ctx)).isFalse();
+  }
+
+  private static Check getCheck() {
+    var check = new BIDICharacterCheck();
+    check.initialize(mockDurationStatistics());
+    return check;
   }
 
   private static InputFileContext prepareInputFileContext(String uri) throws URISyntaxException {

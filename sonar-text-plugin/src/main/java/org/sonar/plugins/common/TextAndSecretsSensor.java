@@ -55,6 +55,8 @@ import org.sonar.plugins.secrets.api.SpecificationConfiguration;
 import org.sonar.plugins.secrets.api.task.RegexMatchingManager;
 import org.sonar.plugins.text.TextCheckList;
 import org.sonar.plugins.text.TextRuleDefinition;
+import org.sonar.plugins.text.checks.BIDICharacterCheck;
+import org.sonar.plugins.text.checks.TagBlockCheck;
 
 public class TextAndSecretsSensor implements Sensor {
 
@@ -380,7 +382,11 @@ public class TextAndSecretsSensor implements Sensor {
     durationStatistics.timed("initializingSecretMatchers" + DurationStatistics.SUFFIX_GENERAL, () -> {
       for (Check activeCheck : checks) {
         if (activeCheck instanceof SpecificationBasedCheck specificationBasedCheck) {
-          (specificationBasedCheck).initialize(specificationLoader, durationStatistics, specificationConfiguration);
+          specificationBasedCheck.initialize(specificationLoader, durationStatistics, specificationConfiguration);
+        } else if (activeCheck instanceof BIDICharacterCheck bidiCharacterCheck) {
+          bidiCharacterCheck.initialize(durationStatistics);
+        } else if (activeCheck instanceof TagBlockCheck tagBlockCheck) {
+          tagBlockCheck.initialize(durationStatistics);
         }
       }
     });
