@@ -32,6 +32,7 @@ import org.opentest4j.AssertionFailedError;
 import org.sonar.api.SonarProduct;
 import org.sonar.api.batch.fs.InputComponent;
 import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.config.Configuration;
 import org.sonar.check.Rule;
 import org.sonar.java.model.JavaVersionImpl;
 import org.sonar.java.regex.JavaAnalyzerRegexSource;
@@ -279,6 +280,11 @@ public class TestRegexScannerContext implements JavaFileScannerContext, RegexSca
   @CheckForNull
   @Override
   public SonarProduct sonarProduct() {
+    return null;
+  }
+
+  @Override
+  public Configuration getConfiguration() {
     return null;
   }
 
