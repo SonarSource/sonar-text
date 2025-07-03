@@ -47,54 +47,6 @@ issuesToVerify:
     message: Make sure the regex used here, which is vulnerable to polynomial runtime due to backtracking, cannot lead to denial of service.
     details: ""
 
-  - secretRuleKey: S6698
-    secretRuleId: postgres-url
-    location: post
-    regexText: "^\\\\{+[^}]*\\\\}+$"
-    issueRuleKey: S5852
-    message: Make sure the regex used here, which is vulnerable to polynomial runtime due to backtracking, cannot lead to denial of service.
-    details: ""
-
-  - secretRuleKey: S6698
-    secretRuleId: postgres-url-password-from-env-with-default
-    location: post
-    regexText: "^\\\\{+[^}]*\\\\}+$"
-    issueRuleKey: S5852
-    message: Make sure the regex used here, which is vulnerable to polynomial runtime due to backtracking, cannot lead to denial of service.
-    details: ""
-
-  - secretRuleKey: S6698
-    secretRuleId: postgres-env-pg_password-unquoted
-    location: post
-    regexText: "^\\\\{+[^}]*\\\\}+$"
-    issueRuleKey: S5852
-    message: Make sure the regex used here, which is vulnerable to polynomial runtime due to backtracking, cannot lead to denial of service.
-    details: ""
-
-  - secretRuleKey: S6698
-    secretRuleId: postgres-env-pg_password-quoted
-    location: post
-    regexText: "^\\\\{+[^}]*\\\\}+$"
-    issueRuleKey: S5852
-    message: Make sure the regex used here, which is vulnerable to polynomial runtime due to backtracking, cannot lead to denial of service.
-    details: ""
-
-  - secretRuleKey: S6698
-    secretRuleId: psql-cli-unquoted
-    location: post
-    regexText: "^\\\\{+[^}]*\\\\}+$"
-    issueRuleKey: S5852
-    message: Make sure the regex used here, which is vulnerable to polynomial runtime due to backtracking, cannot lead to denial of service.
-    details: ""
-
-  - secretRuleKey: S6698
-    secretRuleId: psql-cli-quoted
-    location: post
-    regexText: "^\\\\{+[^}]*\\\\}+$"
-    issueRuleKey: S5852
-    message: Make sure the regex used here, which is vulnerable to polynomial runtime due to backtracking, cannot lead to denial of service.
-    details: ""
-
   - secretRuleKey: S6697
     secretRuleId: mysql-url
     location: matching
@@ -120,22 +72,6 @@ issuesToVerify:
     details: ""
 
   - secretRuleKey: S6703
-    secretRuleId: jdbc-connection-string
-    location: post
-    regexText: "^\\\\{+[^}]*\\\\}+$"
-    issueRuleKey: S5852
-    message: Make sure the regex used here, which is vulnerable to polynomial runtime due to backtracking, cannot lead to denial of service.
-    details: ""
-
-  - secretRuleKey: S6703
-    secretRuleId: odbc-connection-string
-    location: post
-    regexText: "\\\\{+[^}]++\\\\}+"
-    issueRuleKey: S5852
-    message: Make sure the regex used here, which is vulnerable to polynomial runtime due to backtracking, cannot lead to denial of service.
-    details: ""
-
-  - secretRuleKey: S6703
     secretRuleId: odbc-connection-string
     location: post
     regexText: "parameters\\\\(+[^)]*\\\\)++"
@@ -143,18 +79,3 @@ issuesToVerify:
     message: Make sure the regex used here, which is vulnerable to polynomial runtime due to backtracking, cannot lead to denial of service.
     details: ""
 
-  - secretRuleKey: S6703
-    secretRuleId: odbc-connection-string
-    location: post
-    regexText: "\\\\{+[^}]*\\\\}++"
-    issueRuleKey: S5852
-    message: Make sure the regex used here, which is vulnerable to polynomial runtime due to backtracking, cannot lead to denial of service.
-    details: ""
-
-  - secretRuleKey: S6703
-    secretRuleId: odbc-connection-string
-    location: post
-    regexText: "^\\\\{+[^}]*\\\\}+$"
-    issueRuleKey: S5852
-    message: Make sure the regex used here, which is vulnerable to polynomial runtime due to backtracking, cannot lead to denial of service.
-    details: ""
