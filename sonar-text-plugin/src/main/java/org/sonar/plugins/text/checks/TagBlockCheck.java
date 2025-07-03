@@ -134,11 +134,13 @@ public class TagBlockCheck extends TextCheck {
         .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append)
         .toString();
 
-      var tagSequenceStartColumnNumber = currentColumnNumber - tagSequence.size();
-      ctx.reportTextIssue(
-        getRuleKey(),
-        lineNumber,
-        MESSAGE_FORMAT.formatted(hiddenText, tagSequenceStartColumnNumber));
+      if (!hiddenText.isBlank() && hiddenText.length() > 1) {
+        var tagSequenceStartColumnNumber = currentColumnNumber - tagSequence.size();
+        ctx.reportTextIssue(
+          getRuleKey(),
+          lineNumber,
+          MESSAGE_FORMAT.formatted(hiddenText, tagSequenceStartColumnNumber));
+      }
 
       tagSequence.clear();
       tagSequenceStartIndex = null;
