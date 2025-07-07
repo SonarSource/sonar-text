@@ -28,17 +28,16 @@ import org.junit.jupiter.api.Test;
 import org.sonar.api.internal.apachecommons.io.FileUtils;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.configuration.model.Rule;
-import org.sonar.plugins.secrets.configuration.model.matching.filter.FileFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
 import static org.assertj.core.api.Assertions.fail;
 
 /**
- * Abstract test class to ensure that all secret rules have a pre.include.content filter.
+ * Abstract test class to ensure that all secret rules have a pre.include filter.
  * <p>
  * This is important for performance reasons, as it allows the engine to potentially skip the file before applying the heavy regex.
  * <p>
- * The test will fail if any rule does not have a pre.include.content filter and is not in the exclusion list.
+ * The test will fail if any rule does not have a pre.include filter and is not in the exclusion list.
  */
 public abstract class AbstractSecretPreFiltersTest {
 
@@ -56,19 +55,19 @@ public abstract class AbstractSecretPreFiltersTest {
   protected abstract Collection<String> getExcludedRuleKeys();
 
   @Test
-  void shouldEnsureAllSecretRulesHaveContentPreFilters() {
+  void shouldEnsureAllSecretRulesIncludePreFilters() {
     var secretSpecFileNames = getSecretSpecFileNames();
-    var ruleKeysWithoutContentPreFilters = getRuleKeysWithoutContentPreFilters(secretSpecFileNames);
+    var ruleKeysWithoutIncludePreFilters = getRuleKeysWithoutIncludePreFilters(secretSpecFileNames);
     var excludedRuleKeys = getExcludedRuleKeys();
     excludedRuleKeys.forEach(ruleKey -> {
-      var ruleKeyWasInList = ruleKeysWithoutContentPreFilters.remove(ruleKey);
+      var ruleKeyWasInList = ruleKeysWithoutIncludePreFilters.remove(ruleKey);
       if (!ruleKeyWasInList) {
-        fail("Rule '%s' is in the exclusion list but does not exist or has a pre.include.content filter. " +
+        fail("Rule '%s' is in the exclusion list but does not exist or has a pre.include filter. " +
           "Remove it from the exclusion list in '%s'.", ruleKey, getClass().getSimpleName());
       }
     });
-    ruleKeysWithoutContentPreFilters.forEach(ruleKey -> fail(
-      "Rule '%s' is missing a pre.include.content filter to improve performances. " +
+    ruleKeysWithoutIncludePreFilters.forEach(ruleKey -> fail(
+      "Rule '%s' is missing a pre.include filter to improve performances. " +
         "Add it or add '%s' to the exclusion list in '%s'.",
       ruleKey, ruleKey, getClass().getSimpleName()));
   }
@@ -79,11 +78,11 @@ public abstract class AbstractSecretPreFiltersTest {
     return files.stream().map(File::getName).collect(Collectors.toSet());
   }
 
-  private List<String> getRuleKeysWithoutContentPreFilters(Set<String> secretSpecFileNames) {
+  private List<String> getRuleKeysWithoutIncludePreFilters(Set<String> secretSpecFileNames) {
     var specificationLoader = new SecretsSpecificationLoader(specificationFilesLocation, secretSpecFileNames);
     return specificationLoader.getRulesMappedToKey().values().stream()
       .flatMap(Collection::stream)
-      .filter(this::hasNoContentPreFilter)
+      .filter(this::hasNoIncludePreFilter)
       .map(this::getRuleKey)
       .sorted()
       .collect(Collectors.toCollection(ArrayList::new)); // The list will get modified
@@ -93,10 +92,9 @@ public abstract class AbstractSecretPreFiltersTest {
     return rule.getRspecKey() + ":" + rule.getId();
   }
 
-  private boolean hasNoContentPreFilter(Rule rule) {
+  private boolean hasNoIncludePreFilter(Rule rule) {
     return Optional.ofNullable(rule.getDetection().getPre())
       .map(PreModule::getInclude)
-      .map(FileFilter::getContent)
       .isEmpty();
   }
 }
