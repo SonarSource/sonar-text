@@ -27,8 +27,6 @@ public class SecretPreFiltersTest extends AbstractSecretPreFiltersTest {
 
   @Override
   protected Collection<String> getExcludedRuleKeys() {
-    return List.of(
-      "S6706:pkcs8-private-key" // Excluded because the regex is a simple string
-    );
+    return List.of();
   }
 }
