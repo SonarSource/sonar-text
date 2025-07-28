@@ -133,6 +133,10 @@ def qa_benchmark_task():
             "log_benchmark_results_script": [
                 "grep -A 5 'Analysis result for project' private/its/benchmark/build/reports/tests/integrationTest/classes/com.sonarsource.text.BenchmarkTest.html"
             ],
+            "log_benchmark_duration_statistics_script": [
+                # Take the lines with duration statistics (i.e. starting with whitespaces after 'INFO  Duration Statistics') and some analysis info
+                "awk '/Project key: .*/{print; next} /Using [0-9]+ threads for analysis\\./{print; next} /INFO  Duration Statistics/{flag=1;next}/^[^ ]/{flag=0}flag' private/its/benchmark/build/reports/tests/integrationTest/classes/com.sonarsource.text.BenchmarkTest.html"
+            ],
             "cleanup_gradle_script": cleanup_gradle_script(),
             "on_failure": default_gradle_on_failure(),
         }

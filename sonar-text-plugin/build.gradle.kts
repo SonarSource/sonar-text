@@ -31,6 +31,7 @@ dependencies {
     api(libs.jackson.dataformat.yaml)
     api(libs.com.networknt.jsonSchemaValidator)
     api(libs.eclipse.jgit)
+    api(libs.ahocorasick)
     compileOnly(libs.sonar.plugin.api)
     compileOnly(libs.slf4j.api)
     testImplementation(libs.junit.jupiter)
@@ -38,6 +39,7 @@ dependencies {
     testImplementation(libs.sonar.plugin.api.test.fixtures)
     testImplementation(libs.sonar.plugin.api.impl)
     testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.junit.jupiter)
     testImplementation(libs.logback.classic)
     testRuntimeOnly(libs.junit.platform.launcher)
 

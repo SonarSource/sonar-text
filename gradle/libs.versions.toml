@@ -22,6 +22,7 @@ commons-io = "2.20.0"
 re2j = "1.8"
 gradle-shadow = "8.3.8"
 awaitility = "4.3.0"
+ahocorasick = "0.6.3"
 
 [libraries]
 sonar-analyzer-commons = { module = "org.sonarsource.analyzer-commons:sonar-analyzer-commons", version.ref = "sonar-commons" }
@@ -44,6 +45,7 @@ junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "jun
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
 sonar-license-api = { module = "com.sonarsource.license:license-api", version.ref = "sonar-license-api" }
 yguard = { module = "com.yworks:yguard", version.ref = "yguard"}
 eclipse-jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "eclipse-jgit" }
@@ -51,3 +53,4 @@ commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
 google-re2j = { module = "com.google.re2j:re2j", version.ref = "re2j" }
 gradle-shadow = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "gradle-shadow" }
 awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility"}
+ahocorasick = { module = "org.ahocorasick:ahocorasick", version.ref = "ahocorasick" }

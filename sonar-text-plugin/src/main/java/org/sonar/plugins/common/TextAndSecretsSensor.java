@@ -90,6 +90,7 @@ public class TextAndSecretsSensor implements Sensor {
   protected ParallelizationManager parallelizationManager;
   protected GitService gitService;
   private GitTrackedFilePredicate gitTrackedFilePredicate;
+  private SecretsSpecificationLoader specificationLoader;
 
   public TextAndSecretsSensor(SonarRuntime sonarRuntime, CheckFactory checkFactory) {
     this(sonarRuntime, checkFactory, DefaultAnalysisWarningsWrapper.NOOP_ANALYSIS_WARNINGS);
@@ -163,7 +164,7 @@ public class TextAndSecretsSensor implements Sensor {
       "applyFilePredicate" + DurationStatistics.SUFFIX_GENERAL,
       () -> getInputFiles(sensorContext, filePredicate));
 
-    var analyzer = new TextAndSecretsAnalyzer(sensorContext, parallelizationManager, durationStatistics, suitableChecks, telemetryReporter, memoryMonitor);
+    var analyzer = new TextAndSecretsAnalyzer(sensorContext, parallelizationManager, durationStatistics, suitableChecks, telemetryReporter, memoryMonitor, specificationLoader);
     durationStatistics.timed("analyzerTotal" + DurationStatistics.SUFFIX_GENERAL, () -> analyzer.analyzeFiles(inputFiles));
     logCheckBasedStatistics(suitableChecks);
     reportAllTrackedTextFilesMeasure(sensorContext, notBinaryFilePredicate);
@@ -339,6 +340,8 @@ public class TextAndSecretsSensor implements Sensor {
     initializeGitService(sensorContext);
     initializeOptionalConfigValue(sensorContext, REGEX_MATCH_TIMEOUT_KEY, RegexMatchingManager::setTimeoutMs);
     initializeOptionalConfigValue(sensorContext, REGEX_EXECUTION_TIMEOUT_KEY, RegexMatchingManager::setUninterruptibleTimeoutMs);
+    specificationLoader = durationStatistics.timed("deserializingSpecifications" + DurationStatistics.SUFFIX_GENERAL,
+      this::constructSpecificationLoader);
   }
 
   private void initializeParallelizationManager(SensorContext sensorContext) {
@@ -376,9 +379,6 @@ public class TextAndSecretsSensor implements Sensor {
   }
 
   protected void initializeChecks(List<Check> checks, SpecificationConfiguration specificationConfiguration) {
-    var specificationLoader = durationStatistics.timed("deserializingSpecifications" + DurationStatistics.SUFFIX_GENERAL,
-      this::constructSpecificationLoader);
-
     durationStatistics.timed("initializingSecretMatchers" + DurationStatistics.SUFFIX_GENERAL, () -> {
       for (Check activeCheck : checks) {
         if (activeCheck instanceof SpecificationBasedCheck specificationBasedCheck) {

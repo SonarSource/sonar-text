@@ -41,7 +41,7 @@ public class Analyzer {
 
   private final SensorContext sensorContext;
   private final ParallelizationManager parallelizationManager;
-  private final DurationStatistics durationStatistics;
+  protected final DurationStatistics durationStatistics;
   private final List<Check> suitableChecks;
   private final String analysisName;
   private final TelemetryReporter telemetryReporter;
@@ -142,7 +142,7 @@ public class Analyzer {
     }
   }
 
-  private void analyzeAllChecks(InputFileContext inputFileContext) {
+  protected void analyzeAllChecks(InputFileContext inputFileContext) {
     // Currently not possible and desired to parallelize check execution per file, as we rely on the sequential and always same order of the
     // checks to achieve deterministic analysis results
     // The main reason is because of the calculation of overlapping reported secrets in InputFileContext
@@ -156,15 +156,13 @@ public class Analyzer {
     }
   }
 
-  private void logAnalysisError(InputFile inputFile, Exception e) {
+  protected void logAnalysisError(InputFile inputFile, Exception e) {
     var message = String.format("Unable to analyze file %s: %s", inputFile, e.getMessage());
     sensorContext.newAnalysisError()
       .message(message)
       .onFile(inputFile)
       .save();
     LOG.warn(message);
-    // TODO SECRETS-114: remove print of stacktrace
-    LOG.debug("{}: ", e, e);
   }
 
   private void countAnalyzedFile(InputFile inputFile) {
