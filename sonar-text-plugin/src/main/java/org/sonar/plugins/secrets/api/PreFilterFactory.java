@@ -55,7 +55,7 @@ public final class PreFilterFactory {
     FileFilter include = pre.getInclude();
     FileFilter reject = pre.getReject();
     if (reject != null) {
-      predicate = predicate.and(Predicate.not(ctx -> matches(reject, ctx)));
+      predicate = predicate.and(ctx -> notMatches(reject, ctx));
     }
     if (include != null) {
       predicate = predicate.and(ctx -> matches(include, ctx));
@@ -64,9 +64,17 @@ public final class PreFilterFactory {
   }
 
   private static boolean matches(FileFilter filter, InputFileContext ctx) {
-    return anyMatch(filter.getPaths(), PreFilterFactory::matchesPath, ctx) ||
-      anyMatch(filter.getExt(), PreFilterFactory::matchesExt, ctx) ||
-      anyMatch(filter.getContent(), PreFilterFactory::matchesContent, ctx);
+    var matchesPath = filter.getPaths().isEmpty() || anyMatch(filter.getPaths(), PreFilterFactory::matchesPath, ctx);
+    var matchesExt = filter.getExt().isEmpty() || anyMatch(filter.getExt(), PreFilterFactory::matchesExt, ctx);
+    var matchesContent = filter.getContent().isEmpty() || anyMatch(filter.getContent(), PreFilterFactory::matchesContent, ctx);
+    return matchesPath && matchesExt && matchesContent;
+  }
+
+  private static boolean notMatches(FileFilter filter, InputFileContext ctx) {
+    var matchesAnyPath = anyMatch(filter.getPaths(), PreFilterFactory::matchesPath, ctx);
+    var matchesAnyExt = anyMatch(filter.getExt(), PreFilterFactory::matchesExt, ctx);
+    var matchesAnyContent = anyMatch(filter.getContent(), PreFilterFactory::matchesContent, ctx);
+    return !matchesAnyPath && !matchesAnyExt && !matchesAnyContent;
   }
 
   private static boolean anyMatch(List<String> filterElements, BiPredicate<String, InputFileContext> filterFunction, InputFileContext ctx) {
