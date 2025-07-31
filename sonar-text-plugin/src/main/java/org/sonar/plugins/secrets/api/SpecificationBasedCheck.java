@@ -54,6 +54,7 @@ public abstract class SpecificationBasedCheck extends AbstractSpecificationBased
     return loader.getRulesForKey(ruleKey);
   }
 
+  @Override
   protected void analyze(InputFileContext ctx, Predicate<String> ruleFilter) {
     for (SecretMatcher secretMatcher : matchers) {
       if (ruleFilter.test(secretMatcher.getRuleId())) {
