@@ -71,11 +71,16 @@ public class SecretMatcher implements Matcher {
    * @param rule                       rule to extract matcher logic from
    * @param durationStatistics         instance to collect performance statistics
    * @param specificationConfiguration configuration of specification
+   * @param shouldExecuteContentPreFilters    whether content pre-filters should be executed or they have been executed earlier
    * @return a new SecretMatcher
    */
-  public static SecretMatcher build(Rule rule, DurationStatistics durationStatistics, SpecificationConfiguration specificationConfiguration) {
+  public static SecretMatcher build(
+    Rule rule,
+    DurationStatistics durationStatistics,
+    SpecificationConfiguration specificationConfiguration,
+    boolean shouldExecuteContentPreFilters) {
     var patternMatcher = PatternMatcher.build(rule.getDetection().getMatching());
-    Predicate<InputFileContext> preFilter = PreFilterFactory.createPredicate(rule.getDetection().getPre(), specificationConfiguration);
+    Predicate<InputFileContext> preFilter = PreFilterFactory.createPredicate(rule.getDetection().getPre(), specificationConfiguration, shouldExecuteContentPreFilters);
     Predicate<String> postFilter = PostFilterFactory.createPredicate(rule.getDetection().getPost());
     var postFilterByGroup = Optional.ofNullable(rule.getDetection().getPost()).stream()
       .flatMap(it -> it.getGroups().stream())

@@ -1,0 +1,26 @@
+provider:
+  metadata:
+    name: Multiple Optimizable Provider
+  rules:
+    - id: exampleKey1
+      rspecKey: exampleKey
+      metadata:
+        name: First optimizable rule
+      detection:
+        pre:
+          include:
+            content:
+              - "secret"
+        matching:
+          pattern: ""
+    - id: exampleKey2
+      rspecKey: exampleKey
+      metadata:
+        name: Second optimizable rule
+      detection:
+        pre:
+          include:
+            content:
+              - "password"
+        matching:
+          pattern: ""

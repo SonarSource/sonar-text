@@ -33,14 +33,11 @@ public final class ContentPreFilterUtils {
     // Utility class
   }
 
-  public static Map<String, Collection<Check>> getChecksByContentPreFilters(Iterable<Check> checks, SecretsSpecificationLoader specLoader) {
-    Map<String, Collection<Check>> checksByPreFilters = new HashMap<>();
-    for (Check check : checks) {
+  public static <T extends Check> Map<String, Collection<T>> getChecksByContentPreFilters(Iterable<T> checks, SecretsSpecificationLoader specLoader) {
+    Map<String, Collection<T>> checksByPreFilters = new HashMap<>();
+    for (var check : checks) {
       var rules = specLoader.getRulesForKey(check.getRuleKey().rule());
-      if (!rules.stream().allMatch(ContentPreFilterUtils::hasPreFilter)) {
-        // If not all rules within a check have content pre-filters, don't try to apply an optimization.
-        // The check will be executed normally by the TextAndSecretsAnalyzer.
-        // Note: we are deliberately not filtering individual rules here, because it will overcomplicate the logic without substantial gains.
+      if (!hasOptimizableContentPrefilters(rules)) {
         continue;
       }
       for (var rule : rules) {
@@ -58,18 +55,28 @@ public final class ContentPreFilterUtils {
     return checksByPreFilters;
   }
 
-  public static PayloadTrie<Collection<Check>> getPreprocessedTrie(Map<String, Collection<Check>> checksByPreFilters) {
-    var trieBuilder = PayloadTrie.<Collection<Check>>builder();
+  public static <T extends Check> PayloadTrie<Collection<T>> getPreprocessedTrie(Map<String, Collection<T>> checksByPreFilters) {
+    var trieBuilder = PayloadTrie.<Collection<T>>builder();
     for (var entry : checksByPreFilters.entrySet()) {
       // Lower-case needed even if the trie should be case-insensitive, weird behavior in the library
       String preFilter = entry.getKey().toLowerCase(Locale.ROOT);
-      Collection<Check> checks = entry.getValue();
+      Collection<T> checks = entry.getValue();
       trieBuilder.addKeyword(preFilter, checks);
     }
     return trieBuilder.ignoreCase().build();
   }
 
-  private static boolean hasPreFilter(Rule rule) {
+  /**
+   * Checks if execution of content pre-filters can be optimized.<p/>
+   * If not all rules within a check have content pre-filters, don't try to apply an optimization.
+   * The check will be executed normally by the TextAndSecretsAnalyzer.<p/>
+   * Note: we are deliberately not filtering individual rules here, because it will overcomplicate the logic without substantial gains.
+   */
+  public static boolean hasOptimizableContentPrefilters(Collection<Rule> rules) {
+    return rules.stream().allMatch(ContentPreFilterUtils::hasIncludeContentPreFilter);
+  }
+
+  private static boolean hasIncludeContentPreFilter(Rule rule) {
     var pre = rule.getDetection().getPre();
     if (pre == null) {
       return false;

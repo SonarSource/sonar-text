@@ -1,0 +1,23 @@
+provider:
+  metadata:
+    name: Multiple Non-Optimizable Rules
+    category: Cloud Provider
+    message: provider message
+  rules:
+    - id: exampleKey1
+      rspecKey: exampleKey
+      metadata:
+        name: Rule without pre-filters
+      detection:
+        matching:
+          pattern: ""
+    - id: exampleKey2
+      rspecKey: exampleKey
+      metadata:
+        name: Rule only with extension pre-filters
+      detection:
+        pre:
+          include:
+            ext: [ '.txt' ]
+        matching:
+          pattern: ""

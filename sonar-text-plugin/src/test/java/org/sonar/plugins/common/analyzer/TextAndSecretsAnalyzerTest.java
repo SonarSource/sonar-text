@@ -28,10 +28,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.Version;
-import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.common.measures.DurationStatistics;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
+import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.configuration.deserialization.SpecificationDeserializer;
 import org.sonar.plugins.secrets.configuration.model.Specification;
 
@@ -59,13 +59,13 @@ class TextAndSecretsAnalyzerTest {
   @Mock
   private SecretsSpecificationLoader specLoader;
   @Mock
-  private Check checkWithPreFilter;
+  private SpecificationBasedCheck checkWithPreFilter;
   @Mock
-  private Check checkWithoutPreFilter;
+  private SpecificationBasedCheck checkWithoutPreFilter;
   @Mock
-  private Check checkWithMultiplePreFilters;
+  private SpecificationBasedCheck checkWithMultiplePreFilters;
   @Mock
-  private Check checkWithOverlappingPreFilter;
+  private SpecificationBasedCheck checkWithOverlappingPreFilter;
   @Mock
   private RuleKey ruleKeyWithPreFilter;
   @Mock
@@ -207,7 +207,7 @@ class TextAndSecretsAnalyzerTest {
   @Test
   void shouldRunAllChecksEvenWithDuplicatedPreFilters() {
     var ruleKeyWithDuplicatedPreFilter = mock(RuleKey.class);
-    var checkWithDuplicatedPreFilter = mock(Check.class);
+    var checkWithDuplicatedPreFilter = mock(SpecificationBasedCheck.class);
     when(ruleKeyWithDuplicatedPreFilter.rule()).thenReturn("ruleWithDuplicatedPreFilter");
     when(checkWithDuplicatedPreFilter.getRuleKey()).thenReturn(ruleKeyWithDuplicatedPreFilter);
     when(specLoader.getRulesForKey("ruleWithDuplicatedPreFilter")).thenReturn(List.of(testSpec.getProvider().getRules().get(4)));

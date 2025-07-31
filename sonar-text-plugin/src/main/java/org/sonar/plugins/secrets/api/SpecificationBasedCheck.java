@@ -25,6 +25,8 @@ import org.sonar.plugins.common.measures.DurationStatistics;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 
+import static org.sonar.plugins.secrets.utils.ContentPreFilterUtils.hasOptimizableContentPrefilters;
+
 /**
  * A base Check class for all checks that are configured by YAML specification.
  */
@@ -69,8 +71,11 @@ public abstract class SpecificationBasedCheck extends AbstractSpecificationBased
     if (rulesForKey.isEmpty()) {
       LOG.warn("Found no rule specification for rule with key: {}", ruleId);
     }
+    // Only if there is a single (and optimizable) rule for the key, we can safely skip execution of content pre-filters.
+    // See SONARTEXT-585 for more details.
+    var shouldExecuteContentPreFilters = !(rulesForKey.size() == 1 && hasOptimizableContentPrefilters(rulesForKey));
     return rulesForKey.stream()
-      .map(rule -> SecretMatcher.build(rule, durationStatistics, specificationConfiguration))
+      .map(rule -> SecretMatcher.build(rule, durationStatistics, specificationConfiguration, shouldExecuteContentPreFilters))
       .toList();
   }
 }

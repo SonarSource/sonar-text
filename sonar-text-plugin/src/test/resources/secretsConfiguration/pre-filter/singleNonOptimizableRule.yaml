@@ -1,0 +1,13 @@
+provider:
+  metadata:
+    name: Single Non-Optimizable Provider
+    category: Cloud Provider
+    message: provider message
+  rules:
+    - id: exampleKey
+      rspecKey: exampleKey
+      metadata:
+        name: Single non-optimizable rule (no content pre-filter)
+      detection:
+        matching:
+          pattern: ""

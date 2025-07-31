@@ -1,0 +1,17 @@
+provider:
+  metadata:
+    name: Single Optimizable Provider
+    category: Cloud Provider
+    message: provider message
+  rules:
+    - id: exampleKey
+      rspecKey: exampleKey
+      metadata:
+        name: Single optimizable rule
+      detection:
+        pre:
+          include:
+            content:
+              - "secret"
+        matching:
+          pattern: ""

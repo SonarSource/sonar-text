@@ -19,10 +19,18 @@ package org.sonar.plugins.secrets.api;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.Mockito;
 import org.sonar.check.Rule;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.sonar.plugins.common.TestUtils.analyze;
 import static org.sonar.plugins.common.TestUtils.mockDurationStatistics;
 
@@ -83,6 +91,31 @@ class SpecificationBasedCheckTest {
     exampleCheck.initialize(specificationLoader, mockDurationStatistics(), SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED);
 
     assertThat(analyze(exampleCheck, fileContent)).isEmpty();
+  }
+
+  @ParameterizedTest
+  @MethodSource("contentPreFilterTestCases")
+  void shouldSkipContentPreFiltersOnlyForCompatibleRules(
+    String specFile,
+    boolean shouldExecuteContentPreFilters) {
+    try (var mockedStatic = Mockito.mockStatic(SecretMatcher.class)) {
+      var specificationLocation = "secretsConfiguration/pre-filter/";
+      var specifications = Set.of(specFile);
+      var specificationLoader = new SecretsSpecificationLoader(specificationLocation, specifications);
+
+      new ExampleCheck().initialize(specificationLoader, mockDurationStatistics(), SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED);
+
+      mockedStatic.verify(() -> SecretMatcher.build(any(), any(), any(), eq(shouldExecuteContentPreFilters)), atLeastOnce());
+    }
+  }
+
+  static Stream<Arguments> contentPreFilterTestCases() {
+    return Stream.of(
+      Arguments.of("singleOptimizableRule.yaml", false),
+      // Due to the current limitations of the implementation, we cannot optimize content pre-filters for multiple rules. See SONARTEXT-585.
+      Arguments.of("multipleOptimizableRules.yaml", true),
+      Arguments.of("singleNonOptimizableRule.yaml", true),
+      Arguments.of("multipleNonOptimizableRules.yaml", true));
   }
 
   @Rule(key = "exampleKey")

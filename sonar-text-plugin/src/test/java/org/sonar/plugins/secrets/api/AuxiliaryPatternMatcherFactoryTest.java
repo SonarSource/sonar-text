@@ -35,7 +35,7 @@ class AuxiliaryPatternMatcherFactoryTest {
     Rule rule = ReferenceTestModel.constructMinimumSpecification().getProvider().getRules().get(0);
 
     var configuration = SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED;
-    AuxiliaryPatternMatcher auxiliaryPatternMatcher = SecretMatcher.build(rule, mockDurationStatistics(), configuration)
+    AuxiliaryPatternMatcher auxiliaryPatternMatcher = SecretMatcher.build(rule, mockDurationStatistics(), configuration, true)
       .getAuxiliaryPatternMatcher();
 
     assertThat(auxiliaryPatternMatcher).isEqualTo(AuxiliaryPatternMatcher.NO_FILTERING_AUXILIARY_MATCHER);

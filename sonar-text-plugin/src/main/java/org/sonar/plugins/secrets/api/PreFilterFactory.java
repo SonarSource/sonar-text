@@ -42,11 +42,15 @@ public final class PreFilterFactory {
   /**
    * Produce a predicate from {@link PreModule}.
    *
-   * @param pre                        the input {@link PreModule}
-   * @param specificationConfiguration the configuration
+   * @param pre                            the input {@link PreModule}
+   * @param specificationConfiguration     the configuration
+   * @param shouldExecuteContentPreFilters whether content pre-filters should be executed or they have been executed earlier
    * @return a predicate
    */
-  public static Predicate<InputFileContext> createPredicate(@Nullable PreModule pre, SpecificationConfiguration specificationConfiguration) {
+  public static Predicate<InputFileContext> createPredicate(
+    @Nullable PreModule pre,
+    SpecificationConfiguration specificationConfiguration,
+    boolean shouldExecuteContentPreFilters) {
     if (pre == null) {
       return INCLUDE_ALL_FILES;
     }
@@ -58,16 +62,19 @@ public final class PreFilterFactory {
       predicate = predicate.and(ctx -> notMatches(reject, ctx));
     }
     if (include != null) {
-      predicate = predicate.and(ctx -> matches(include, ctx));
+      predicate = predicate.and(ctx -> matches(include, ctx, shouldExecuteContentPreFilters));
     }
     return predicate;
   }
 
-  private static boolean matches(FileFilter filter, InputFileContext ctx) {
-    var matchesPath = filter.getPaths().isEmpty() || anyMatch(filter.getPaths(), PreFilterFactory::matchesPath, ctx);
-    var matchesExt = filter.getExt().isEmpty() || anyMatch(filter.getExt(), PreFilterFactory::matchesExt, ctx);
-    var matchesContent = filter.getContent().isEmpty() || anyMatch(filter.getContent(), PreFilterFactory::matchesContent, ctx);
-    return matchesPath && matchesExt && matchesContent;
+  private static boolean matches(FileFilter filter, InputFileContext ctx, boolean shouldExecuteContentPreFilters) {
+    var isContentMatch = true;
+    if (shouldExecuteContentPreFilters) {
+      isContentMatch = filter.getContent().isEmpty() || anyMatch(filter.getContent(), PreFilterFactory::matchesContent, ctx);
+    }
+    var isPathMatch = filter.getPaths().isEmpty() || anyMatch(filter.getPaths(), PreFilterFactory::matchesPath, ctx);
+    var isExtMatch = filter.getExt().isEmpty() || anyMatch(filter.getExt(), PreFilterFactory::matchesExt, ctx);
+    return isPathMatch && isExtMatch && isContentMatch;
   }
 
   private static boolean notMatches(FileFilter filter, InputFileContext ctx) {

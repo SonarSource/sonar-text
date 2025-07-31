@@ -96,7 +96,7 @@ class PreFilterFactoryTest {
   void testFiltersFromYamlFragments(String input, String filename, boolean shouldMatch) throws IOException {
     Detection detection = MAPPER.readValue(input, Detection.class);
 
-    Predicate<InputFileContext> predicate = PreFilterFactory.createPredicate(detection.getPre(), new SpecificationConfiguration(false));
+    Predicate<InputFileContext> predicate = PreFilterFactory.createPredicate(detection.getPre(), new SpecificationConfiguration(false), true);
 
     InputFileContext ctx = mock(InputFileContext.class);
     when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder("myProject", filename).build());
@@ -202,7 +202,7 @@ class PreFilterFactoryTest {
     when(ctx.getInputFile()).thenReturn(inputFile);
     when(ctx.getFileSystem()).thenReturn(fileSystem);
 
-    var predicate = PreFilterFactory.createPredicate(preModule, configuration);
+    var predicate = PreFilterFactory.createPredicate(preModule, configuration, true);
 
     assertThat(predicate.test(ctx))
       .withFailMessage("Input file uri: " + inputFile.uri().getPath())
@@ -225,7 +225,7 @@ class PreFilterFactoryTest {
     when(ctx.getInputFile()).thenReturn(inputFile);
     when(ctx.getFileSystem()).thenReturn(fileSystem);
 
-    var predicate = PreFilterFactory.createPredicate(preModule, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED);
+    var predicate = PreFilterFactory.createPredicate(preModule, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, true);
     assertThat(predicate.test(ctx)).isEqualTo(shouldMatch);
   }
 }

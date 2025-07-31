@@ -128,8 +128,8 @@ public abstract class AbstractRuleExampleTest {
       var exampleFileName = ruleExample.getFileName() != null ? ruleExample.getFileName() : "file.txt";
       var inputFileContext = new InputFileContext(context, inputFile(Path.of(exampleFileName), ruleExample.getText()));
 
-      check.analyze(inputFileContext, rule.getId());
-      inputFileContext.flushIssues();
+      var checksContainer = new ChecksContainer(Set.of(check), specificationLoader, mockDurationStatistics());
+      checksContainer.analyze(inputFileContext, rule.getId());
 
       var issues = context.allIssues();
       if (ruleExample.isContainsSecret()) {
