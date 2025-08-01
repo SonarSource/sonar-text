@@ -53,6 +53,7 @@ import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.api.SpecificationConfiguration;
 import org.sonar.plugins.secrets.api.task.RegexMatchingManager;
+import org.sonar.plugins.secrets.configuration.SecretsSpecificationContainer;
 import org.sonar.plugins.text.TextCheckList;
 import org.sonar.plugins.text.TextRuleDefinition;
 import org.sonar.plugins.text.checks.BIDICharacterCheck;
@@ -84,22 +85,27 @@ public class TextAndSecretsSensor implements Sensor {
 
   protected final SonarRuntime sonarRuntime;
   protected final AnalysisWarningsWrapper analysisWarnings;
+  private final SecretsSpecificationContainer secretsSpecificationContainer;
   protected DurationStatistics durationStatistics;
   protected TelemetryReporter telemetryReporter;
   protected MemoryMonitor memoryMonitor;
   protected ParallelizationManager parallelizationManager;
   protected GitService gitService;
   private GitTrackedFilePredicate gitTrackedFilePredicate;
-  private SecretsSpecificationLoader specificationLoader;
 
-  public TextAndSecretsSensor(SonarRuntime sonarRuntime, CheckFactory checkFactory) {
-    this(sonarRuntime, checkFactory, DefaultAnalysisWarningsWrapper.NOOP_ANALYSIS_WARNINGS);
+  public TextAndSecretsSensor(SonarRuntime sonarRuntime, CheckFactory checkFactory, SecretsSpecificationContainer secretsSpecificationContainer) {
+    this(sonarRuntime, checkFactory, DefaultAnalysisWarningsWrapper.NOOP_ANALYSIS_WARNINGS, secretsSpecificationContainer);
   }
 
-  public TextAndSecretsSensor(SonarRuntime sonarRuntime, CheckFactory checkFactory, AnalysisWarningsWrapper analysisWarnings) {
+  public TextAndSecretsSensor(
+    SonarRuntime sonarRuntime,
+    CheckFactory checkFactory,
+    AnalysisWarningsWrapper analysisWarnings,
+    SecretsSpecificationContainer secretsSpecificationContainer) {
     this.sonarRuntime = sonarRuntime;
     this.checkFactory = checkFactory;
     this.analysisWarnings = analysisWarnings;
+    this.secretsSpecificationContainer = secretsSpecificationContainer;
   }
 
   @Override
@@ -164,7 +170,8 @@ public class TextAndSecretsSensor implements Sensor {
       "applyFilePredicate" + DurationStatistics.SUFFIX_GENERAL,
       () -> getInputFiles(sensorContext, filePredicate));
 
-    var analyzer = new TextAndSecretsAnalyzer(sensorContext, parallelizationManager, durationStatistics, suitableChecks, telemetryReporter, memoryMonitor, specificationLoader);
+    var analyzer = new TextAndSecretsAnalyzer(sensorContext, parallelizationManager, durationStatistics, suitableChecks, telemetryReporter, memoryMonitor,
+      secretsSpecificationContainer.getSpecificationLoader());
     durationStatistics.timed("analyzerTotal" + DurationStatistics.SUFFIX_GENERAL, () -> analyzer.analyzeFiles(inputFiles));
     logCheckBasedStatistics(suitableChecks);
     reportAllTrackedTextFilesMeasure(sensorContext, notBinaryFilePredicate);
@@ -340,8 +347,8 @@ public class TextAndSecretsSensor implements Sensor {
     initializeGitService(sensorContext);
     initializeOptionalConfigValue(sensorContext, REGEX_MATCH_TIMEOUT_KEY, RegexMatchingManager::setTimeoutMs);
     initializeOptionalConfigValue(sensorContext, REGEX_EXECUTION_TIMEOUT_KEY, RegexMatchingManager::setUninterruptibleTimeoutMs);
-    specificationLoader = durationStatistics.timed("deserializingSpecifications" + DurationStatistics.SUFFIX_GENERAL,
-      this::constructSpecificationLoader);
+
+    secretsSpecificationContainer.initialize(this::constructSpecificationLoader, durationStatistics);
   }
 
   private void initializeParallelizationManager(SensorContext sensorContext) {
@@ -382,7 +389,7 @@ public class TextAndSecretsSensor implements Sensor {
     durationStatistics.timed("initializingSecretMatchers" + DurationStatistics.SUFFIX_GENERAL, () -> {
       for (Check activeCheck : checks) {
         if (activeCheck instanceof SpecificationBasedCheck specificationBasedCheck) {
-          specificationBasedCheck.initialize(specificationLoader, durationStatistics, specificationConfiguration);
+          specificationBasedCheck.initialize(secretsSpecificationContainer.getSpecificationLoader(), durationStatistics, specificationConfiguration);
         } else if (activeCheck instanceof BIDICharacterCheck bidiCharacterCheck) {
           bidiCharacterCheck.initialize(durationStatistics);
         } else if (activeCheck instanceof TagBlockCheck tagBlockCheck) {

@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.plugins.secrets.configuration.SecretsSpecificationContainer;
 
 import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME;
 import static org.sonar.plugins.common.TestUtils.activeRules;
@@ -32,7 +33,7 @@ public class TextAndSecretsSensorTest extends AbstractTextAndSecretsSensorTest {
   @Override
   protected TextAndSecretsSensor sensor(Check... checks) {
     CheckFactory checkFactory = new CheckFactory(activeRules(toRuleKeys(checks)));
-    return new TextAndSecretsSensor(SONARQUBE_RUNTIME, checkFactory) {
+    return new TextAndSecretsSensor(SONARQUBE_RUNTIME, checkFactory, new SecretsSpecificationContainer()) {
       @Override
       protected List<Check> getActiveChecks() {
         return Arrays.stream(checks).toList();
@@ -42,7 +43,7 @@ public class TextAndSecretsSensorTest extends AbstractTextAndSecretsSensorTest {
 
   @Override
   protected TextAndSecretsSensor sensor(SensorContext sensorContext) {
-    return new TextAndSecretsSensor(sensorContext.runtime(), new CheckFactory(sensorContext.activeRules()));
+    return new TextAndSecretsSensor(sensorContext.runtime(), new CheckFactory(sensorContext.activeRules()), new SecretsSpecificationContainer());
   }
 
   @Override
