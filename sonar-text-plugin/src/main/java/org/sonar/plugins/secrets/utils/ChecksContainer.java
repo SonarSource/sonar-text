@@ -17,11 +17,14 @@
 package org.sonar.plugins.secrets.utils;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+import org.ahocorasick.trie.PayloadEmit;
 import org.ahocorasick.trie.PayloadTrie;
+import org.ahocorasick.trie.handler.PayloadEmitHandler;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.common.measures.DurationStatistics;
@@ -82,16 +85,30 @@ public class ChecksContainer {
   }
 
   private void analyze(InputFileContext inputFileContext, Consumer<Check> executeCheck) {
-    var emits = durationStatistics.timed("trieMatch::general", () -> trie.parseText(inputFileContext.content()));
+    var handler = new SingleEmittingEmitHandler<Collection<SpecificationBasedCheck>>();
+    durationStatistics.timed("trieMatch::general", () -> trie.parseText(inputFileContext.content(), handler));
+
+    var emits = handler.getEmits();
     emits.stream()
-      .flatMap(emit -> emit.getPayload().stream())
-      // Avoid running the same check multiple times, as it emits for every match.
-      // We still need to process the entire text to make sure we don't miss any matches, so one option for optimization here
-      // would be to remove fully matched branches from the trie, but it would require patching the library and careful measurements.
-      .distinct()
+      .flatMap(Collection::stream)
       .forEach(executeCheck);
     checksWithoutPreFilter.forEach(executeCheck);
 
     inputFileContext.flushIssues();
+  }
+}
+
+class SingleEmittingEmitHandler<T> implements PayloadEmitHandler<T> {
+  private final Set<T> emits = new HashSet<>();
+
+  public Set<T> getEmits() {
+    return emits;
+  }
+
+  @Override
+  public boolean emit(PayloadEmit<T> emit) {
+    // `emit` is called for every matched keyword, but we only care about whether the keyword has matched at all,
+    // so we keep a single occurrence.
+    return emits.add(emit.getPayload());
   }
 }

@@ -43,6 +43,7 @@ import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -133,6 +134,11 @@ class TextAndSecretsAnalyzerTest {
       var supplier = invocation.getArgument(1, Supplier.class);
       return supplier.get();
     });
+    lenient().doAnswer(invocation -> {
+      var runnable = invocation.getArgument(1, Runnable.class);
+      runnable.run();
+      return null;
+    }).when(durationStatistics).timed(anyString(), ArgumentMatchers.<Runnable>any());
 
     textAndSecretsAnalyzer = new TextAndSecretsAnalyzer(
       sensorContext, mock(), durationStatistics,
