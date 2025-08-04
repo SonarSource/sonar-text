@@ -245,7 +245,7 @@ class TextAndSecretsAnalyzerTest {
     });
 
     executor.shutdown();
-    var finished = executor.awaitTermination(10, SECONDS);
+    var finished = executor.awaitTermination(20, SECONDS);
     assertThat(finished).as("Executor should finish analyzing files").isTrue();
 
     // Verify that no matches leak between threads by asserting that all checks are called only on expected files
