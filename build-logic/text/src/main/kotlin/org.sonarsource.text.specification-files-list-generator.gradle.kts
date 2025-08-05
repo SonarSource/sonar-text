@@ -16,6 +16,7 @@
  */
 import kotlin.io.path.div
 import org.sonarsource.text.CodeGenerationConfiguration
+import org.sonarsource.text.Constants
 import org.sonarsource.text.GENERATED_SOURCES_DIR
 import org.sonarsource.text.SPEC_LIST_GENERATION_TASK_NAME
 import org.sonarsource.text.listSecretSpecificationFiles
@@ -24,31 +25,6 @@ import org.sonarsource.text.writeToFile
 
 val codeGenerationConfiguration = extensions.findByType<CodeGenerationConfiguration>()
     ?: extensions.create<CodeGenerationConfiguration>("codeGeneration")
-
-private data class Constants(
-    val packagePrefix: String,
-    val generatedClassName: String,
-) {
-    val specFilesLocation get() = "$packagePrefix/sonar/plugins/secrets/configuration"
-    val template
-        get() =
-            """
-    //<LICENSE_HEADER>
-    package $packagePrefix.sonar.plugins.secrets;
-
-    import java.util.Set;
-    
-    // This class was generated automatically, the generation logic can be found in
-    // org.sonarsource.text.specification-files-list-generator.gradle.kts
-    public class $generatedClassName {
-
-      public static Set<String> existingSecretSpecifications() {
-        return Set.of(
-    //<REPLACE-WITH-LIST-OF-FILES>
-      }
-    }
-            """.trimIndent()
-}
 
 tasks.register(SPEC_LIST_GENERATION_TASK_NAME) {
     description = "Generates spec files list class based on all specification files"
