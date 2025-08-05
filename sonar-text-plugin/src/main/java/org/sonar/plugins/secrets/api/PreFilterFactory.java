@@ -27,6 +27,7 @@ import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.FileFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
+import static java.util.function.Predicate.not;
 import static org.sonar.plugins.secrets.api.ScopeBasedFileFilter.scopeBasedFilePredicate;
 
 /**
@@ -68,20 +69,26 @@ public final class PreFilterFactory {
   }
 
   private static boolean matches(FileFilter filter, InputFileContext ctx, boolean shouldExecuteContentPreFilters) {
-    var isContentMatch = true;
+    Predicate<InputFileContext> isPathMatch = c -> filter.getPaths().isEmpty() || anyMatch(filter.getPaths(), PreFilterFactory::matchesPath, c);
+    Predicate<InputFileContext> isExtMatch = c -> filter.getExt().isEmpty() || anyMatch(filter.getExt(), PreFilterFactory::matchesExt, c);
+    Predicate<InputFileContext> isContentMatch = c -> true;
     if (shouldExecuteContentPreFilters) {
-      isContentMatch = filter.getContent().isEmpty() || anyMatch(filter.getContent(), PreFilterFactory::matchesContent, ctx);
+      isContentMatch = c -> filter.getContent().isEmpty() || anyMatch(filter.getContent(), PreFilterFactory::matchesContent, c);
     }
-    var isPathMatch = filter.getPaths().isEmpty() || anyMatch(filter.getPaths(), PreFilterFactory::matchesPath, ctx);
-    var isExtMatch = filter.getExt().isEmpty() || anyMatch(filter.getExt(), PreFilterFactory::matchesExt, ctx);
-    return isPathMatch && isExtMatch && isContentMatch;
+    return isPathMatch
+      .and(isExtMatch)
+      .and(isContentMatch)
+      .test(ctx);
   }
 
   private static boolean notMatches(FileFilter filter, InputFileContext ctx) {
-    var matchesAnyPath = anyMatch(filter.getPaths(), PreFilterFactory::matchesPath, ctx);
-    var matchesAnyExt = anyMatch(filter.getExt(), PreFilterFactory::matchesExt, ctx);
-    var matchesAnyContent = anyMatch(filter.getContent(), PreFilterFactory::matchesContent, ctx);
-    return !matchesAnyPath && !matchesAnyExt && !matchesAnyContent;
+    Predicate<InputFileContext> isPathMatch = c -> anyMatch(filter.getPaths(), PreFilterFactory::matchesPath, c);
+    Predicate<InputFileContext> isExtMatch = c -> anyMatch(filter.getExt(), PreFilterFactory::matchesExt, c);
+    Predicate<InputFileContext> isContentMatch = c -> anyMatch(filter.getContent(), PreFilterFactory::matchesContent, c);
+    return not(isPathMatch)
+      .and(not(isExtMatch))
+      .and(not(isContentMatch))
+      .test(ctx);
   }
 
   private static boolean anyMatch(List<String> filterElements, BiPredicate<String, InputFileContext> filterFunction, InputFileContext ctx) {
