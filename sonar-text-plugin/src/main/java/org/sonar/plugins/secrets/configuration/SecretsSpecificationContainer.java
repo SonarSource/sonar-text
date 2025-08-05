@@ -28,8 +28,9 @@ import org.sonarsource.api.sonarlint.SonarLintSide;
 import static org.sonarsource.api.sonarlint.SonarLintSide.INSTANCE;
 
 /**
- * Container for the state of the secrets plugin, that requires one-time initialization. While being effectively no-op in the Sonar scanner,
- * this class improves performance in SonarQube:IDE by avoiding repeated initialization.
+ * Container for the state of the secrets plugin, that requires one-time initialization.
+ * This class improves performance in SonarQube:IDE by avoiding repeated initialization.
+ * In the scanner, it acts only as a wrapper for the specification loader.
  */
 @ScannerSide
 @SonarLintSide(lifespan = INSTANCE)

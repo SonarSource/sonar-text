@@ -54,6 +54,7 @@ import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.api.SpecificationConfiguration;
 import org.sonar.plugins.secrets.api.task.RegexMatchingManager;
 import org.sonar.plugins.secrets.configuration.SecretsSpecificationContainer;
+import org.sonar.plugins.secrets.utils.CheckContainer;
 import org.sonar.plugins.text.TextCheckList;
 import org.sonar.plugins.text.TextRuleDefinition;
 import org.sonar.plugins.text.checks.BIDICharacterCheck;
@@ -86,6 +87,7 @@ public class TextAndSecretsSensor implements Sensor {
   protected final SonarRuntime sonarRuntime;
   protected final AnalysisWarningsWrapper analysisWarnings;
   private final SecretsSpecificationContainer secretsSpecificationContainer;
+  private final CheckContainer checkContainer;
   protected DurationStatistics durationStatistics;
   protected TelemetryReporter telemetryReporter;
   protected MemoryMonitor memoryMonitor;
@@ -93,19 +95,22 @@ public class TextAndSecretsSensor implements Sensor {
   protected GitService gitService;
   private GitTrackedFilePredicate gitTrackedFilePredicate;
 
-  public TextAndSecretsSensor(SonarRuntime sonarRuntime, CheckFactory checkFactory, SecretsSpecificationContainer secretsSpecificationContainer) {
-    this(sonarRuntime, checkFactory, DefaultAnalysisWarningsWrapper.NOOP_ANALYSIS_WARNINGS, secretsSpecificationContainer);
+  public TextAndSecretsSensor(SonarRuntime sonarRuntime, CheckFactory checkFactory, SecretsSpecificationContainer secretsSpecificationContainer,
+    CheckContainer checkContainer) {
+    this(sonarRuntime, checkFactory, DefaultAnalysisWarningsWrapper.NOOP_ANALYSIS_WARNINGS, secretsSpecificationContainer, checkContainer);
   }
 
   public TextAndSecretsSensor(
     SonarRuntime sonarRuntime,
     CheckFactory checkFactory,
     AnalysisWarningsWrapper analysisWarnings,
-    SecretsSpecificationContainer secretsSpecificationContainer) {
+    SecretsSpecificationContainer secretsSpecificationContainer,
+    CheckContainer checkContainer) {
     this.sonarRuntime = sonarRuntime;
     this.checkFactory = checkFactory;
     this.analysisWarnings = analysisWarnings;
     this.secretsSpecificationContainer = secretsSpecificationContainer;
+    this.checkContainer = checkContainer;
   }
 
   @Override
@@ -138,7 +143,7 @@ public class TextAndSecretsSensor implements Sensor {
     }
     initialize(sensorContext);
 
-    List<Check> activeChecks = getActiveChecks();
+    var activeChecks = getActiveChecks();
     if (activeChecks.isEmpty()) {
       return;
     }
@@ -171,7 +176,7 @@ public class TextAndSecretsSensor implements Sensor {
       () -> getInputFiles(sensorContext, filePredicate));
 
     var analyzer = new TextAndSecretsAnalyzer(sensorContext, parallelizationManager, durationStatistics, suitableChecks, telemetryReporter, memoryMonitor,
-      secretsSpecificationContainer.getSpecificationLoader());
+      checkContainer);
     durationStatistics.timed("analyzerTotal" + DurationStatistics.SUFFIX_GENERAL, () -> analyzer.analyzeFiles(inputFiles));
     logCheckBasedStatistics(suitableChecks);
     reportAllTrackedTextFilesMeasure(sensorContext, notBinaryFilePredicate);
@@ -397,6 +402,7 @@ public class TextAndSecretsSensor implements Sensor {
         }
       }
     });
+    checkContainer.initialize(checks, secretsSpecificationContainer.getSpecificationLoader(), durationStatistics);
   }
 
   private static void initializeOptionalConfigValue(SensorContext sensorContext, String key, Consumer<Integer> setConfigValue) {

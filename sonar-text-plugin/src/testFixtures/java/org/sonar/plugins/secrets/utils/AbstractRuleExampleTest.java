@@ -128,7 +128,8 @@ public abstract class AbstractRuleExampleTest {
       var exampleFileName = ruleExample.getFileName() != null ? ruleExample.getFileName() : "file.txt";
       var inputFileContext = new InputFileContext(context, inputFile(Path.of(exampleFileName), ruleExample.getText()));
 
-      var checksContainer = new ChecksContainer(Set.of(check), specificationLoader, mockDurationStatistics());
+      var checksContainer = new CheckContainer();
+      checksContainer.initialize(Set.of(check), specificationLoader, mockDurationStatistics());
       checksContainer.analyze(inputFileContext, rule.getId());
 
       var issues = context.allIssues();

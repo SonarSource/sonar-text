@@ -18,27 +18,41 @@ package org.sonar.plugins.secrets.utils;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import org.ahocorasick.trie.PayloadEmit;
 import org.ahocorasick.trie.PayloadTrie;
 import org.ahocorasick.trie.handler.PayloadEmitHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.sonar.api.scanner.ScannerSide;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.InputFileContext;
+import org.sonar.plugins.common.analyzer.TextAndSecretsAnalyzer;
 import org.sonar.plugins.common.measures.DurationStatistics;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
+import org.sonarsource.api.sonarlint.SonarLintSide;
 
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toSet;
 import static org.sonar.plugins.secrets.utils.ContentPreFilterUtils.getChecksByContentPreFilters;
 import static org.sonar.plugins.secrets.utils.ContentPreFilterUtils.getPreprocessedTrie;
+import static org.sonarsource.api.sonarlint.SonarLintSide.MODULE;
 
-public class ChecksContainer {
-  private final Map<String, Collection<SpecificationBasedCheck>> checksByPreFilters;
-  private final Set<? extends Check> checksWithoutPreFilter;
+/**
+ * Container for checks and their associated trie, that requires one-time initialization.
+ * This class improves performance in SonarLint by avoiding repeated expensive trie construction.
+ * In the sonar-scanner, it acts only as a wrapper for checks and trie.
+ */
+@ScannerSide
+@SonarLintSide(lifespan = MODULE)
+public class CheckContainer {
+  private static final Logger LOG = LoggerFactory.getLogger(CheckContainer.class);
+
+  private DurationStatistics durationStatistics;
+  private Collection<? extends Check> checksWithoutPreFilter;
   /**
    * A Trie that represents all content pre-filters and associated checks.<br/>
    * Implementation of Trie and `Trie#parseText` seems thread-safe, so we can have a single instance for the whole analyzer.
@@ -48,25 +62,41 @@ public class ChecksContainer {
    * Moreover, building the trie is expensive compared to matching on small files (at least 35x was spotted in tests),
    * so we really want to reuse it.
    */
-  private final PayloadTrie<Collection<SpecificationBasedCheck>> trie;
-  private final DurationStatistics durationStatistics;
+  private PayloadTrie<Collection<SpecificationBasedCheck>> trie;
+  private boolean initialized;
 
-  public ChecksContainer(
+  public CheckContainer() {
+    // Default constructor for DI framework.
+  }
+
+  public void initialize(
     Collection<Check> checks,
-    SecretsSpecificationLoader specLoader,
+    SecretsSpecificationLoader specificationLoader,
     DurationStatistics durationStatistics) {
-    var specificationBasedChecks = checks.stream()
+    if (this.initialized) {
+      LOG.debug("ChecksContainer is already initialized, skipping re-initialization.");
+      return;
+    }
+
+    LOG.debug("Initializing ChecksContainer with checks and trie construction.");
+
+    var suitableChecks = TextAndSecretsAnalyzer.filterSuitableChecks(checks);
+    var specificationBasedChecks = suitableChecks.stream()
       .filter(SpecificationBasedCheck.class::isInstance)
       .map(SpecificationBasedCheck.class::cast)
       .collect(toSet());
-    this.checksByPreFilters = getChecksByContentPreFilters(specificationBasedChecks, specLoader);
+    var checksByPreFilters = getChecksByContentPreFilters(specificationBasedChecks, specificationLoader);
     var checksWithPreFilter = checksByPreFilters.values().stream().flatMap(Collection::stream).collect(toSet());
     this.checksWithoutPreFilter = Stream.concat(
-      checks.stream().filter(not(SpecificationBasedCheck.class::isInstance)),
+      suitableChecks.stream().filter(not(SpecificationBasedCheck.class::isInstance)),
       specificationBasedChecks.stream().filter(not(checksWithPreFilter::contains)))
       .collect(toSet());
     this.trie = durationStatistics.timed("trieBuild::general", () -> getPreprocessedTrie(checksByPreFilters));
     this.durationStatistics = durationStatistics;
+    this.initialized = true;
+
+    LOG.debug("ChecksContainer initialized successfully with {} checks without pre-filter and trie containing {} patterns.",
+      checksWithoutPreFilter.size(), checksByPreFilters.size());
   }
 
   public void analyze(InputFileContext inputFileContext) {
@@ -85,6 +115,7 @@ public class ChecksContainer {
   }
 
   private void analyze(InputFileContext inputFileContext, Consumer<Check> executeCheck) {
+    validateInitialized();
     var handler = new SingleEmittingEmitHandler<Collection<SpecificationBasedCheck>>();
     durationStatistics.timed("trieMatch::general", () -> trie.parseText(inputFileContext.content(), handler));
 
@@ -96,19 +127,29 @@ public class ChecksContainer {
 
     inputFileContext.flushIssues();
   }
-}
 
-class SingleEmittingEmitHandler<T> implements PayloadEmitHandler<T> {
-  private final Set<T> emits = new HashSet<>();
-
-  public Set<T> getEmits() {
-    return emits;
+  private void validateInitialized() {
+    if (!initialized) {
+      throw new IllegalStateException("ChecksContainer must be initialized before use. Call initialize() first.");
+    }
   }
 
-  @Override
-  public boolean emit(PayloadEmit<T> emit) {
-    // `emit` is called for every matched keyword, but we only care about whether the keyword has matched at all,
-    // so we keep a single occurrence.
-    return emits.add(emit.getPayload());
+  boolean isInitialized() {
+    return initialized;
+  }
+
+  private static class SingleEmittingEmitHandler<T> implements PayloadEmitHandler<T> {
+    private final Set<T> emits = new HashSet<>();
+
+    public Set<T> getEmits() {
+      return emits;
+    }
+
+    @Override
+    public boolean emit(PayloadEmit<T> emit) {
+      // `emit` is called for every matched keyword, but we only care about whether the keyword has matched at all,
+      // so we keep a single occurrence.
+      return emits.add(emit.getPayload());
+    }
   }
 }

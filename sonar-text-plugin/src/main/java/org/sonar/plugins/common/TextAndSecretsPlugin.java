@@ -25,6 +25,7 @@ import org.sonar.plugins.common.warnings.DefaultAnalysisWarningsWrapper;
 import org.sonar.plugins.secrets.SecretsLanguage;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.configuration.SecretsSpecificationContainer;
+import org.sonar.plugins.secrets.utils.CheckContainer;
 import org.sonar.plugins.text.TextLanguage;
 import org.sonar.plugins.text.TextRuleDefinition;
 
@@ -48,7 +49,8 @@ public class TextAndSecretsPlugin implements Plugin {
       SecretsLanguage.class,
       SecretsRulesDefinition.class,
       SecretsRulesDefinition.DefaultQualityProfile.class,
-      SecretsSpecificationContainer.class);
+      SecretsSpecificationContainer.class,
+      CheckContainer.class);
 
     context.addExtensions(createUIProperties());
   }

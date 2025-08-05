@@ -29,14 +29,13 @@ import org.sonar.plugins.common.measures.MemoryMonitor;
 import org.sonar.plugins.common.measures.TelemetryReporter;
 import org.sonar.plugins.common.thread.ParallelizationManager;
 import org.sonar.plugins.secrets.AbstractBinaryFileCheck;
-import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
-import org.sonar.plugins.secrets.utils.ChecksContainer;
+import org.sonar.plugins.secrets.utils.CheckContainer;
 
 public final class TextAndSecretsAnalyzer extends Analyzer {
   private static final Logger LOG = LoggerFactory.getLogger(TextAndSecretsAnalyzer.class);
   private static final String ANALYSIS_NAME = "text and secrets analysis";
 
-  private final ChecksContainer checksContainer;
+  private final CheckContainer checkContainer;
 
   public TextAndSecretsAnalyzer(
     SensorContext sensorContext,
@@ -45,10 +44,9 @@ public final class TextAndSecretsAnalyzer extends Analyzer {
     List<Check> suitableChecks,
     TelemetryReporter telemetryReporter,
     MemoryMonitor memoryMonitor,
-    SecretsSpecificationLoader specLoader) {
+    CheckContainer checkContainer) {
     super(sensorContext, parallelizationManager, durationStatistics, suitableChecks, ANALYSIS_NAME, telemetryReporter, memoryMonitor);
-
-    this.checksContainer = new ChecksContainer(suitableChecks, specLoader, durationStatistics);
+    this.checkContainer = checkContainer;
   }
 
   @Override
@@ -62,7 +60,7 @@ public final class TextAndSecretsAnalyzer extends Analyzer {
     // checks to achieve deterministic analysis results
     // The main reason is because of the calculation of overlapping reported secrets in InputFileContext
     try {
-      checksContainer.analyze(inputFileContext);
+      checkContainer.analyze(inputFileContext);
     } catch (RuntimeException e) {
       logAnalysisError(inputFileContext.getInputFile(), e);
     }

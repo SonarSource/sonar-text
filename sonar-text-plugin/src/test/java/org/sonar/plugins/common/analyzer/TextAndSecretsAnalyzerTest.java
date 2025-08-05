@@ -34,6 +34,7 @@ import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.configuration.deserialization.SpecificationDeserializer;
 import org.sonar.plugins.secrets.configuration.model.Specification;
+import org.sonar.plugins.secrets.utils.CheckContainer;
 
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -140,10 +141,14 @@ class TextAndSecretsAnalyzerTest {
       return null;
     }).when(durationStatistics).timed(anyString(), ArgumentMatchers.<Runnable>any());
 
+    var checksContainer = new CheckContainer();
+    checksContainer.initialize(List.of(checkWithPreFilter, checkWithoutPreFilter, checkWithMultiplePreFilters),
+      specLoader, durationStatistics);
+
     textAndSecretsAnalyzer = new TextAndSecretsAnalyzer(
       sensorContext, mock(), durationStatistics,
       List.of(checkWithPreFilter, checkWithoutPreFilter, checkWithMultiplePreFilters),
-      mock(), mock(), specLoader);
+      mock(), mock(), checksContainer);
   }
 
   @Test
@@ -194,10 +199,14 @@ class TextAndSecretsAnalyzerTest {
     when(checkWithOverlappingPreFilter.getRuleKey()).thenReturn(ruleKeyWithOverlappingPreFilter);
     when(specLoader.getRulesForKey("ruleWithOverlappingPreFilter")).thenReturn(List.of(testSpec.getProvider().getRules().get(3)));
 
+    var checksContainer = new CheckContainer();
+    checksContainer.initialize(List.of(checkWithPreFilter, checkWithoutPreFilter, checkWithMultiplePreFilters, checkWithOverlappingPreFilter),
+      specLoader, durationStatistics);
+
     textAndSecretsAnalyzer = new TextAndSecretsAnalyzer(
       sensorContext, mock(), durationStatistics,
       List.of(checkWithPreFilter, checkWithoutPreFilter, checkWithMultiplePreFilters, checkWithOverlappingPreFilter),
-      mock(), mock(), specLoader);
+      mock(), mock(), checksContainer);
 
     var inputFileContext = createMockInputFileContext("PASSWORD: ${{ password_env }}");
 
@@ -218,10 +227,14 @@ class TextAndSecretsAnalyzerTest {
     when(checkWithDuplicatedPreFilter.getRuleKey()).thenReturn(ruleKeyWithDuplicatedPreFilter);
     when(specLoader.getRulesForKey("ruleWithDuplicatedPreFilter")).thenReturn(List.of(testSpec.getProvider().getRules().get(4)));
 
+    var checksContainer = new CheckContainer();
+    checksContainer.initialize(List.of(checkWithMultiplePreFilters, checkWithDuplicatedPreFilter),
+      specLoader, durationStatistics);
+
     textAndSecretsAnalyzer = new TextAndSecretsAnalyzer(
       sensorContext, mock(), durationStatistics,
       List.of(checkWithMultiplePreFilters, checkWithDuplicatedPreFilter),
-      mock(), mock(), specLoader);
+      mock(), mock(), checksContainer);
 
     var inputFileContext = createMockInputFileContext("The word token should be captured by two checks");
 
