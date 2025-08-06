@@ -11,13 +11,13 @@ This SonarSource project is a static code analyzer made to detect:
 * Leaking Secrets/Tokens
 
 It is a component of the
-Sonar [Clean Code solution](https://www.sonarsource.com/solutions/clean-code/?utm_medium=referral&utm_source=github&utm_campaign=clean-code&utm_content=sonar-text).
-It is embedded in SonarLint, SonarQube, and SonarCloud.
+Sonar [integrated code quality and security](https://www.sonarsource.com/solutions/for-developers/?utm_medium=referral&utm_source=github&utm_campaign=clean-code&utm_content=sonar-text) solution.
+It is embedded in SonarQube for IDE, SonarQube Server, and SonarQube Cloud.
 This component helps you prevent the leakage of secrets even before you push them into your repository thanks to SonarLint.
 
 # Features
 
-* 140+ secret patterns supported and detected by [90+](https://rules.sonarsource.com/secrets/) rules
+* 450+ secret patterns supported and detected by [340+](https://rules.sonarsource.com/secrets/) rules
 * detection of [BIDI characters](https://rules.sonarsource.com/text/) that could lead to attacks
 * detection of Unicode hidden tag blocks that could lead to prompt injection
 * detection of secrets in all files indexed by Sonar products
