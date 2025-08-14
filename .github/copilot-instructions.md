@@ -32,7 +32,7 @@ The technology stack:
 * Prefer immutable data structures and classes.
 * Prefer `var` over explicit types for local variables, unless the type is not obvious from the right-hand side of the
   assignment.
-* Prefer `final` for fields.
+* Prefer `final` for class attributes.
 * When `for` loops could be rewritten as streams that are still easy to read and understand, prefer using streams.
 * Short streams can be in a single line, and long streams should be broken before every `.` starting after the stream() method.
 * Avoid nested streams
