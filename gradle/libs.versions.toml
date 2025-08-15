@@ -21,7 +21,7 @@ yguard = "4.1.1"
 eclipse-jgit = "7.3.0.202506031305-r"
 commons-io = "2.20.0"
 re2j = "1.8"
-gradle-shadow = "8.3.9"
+gradle-shadow = "9.0.2" # should be in sync with build-logic/common/gradle/libs.versions.toml
 awaitility = "4.3.0"
 ahocorasick = "0.6.3"
 
