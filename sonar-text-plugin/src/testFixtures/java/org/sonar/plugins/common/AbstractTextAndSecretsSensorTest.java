@@ -258,7 +258,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
       DEFAULT_THREAD_USAGE_LOG_LINE,
       EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE,
       "Start fetching files for the text and secrets analysis",
-      "Retrieving all except non binary files",
+      "Retrieving all except binary files",
       "Starting the text and secrets analysis",
       "1 source file to be analyzed for the text and secrets analysis");
   }

@@ -186,7 +186,7 @@ public class TextAndSecretsSensor implements Sensor {
     LOG.info("Start fetching files for the text and secrets analysis");
     if (analyzeAllFiles) {
       // if we're in a sonarlint context, we return this predicate as well
-      LOG.info("Retrieving all except non binary files");
+      LOG.info("Retrieving all except binary files");
       return notBinaryFilePredicate;
     }
 
