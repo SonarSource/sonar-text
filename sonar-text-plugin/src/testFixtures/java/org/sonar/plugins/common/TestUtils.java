@@ -201,7 +201,7 @@ public class TestUtils {
 
   private static MapSettings createDefaultSettings() {
     var mapSettings = new MapSettings();
-    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt");
+    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "**/*.txt");
     return mapSettings;
   }
 

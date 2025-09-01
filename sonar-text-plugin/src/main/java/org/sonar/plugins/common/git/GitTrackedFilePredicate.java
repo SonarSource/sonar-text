@@ -16,6 +16,7 @@
  */
 package org.sonar.plugins.common.git;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
@@ -46,23 +47,26 @@ public class GitTrackedFilePredicate implements FilePredicate {
 
   @Override
   public boolean apply(InputFile inputFile) {
-    if (isGitStatusSuccessful) {
-      var filePath = Path.of(inputFile.uri()).toAbsolutePath();
-      String relativePath;
-      try {
-        relativePath = projectRootPath.relativize(filePath).toString();
-      } catch (IllegalArgumentException e) {
-        LOG.debug("Unable to resolve git status for {}, falling back to analyzing the file if it's associated with a language", inputFile, e);
-        return defaultFilePredicate.apply(inputFile);
-      }
-      var result = !untrackedFileNames.contains(relativePath);
-      if (!result) {
-        ignoredFileNames.add(relativePath);
-      }
-      return result;
-    } else {
+    if (!isGitStatusSuccessful) {
       return true;
     }
+    var filePath = Path.of(inputFile.uri()).toAbsolutePath();
+    if (filePath.toString().contains(File.separator + ".git" + File.separator)) {
+      // git internal files are not listed as untracked, but they should not be considered as tracked
+      return false;
+    }
+    String relativePath;
+    try {
+      relativePath = projectRootPath.relativize(filePath).toString();
+    } catch (IllegalArgumentException e) {
+      LOG.debug("Unable to resolve git status for {}, falling back to analyzing the file if it's associated with a language", inputFile, e);
+      return defaultFilePredicate.apply(inputFile);
+    }
+    var result = !untrackedFileNames.contains(relativePath);
+    if (!result) {
+      ignoredFileNames.add(relativePath);
+    }
+    return result;
   }
 
   public boolean isGitStatusSuccessful() {

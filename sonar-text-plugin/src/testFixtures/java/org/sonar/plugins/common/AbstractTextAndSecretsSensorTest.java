@@ -28,6 +28,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -239,8 +240,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     SensorContextTester context = testUtils().defaultSensorContext();
     analyse(sensor(check), context, inputFile);
 
-    assertThat(asString(context.allIssues())).containsExactly(
-      "text:IssueAtLineOne [1:0-1:3] testIssue");
+    assertThatIssuesRaisedOnFiles(context.allIssues(), inputFile);
     assertCorrectLogsForTextAndSecretsAnalysis(1, false);
   }
 
@@ -487,10 +487,10 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void shouldNotExcludeBinaryFileContentIfLanguageIsNotNull() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = testUtils().defaultSensorContext();
-    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, "java"));
+    InputFile binaryFileWithLanguage = inputFile(Path.of("Foo.java"), SENSITIVE_BIDI_CHARS, "java");
+    analyse(sensor(check), context, binaryFileWithLanguage);
 
-    assertThat(asString(context.allIssues())).containsExactly(
-      "text:IssueAtLineOne [1:0-1:2] testIssue");
+    assertThatIssuesRaisedOnFiles(context.allIssues(), binaryFileWithLanguage);
     assertCorrectLogsForTextAndSecretsAnalysis(1);
   }
 
@@ -567,22 +567,22 @@ public abstract class AbstractTextAndSecretsSensorTest {
       .thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of("c.txt", "d.txt", relativePathFooJava)));
     when(sensorSpy.createGitService(any())).thenReturn(gitService);
 
+    var trackedFileWithLanguage = inputFile(Path.of("a.txt"), "{}", "secrets");
+    var trackedFileWithoutLanguage = inputFile(Path.of("b.txt"), "{}");
+    var untrackedFileWithLanguage = inputFile(Path.of("c.txt"), "{}", "secrets");
+
     analyse(sensorSpy, context,
       // tracked files
-      inputFile(Path.of("a.txt"), "{}", "secrets"),
-      inputFile(Path.of("b.txt"), "{}"),
+      trackedFileWithLanguage,
+      trackedFileWithoutLanguage,
 
       // untracked files
-      inputFile(Path.of("c.txt"), "{}", "secrets"),
+      untrackedFileWithLanguage,
       inputFile(Path.of("d.txt"), "{}"),
       // no language assigned to file and not part of the included path patterns
       inputFile(Path.of("src", "foo.java"), "{}"));
 
-    Collection<Issue> issues = context.allIssues();
-    assertThat(issues)
-      .hasSize(3)
-      .map(it -> ((InputFile) it.primaryLocation().inputComponent()).filename())
-      .containsExactlyInAnyOrder("a.txt", "b.txt", "c.txt");
+    assertThatIssuesRaisedOnFiles(context.allIssues(), trackedFileWithLanguage, trackedFileWithoutLanguage, untrackedFileWithLanguage);
     assertCorrectLogsForTextAndSecretsAnalysis(3, "1 file is ignored because it is untracked by git");
   }
 
@@ -663,14 +663,15 @@ public abstract class AbstractTextAndSecretsSensorTest {
       .thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of("a.txt", "c.txt", "d.txt")));
     when(sensorSpy.createGitService(any())).thenReturn(gitService);
 
+    var trackedFile = inputFile(Path.of("b.txt"), "{}");
+
     analyse(sensorSpy, context,
       inputFile(Path.of("a.txt"), "{}"),
-      inputFile(Path.of("b.txt"), "{}"),
+      trackedFile,
       inputFile(Path.of("c.txt"), "{}"),
       inputFile(Path.of("d.txt"), "{}"));
 
-    Collection<Issue> issues = context.allIssues();
-    assertThat(issues).hasSize(1);
+    assertThatIssuesRaisedOnFiles(context.allIssues(), trackedFile);
     assertCorrectLogsForTextAndSecretsAnalysis(1,
       "Retrieving language associated files and files included via \"sonar.text.inclusions\" that are tracked by git",
       "3 files are ignored because they are untracked by git",
@@ -718,14 +719,15 @@ public abstract class AbstractTextAndSecretsSensorTest {
     when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(false, Set.of()));
     when(sensorSpy.createGitService(any())).thenReturn(gitService);
 
+    var fileWithLanguage = inputFile(Path.of("a.txt"), "{}", "secrets");
+
     analyse(sensorSpy, context,
-      inputFile(Path.of("a.txt"), "{}", "secrets"),
+      fileWithLanguage,
       inputFile(Path.of("b.txt"), "{}"),
       hiddenInputFile(Path.of("c.txt"), "{}", "secrets"),
       hiddenInputFile(Path.of("d.txt"), "{}"));
 
-    Collection<Issue> issues = context.allIssues();
-    assertThat(issues).hasSize(1);
+    assertThatIssuesRaisedOnFiles(context.allIssues(), fileWithLanguage);
     assertCorrectLogsForTextAndSecretsAnalysis(1,
       "Retrieving only language associated files, make sure to run the analysis " +
         "inside a git repository to make use of inclusions specified via \"sonar.text.inclusions\"");
@@ -1106,20 +1108,15 @@ public abstract class AbstractTextAndSecretsSensorTest {
 
     analyse(sensor, context, hiddenFile, untrackedHiddenFile, hiddenDirectoryFile, untrackedHiddenFileWithLanguage, hiddenBinaryFile, untrackedHiddenBinaryFile);
 
-    var expectedIssues = List.of(
-      "text:IssueAtLineOne [1:0-1:2] testIssue",
-      "text:IssueAtLineOne [1:0-1:2] testIssue");
-
-    if (!isPublicSensor()) {
-      expectedIssues = new ArrayList<>(expectedIssues);
-      expectedIssues.add("secrets:BinaryCheck [] binaryIssue");
+    if (isPublicSensor()) {
+      assertThatIssuesRaisedOnFiles(context.allIssues(), hiddenFile, hiddenDirectoryFile);
+    } else {
       // Binary files are analyzed based on extensions and do not have the file inclusions logic
       // As long as the hidden keystore file is picked up by the sensor, it will be analyzed by the binary analyzer
       // So ".hidden/untracked.jks" is analyzed
-      expectedIssues.add("secrets:BinaryCheck [] binaryIssue");
+      assertThatIssuesRaisedOnFiles(context.allIssues(), hiddenFile, hiddenDirectoryFile, hiddenBinaryFile, untrackedHiddenBinaryFile);
     }
 
-    assertThat(asString(context.allIssues())).containsExactly(expectedIssues.toArray(new String[0]));
     assertCorrectLogsForTextAndSecretsAnalysis(4);
   }
 
@@ -1155,20 +1152,52 @@ public abstract class AbstractTextAndSecretsSensorTest {
       .thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of()));
     when(sensor.createGitService(any())).thenReturn(gitService);
 
-    var hiddenFile = hiddenInputFile(Path.of(".a"), "{}");
-    var hiddenDirectoryFile = hiddenInputFile(Path.of(".hidden", "b.txt"), "{}");
-    var hiddenBinaryFile = hiddenInputFile(Path.of(".keystore"), SENSITIVE_BIDI_CHARS);
+    var hiddenNonIncludedFile = hiddenInputFile(Path.of(".a"), "{}");
+    var hiddenNonIncludedDirectoryFile = hiddenInputFile(Path.of(".hidden", "a.random"), "{}");
+    var hiddenNonIncludedFileWithLanguage = hiddenInputFile(Path.of(".hidden", "b.random"), "{}", "secrets");
+    var hiddenNonIncludedBinaryFile = hiddenInputFile(Path.of(".random"), SENSITIVE_BIDI_CHARS);
+    var hiddenIncludedFile = hiddenInputFile(Path.of(".hidden", "a.txt"), "{}");
+    var hiddenBinaryKeystore = hiddenInputFile(Path.of(".keystore"), SENSITIVE_BIDI_CHARS);
 
-    analyse(sensor, context, hiddenFile, hiddenDirectoryFile, hiddenBinaryFile);
+    analyse(sensor, context, hiddenNonIncludedFile, hiddenNonIncludedDirectoryFile, hiddenNonIncludedFileWithLanguage,
+      hiddenNonIncludedBinaryFile, hiddenIncludedFile, hiddenBinaryKeystore);
 
-    // Binary files are analyzed based on extensions and do not have the file inclusions logic
-    // As long as the hidden keystore file is picked up by the sensor, it will be analyzed by the binary analyzer
-    List<String> expectedIssues = isPublicSensor() ? List.of() : List.of("secrets:BinaryCheck [] binaryIssue");
+    // When runtime does not support hidden files, hidden files are analyzed as regular files.
+    // In reality, these hidden files would not get picked up by the scanner at all, so they would not be analyzed.
+    if (isPublicSensor()) {
+      // Keystores are not analyzed in public edition
+      assertThatIssuesRaisedOnFiles(context.allIssues(), hiddenNonIncludedFileWithLanguage, hiddenIncludedFile);
+    } else {
+      assertThatIssuesRaisedOnFiles(context.allIssues(), hiddenNonIncludedFileWithLanguage, hiddenIncludedFile, hiddenBinaryKeystore);
+    }
 
-    assertThat(asString(context.allIssues())).contains(expectedIssues.toArray(new String[0]));
-    verify(hiddenFile, never()).isHidden();
-    verify(hiddenDirectoryFile, never()).isHidden();
-    verify(hiddenBinaryFile, never()).isHidden();
+    verify(hiddenNonIncludedFile, never()).isHidden();
+    verify(hiddenNonIncludedDirectoryFile, never()).isHidden();
+    verify(hiddenNonIncludedFileWithLanguage, never()).isHidden();
+    verify(hiddenNonIncludedBinaryFile, never()).isHidden();
+    verify(hiddenIncludedFile, never()).isHidden();
+    verify(hiddenBinaryKeystore, never()).isHidden();
+  }
+
+  @Test
+  void shouldNotAnalyzeGitInternalFiles() {
+    var reportIssueAtLineOneCheck = new ReportIssueAtLineOneCheck();
+    var context = sensorContext(reportIssueAtLineOneCheck);
+
+    var sensor = spy(sensor(reportIssueAtLineOneCheck));
+    var gitService = mock(GitService.class);
+    when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(true, Collections.emptySet()));
+    when(sensor.createGitService(any())).thenReturn(gitService);
+
+    var regularFile = inputFile(Path.of("a.txt"), "{}");
+    var regularFileInGitLookingDirectory = inputFile(Path.of("workspace", ".github", "b.txt"), "{}");
+    var gitInternalFile = hiddenInputFile(Path.of(".git", "config"), "{}");
+    var gitNestedInternalFile = hiddenInputFile(Path.of("workspace", ".git", "config"), "{}");
+
+    analyse(sensor, context, regularFile, regularFileInGitLookingDirectory, gitInternalFile, gitNestedInternalFile);
+
+    assertThatIssuesRaisedOnFiles(context.allIssues(), regularFile, regularFileInGitLookingDirectory);
+    assertCorrectLogsForTextAndSecretsAnalysis(2);
   }
 
   @Test
@@ -1271,6 +1300,13 @@ public abstract class AbstractTextAndSecretsSensorTest {
       hiddenInputFile(Path.of("d.txt"), "{}"));
 
     verify(context).addTelemetryProperty(TelemetryReporter.KEY_PREFIX + ALL_TRACKED_TEXT_FILES_MEASURE_KEY, "0");
+  }
+
+  private static void assertThatIssuesRaisedOnFiles(Collection<Issue> issues, InputFile... expectedFilesWithIssues) {
+    assertThat(issues).hasSize(expectedFilesWithIssues.length);
+    assertThat(issues)
+      .extracting(issue -> issue.primaryLocation().inputComponent())
+      .containsExactlyInAnyOrder(expectedFilesWithIssues);
   }
 
   protected void assertCorrectLogsForTextAndSecretsAnalysis(int numberOfAnalyzedFiles, String... additionalLogs) {
