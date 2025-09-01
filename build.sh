@@ -6,7 +6,7 @@ set -euo pipefail
 
 INITIAL_VERSION=$(grep version gradle.properties | awk -F= '{print $2}')
 
-./gradlew --no-daemon --console plain \
+./gradlew --no-daemon --info --console plain \
   -DbuildNumber="$CI_BUILD_NUMBER" \
   build sonar :build-logic-text:test \
   -Dsonar.host.url="$SONAR_HOST_URL" \

@@ -90,8 +90,9 @@ tasks.shadowJar {
     exclude("LICENSE*")
     exclude("NOTICE*")
 
+    val logger = project.logger
     doLast {
-        enforceJarSize(tasks.shadowJar.get().archiveFile.get().asFile, 6_500_000L, 8_500_000L)
+        enforceJarSize(tasks.shadowJar.get().archiveFile.get().asFile, 6_500_000L, 8_500_000L, logger)
     }
 }
 
