@@ -67,7 +67,7 @@ public class TextAndSecretsSensor implements Sensor {
   public static final String TEXT_INCLUSIONS_KEY = "sonar.text.inclusions";
 
   public static final String TEXT_INCLUSIONS_DEFAULT_VALUE = "**/*.sh,**/*.bash,**/*.zsh,**/*.ksh,**/*.ps1,**/*.properties," +
-    "**/*.conf,**/*.pem,**/*.config,.env,.aws/config";
+    "**/*.conf,**/*.pem,**/*.config,.env,.aws/config,**/*.key";
   private static final String ANALYZE_ALL_FILES_KEY = "sonar.text.analyzeAllFiles";
   public static final String REGEX_MATCH_TIMEOUT_KEY = "sonar.text.regex.timeout.match";
   public static final String REGEX_EXECUTION_TIMEOUT_KEY = "sonar.text.regex.timeout.execution";

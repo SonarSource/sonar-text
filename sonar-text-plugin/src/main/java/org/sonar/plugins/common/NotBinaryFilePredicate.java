@@ -175,7 +175,6 @@ public class NotBinaryFilePredicate implements FilePredicate {
     "kdd",
     "kdi",
     "kdm",
-    "key",
     "keystore",
     "keystream",
     "kjsm",
