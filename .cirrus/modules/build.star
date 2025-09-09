@@ -4,7 +4,7 @@ load(
     "pgp_signing_env",
     "whitesource_api_env"
 )
-load("github.com/SonarSource/cirrus-modules/cloud-native/conditions.star@analysis/master", "is_main_branch")
+load("github.com/SonarSource/cirrus-modules/cloud-native/conditions.star@analysis/master", "is_main_branch", "is_branch_qa_eligible")
 load("github.com/SonarSource/cirrus-modules/cloud-native/platform.star@analysis/master", "base_image_container_builder")
 load(
     "github.com/SonarSource/cirrus-modules/cloud-native/cache.star@analysis/master",
@@ -27,7 +27,8 @@ def build_env():
     env |= gradle_signing_env()
     env |= {
         "DEPLOY_PULL_REQUEST": "true",
-        "BUILD_ARGUMENTS": "--profile storeProjectVersion"
+        "BUILD_ARGUMENTS": "--profile storeProjectVersion",
+        "SONAR_PROJECT_KEY": "org.sonarsource.text:text"
     }
     return env
 
@@ -77,6 +78,170 @@ def build_task():
                 }
             }
         }
+    }
+
+
+#
+# Shadow Scans
+#
+
+def is_run_shadow_scan():
+    return "($CIRRUS_CRON == $CRON_NIGHTLY_JOB_NAME && $CIRRUS_BRANCH == \"master\") || $CIRRUS_PR_LABELS =~ \".*shadow_scan.*\""
+
+def shadow_scan_general_env():
+    env = pgp_signing_env()
+    env |= gradle_signing_env()
+    env |= {
+        "DEPLOY_PULL_REQUEST": "false",
+        "BUILD_ARGUMENTS": "-x artifactoryPublish --no-parallel",
+        "CRON_NIGHTLY_JOB_NAME": "nightly",
+        "SONAR_PROJECT_KEY": "SonarSource_sonar-text-enterprise"
+    }
+    return env
+
+def shadow_scan_task_template(env):
+    return {
+        "only_if": "({}) && ({})".format(is_branch_qa_eligible(), is_run_shadow_scan()),
+        "depends_on": "build",
+        "env": env,
+        "eks_container": base_image_container_builder(cpu=4, memory="10G"),
+        "project_version_cache": project_version_cache(),
+        "gradle_cache": gradle_cache(),
+        "gradle_wrapper_cache": gradle_wrapper_cache(),
+        "build_script": build_script(),
+        "cleanup_gradle_script": cleanup_gradle_script(),
+    }
+
+
+def shadow_scan_sqc_eu_env():
+    env = shadow_scan_general_env()
+    env |= {
+       "SONAR_TOKEN": "VAULT[development/kv/data/sonarcloud data.token]",
+       "SONAR_HOST_URL": "https://sonarcloud.io"
+    }
+    return env
+
+# Overlap with build_task, because of imminent GHA migration we don't take any effort to abstract it
+def shadow_scan_sqc_eu_task():
+    return {
+        "shadow_scan_sqc_eu_task": shadow_scan_task_template(shadow_scan_sqc_eu_env())
+    }
+
+def shadow_scan_sqc_us_env():
+    env = shadow_scan_general_env()
+    env |= {
+       "SONAR_TOKEN": "VAULT[development/kv/data/sonarqube-us data.token]",
+       "SONAR_HOST_URL": "https://sonarqube.us"
+    }
+    return env
+
+# Overlap with build_task, because of imminent GHA migration we don't take any effort to abstract it
+def shadow_scan_sqc_us_task():
+    return {
+        "shadow_scan_sqc_us_task": shadow_scan_task_template(shadow_scan_sqc_us_env())
+    }
+
+
+#
+# Iris
+#
+
+def iris_general_env():
+    return {
+       "SONAR_SOURCE_IRIS_TOKEN": "VAULT[development/kv/data/iris data.next]",
+       "SONAR_SOURCE_PROJECT_KEY": "org.sonarsource.text:text",
+       "CRON_NIGHTLY_JOB_NAME": "nightly",
+    }
+
+def run_iris_task_template(env):
+    return {
+        "only_if": "({}) && ({})".format(is_branch_qa_eligible(), is_run_shadow_scan()),
+        "depends_on": "promote",
+        "env": env,
+        "eks_container": base_image_container_builder(cpu=2, memory="2G"),
+        "build_script": [
+                        "./run_iris.sh"
+                    ],
+    }
+
+# Next Enterprise -> SQC EU Enterprise
+
+def iris_next_enterprise_to_sqc_eu_enterprise_env():
+    env = iris_general_env()
+    env |= {
+       "SONAR_TARGET_URL": "https://sonarcloud.io",
+       "SONAR_TARGET_IRIS_TOKEN": "VAULT[development/kv/data/iris data.sqc-eu]",
+       "SONAR_TARGET_PROJECT_KEY": "SonarSource_sonar-text-enterprise",
+    }
+    return env
+
+def run_iris_next_enterprise_to_sqc_eu_enterprise_task():
+    return {
+        "run_iris_next_enterprise_to_sqc_eu_enterprise_task": run_iris_task_template(iris_next_enterprise_to_sqc_eu_enterprise_env())
+    }
+
+# Next Enterprise -> SQC EU Public
+
+def iris_next_enterprise_to_sqc_eu_public_env():
+    env = iris_general_env()
+    env |= {
+       "SONAR_TARGET_URL": "https://sonarcloud.io",
+       "SONAR_TARGET_IRIS_TOKEN": "VAULT[development/kv/data/iris data.sqc-eu]",
+       "SONAR_TARGET_PROJECT_KEY": "org.sonarsource.text:text",
+    }
+    return env
+
+def run_iris_next_enterprise_to_sqc_eu_public_task():
+    return {
+        "run_iris_next_enterprise_to_sqc_eu_public_task": run_iris_task_template(iris_next_enterprise_to_sqc_eu_public_env())
+    }
+
+# Next Enterprise -> SQC US Enterprise
+
+def iris_next_enterprise_to_sqc_us_enterprise_env():
+    env = iris_general_env()
+    env |= {
+       "SONAR_TARGET_URL": "https://sonarqube.us",
+       "SONAR_TARGET_IRIS_TOKEN": "VAULT[development/kv/data/iris data.sqc-us]",
+       "SONAR_TARGET_PROJECT_KEY": "SonarSource_sonar-iac-enterprise",
+    }
+    return env
+
+def run_iris_next_enterprise_to_sqc_us_enterprise_task():
+    return {
+        "run_iris_next_enterprise_to_sqc_us_enterprise_task": run_iris_task_template(iris_next_enterprise_to_sqc_us_enterprise_env())
+    }
+
+# Next Enterprise -> SQC US Public
+
+def iris_next_enterprise_to_sqc_us_public_env():
+    env = iris_general_env()
+    env |= {
+       "SONAR_TARGET_URL": "https://sonarqube.us",
+       "SONAR_TARGET_IRIS_TOKEN": "VAULT[development/kv/data/iris data.sqc-eu]",
+       "SONAR_TARGET_PROJECT_KEY": "SonarSource_sonar-iac",
+    }
+    return env
+
+def run_iris_next_enterprise_to_sqc_us_public_task():
+    return {
+        "run_iris_next_enterprise_to_sqc_us_public_task": run_iris_task_template(iris_next_enterprise_to_sqc_us_public_env())
+    }
+
+# Next Enterprise -> Next Public
+
+def iris_next_enterprise_to_next_public_env():
+    env = iris_general_env()
+    env |= {
+       "SONAR_TARGET_URL": "https://next.sonarqube.com/sonarqube",
+       "SONAR_TARGET_IRIS_TOKEN": "VAULT[development/kv/data/iris data.next]",
+       "SONAR_TARGET_PROJECT_KEY": "SonarSource_sonar-iac",
+    }
+    return env
+
+def run_iris_next_enterprise_to_next_public_task():
+    return {
+        "run_iris_next_enterprise_to_next_public_task": run_iris_task_template(iris_next_enterprise_to_next_public_env())
     }
 
 
