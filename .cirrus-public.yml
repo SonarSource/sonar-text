@@ -15,6 +15,8 @@ base_analysis_template: &BASE_ANALYSIS
     image: ${CIRRUS_AWS_ACCOUNT}.dkr.ecr.eu-central-1.amazonaws.com/base:j17-latest
     region: eu-central-1
     cluster_name: ${CIRRUS_CLUSTER_NAME}
+    namespace: default
+    use_in_memory_disk: true
     cpu: 4
     memory: 8G
   <<: *ONLY_SONARSOURCE_QA
