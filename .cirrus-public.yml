@@ -23,6 +23,7 @@ base_analysis_template: &BASE_ANALYSIS
   env:
     GRADLE_USER_HOME: ${CIRRUS_WORKING_DIR}/.gradle
     GRADLE_VERSION: "8.14"
+    RETRIGGER: "true"
   gradle_cache:
     folder: ${GRADLE_USER_HOME}/caches
     fingerprint_script: find -type f \( -name "*.gradle*" -or -name "gradle*.properties" \) | sort | xargs cat
