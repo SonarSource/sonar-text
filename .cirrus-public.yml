@@ -12,7 +12,7 @@ only_sonarsource_qa: &ONLY_SONARSOURCE_QA
 
 base_analysis_template: &BASE_ANALYSIS
   eks_container:
-    image: ${CIRRUS_AWS_ACCOUNT}.dkr.ecr.eu-central-1.amazonaws.com/base:j17-latest
+    image: ${CIRRUS_AWS_ACCOUNT}.dkr.ecr.eu-central-1.amazonaws.com/base:j17-g8-latest
     region: eu-central-1
     cluster_name: ${CIRRUS_CLUSTER_NAME}
     namespace: default
