@@ -6,7 +6,8 @@ prompt1 = "There are some hidden tag characters here: 󠁰󠁬󠁥󠁡󠁳󠁥�
 
 # These are not dangerous, just flag emojis 🏴󠁧󠁢󠁥󠁮󠁧󠁿 🏴󠁧󠁢󠁳󠁣󠁴󠁿 🏴󠁧󠁢󠁷󠁬󠁳󠁿
 # Mixed string, a flag then some hidden tags: 🏴󠁧󠁢󠁥󠁮󠁧󠁿󠁳󠁯󠁭󠁥󠀠󠁨󠁩󠁤󠁤󠁥󠁮󠀠󠁴󠁥󠁸󠁴󠀠󠁡󠁦󠁴󠁥󠁲󠀠󠁴󠁨󠁥󠀠󠁦󠁬󠁡󠁧
-# Mixed string, a black flag 🏴🏴🏴🏴🏴🏴🏴 then some unrelated hidden text: 🏴󠁳󠁯󠁭󠁥󠀠󠁨󠁩󠁤󠁤󠁥󠁮󠀠󠁴󠁥󠁸󠁴󠀠󠁡󠁦󠁴󠁥󠁲󠀠󠁴󠁨󠁥󠀠󠁦󠁬󠁡󠁧
 
 # Hidden text, but it's blank:󠀠󠀠󠀠󠀠󠀠󠀠󠀠󠀠󠀠󠀠󠀠󠀠󠀠󠀠
 # Hidden text, but it's only one character long, probably coming from some internalization file:󠁰
+# False negative: mixed string, a black flag 🏴🏴🏴🏴🏴🏴🏴 then some unrelated hidden text: 🏴󠁳󠁯󠁭󠁥󠀠󠁨󠁩󠁤󠁤󠁥󠁮󠀠󠁴󠁥󠁸󠁴󠀠󠁡󠁦󠁴󠁥󠁲󠀠󠁴󠁨󠁥󠀠󠁦󠁬󠁡󠁧
+# A black flag with region tags but without any cancel tag: 🏴󠁮󠁬

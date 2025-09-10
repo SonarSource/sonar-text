@@ -107,25 +107,25 @@ public class TagBlockCheck extends TextCheck {
     /**
      * Skip over a flag emoji sequence in the text.
      * Flag emojis are sequences with a black flag emoji (U+1F3F4), followed by tag characters corresponding
-     * to the country code, then a cancel tag (U+E007F).
+     * to the country code, then an optional cancel tag (U+E007F).
      * For example, for the flag of England: U+1F3F4 U+E0067 U+E0062 U+E0065 U+E006E U+E0067 U+E007F
      */
     private int getIndexAfterFlagEmoji(String text, int startIndex) {
-      var positionAfterBlackFlag = startIndex + Character.charCount(BLACK_FLAG_EMOJI_CODE_POINT);
-      var endPosition = positionAfterBlackFlag;
-      var foundCancelTag = false;
-      while (endPosition < text.length()) {
-        var codePoint = text.codePointAt(endPosition);
+      var currentPosition = startIndex + Character.charCount(BLACK_FLAG_EMOJI_CODE_POINT);
+      while (currentPosition < text.length()) {
+        var codePoint = text.codePointAt(currentPosition);
         if (!isTag(codePoint)) {
+          // Not a tag character, so it is the end of the sequence
           break;
         }
-        endPosition += Character.charCount(codePoint);
         if (codePoint == CANCEL_TAG_CODE_POINT) {
-          foundCancelTag = true;
+          // Cancel tag, so the end of the sequence is after it
+          currentPosition += Character.charCount(CANCEL_TAG_CODE_POINT);
           break;
         }
+        currentPosition += Character.charCount(codePoint);
       }
-      return foundCancelTag ? endPosition : positionAfterBlackFlag;
+      return currentPosition;
     }
 
     private void flushTagSequence(InputFileContext ctx, int lineNumber) {
