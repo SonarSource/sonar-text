@@ -73,7 +73,7 @@ Update all rule descriptions.
 ./gradlew ruleApiUpdate
 ```
 
-There are also tasks: `ruleApiUpdateSecrets`, `ruleApiUpdateText` and `ruleApiUpdateDeveloperSecrets`, `ruleApiUpdateEnterpriseSecrets` `ruleApiUpdateEnterpriseText` 
+There are also tasks: `ruleApiUpdateSecrets`, `ruleApiUpdateText` and `ruleApiUpdateDeveloperSecrets`, `ruleApiUpdateEnterpriseSecrets` `ruleApiUpdateEnterpriseText`
 for updating Secrets, Text, Developer Secrets and Enterprise Text and Secrets rule descriptions.
 
 ### Generate new rule description
@@ -96,14 +96,14 @@ for the inclusion or deletion of these secrets and to update static RSPEC files.
 As we use the enforcer plugin to define the file size of the build, this can lead to test failures after adding new secret specifications.
 The `<minsize>` and `<maxsize>` can be changed in `sonar-text-plugin/build.gradle.kts` (search for `enforceJarSize`).
 
+To create the files for a public secret, pass the flag `--public` as the third argument to the script.
 If the static RSPEC files are currently not merged on master, it is possible to specify a branch to fetch the files from.
 This can be done by adding the name of the branch as an argument to the script, like shown below.
 Use this feature with caution, due to a limitation of the underlying library in the rule api, not all branch names are supported, and it's
 not clear which ones do work.
 
 ```shell
-./secretSpecificationInclusionGenerator.sh
-./secretSpecificationInclusionGenerator.sh branchName
+./secretSpecificationInclusionGenerator.sh <branch> <rulekey> [--public]
 ```
 
 ### Verify Regexes
@@ -125,8 +125,8 @@ There is also a way of running this check from the command line.
 
 Copyright 2021-2025 SonarSource.
 
-SonarQube analyzers released after November 29, 2024, including patch fixes for prior versions, 
+SonarQube analyzers released after November 29, 2024, including patch fixes for prior versions,
 are published under the [Sonar Source-Available License Version 1 (SSALv1)](LICENSE.txt).
 
-See individual files for details that specify the license applicable to each file. 
+See individual files for details that specify the license applicable to each file.
 Files subject to the SSALv1 will be noted in their headers.
