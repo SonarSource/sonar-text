@@ -1,26 +1,27 @@
-# SonarText: detect BIDI Characters Vulnerabilities and Leaking Secrets
+# SonarText: detect Leaking Secrets, BIDI Characters and Hidden Text Vulnerabilities 
 
 [![Build Status](https://api.cirrus-ci.com/github/SonarSource/sonar-text.svg?branch=master)](https://cirrus-ci.com/github/SonarSource/sonar-text)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=org.sonarsource.text%3Atext&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=org.sonarsource.text%3Atext)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=org.sonarsource.text%3Atext&metric=coverage)](https://sonarcloud.io/summary/new_code?id=org.sonarsource.text%3Atext)
 
-This SonarSource project is a static code analyzer made to detect:
+This project is a static code analyzer made to detect:
 
+* Leaking Secrets/Tokens
 * BIDI Characters Vulnerabilities
 * Hidden Text Vulnerabilities
-* Leaking Secrets/Tokens
 
 It is a component of the
-Sonar [integrated code quality and security](https://www.sonarsource.com/solutions/for-developers/?utm_medium=referral&utm_source=github&utm_campaign=clean-code&utm_content=sonar-text) solution.
+Sonar [code quality and security](https://www.sonarsource.com/solutions/for-developers/?utm_medium=referral&utm_source=github&utm_campaign=clean-code&utm_content=sonar-text) solution.
 It is embedded in SonarQube for IDE, SonarQube Server, and SonarQube Cloud.
-This component helps you prevent the leakage of secrets even before you push them into your repository thanks to SonarLint.
+This component helps you prevent the leakage of secrets even before you push them into your repository thanks to SonarQube for IDE.
 
 # Features
 
-* 450+ secret patterns supported and detected by [340+](https://rules.sonarsource.com/secrets/) rules
-* detection of [BIDI characters](https://rules.sonarsource.com/text/) that could lead to attacks
-* detection of Unicode hidden tag blocks that could lead to prompt injection
+* :purple_heart: 450+ secret patterns supported and detected by [340+](https://rules.sonarsource.com/secrets/) rules
+  * 71 secret patterns are open-source and provided by 28 rules, the others are available through [commercial plans](https://www.sonarsource.com/plans-and-pricing/) with Sonar products
 * detection of secrets in all files indexed by Sonar products
+* detection of [BIDI characters](https://rules.sonarsource.com/text/RSPEC-6389/) that could lead to attacks
+* detection of [Unicode hidden tag blocks](https://rules.sonarsource.com/text/RSPEC-7628/) that could lead to prompt injection
 
 ## Build
 
