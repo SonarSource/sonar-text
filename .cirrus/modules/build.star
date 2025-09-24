@@ -104,7 +104,7 @@ def build_cli_task_template(install_graalvm_script=[
 ]):
     return {
         "only_if": build_native_cli_condition(),
-        "depends_on": "build",
+        "depends_on": "promote", # workaround to run CLI builds last and not overlap with the same Artifactory upload
         "env": build_env() | {
             "JAVA_HOME": "${{GRADLE_USER_HOME}}/jdks/graalvm-community-openjdk-{}".format(GRAALVM_CE_OPENJDK_VERSION),
             "GRAALVM_HOME": "${{GRADLE_USER_HOME}}/jdks/graalvm-community-openjdk-{}".format(GRAALVM_CE_OPENJDK_VERSION),
@@ -142,7 +142,7 @@ def build_cli_win_task():
                 "BUILD_NATIVE_IMAGE": "true",
             },
             "only_if": build_native_cli_condition(),
-            "depends_on": "build",
+            "depends_on": "promote", # workaround to run CLI builds last and not overlap with the same Artifactory upload
             # GraalVM Native Image on Windows requires MSVS 2022, which is already present in the Dotnet image
             "ec2_instance": ec2_instance_builder(image="peachee-windows-dotnet-v*"),
             "prepare_script": [
