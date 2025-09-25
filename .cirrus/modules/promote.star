@@ -29,6 +29,7 @@ def promote_task():
             "only_if": is_branch_qa_eligible(),
             "depends_on": [
                 "build",
+                "publish_artifacts",
                 "qa_plugin",
                 "sca_scan",
                 "qa_os_win",

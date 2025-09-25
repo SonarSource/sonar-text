@@ -29,7 +29,7 @@ def build_env():
     env |= gradle_signing_env()
     env |= {
         "DEPLOY_PULL_REQUEST": "true",
-        "BUILD_ARGUMENTS": "--profile storeProjectVersion",
+        "BUILD_ARGUMENTS": "--profile storeProjectVersion -x artifactoryPublish",
         "SONAR_PROJECT_KEY": "org.sonarsource.text:text"
     }
     return env
@@ -100,11 +100,11 @@ def build_cli_task_template(install_graalvm_script=[
     "rm graalvm-community-jdk-{}_linux-x64_bin.tar.gz".format(GRAALVM_VERSION),
 ], build_script=[
     # Common command for Linux and MacOS
-    "./gradlew -DbuildNumber=\"${CI_BUILD_NUMBER}\" :private:sonar-secrets-cli:test :private:sonar-secrets-cli:nativeCompile :private:sonar-secrets-cli:artifactoryPublish --info",
+    "./gradlew -DbuildNumber=\"${CI_BUILD_NUMBER}\" :private:sonar-secrets-cli:test :private:sonar-secrets-cli:nativeCompile --info",
 ]):
     return {
         "only_if": build_native_cli_condition(),
-        "depends_on": "promote", # workaround to run CLI builds last and not overlap with the same Artifactory upload
+        "depends_on": "build",
         "env": build_env() | {
             "JAVA_HOME": "${{GRADLE_USER_HOME}}/jdks/graalvm-community-openjdk-{}".format(GRAALVM_CE_OPENJDK_VERSION),
             "GRAALVM_HOME": "${{GRADLE_USER_HOME}}/jdks/graalvm-community-openjdk-{}".format(GRAALVM_CE_OPENJDK_VERSION),
@@ -115,6 +115,11 @@ def build_cli_task_template(install_graalvm_script=[
         ],
         "install_graalvm_script": install_graalvm_script,
         "build_script": build_script,
+        "on_success": {
+            "sonar_secrets_cli_artifacts": {
+                "path": "private/sonar-secrets-cli/build/native/nativeCompile/sonar-secrets*"
+            }
+        },
         "on_failure": default_gradle_on_failure(),
     }
 
@@ -142,7 +147,7 @@ def build_cli_win_task():
                 "BUILD_NATIVE_IMAGE": "true",
             },
             "only_if": build_native_cli_condition(),
-            "depends_on": "promote", # workaround to run CLI builds last and not overlap with the same Artifactory upload
+            "depends_on": "build",
             # GraalVM Native Image on Windows requires MSVS 2022, which is already present in the Dotnet image
             "ec2_instance": ec2_instance_builder(image="peachee-windows-dotnet-v*"),
             "prepare_script": [
@@ -153,9 +158,15 @@ def build_cli_win_task():
                 "curl --proto \"=https\" -sSfL -O https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-{}/graalvm-community-jdk-{}_windows-x64_bin.zip".format(GRAALVM_VERSION, GRAALVM_VERSION),
                 "tar -xf graalvm-community-jdk-{}_windows-x64_bin.zip -C %GRADLE_USER_HOME%\\jdks".format(GRAALVM_VERSION),
                 "del graalvm-community-jdk-{}_windows-x64_bin.zip".format(GRAALVM_VERSION),
-            ], "build_script": [
-                "gradlew.bat -DbuildNumber=%CI_BUILD_NUMBER% :private:sonar-secrets-cli:test :private:sonar-secrets-cli:nativeCompile :private:sonar-secrets-cli:artifactoryPublish --info",
-            ]
+            ],
+            "build_script": [
+                "gradlew.bat -DbuildNumber=%CI_BUILD_NUMBER% :private:sonar-secrets-cli:test :private:sonar-secrets-cli:nativeCompile --info",
+            ],
+            "on_success": {
+                "sonar_secrets_cli_artifacts": {
+                    "path": "private\\sonar-secrets-cli\\build\\native\\nativeCompile\\sonar-secrets*"
+                }
+            },
         }
     }
 
@@ -185,6 +196,40 @@ def build_cli_macos_task():
                     }
                 }
             }
+        }
+    }
+
+
+def publish_artifacts_task():
+    artifact_zip_name = "sonar_secrets_cli.zip"
+    return {
+        "publish_artifacts_task": {
+            "depends_on": [
+                "build",
+                "build_cli_linux",
+                "build_cli_win",
+                "build_cli_macos",
+            ],
+            "env": {
+                "CIRRUS_TOKEN": "VAULT[development/kv/data/cirrusci/github/SonarSource data.api_token]",
+            },
+            "eks_container": base_image_container_builder(cpu=4, memory="10G"),
+            "project_version_cache": project_version_cache(),
+            "gradle_cache": gradle_cache(),
+            "gradle_wrapper_cache": gradle_wrapper_cache(),
+            "download_cli_artifacts_script": [
+                "curl -SL -H \"Authorization: Bearer $CIRRUS_TOKEN\" -O https://api.cirrus-ci.com/v1/artifact/build/${{CIRRUS_BUILD_ID}}/{}".format(artifact_zip_name),
+                "mkdir -p private/sonar-secrets-cli/build/tmp/",
+                "mkdir -p private/sonar-secrets-cli/build/native/images/",
+                "unzip {} -d private/sonar-secrets-cli/build/tmp/".format(artifact_zip_name),
+                "find private/sonar-secrets-cli/build/tmp/ -type f -exec mv {} private/sonar-secrets-cli/build/native/images/ \\;",
+                "ls -l private/sonar-secrets-cli/build/native/images/",
+            ],
+            "publish_script": [
+                "git submodule update --init --depth 1 -- build-logic/common",
+                "./gradlew -DbuildNumber=\"${CI_BUILD_NUMBER}\" artifactoryPublish -PnativeImagesDir=build/native/images/ --info",
+            ],
+            "cleanup_gradle_script": cleanup_gradle_script(),
         }
     }
 

@@ -11,6 +11,7 @@ load(
     "build_cli_linux_task",
     "build_cli_win_task",
     "build_cli_macos_task",
+    "publish_artifacts_task",
     "shadow_scan_sqc_eu_task",
     "shadow_scan_sqc_us_task",
     "run_iris_next_enterprise_to_sqc_eu_enterprise_task",
@@ -38,6 +39,7 @@ def private_pipeline_builder():
     merge_dict(conf, build_cli_linux_task())
     merge_dict(conf, build_cli_win_task())
     merge_dict(conf, build_cli_macos_task())
+    merge_dict(conf, publish_artifacts_task())
     merge_dict(conf, sca_scan_task())
     merge_dict(conf, qa_plugin_task())
     merge_dict(conf, qa_ruling_task())

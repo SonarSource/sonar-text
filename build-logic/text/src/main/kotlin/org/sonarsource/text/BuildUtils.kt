@@ -16,8 +16,25 @@
  */
 package org.sonarsource.text
 
+import org.gradle.api.GradleException
 import org.gradle.internal.extensions.stdlib.capitalized
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 fun String.toCamelCase() = replace("-[a-z]".toRegex()) { it.value.last().uppercase() }.capitalized()
 
 fun String.toSnakeCase() = replace("[a-z][A-Z]".toRegex()) { it.value.first() + "_" + it.value.last().lowercase() }
+
+fun getNativeClassifier(platform: DefaultNativePlatform): String {
+    val os = when {
+        platform.operatingSystem.isLinux -> "linux"
+        platform.operatingSystem.isMacOsX -> "macos"
+        platform.operatingSystem.isWindows -> "windows"
+        else -> throw GradleException("Unsupported OS: ${platform.operatingSystem.displayName}")
+    }
+    val arch = when {
+        platform.architecture.isArm64 -> "arm64"
+        platform.architecture.isAmd64 -> "x86-64"
+        else -> throw GradleException("Unsupported architecture: ${platform.architecture}")
+    }
+    return "$os-$arch"
+}
