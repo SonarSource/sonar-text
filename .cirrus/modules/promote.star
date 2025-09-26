@@ -31,7 +31,6 @@ def promote_task():
                 "build",
                 "publish_artifacts",
                 "qa_plugin",
-                "sca_scan",
                 "qa_os_win",
             ],
             "env": promotion_env(),

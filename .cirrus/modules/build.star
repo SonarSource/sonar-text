@@ -1,8 +1,7 @@
 load(
     "github.com/SonarSource/cirrus-modules/cloud-native/env.star@analysis/master",
     "gradle_signing_env",
-    "pgp_signing_env",
-    "whitesource_api_env"
+    "pgp_signing_env"
 )
 load("github.com/SonarSource/cirrus-modules/cloud-native/conditions.star@analysis/master", "is_main_branch", "is_branch_qa_eligible")
 load("github.com/SonarSource/cirrus-modules/cloud-native/platform.star@analysis/master",
@@ -395,48 +394,4 @@ def iris_next_enterprise_to_next_public_env():
 def run_iris_next_enterprise_to_next_public_task():
     return {
         "run_iris_next_enterprise_to_next_public_task": run_iris_task_template(iris_next_enterprise_to_next_public_env())
-    }
-
-
-#
-# Whitesource scan
-#
-# SHARED CANDIDATE???
-# Some bits depend on the project: memory options, gradle task
-# Different from Sonar IaC from many aspects but it is justified?
-# In any case, parameterizing the script would be a good idea to make it more reusable
-def whitesource_script():
-    return [
-        "git submodule update --init --depth 1 -- build-logic/common",
-        "source cirrus-env QA",
-        "source .cirrus/use-gradle-wrapper.sh",
-        "export PROJECT_VERSION=$(cat ${PROJECT_VERSION_CACHE_DIR}/evaluated_project_version.txt)",
-        "GRADLE_OPTS=\"-Xmx64m -Dorg.gradle.jvmargs='-Xmx3G' -Dorg.gradle.daemon=false\" ./gradlew ${GRADLE_COMMON_FLAGS} :sonar-text-plugin:processResources -Pkotlin.compiler.execution.strategy=in-process",
-        "source ws_scan.sh",
-    ]
-
-
-# SHARED CANDIDATE???
-# Some bits depend on the project: project version cache, on success profile report artifacts
-# on_success is activated for Sonar IaC : https://github.com/SonarSource/sonar-iac/blob/153aed5008efac5ff1bbb0014672e653194ee79b/.cirrus/modules/build.star#L135
-# Project version cache is used in Sonar IaC: https://github.com/SonarSource/sonar-iac/blob/153aed5008efac5ff1bbb0014672e653194ee79b/.cirrus/modules/build.star#L126
-def sca_scan_task():
-    return {
-        "sca_scan_task": {
-            "only_if": is_main_branch(),
-            "depends_on": "build",
-            "env": whitesource_api_env(),
-            "eks_container": base_image_container_builder(cpu=1, memory="4G"),
-            "gradle_cache": gradle_cache(),
-            "gradle_wrapper_cache": gradle_wrapper_cache(),
-            "project_version_cache": project_version_cache(),
-            "whitesource_script": whitesource_script(),
-            "cleanup_gradle_script": cleanup_gradle_script(),
-            "allow_failures": "true",
-            "always": {
-                "ws_artifacts": {
-                    "path": "whitesource/**/*"
-                }
-            },
-        }
     }

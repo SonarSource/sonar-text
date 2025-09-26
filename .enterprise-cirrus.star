@@ -18,8 +18,7 @@ load(
     "run_iris_next_enterprise_to_sqc_eu_public_task",
     "run_iris_next_enterprise_to_sqc_us_enterprise_task",
     "run_iris_next_enterprise_to_sqc_us_public_task",
-    "run_iris_next_enterprise_to_next_public_task",
-    "sca_scan_task")
+    "run_iris_next_enterprise_to_next_public_task")
 
 load(
     ".cirrus/modules/qa.star",
@@ -40,7 +39,6 @@ def private_pipeline_builder():
     merge_dict(conf, build_cli_win_task())
     merge_dict(conf, build_cli_macos_task())
     merge_dict(conf, publish_artifacts_task())
-    merge_dict(conf, sca_scan_task())
     merge_dict(conf, qa_plugin_task())
     merge_dict(conf, qa_ruling_task())
     merge_dict(conf, qa_benchmark_task())
