@@ -180,6 +180,9 @@ def build_cli_macos_task():
             "rm graalvm-community-jdk-{}_macos-aarch64_bin.tar.gz".format(GRAALVM_VERSION),
             "rm -r graalvm-community-openjdk-{}".format(GRAALVM_CE_OPENJDK_VERSION),
         ]) | {
+            # macOS workers are not available on weekends, but this shouldn't cause the entire build to hang and fail.
+            # See https://xtranet-sonarsource.atlassian.net/wiki/spaces/Platform/pages/3447980037/MacOS+Persistent+Workers+User+Guide+-+Cirrus+CI
+            "allow_failures": True,
             "persistent_worker": {
                 "isolation": {
                     "tart": {
