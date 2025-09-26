@@ -87,8 +87,8 @@ def build_native_cli_condition():
     return "$CIRRUS_PR_LABELS =~ \".*build-cli-native.*\" || $CIRRUS_BRANCH == $CIRRUS_DEFAULT_BRANCH || $CIRRUS_BRANCH =~ \"branch-.*\""
 
 
-GRAALVM_VERSION = "24.0.2"
-GRAALVM_CE_OPENJDK_VERSION = "24.0.2+11.1"
+GRAALVM_VERSION = "25.0.0"
+GRAALVM_CE_OPENJDK_VERSION = "25+37.1"
 
 
 # Task template suitable for systems with Bash (Linux, MacOS)
@@ -222,7 +222,7 @@ def publish_artifacts_task():
                 "mkdir -p private/sonar-secrets-cli/build/native/images/",
                 "test -f {} && unzip {} -d private/sonar-secrets-cli/build/tmp/ || echo Archive not found, skipping".format(artifact_zip_name, artifact_zip_name),
                 "find private/sonar-secrets-cli/build/tmp/ -type f -exec mv {} private/sonar-secrets-cli/build/native/images/ \\;",
-                "ls -l private/sonar-secrets-cli/build/native/images/",
+                "ls -lh private/sonar-secrets-cli/build/native/images/",
             ],
             "publish_script": [
                 "git submodule update --init --depth 1 -- build-logic/common",
