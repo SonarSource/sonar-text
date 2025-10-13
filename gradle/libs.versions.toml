@@ -3,14 +3,14 @@ sonar-commons = "2.18.0.3393"
 # Before updating the plugin-api version, make sure to check the compatibility matrix and stick to the lowest denominator
 # https://github.com/SonarSource/sonar-plugin-api?tab=readme-ov-file#compatibility
 sonar-plugin-api = "12.0.0.2960"
-sonarqube = "25.9.0.112764"
-sonar-java = "8.18.0.40025"
+sonarqube = "25.10.0.114319"
+sonar-java = "8.19.0.40387"
 sonar-scanner-gradle = "6.3.1.5724"
 sonar-orchestrator = "5.6.2.2625"
 sonar-license-api = "3.4"
-sonar-lint = "10.32.0.82302"
+sonar-lint = "10.33.0.82470"
 slf4j = "2.0.17"
-logback = "1.5.18"
+logback = "1.5.19"
 jackson = "2.20.0"
 json-schema-validator = "1.5.9"
 pico-cli = "4.7.7"
@@ -18,7 +18,7 @@ junit = "6.0.0"
 assertj = "3.27.6"
 mockito = "5.20.0"
 yguard = "4.1.1"
-eclipse-jgit = "7.3.0.202506031305-r"
+eclipse-jgit = "7.4.0.202509020913-r"
 commons-io = "2.20.0"
 re2j = "1.8"
 gradle-shadow = "9.2.2" # should be in sync with build-logic/common/gradle/libs.versions.toml
@@ -61,6 +61,6 @@ ahocorasick = { module = "org.ahocorasick:ahocorasick", version.ref = "ahocorasi
 sarif = { module = "com.contrastsecurity:java-sarif", version = "2.0" }
 
 [plugins]
-buildconfig = { id = "com.github.gmazzo.buildconfig", version = "5.6.8" }
+buildconfig = { id = "com.github.gmazzo.buildconfig", version = "5.7.0" }
 jmh = { id = "me.champeau.jmh", version = "0.7.3" }
 graalvm-native = { id = "org.graalvm.buildtools.native", version = "0.11.1" }
