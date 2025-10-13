@@ -29,7 +29,7 @@ def build_env():
     env |= {
         "DEPLOY_PULL_REQUEST": "true",
         "BUILD_ARGUMENTS": "--profile storeProjectVersion -x artifactoryPublish",
-        "SONAR_PROJECT_KEY": "org.sonarsource.text:text"
+        "SONAR_PROJECT_KEY": "SonarSource_sonar-text-enterprise"
     }
     return env
 
@@ -304,7 +304,7 @@ def shadow_scan_sqc_us_task():
 def iris_general_env():
     return {
        "SONAR_SOURCE_IRIS_TOKEN": "VAULT[development/kv/data/iris data.next]",
-       "SONAR_SOURCE_PROJECT_KEY": "org.sonarsource.text:text",
+       "SONAR_SOURCE_PROJECT_KEY": "SonarSource_sonar-text-enterprise",
        "CRON_NIGHTLY_JOB_NAME": "nightly",
     }
 
@@ -342,7 +342,7 @@ def iris_next_enterprise_to_sqc_eu_public_env():
     env |= {
        "SONAR_TARGET_URL": "https://sonarcloud.io",
        "SONAR_TARGET_IRIS_TOKEN": "VAULT[development/kv/data/iris data.sqc-eu]",
-       "SONAR_TARGET_PROJECT_KEY": "org.sonarsource.text:text",
+       "SONAR_TARGET_PROJECT_KEY": "SonarSource_sonar-text",
     }
     return env
 
