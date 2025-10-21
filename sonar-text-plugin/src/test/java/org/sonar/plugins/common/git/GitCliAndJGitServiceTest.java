@@ -21,24 +21,25 @@ import java.nio.file.Paths;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
-import static org.sonar.plugins.common.TestUtils.inputFileFromPath;
 
 class GitCliAndJGitServiceTest {
 
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5();
 
-  // Workaround to get the base directory of the project
-  private static final Path BASE_DIR = inputFileFromPath(Paths.get("")).path();
+  private static final Path BASE_DIR_PLACEHOLDER = Paths.get("fake-repo-dir");
 
   @Test
-  void shouldRetrieveUntracked() {
-    try (var gitService = new GitCliAndJGitService(BASE_DIR)) {
+  void shouldRetrieveNoUntrackedFilesFromCleanRepo(@TempDir Path tempDir) {
+    GitRepoBuilder.setupCleanRepo(tempDir);
+
+    try (var gitService = new GitCliAndJGitService(tempDir)) {
       var gitResult = gitService.retrieveUntrackedFileNames();
       assertThat(gitResult.isGitSuccessful()).isTrue();
       assertThat(gitResult.untrackedFileNames()).isEmpty();
@@ -46,10 +47,24 @@ class GitCliAndJGitServiceTest {
   }
 
   @Test
+  void shouldRetrieveUntrackedFilesFromRepo(@TempDir Path tempDir) {
+    GitRepoBuilder.builder(tempDir)
+      .withTrackedFile("tracked.txt")
+      .withUntrackedFile("untracked1.txt", "untracked2.txt")
+      .build();
+
+    try (var gitService = new GitCliAndJGitService(tempDir)) {
+      var gitResult = gitService.retrieveUntrackedFileNames();
+      assertThat(gitResult.isGitSuccessful()).isTrue();
+      assertThat(gitResult.untrackedFileNames()).containsExactlyInAnyOrder("untracked1.txt", "untracked2.txt");
+    }
+  }
+
+  @Test
   void shouldRetrieveUntrackedFromCliWhenAvailable() {
-    var gitCliService = spy(GitCliService.createOsSpecificInstance(BASE_DIR));
+    var gitCliService = spy(GitCliService.createOsSpecificInstance(BASE_DIR_PLACEHOLDER));
     when(gitCliService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of("a.txt")));
-    var jGitService = new JGitService(BASE_DIR);
+    var jGitService = new JGitService(BASE_DIR_PLACEHOLDER);
     try (var gitService = new GitCliAndJGitService(gitCliService, jGitService)) {
       var gitResult = gitService.retrieveUntrackedFileNames();
       assertThat(logTester.logs())
@@ -61,9 +76,9 @@ class GitCliAndJGitServiceTest {
 
   @Test
   void shouldRetrieveUntrackedFromJGitWhenCliNotAvailable() {
-    var gitCliService = spy(GitCliService.createOsSpecificInstance(BASE_DIR));
+    var gitCliService = spy(GitCliService.createOsSpecificInstance(BASE_DIR_PLACEHOLDER));
     when(gitCliService.isAvailable()).thenReturn(false);
-    var jGitService = spy(new JGitService(BASE_DIR));
+    var jGitService = spy(new JGitService(BASE_DIR_PLACEHOLDER));
     when(jGitService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of("a.txt")));
     try (var gitService = new GitCliAndJGitService(gitCliService, jGitService)) {
       var gitResult = gitService.retrieveUntrackedFileNames();
@@ -76,9 +91,9 @@ class GitCliAndJGitServiceTest {
 
   @Test
   void shouldRetrieveRepositoryMetadataFromCliWhenAvailable() {
-    var gitCliService = spy(GitCliService.createOsSpecificInstance(BASE_DIR));
+    var gitCliService = spy(GitCliService.createOsSpecificInstance(BASE_DIR_PLACEHOLDER));
     when(gitCliService.retrieveRepositoryMetadata()).thenReturn(new GitService.RepositoryMetadataResult(true, "project", "org"));
-    var jGitService = new JGitService(BASE_DIR);
+    var jGitService = new JGitService(BASE_DIR_PLACEHOLDER);
     try (var gitService = new GitCliAndJGitService(gitCliService, jGitService)) {
       var gitResult = gitService.retrieveRepositoryMetadata();
       assertThat(logTester.logs())
@@ -91,9 +106,9 @@ class GitCliAndJGitServiceTest {
 
   @Test
   void shouldRetrieveRepositoryMetadataFromJGitWhenCliNotAvailable() {
-    var gitCliService = spy(GitCliService.createOsSpecificInstance(BASE_DIR));
+    var gitCliService = spy(GitCliService.createOsSpecificInstance(BASE_DIR_PLACEHOLDER));
     when(gitCliService.isAvailable()).thenReturn(false);
-    var jGitService = spy(new JGitService(BASE_DIR));
+    var jGitService = spy(new JGitService(BASE_DIR_PLACEHOLDER));
     when(jGitService.retrieveRepositoryMetadata()).thenReturn(new GitService.RepositoryMetadataResult(true, "project", "org"));
     try (var gitService = new GitCliAndJGitService(gitCliService, jGitService)) {
       var gitResult = gitService.retrieveRepositoryMetadata();
