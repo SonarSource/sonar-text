@@ -80,7 +80,8 @@ public class SecretMatcher implements Matcher {
     SpecificationConfiguration specificationConfiguration,
     boolean shouldExecuteContentPreFilters) {
     var patternMatcher = PatternMatcher.build(rule.getDetection().getMatching());
-    Predicate<InputFileContext> preFilter = PreFilterFactory.createPredicate(rule.getDetection().getPre(), specificationConfiguration, shouldExecuteContentPreFilters);
+    Predicate<InputFileContext> preFilter = PreFilterFactory.createPredicate(
+      rule.getDetection().getPre(), rule.getSelectivity(), specificationConfiguration, shouldExecuteContentPreFilters);
     Predicate<String> postFilter = PostFilterFactory.createPredicate(rule.getDetection().getPost());
     var postFilterByGroup = Optional.ofNullable(rule.getDetection().getPost()).stream()
       .flatMap(it -> it.getGroups().stream())

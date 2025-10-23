@@ -33,6 +33,7 @@ import org.sonar.api.batch.fs.internal.DefaultFileSystem;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.configuration.model.RuleScope;
+import org.sonar.plugins.secrets.configuration.model.Selectivity;
 import org.sonar.plugins.secrets.configuration.model.matching.Detection;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
@@ -96,7 +97,7 @@ class PreFilterFactoryTest {
   void testFiltersFromYamlFragments(String input, String filename, boolean shouldMatch) throws IOException {
     Detection detection = MAPPER.readValue(input, Detection.class);
 
-    Predicate<InputFileContext> predicate = PreFilterFactory.createPredicate(detection.getPre(), new SpecificationConfiguration(false), true);
+    Predicate<InputFileContext> predicate = PreFilterFactory.createPredicate(detection.getPre(), Selectivity.SPECIFIC, new SpecificationConfiguration(false), true);
 
     InputFileContext ctx = mock(InputFileContext.class);
     when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder("myProject", filename).build());
@@ -202,7 +203,7 @@ class PreFilterFactoryTest {
     when(ctx.getInputFile()).thenReturn(inputFile);
     when(ctx.getFileSystem()).thenReturn(fileSystem);
 
-    var predicate = PreFilterFactory.createPredicate(preModule, configuration, true);
+    var predicate = PreFilterFactory.createPredicate(preModule, Selectivity.SPECIFIC, configuration, true);
 
     assertThat(predicate.test(ctx))
       .withFailMessage("Input file uri: " + inputFile.uri().getPath())
@@ -225,7 +226,27 @@ class PreFilterFactoryTest {
     when(ctx.getInputFile()).thenReturn(inputFile);
     when(ctx.getFileSystem()).thenReturn(fileSystem);
 
-    var predicate = PreFilterFactory.createPredicate(preModule, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, true);
+    var predicate = PreFilterFactory.createPredicate(preModule, Selectivity.SPECIFIC, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, true);
     assertThat(predicate.test(ctx)).isEqualTo(shouldMatch);
+  }
+
+  @ParameterizedTest
+  @MethodSource
+  void matchesBasePredicateBySelectivityWithInputFileLanguage(Selectivity selectivity, String language, boolean shouldMatch) {
+    InputFileContext ctx = mock(InputFileContext.class);
+    when(ctx.getInputFile()).thenReturn(mock(InputFile.class));
+    when(ctx.getInputFile().language()).thenReturn(language);
+    assertThat(PreFilterFactory.basePredicateBySelectivity(selectivity).test(ctx)).isEqualTo(shouldMatch);
+  }
+
+  static Stream<Arguments> matchesBasePredicateBySelectivityWithInputFileLanguage() {
+    return Stream.of(
+      Arguments.of(Selectivity.SPECIFIC, null, true),
+      Arguments.of(Selectivity.PROVIDER_GENERIC, null, true),
+      Arguments.of(Selectivity.ANALYZER_GENERIC, null, true),
+
+      Arguments.of(Selectivity.SPECIFIC, "myLanguage", true),
+      Arguments.of(Selectivity.PROVIDER_GENERIC, "myLanguage", true),
+      Arguments.of(Selectivity.ANALYZER_GENERIC, "myLanguage", false));
   }
 }

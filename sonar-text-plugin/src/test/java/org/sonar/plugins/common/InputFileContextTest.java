@@ -19,10 +19,13 @@ package org.sonar.plugins.common;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.event.Level;
 import org.sonar.api.batch.fs.InputFile;
@@ -150,7 +153,7 @@ class InputFileContextTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"GENERIC", "SPECIFIC"})
+  @ValueSource(strings = {"ANALYZER_GENERIC", "PROVIDER_GENERIC", "SPECIFIC"})
   void shouldRaiseExactlyOneIssueOnOverlappingTextRange(Selectivity selectivity) throws IOException {
     var ctx = inputFileContext("{some content inside this file}");
     var range1 = ctx.newTextRangeFromFileOffsets(2, 6);
@@ -175,8 +178,8 @@ class InputFileContextTest {
     var range1 = ctx.newTextRangeFromFileOffsets(0, 5);
     var range2 = ctx.newTextRangeFromFileOffsets(6, 10);
 
-    ctx.reportIssueOnTextRange(RuleKey.parse("s:1"), Selectivity.GENERIC, range1, "Issue 1");
-    ctx.reportIssueOnTextRange(RuleKey.parse("s:2"), Selectivity.GENERIC, range2, "Issue 2");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:1"), Selectivity.PROVIDER_GENERIC, range1, "Issue 1");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:2"), Selectivity.PROVIDER_GENERIC, range2, "Issue 2");
     ctx.flushIssues();
 
     var actual = sensorContext.allIssues();
@@ -187,21 +190,48 @@ class InputFileContextTest {
       .anySatisfy(issue -> assertThat(issue.primaryLocation()).returns("Issue 2", from(IssueLocation::message)));
   }
 
-  @Test
-  void shouldRetainLowestSelectivityIssueWhenOverlapping() throws IOException {
+  @ParameterizedTest
+  @MethodSource
+  void shouldRetainLowestSelectivityIssueWhenOverlapping(Selectivity selectivityIssue1, Selectivity selectivityIssue2, Selectivity selectivityRaisedIssue) throws IOException {
     var ctx = inputFileContext("overlapping content");
     var range1 = ctx.newTextRangeFromFileOffsets(0, 5);
     var range2 = ctx.newTextRangeFromFileOffsets(3, 8);
 
-    ctx.reportIssueOnTextRange(RuleKey.parse("s:1"), Selectivity.GENERIC, range1, "Generic Issue");
-    ctx.reportIssueOnTextRange(RuleKey.parse("s:2"), Selectivity.SPECIFIC, range2, "Specific Issue");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:1"), selectivityIssue1, range1, selectivityIssue1.toString());
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:2"), selectivityIssue2, range2, selectivityIssue2.toString());
     ctx.flushIssues();
 
     var actual = sensorContext.allIssues();
 
     assertThat(actual)
       .hasSize(1)
-      .anySatisfy(issue -> assertThat(issue.primaryLocation()).returns("Specific Issue", from(IssueLocation::message)));
+      .anySatisfy(issue -> assertThat(issue.primaryLocation()).returns(selectivityRaisedIssue.toString(), from(IssueLocation::message)));
+  }
+
+  static Stream<Arguments> shouldRetainLowestSelectivityIssueWhenOverlapping() {
+    return Stream.of(
+      Arguments.of(Selectivity.SPECIFIC, Selectivity.PROVIDER_GENERIC, Selectivity.SPECIFIC),
+      Arguments.of(Selectivity.SPECIFIC, Selectivity.ANALYZER_GENERIC, Selectivity.SPECIFIC),
+      Arguments.of(Selectivity.PROVIDER_GENERIC, Selectivity.ANALYZER_GENERIC, Selectivity.PROVIDER_GENERIC));
+  }
+
+  @Test
+  void shouldHandleAllSelectivities() throws IOException {
+    var ctx = inputFileContext("all selectivities");
+    var range1 = ctx.newTextRangeFromFileOffsets(0, 5);
+    var range2 = ctx.newTextRangeFromFileOffsets(3, 8);
+    var range3 = ctx.newTextRangeFromFileOffsets(1, 7);
+
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:1"), Selectivity.ANALYZER_GENERIC, range1, Selectivity.ANALYZER_GENERIC.toString());
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:2"), Selectivity.PROVIDER_GENERIC, range2, Selectivity.PROVIDER_GENERIC.toString());
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:3"), Selectivity.SPECIFIC, range3, Selectivity.SPECIFIC.toString());
+    ctx.flushIssues();
+
+    var actual = sensorContext.allIssues();
+
+    assertThat(actual)
+      .hasSize(1)
+      .anySatisfy(issue -> assertThat(issue.primaryLocation()).returns(Selectivity.SPECIFIC.toString(), from(IssueLocation::message)));
   }
 
   @Test
@@ -212,10 +242,10 @@ class InputFileContextTest {
     var range3 = ctx.newTextRangeFromFileOffsets(10, 15);
     var range4 = ctx.newTextRangeFromFileOffsets(12, 18);
 
-    ctx.reportIssueOnTextRange(RuleKey.parse("s:1"), Selectivity.GENERIC, range1, "Generic Issue 1");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:1"), Selectivity.PROVIDER_GENERIC, range1, "Generic Issue 1");
     ctx.reportIssueOnTextRange(RuleKey.parse("s:2"), Selectivity.SPECIFIC, range2, "Specific Issue 1");
-    ctx.reportIssueOnTextRange(RuleKey.parse("s:3"), Selectivity.GENERIC, range3, "Generic Issue 2");
-    ctx.reportIssueOnTextRange(RuleKey.parse("s:4"), Selectivity.SPECIFIC, range4, "Specific Issue 2");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:3"), Selectivity.ANALYZER_GENERIC, range3, "Language Generic Issue 2");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:4"), Selectivity.PROVIDER_GENERIC, range4, "Provider Generic Issue 2");
     ctx.flushIssues();
 
     var actual = sensorContext.allIssues();
@@ -223,7 +253,7 @@ class InputFileContextTest {
     assertThat(actual)
       .hasSize(2)
       .anySatisfy(issue -> assertThat(issue.primaryLocation()).returns("Specific Issue 1", from(IssueLocation::message)))
-      .anySatisfy(issue -> assertThat(issue.primaryLocation()).returns("Specific Issue 2", from(IssueLocation::message)));
+      .anySatisfy(issue -> assertThat(issue.primaryLocation()).returns("Provider Generic Issue 2", from(IssueLocation::message)));
   }
 
   @Test
@@ -234,7 +264,7 @@ class InputFileContextTest {
     var range1 = ctx.newTextRangeFromFileOffsets(0, 5);
     var range2 = ctx.newTextRangeFromFileOffsets(3, 8);
 
-    ctx.reportIssueOnTextRange(RuleKey.parse("s:1"), Selectivity.GENERIC, range1, "Generic Issue");
+    ctx.reportIssueOnTextRange(RuleKey.parse("s:1"), Selectivity.PROVIDER_GENERIC, range1, "Generic Issue");
     ctx.reportIssueOnTextRange(RuleKey.parse("s:2"), Selectivity.SPECIFIC, range2, "Strict Issue");
 
     ctx.flushIssues();

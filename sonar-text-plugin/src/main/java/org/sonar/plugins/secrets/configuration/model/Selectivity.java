@@ -23,9 +23,11 @@ public enum Selectivity {
   @JsonEnumDefaultValue
   @JsonAlias("specific")
   SPECIFIC(0),
-  @JsonAlias("generic")
-  GENERIC(1),
-  ;
+  @JsonAlias("providerGeneric")
+  PROVIDER_GENERIC(1),
+  // Lowest priority. If used as a selectivity, the rule will only raise on files without a language associated to it
+  @JsonAlias("analyzerGeneric")
+  ANALYZER_GENERIC(2);
 
   private final int priority;
 

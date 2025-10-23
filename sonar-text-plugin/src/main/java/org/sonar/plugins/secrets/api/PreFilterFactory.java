@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.plugins.common.InputFileContext;
+import org.sonar.plugins.secrets.configuration.model.Selectivity;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.FileFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
@@ -36,6 +37,7 @@ import static org.sonar.plugins.secrets.api.ScopeBasedFileFilter.scopeBasedFileP
 public final class PreFilterFactory {
   private static final Logger LOG = LoggerFactory.getLogger(PreFilterFactory.class);
   private static final Predicate<InputFileContext> INCLUDE_ALL_FILES = ctx -> true;
+  private static final Predicate<InputFileContext> NO_LANGUAGE_PREDICATE = ctx -> ctx.getInputFile().language() == null;
 
   private PreFilterFactory() {
   }
@@ -50,13 +52,16 @@ public final class PreFilterFactory {
    */
   public static Predicate<InputFileContext> createPredicate(
     @Nullable PreModule pre,
+    Selectivity selectivity,
     SpecificationConfiguration specificationConfiguration,
     boolean shouldExecuteContentPreFilters) {
+    var predicate = basePredicateBySelectivity(selectivity);
+
     if (pre == null) {
-      return INCLUDE_ALL_FILES;
+      return predicate;
     }
 
-    Predicate<InputFileContext> predicate = scopeBasedFilePredicate(pre.getScopes(), specificationConfiguration);
+    predicate = predicate.and(scopeBasedFilePredicate(pre.getScopes(), specificationConfiguration));
     FileFilter include = pre.getInclude();
     FileFilter reject = pre.getReject();
     if (reject != null) {
@@ -66,6 +71,13 @@ public final class PreFilterFactory {
       predicate = predicate.and(ctx -> matches(include, ctx, shouldExecuteContentPreFilters));
     }
     return predicate;
+  }
+
+  static Predicate<InputFileContext> basePredicateBySelectivity(Selectivity selectivity) {
+    if (selectivity == Selectivity.ANALYZER_GENERIC) {
+      return NO_LANGUAGE_PREDICATE;
+    }
+    return INCLUDE_ALL_FILES;
   }
 
   private static boolean matches(FileFilter filter, InputFileContext ctx, boolean shouldExecuteContentPreFilters) {

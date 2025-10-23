@@ -57,9 +57,10 @@ provider:
     # will output a new rule ID (rspec key)
     - rspecKey: SXXXX
       id: fakecloud-api-key
-      # The `selectivity` field can be either `specific` or `generic`.
+      # The `selectivity` field can be either `specific`, `providerGeneric` or `analyzerGeneric`.
       # In case two rules match on the same text,
-      # the one with the `specific` selectivity will be used.
+      # the issue with the more specific selectivity will be used with the following order `specific` > `providerGeneric` > `analyzerGeneric`.
+      # Rules with a selectivity of `analyzerGeneric` will also only be raised on files without a sonar language associated to it. 
       selectivity: specific
       metadata:
         # This does not influence the rule name

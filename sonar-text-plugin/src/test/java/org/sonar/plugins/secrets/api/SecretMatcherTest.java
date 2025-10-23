@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import org.eclipse.jgit.util.Base64;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -33,6 +34,7 @@ import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.RuleScope;
+import org.sonar.plugins.secrets.configuration.model.Selectivity;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
 import static java.util.Collections.emptyMap;
@@ -154,5 +156,31 @@ class SecretMatcherTest {
     var result = actualMatcher.findIn(fileContext);
 
     assertThat(result).hasSize(expectedMatches);
+  }
+
+  @ParameterizedTest
+  @MethodSource
+  void shouldRaiseIssueAccordingToSelectivityAndLanguageExistence(Selectivity ruleSelectivity, String language, boolean shouldRaise) throws IOException {
+    var specification = ReferenceTestModel.constructMinimumSpecification();
+    var rule = specification.getProvider().getRules().get(0);
+    rule.setSelectivity(ruleSelectivity);
+    SecretMatcher actualMatcher = SecretMatcher.build(rule, mockDurationStatistics(), SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_DISABLED, true);
+    var inputFile = inputFile(Path.of(".env"), "rule matching pattern", language, InputFile.Type.MAIN);
+    var fileContext = inputFileContext(inputFile);
+
+    var result = actualMatcher.findIn(fileContext);
+
+    assertThat(result).hasSize(shouldRaise ? 1 : 0);
+  }
+
+  static Stream<Arguments> shouldRaiseIssueAccordingToSelectivityAndLanguageExistence() {
+    return Stream.of(
+      Arguments.of(Selectivity.SPECIFIC, null, true),
+      Arguments.of(Selectivity.PROVIDER_GENERIC, null, true),
+      Arguments.of(Selectivity.ANALYZER_GENERIC, null, true),
+
+      Arguments.of(Selectivity.SPECIFIC, "myLanguage", true),
+      Arguments.of(Selectivity.PROVIDER_GENERIC, "myLanguage", true),
+      Arguments.of(Selectivity.ANALYZER_GENERIC, "myLanguage", false));
   }
 }
