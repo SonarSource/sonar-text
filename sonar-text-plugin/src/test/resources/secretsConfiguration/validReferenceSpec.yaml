@@ -38,9 +38,6 @@ provider:
             type: Standards
       detection:
         pre:
-          scopes:
-            - main
-            - test
           include:
             paths:
               - "*.aws/config"

@@ -3,10 +3,6 @@ provider:
     name: GeneratorTestOneNewRSPECKey
     category: GeneratorTest
     message: Message
-  detection:
-    pre:
-      scopes:
-        - main
   rules:
     - rspecKey: S9999
       id: generatorTestTwo

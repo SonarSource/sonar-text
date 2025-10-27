@@ -38,7 +38,6 @@ class PreModuleTest {
 
     assertThat(preModule.getReject()).isNull();
     assertThat(preModule.getInclude()).isNotNull();
-    assertThat(preModule.getScopes()).isEmpty();
 
     assertThat(preModule.getInclude().getContent()).isEmpty();
     assertThat(preModule.getInclude().getPaths()).isEmpty();

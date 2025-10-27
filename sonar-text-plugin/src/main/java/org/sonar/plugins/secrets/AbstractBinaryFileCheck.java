@@ -16,20 +16,17 @@
  */
 package org.sonar.plugins.secrets;
 
-import java.util.List;
 import java.util.function.Predicate;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.common.git.GitService;
 import org.sonar.plugins.common.git.NullGitService;
-import org.sonar.plugins.secrets.api.ScopeBasedFileFilter;
 import org.sonar.plugins.secrets.api.SpecificationConfiguration;
-import org.sonar.plugins.secrets.configuration.model.RuleScope;
+
+import static org.sonar.plugins.secrets.api.PreFilterFactory.INCLUDE_ONLY_MAIN_FILES;
+import static org.sonar.plugins.secrets.api.PreFilterFactory.appendAutomaticNoTestFileFilter;
 
 public abstract class AbstractBinaryFileCheck extends Check {
-
-  // we assume that every binary file check only applies to main files
-  private static final List<RuleScope> APPLICABLE_SCOPES = List.of(RuleScope.MAIN);
 
   protected Predicate<InputFileContext> scopedFilePredicate;
   protected GitService gitService = NullGitService.INSTANCE;
@@ -42,7 +39,7 @@ public abstract class AbstractBinaryFileCheck extends Check {
    * @param gitService {@link GitService} instance to be used by checks like S7203
    */
   public void initialize(SpecificationConfiguration specificationConfiguration, GitService gitService) {
-    this.scopedFilePredicate = ScopeBasedFileFilter.scopeBasedFilePredicate(APPLICABLE_SCOPES, specificationConfiguration);
+    this.scopedFilePredicate = appendAutomaticNoTestFileFilter(INCLUDE_ONLY_MAIN_FILES, specificationConfiguration);
     this.gitService = gitService;
   }
 

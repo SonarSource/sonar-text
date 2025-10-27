@@ -18,7 +18,6 @@ package org.sonar.plugins.secrets.api;
 
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -26,7 +25,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.sonar.api.batch.fs.internal.DefaultFileSystem;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.plugins.common.InputFileContext;
-import org.sonar.plugins.secrets.configuration.model.RuleScope;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -34,35 +32,21 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-class ScopeBasedFileFilterTest {
+class AutomaticTestFileFilterTest {
 
   @ParameterizedTest
   @MethodSource("inputsForTestingMainScopeAndSonarTest")
-  void shouldTestMainScopeWhenSonarTestIsNotSet(String filePath, boolean shouldMatch) {
-    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.MAIN, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, shouldMatch);
+  void shouldAutomaticallyDetectTestFiles(String filePath, boolean shouldMatch) {
+    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", shouldMatch);
   }
 
   @ParameterizedTest
   @MethodSource("inputsForTestingMainScopeAndSonarTest")
-  void shouldTestMainScopeWhenSonarTestIsNotSetAndBaseDirectoryContainsTest(String filePath, boolean shouldMatch) {
-    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/with/test/in/it/", RuleScope.MAIN, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, shouldMatch);
+  void shouldAutomaticallyDetectTestFilesWithBaseDirectoryContainingTest(String filePath, boolean shouldMatch) {
+    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/with/test/in/it/", shouldMatch);
   }
 
-  @ParameterizedTest
-  @MethodSource("inputsForTestingMainScopeAndSonarTest")
-  void shouldTestMainScopeWhenSonarTestIsSet(String filePath, boolean ignored) {
-    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.MAIN, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_DISABLED, true);
-  }
-
-  @ParameterizedTest
-  @MethodSource("inputsForTestingMainScopeAndSonarTest")
-  void shouldTestMainScopeWhenSonarTestIsNotSetAndScopeTest(String filePath, boolean ignored) {
-    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.TEST, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, false);
-  }
-
-  private void testPredicateWithScopeAndConfiguration(String filePath, String baseDir, RuleScope scope, SpecificationConfiguration specificationConfiguration, boolean expected) {
-    List<RuleScope> scopes = List.of(scope);
-
+  private void testPredicateWithScopeAndConfiguration(String filePath, String baseDir, boolean expected) {
     String projectKey = "myProject";
 
     var inputFile = spy(new TestInputFileBuilder(projectKey, filePath).build());
@@ -75,7 +59,7 @@ class ScopeBasedFileFilterTest {
     when(ctx.getInputFile()).thenReturn(inputFile);
     when(ctx.getFileSystem()).thenReturn(fileSystem);
 
-    var predicate = ScopeBasedFileFilter.scopeBasedFilePredicate(scopes, specificationConfiguration);
+    var predicate = AutomaticTestFileFilter.isNotAutomaticallyDetectedTestFile();
 
     assertThat(predicate.test(ctx))
       .withFailMessage("Input file uri: " + inputFile.uri().getPath())
@@ -121,9 +105,7 @@ class ScopeBasedFileFilterTest {
 
   @ParameterizedTest
   @MethodSource("inputsForTestingMainScopeWithWrongBaseDirectory")
-  void shouldTestMainScopeWhenFileSystemBaseDirPathTypeIsWrong(String filePath, boolean shouldMatch) {
-    var scopes = List.of(RuleScope.MAIN);
-
+  void shouldAutomaticallyDetectTestFilesWhenFileSystemBaseDirPathTypeIsWrong(String filePath, boolean shouldMatch) {
     var inputFile = spy(new TestInputFileBuilder("myProject", filePath).build());
     var uri = URI.create("file:/base/directory/myProject/" + filePath);
     when(inputFile.uri()).thenReturn(uri);
@@ -134,7 +116,7 @@ class ScopeBasedFileFilterTest {
     when(ctx.getInputFile()).thenReturn(inputFile);
     when(ctx.getFileSystem()).thenReturn(fileSystem);
 
-    var predicate = ScopeBasedFileFilter.scopeBasedFilePredicate(scopes, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED);
+    var predicate = AutomaticTestFileFilter.isNotAutomaticallyDetectedTestFile();
     assertThat(predicate.test(ctx)).isEqualTo(shouldMatch);
   }
 
@@ -174,5 +156,4 @@ class ScopeBasedFileFilterTest {
       arguments("contestresults.js", true),
       arguments("Protester.java", true));
   }
-
 }

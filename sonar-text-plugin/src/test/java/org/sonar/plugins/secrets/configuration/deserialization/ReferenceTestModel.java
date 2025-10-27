@@ -21,7 +21,6 @@ import java.util.List;
 import org.sonar.plugins.secrets.configuration.model.Provider;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.RuleExample;
-import org.sonar.plugins.secrets.configuration.model.RuleScope;
 import org.sonar.plugins.secrets.configuration.model.Selectivity;
 import org.sonar.plugins.secrets.configuration.model.Specification;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
@@ -211,7 +210,6 @@ public class ReferenceTestModel {
 
     preModule.setInclude(includedFilter);
     preModule.setReject(rejectFilter);
-    preModule.setScopes(List.of(RuleScope.MAIN, RuleScope.TEST));
 
     return preModule;
   }

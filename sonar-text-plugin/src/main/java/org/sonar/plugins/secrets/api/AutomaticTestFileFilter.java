@@ -23,36 +23,22 @@ import java.util.Locale;
 import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.common.InputFileContext;
-import org.sonar.plugins.secrets.configuration.model.RuleScope;
 
 /**
  * Class for producing a scope based file filter.
  */
-public final class ScopeBasedFileFilter {
-  private static final Logger LOG = LoggerFactory.getLogger(ScopeBasedFileFilter.class);
-  private static final Predicate<InputFileContext> INCLUDE_ALL_FILES = ctx -> true;
+public final class AutomaticTestFileFilter {
+  private static final Logger LOG = LoggerFactory.getLogger(AutomaticTestFileFilter.class);
 
-  private ScopeBasedFileFilter() {
+  private AutomaticTestFileFilter() {
   }
 
   /**
    * Creates a predicate based on the rule scopes and status of automatic test file detection.
    */
-  public static Predicate<InputFileContext> scopeBasedFilePredicate(List<RuleScope> ruleScopes, SpecificationConfiguration specificationConfiguration) {
-    if (ruleScopes.isEmpty() || ruleScopes.size() == RuleScope.values().length) {
-      return INCLUDE_ALL_FILES;
-    }
-
-    return (InputFileContext inputFileContext) -> {
-      var type = inputFileContext.getInputFile().type();
-      if (!ruleScopes.contains(RuleScope.TEST) && specificationConfiguration.automaticTestFileDetection() && type == InputFile.Type.MAIN) {
-        return !isFilenameTest(inputFileContext) && !isFileInDocOrTestDirectory(inputFileContext);
-      }
-      var ruleScope = RuleScope.valueOf(type.toString().toUpperCase(Locale.ROOT));
-      return ruleScopes.contains(ruleScope);
-    };
+  public static Predicate<InputFileContext> isNotAutomaticallyDetectedTestFile() {
+    return ctx -> !isFilenameTest(ctx) && !isFileInDocOrTestDirectory(ctx);
   }
 
   private static boolean isFilenameTest(InputFileContext inputFileContext) {
@@ -61,6 +47,7 @@ public final class ScopeBasedFileFilter {
   }
 
   private static boolean isFileInDocOrTestDirectory(InputFileContext inputFileContext) {
+    // the path of the baseDir is not analyzed, only the relative path from file to baseDir
     var path = Path.of(inputFileContext.getInputFile().uri());
     String relativeUnixPath;
     try {

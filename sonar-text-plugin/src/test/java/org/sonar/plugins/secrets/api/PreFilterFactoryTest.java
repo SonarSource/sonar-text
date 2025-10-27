@@ -28,11 +28,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultFileSystem;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.plugins.common.InputFileContext;
-import org.sonar.plugins.secrets.configuration.model.RuleScope;
 import org.sonar.plugins.secrets.configuration.model.Selectivity;
 import org.sonar.plugins.secrets.configuration.model.matching.Detection;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
@@ -164,32 +164,25 @@ class PreFilterFactoryTest {
   }
 
   @ParameterizedTest
-  @MethodSource("org.sonar.plugins.secrets.api.ScopeBasedFileFilterTest#inputsForTestingMainScopeAndSonarTest")
-  void shouldTestMainScopeWhenSonarTestIsNotSet(String filePath, boolean shouldMatch) {
-    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.MAIN, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, shouldMatch);
+  @MethodSource("org.sonar.plugins.secrets.api.AutomaticTestFileFilterTest#inputsForTestingMainScopeAndSonarTest")
+  void shouldAcceptMainScopeWhenSonarTestIsNotSet(String filePath, boolean shouldMatch) {
+    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, shouldMatch);
   }
 
   @ParameterizedTest
-  @MethodSource("org.sonar.plugins.secrets.api.ScopeBasedFileFilterTest#inputsForTestingMainScopeAndSonarTest")
-  void shouldTestMainScopeWhenSonarTestIsNotSetAndBaseDirectoryContainsTest(String filePath, boolean shouldMatch) {
-    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/with/test/in/it/", RuleScope.MAIN, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, shouldMatch);
+  @MethodSource("org.sonar.plugins.secrets.api.AutomaticTestFileFilterTest#inputsForTestingMainScopeAndSonarTest")
+  void shouldAcceptMainScopeWhenSonarTestIsNotSetAndBaseDirectoryContainsTest(String filePath, boolean shouldMatch) {
+    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/with/test/in/it/", SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, shouldMatch);
   }
 
   @ParameterizedTest
-  @MethodSource("org.sonar.plugins.secrets.api.ScopeBasedFileFilterTest#inputsForTestingMainScopeAndSonarTest")
+  @MethodSource("org.sonar.plugins.secrets.api.AutomaticTestFileFilterTest#inputsForTestingMainScopeAndSonarTest")
   void shouldTestMainScopeWhenSonarTestIsSet(String filePath, boolean ignored) {
-    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.MAIN, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_DISABLED, true);
+    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_DISABLED, true);
   }
 
-  @ParameterizedTest
-  @MethodSource("org.sonar.plugins.secrets.api.ScopeBasedFileFilterTest#inputsForTestingMainScopeAndSonarTest")
-  void shouldTestMainScopeWhenSonarTestIsNotSetAndScopeTest(String filePath, boolean ignored) {
-    testPredicateWithScopeAndConfiguration(filePath, "/base/directory/", RuleScope.TEST, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, false);
-  }
-
-  private void testPredicateWithScopeAndConfiguration(String filePath, String baseDir, RuleScope scope, SpecificationConfiguration configuration, boolean expected) {
+  private void testPredicateWithScopeAndConfiguration(String filePath, String baseDir, SpecificationConfiguration configuration, boolean expected) {
     var preModule = new PreModule();
-    preModule.setScopes(List.of(scope));
 
     String projectKey = "myProject";
 
@@ -211,11 +204,8 @@ class PreFilterFactoryTest {
   }
 
   @ParameterizedTest
-  @MethodSource("org.sonar.plugins.secrets.api.ScopeBasedFileFilterTest#inputsForTestingMainScopeWithWrongBaseDirectory")
+  @MethodSource("org.sonar.plugins.secrets.api.AutomaticTestFileFilterTest#inputsForTestingMainScopeWithWrongBaseDirectory")
   void shouldTestMainScopeWhenFileSystemBaseDirPathTypeIsWrong(String filePath, boolean shouldMatch) {
-    var preModule = new PreModule();
-    preModule.setScopes(List.of(RuleScope.MAIN));
-
     var inputFile = spy(new TestInputFileBuilder("myProject", filePath).build());
     URI uri = URI.create("file:/base/directory/myProject/" + filePath);
     when(inputFile.uri()).thenReturn(uri);
@@ -226,8 +216,28 @@ class PreFilterFactoryTest {
     when(ctx.getInputFile()).thenReturn(inputFile);
     when(ctx.getFileSystem()).thenReturn(fileSystem);
 
-    var predicate = PreFilterFactory.createPredicate(preModule, Selectivity.SPECIFIC, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, true);
+    var predicate = PreFilterFactory.createPredicate(new PreModule(), Selectivity.SPECIFIC, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, true);
     assertThat(predicate.test(ctx)).isEqualTo(shouldMatch);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"true", "false"})
+  void shouldNotAcceptTestFiles(boolean automaticTestDetectionEnabled) {
+    String projectKey = "myProject";
+    String filePath = "file.txt";
+    String baseDir = "/base/directory/";
+    var inputFile = spy(new TestInputFileBuilder(projectKey, filePath).setType(InputFile.Type.TEST).build());
+    URI uri = URI.create("file:" + baseDir + projectKey + "/" + filePath);
+    when(inputFile.uri()).thenReturn(uri);
+
+    DefaultFileSystem fileSystem = new DefaultFileSystem(Path.of(baseDir));
+
+    var ctx = mock(InputFileContext.class);
+    when(ctx.getInputFile()).thenReturn(inputFile);
+    when(ctx.getFileSystem()).thenReturn(fileSystem);
+
+    var predicate = PreFilterFactory.createPredicate(new PreModule(), Selectivity.SPECIFIC, new SpecificationConfiguration(automaticTestDetectionEnabled), true);
+    assertThat(predicate.test(ctx)).isFalse();
   }
 
   @ParameterizedTest
@@ -236,7 +246,9 @@ class PreFilterFactoryTest {
     InputFileContext ctx = mock(InputFileContext.class);
     when(ctx.getInputFile()).thenReturn(mock(InputFile.class));
     when(ctx.getInputFile().language()).thenReturn(language);
-    assertThat(PreFilterFactory.basePredicateBySelectivity(selectivity).test(ctx)).isEqualTo(shouldMatch);
+
+    var selectivityPredicate = PreFilterFactory.appendSelectivityPredicate(context -> true, selectivity);
+    assertThat(selectivityPredicate.test(ctx)).isEqualTo(shouldMatch);
   }
 
   static Stream<Arguments> matchesBasePredicateBySelectivityWithInputFileLanguage() {

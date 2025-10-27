@@ -36,11 +36,6 @@ provider:
     message: Make sure this FakeCloud API key gets revoked, changed, and removed from the code.
   detection:
     pre:
-      # Some rules trigger a lot of false positives on test files.
-      # Use this scope setting to set the analysis scope.
-      scopes:
-      - main
-      - test
       include:
         content:
           - "(?i)fakecloud"

@@ -3,10 +3,6 @@ provider:
     name: GeneratorTestOne
     category: GeneratorTest
     message: Message
-  detection:
-    pre:
-      scopes:
-        - main
   rules:
     - rspecKey: S6733 # Already existing RSPEC key in airtable.yaml
       id: generatorTestOne

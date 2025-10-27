@@ -23,21 +23,23 @@ import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.configuration.model.Selectivity;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.FileFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
 import static java.util.function.Predicate.not;
-import static org.sonar.plugins.secrets.api.ScopeBasedFileFilter.scopeBasedFilePredicate;
 
 /**
  * The Factory class for producing a Predicate from {@link PreModule}.
  */
 public final class PreFilterFactory {
   private static final Logger LOG = LoggerFactory.getLogger(PreFilterFactory.class);
-  private static final Predicate<InputFileContext> INCLUDE_ALL_FILES = ctx -> true;
   private static final Predicate<InputFileContext> NO_LANGUAGE_PREDICATE = ctx -> ctx.getInputFile().language() == null;
+  private static final Predicate<InputFileContext> AUTOMATIC_NO_TEST_FILE_FILTER = AutomaticTestFileFilter.isNotAutomaticallyDetectedTestFile();
+
+  public static final Predicate<InputFileContext> INCLUDE_ONLY_MAIN_FILES = ctx -> InputFile.Type.MAIN == ctx.getInputFile().type();
 
   private PreFilterFactory() {
   }
@@ -55,13 +57,13 @@ public final class PreFilterFactory {
     Selectivity selectivity,
     SpecificationConfiguration specificationConfiguration,
     boolean shouldExecuteContentPreFilters) {
-    var predicate = basePredicateBySelectivity(selectivity);
+    var predicate = appendSelectivityPredicate(INCLUDE_ONLY_MAIN_FILES, selectivity);
+    predicate = appendAutomaticNoTestFileFilter(predicate, specificationConfiguration);
 
     if (pre == null) {
       return predicate;
     }
 
-    predicate = predicate.and(scopeBasedFilePredicate(pre.getScopes(), specificationConfiguration));
     FileFilter include = pre.getInclude();
     FileFilter reject = pre.getReject();
     if (reject != null) {
@@ -73,11 +75,18 @@ public final class PreFilterFactory {
     return predicate;
   }
 
-  static Predicate<InputFileContext> basePredicateBySelectivity(Selectivity selectivity) {
+  static Predicate<InputFileContext> appendSelectivityPredicate(Predicate<InputFileContext> predicate, Selectivity selectivity) {
     if (selectivity == Selectivity.ANALYZER_GENERIC) {
-      return NO_LANGUAGE_PREDICATE;
+      return predicate.and(NO_LANGUAGE_PREDICATE);
     }
-    return INCLUDE_ALL_FILES;
+    return predicate;
+  }
+
+  public static Predicate<InputFileContext> appendAutomaticNoTestFileFilter(Predicate<InputFileContext> predicate, SpecificationConfiguration specificationConfiguration) {
+    if (specificationConfiguration.automaticTestFileDetection()) {
+      return predicate.and(AUTOMATIC_NO_TEST_FILE_FILTER);
+    }
+    return predicate;
   }
 
   private static boolean matches(FileFilter filter, InputFileContext ctx, boolean shouldExecuteContentPreFilters) {
