@@ -178,6 +178,8 @@ public class GitRepoBuilder {
     var config = git.getRepository().getConfig();
     config.setString("user", null, "name", "Test User");
     config.setString("user", null, "email", "test@example.com");
+    // Explicitly disable commit signing to avoid crashes when the environment's git config uses SSH
+    config.setBoolean("commit", null, "gpgsign", false);
     config.save();
     return git;
   }
