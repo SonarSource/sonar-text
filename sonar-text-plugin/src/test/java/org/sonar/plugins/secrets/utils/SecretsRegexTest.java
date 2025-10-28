@@ -16,10 +16,17 @@
  */
 package org.sonar.plugins.secrets.utils;
 
+import java.util.Set;
+import org.sonar.plugins.secrets.SecretsSpecificationFilesDefinition;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 
 public class SecretsRegexTest extends AbstractSecretsRegexTest {
   public SecretsRegexTest() {
     super(SecretsSpecificationLoader.DEFAULT_SPECIFICATION_LOCATION, "baseline.yaml");
+  }
+
+  @Override
+  protected Set<String> getSpecificationFiles() {
+    return SecretsSpecificationFilesDefinition.existingSecretSpecifications();
   }
 }

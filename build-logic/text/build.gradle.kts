@@ -24,6 +24,7 @@ dependencies {
     implementation(libs.sonar.scanner.gradle)
     implementation(libs.commons.io)
     implementation(libs.jackson.dataformat.yaml)
+    implementation(libs.jackson.dataformat.smile)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.assertj.core)
     testImplementation(kotlin("test"))

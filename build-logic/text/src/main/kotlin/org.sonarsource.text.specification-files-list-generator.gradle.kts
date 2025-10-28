@@ -59,5 +59,5 @@ tasks.register(SPEC_LIST_GENERATION_TASK_NAME) {
 
 fun discoverSpecFiles(files: List<File>): String =
     files.joinToString(",\n", postfix = ");") { file ->
-        "      \"${file.name}\""
+        "      \"${file.name.replace(".yaml", ".sml")}\""
     }

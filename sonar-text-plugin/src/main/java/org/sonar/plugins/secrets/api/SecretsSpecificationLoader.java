@@ -33,7 +33,7 @@ import org.sonar.plugins.secrets.configuration.validation.SchemaValidationExcept
 import static org.sonar.plugins.secrets.SecretsSpecificationFilesDefinition.existingSecretSpecifications;
 
 /**
- * A class that loads secret detection specifications from YAML files.
+ * A class that loads secret detection specifications from Smile files.
  */
 public class SecretsSpecificationLoader implements SpecificationLoader {
   private static final Logger LOG = LoggerFactory.getLogger(SecretsSpecificationLoader.class);

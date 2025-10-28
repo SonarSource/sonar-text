@@ -16,18 +16,14 @@
  */
 package org.sonar.plugins.secrets.utils;
 
-import java.io.File;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIf;
 import org.opentest4j.AssertionFailedError;
-import org.sonar.api.internal.apachecommons.io.FileUtils;
 import org.sonar.java.ast.parser.ArgumentListTreeImpl;
 import org.sonar.java.ast.parser.FormalParametersListTreeImpl;
 import org.sonar.java.ast.parser.QualifiedIdentifierListTreeImpl;
@@ -94,18 +90,21 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public abstract class AbstractSecretsRegexTest {
 
   private final String specificationFilesLocation;
-  private final Path configurationFilesPath;
   private final TestRegexScannerContext context;
 
   public AbstractSecretsRegexTest(String specificationFilesLocation, String baselineFileName) {
     this.specificationFilesLocation = specificationFilesLocation;
     this.context = new TestRegexScannerContext(baselineFileName);
-    this.configurationFilesPath = Path.of("src/main/resources", specificationFilesLocation);
   }
+
+  /**
+   * Set of specification file names (e.g., "aws.sml", "github.sml") to test.
+   */
+  protected abstract Set<String> getSpecificationFiles();
 
   @Test
   void shouldValidateAllRegexesInConfiguration() {
-    Set<String> listOfFileNames = listOfYamlFiles();
+    Set<String> listOfFileNames = getSpecificationFiles();
 
     List<PatternLocation> patternLocations = convertToPatternLocations(listOfFileNames);
 
@@ -131,7 +130,7 @@ public abstract class AbstractSecretsRegexTest {
 
   @Test
   void shouldReportIssuesOnTestFile() {
-    var specificationLoader = new SecretsSpecificationLoader("regex/", Set.of("specWithBadRegexes.yaml"));
+    var specificationLoader = new SecretsSpecificationLoader("regex/", Set.of("specWithBadRegexes.sml"));
 
     var patternLocations = specificationLoader.getRulesMappedToKey().entrySet().stream()
       .map(this::toPatternLocation)
@@ -142,12 +141,6 @@ public abstract class AbstractSecretsRegexTest {
 
     assertThatThrownBy(() -> context.verify(false))
       .isInstanceOf(AssertionFailedError.class);
-  }
-
-  private Set<String> listOfYamlFiles() {
-    String[] extensionsToSearchFor = new String[] {"yaml"};
-    Collection<File> files = FileUtils.listFiles(new File(configurationFilesPath.toUri()), extensionsToSearchFor, false);
-    return files.stream().map(File::getName).collect(Collectors.toSet());
   }
 
   private List<PatternLocation> convertToPatternLocations(String fileName) {

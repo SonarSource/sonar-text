@@ -16,7 +16,6 @@
  */
 package org.sonar.plugins.common.analyzer;
 
-import java.io.ByteArrayInputStream;
 import java.util.List;
 import java.util.function.Supplier;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,6 +49,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.sonar.plugins.secrets.utils.SmileConverter.convertYamlToSmileStream;
 
 @ExtendWith(MockitoExtension.class)
 class TextAndSecretsAnalyzerTest {
@@ -83,7 +83,7 @@ class TextAndSecretsAnalyzerTest {
   @BeforeEach
   void setUp() {
     // language=YAML
-    var specYaml = """
+    var yamlSpec = """
       provider:
         rules:
           - id: ruleWithPreFilter
@@ -116,7 +116,7 @@ class TextAndSecretsAnalyzerTest {
                 include:
                   content: [token]
       """;
-    testSpec = SpecificationDeserializer.deserialize(new ByteArrayInputStream(specYaml.getBytes()), "test.yaml");
+    testSpec = SpecificationDeserializer.deserialize(convertYamlToSmileStream(yamlSpec), "test.sml");
 
     when(sensorContext.runtime().getApiVersion()).thenReturn(Version.create(12, 0));
 

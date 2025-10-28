@@ -49,7 +49,7 @@ class SecretsSpecificationLoaderTest extends AbstractSecretsSpecificationLoaderT
   @Test
   void shouldLoadExpectedRule() {
     String specificationLocation = "secretsConfiguration/";
-    Set<String> specifications = Set.of("validMinSpec.yaml");
+    Set<String> specifications = Set.of("validMinSpec.sml");
     Rule expectedRule = ReferenceTestModel.constructMinimumSpecification().getProvider().getRules().get(0);
 
     Rule rule = new SecretsSpecificationLoader(specificationLocation, specifications).getRulesForKey("exampleKey").get(0);
@@ -60,7 +60,7 @@ class SecretsSpecificationLoaderTest extends AbstractSecretsSpecificationLoaderT
   @Test
   void shouldLoadExpectedRuleFromMap() {
     String specificationLocation = "secretsConfiguration/";
-    Set<String> specifications = Set.of("validMinSpec.yaml");
+    Set<String> specifications = Set.of("validMinSpec.sml");
     Rule expectedRule = ReferenceTestModel.constructMinimumSpecification().getProvider().getRules().get(0);
 
     Rule rule = new SecretsSpecificationLoader(Map.of(specificationLocation, specifications), DEFAULT_EXCEPTION_HANDLER).getRulesForKey("exampleKey").get(0);
@@ -71,7 +71,7 @@ class SecretsSpecificationLoaderTest extends AbstractSecretsSpecificationLoaderT
   @Test
   void shouldReturnNullWhenRuleIdNotPresent() {
     String specificationLocation = "secretsConfiguration/";
-    Set<String> specifications = Set.of("validMinSpec.yaml");
+    Set<String> specifications = Set.of("validMinSpec.sml");
 
     List<Rule> rulesForKey = new SecretsSpecificationLoader(specificationLocation, specifications).getRulesForKey("notPresent");
 
@@ -81,7 +81,7 @@ class SecretsSpecificationLoaderTest extends AbstractSecretsSpecificationLoaderT
   @Test
   void duplicateKeyInRulesShouldThrowError() {
     String specificationLocation = "secretsConfiguration/";
-    Set<String> specifications = Set.of("validSpecWithDuplicateRuleKeys.yaml");
+    Set<String> specifications = Set.of("validSpecWithDuplicateRuleKeys.sml");
     List<Rule> rulesForKey = new SecretsSpecificationLoader(specificationLocation, specifications).getRulesForKey("exampleKey");
 
     assertThat(rulesForKey).hasSize(2);
@@ -90,10 +90,10 @@ class SecretsSpecificationLoaderTest extends AbstractSecretsSpecificationLoaderT
   @Test
   void shouldNotFailWhenFileNotFoundButLogShouldContainMessage() {
     String specificationLocation = "secretsConfiguration/";
-    Set<String> specifications = Set.of("unknownFile.yaml");
+    Set<String> specifications = Set.of("unknownFile.sml");
 
     new SecretsSpecificationLoader(specificationLocation, specifications);
-    assertThat(logTester.logs()).containsExactly("DeserializationException: Could not load specification from file: unknownFile.yaml");
+    assertThat(logTester.logs()).containsExactly("DeserializationException: Could not load specification from file: unknownFile.sml");
   }
 
   @Test

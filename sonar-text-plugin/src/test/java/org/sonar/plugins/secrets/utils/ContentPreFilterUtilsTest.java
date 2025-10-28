@@ -16,7 +16,6 @@
  */
 package org.sonar.plugins.secrets.utils;
 
-import java.io.ByteArrayInputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +33,7 @@ import org.sonar.plugins.secrets.configuration.model.Specification;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static org.sonar.plugins.secrets.utils.SmileConverter.convertYamlToSmileStream;
 
 class ContentPreFilterUtilsTest {
 
@@ -54,7 +54,7 @@ class ContentPreFilterUtilsTest {
   private AutoCloseable mocks;
 
   // language=YAML
-  private final Specification spec = SpecificationDeserializer.deserialize(new ByteArrayInputStream("""
+  private final Specification spec = SpecificationDeserializer.deserialize(convertYamlToSmileStream("""
     provider:
       rules:
         - id: rule1
@@ -76,7 +76,7 @@ class ContentPreFilterUtilsTest {
             pre:
               include:
                 content: []
-    """.getBytes()), "test.yaml");
+    """), "test.yaml");
 
   @BeforeEach
   void setUp() {

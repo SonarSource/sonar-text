@@ -18,9 +18,7 @@ package org.sonar.plugins.secrets.configuration.deserialization;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -28,12 +26,13 @@ import org.sonar.plugins.secrets.configuration.model.Specification;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.sonar.plugins.secrets.utils.SmileConverter.convertYamlToSmileStream;
 
 class SpecificationDeserializerTest {
 
   @Test
   void deserializeMinSpecifications() {
-    String fileName = "validMinSpec.yaml";
+    String fileName = "validMinSpec.sml";
     InputStream specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + fileName);
 
     Specification result = SpecificationDeserializer.deserialize(specificationStream, fileName);
@@ -44,7 +43,7 @@ class SpecificationDeserializerTest {
 
   @Test
   void deserializeReferenceSpecifications() {
-    String fileName = "validReferenceSpec.yaml";
+    String fileName = "validReferenceSpec.sml";
     InputStream specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + fileName);
 
     Specification result = SpecificationDeserializer.deserialize(specificationStream, fileName);
@@ -98,7 +97,7 @@ class SpecificationDeserializerTest {
       """,
   })
   void shouldThrowExceptionOnNamedTopLevelPostModule(String spec) {
-    var specificationStream = new ByteArrayInputStream(spec.getBytes(StandardCharsets.UTF_8));
+    var specificationStream = convertYamlToSmileStream(spec);
 
     assertThatExceptionOfType(DeserializationException.class)
       .isThrownBy(() -> SpecificationDeserializer.deserialize(specificationStream, "test.yaml"))
@@ -133,7 +132,7 @@ class SpecificationDeserializerTest {
       """
   })
   void shouldThrowExceptionMalformedGroupElement(String spec) {
-    var specificationStream = new ByteArrayInputStream(spec.getBytes(StandardCharsets.UTF_8));
+    var specificationStream = convertYamlToSmileStream(spec);
 
     assertThatExceptionOfType(DeserializationException.class)
       .isThrownBy(() -> SpecificationDeserializer.deserialize(specificationStream, "test.yaml"))

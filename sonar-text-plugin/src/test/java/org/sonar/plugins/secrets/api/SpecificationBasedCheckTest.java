@@ -39,7 +39,7 @@ class SpecificationBasedCheckTest {
   @Test
   void checkShouldRaiseIssueOnBasicDetection() throws IOException {
     String specificationLocation = "secretsConfiguration/";
-    Set<String> specifications = Set.of("validMinSpec.yaml");
+    Set<String> specifications = Set.of("validMinSpec.sml");
     var specificationLoader = new SecretsSpecificationLoader(specificationLocation, specifications);
 
     String fileContent = "The content contains the rule matching pattern and various other characters.";
@@ -53,7 +53,7 @@ class SpecificationBasedCheckTest {
   @Test
   void checkShouldNotRaiseIssueWithPostFilterBecauseOfLowEntropy() throws IOException {
     String specificationLocation = "secretsConfiguration/";
-    Set<String> specifications = Set.of("validReferenceSpec.yaml");
+    Set<String> specifications = Set.of("validReferenceSpec.sml");
     var specificationLoader = new SecretsSpecificationLoader(specificationLocation, specifications);
 
     String fileContent = "rule matching pattern with low entropy";
@@ -66,7 +66,7 @@ class SpecificationBasedCheckTest {
   @Test
   void checkShouldRaiseIssueWhenFilterHasLowEntropyThreshold() throws IOException {
     String specificationLocation = "secretsConfiguration/postFilter/";
-    Set<String> specifications = Set.of("postFilterSpec.yaml");
+    Set<String> specifications = Set.of("postFilterSpec.sml");
     var specificationLoader = new SecretsSpecificationLoader(specificationLocation, specifications);
     specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().getStatisticalFilter().setThreshold(3f);
 
@@ -81,7 +81,7 @@ class SpecificationBasedCheckTest {
   @Test
   void checkShouldNotRaiseIssueWithPostFilterBecauseOfPatternNot() throws IOException {
     String specificationLocation = "secretsConfiguration/postFilter/";
-    Set<String> specifications = Set.of("postFilterSpec.yaml");
+    Set<String> specifications = Set.of("postFilterSpec.sml");
     var specificationLoader = new SecretsSpecificationLoader(specificationLocation, specifications);
     specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().setPatternNot(List.of("matching"));
     specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().getStatisticalFilter().setThreshold(3f);
@@ -111,11 +111,11 @@ class SpecificationBasedCheckTest {
 
   static Stream<Arguments> contentPreFilterTestCases() {
     return Stream.of(
-      Arguments.of("singleOptimizableRule.yaml", false),
+      Arguments.of("singleOptimizableRule.sml", false),
       // Due to the current limitations of the implementation, we cannot optimize content pre-filters for multiple rules. See SONARTEXT-585.
-      Arguments.of("multipleOptimizableRules.yaml", true),
-      Arguments.of("singleNonOptimizableRule.yaml", true),
-      Arguments.of("multipleNonOptimizableRules.yaml", true));
+      Arguments.of("multipleOptimizableRules.sml", true),
+      Arguments.of("singleNonOptimizableRule.sml", true),
+      Arguments.of("multipleNonOptimizableRules.sml", true));
   }
 
   @Rule(key = "exampleKey")

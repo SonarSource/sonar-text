@@ -28,7 +28,7 @@ description = "SonarSource Text Analyzer :: Plugin"
 
 dependencies {
     api(libs.sonar.analyzer.commons)
-    api(libs.jackson.dataformat.yaml)
+    api(libs.jackson.dataformat.smile)
     api(libs.com.networknt.jsonSchemaValidator)
     api(libs.eclipse.jgit)
     api(libs.ahocorasick)

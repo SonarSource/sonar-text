@@ -16,8 +16,6 @@
  */
 package org.sonar.plugins.secrets.utils;
 
-import java.io.File;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -25,7 +23,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
-import org.sonar.api.internal.apachecommons.io.FileUtils;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
@@ -42,11 +39,9 @@ import static org.assertj.core.api.Assertions.fail;
 public abstract class AbstractSecretPreFiltersTest {
 
   private final String specificationFilesLocation;
-  private final Path configurationFilesPath;
 
   public AbstractSecretPreFiltersTest(String specificationFilesLocation) {
     this.specificationFilesLocation = specificationFilesLocation;
-    this.configurationFilesPath = Path.of("src/main/resources", specificationFilesLocation);
   }
 
   /**
@@ -54,9 +49,14 @@ public abstract class AbstractSecretPreFiltersTest {
    */
   protected abstract Collection<String> getExcludedRuleKeys();
 
+  /**
+   * Set of specification file names (e.g., "aws.sml", "github.sml") to test.
+   */
+  protected abstract Set<String> getSpecificationFiles();
+
   @Test
   void shouldEnsureAllSecretRulesIncludePreFilters() {
-    var secretSpecFileNames = getSecretSpecFileNames();
+    var secretSpecFileNames = getSpecificationFiles();
     var ruleKeysWithoutIncludePreFilters = getRuleKeysWithoutIncludePreFilters(secretSpecFileNames);
     var excludedRuleKeys = getExcludedRuleKeys();
     excludedRuleKeys.forEach(ruleKey -> {
@@ -70,12 +70,6 @@ public abstract class AbstractSecretPreFiltersTest {
       "Rule '%s' is missing a pre.include filter to improve performances. " +
         "Add it or add '%s' to the exclusion list in '%s'.",
       ruleKey, ruleKey, getClass().getSimpleName()));
-  }
-
-  private Set<String> getSecretSpecFileNames() {
-    var extensionsToSearchFor = new String[] {"yaml"};
-    var files = FileUtils.listFiles(new File(configurationFilesPath.toUri()), extensionsToSearchFor, false);
-    return files.stream().map(File::getName).collect(Collectors.toSet());
   }
 
   private List<String> getRuleKeysWithoutIncludePreFilters(Set<String> secretSpecFileNames) {

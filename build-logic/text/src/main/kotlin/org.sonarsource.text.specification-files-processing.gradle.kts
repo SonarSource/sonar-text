@@ -15,6 +15,7 @@
  * along with this program; if not, see https://sonarsource.com/license/ssal/
  */
 import org.sonarsource.text.CodeGenerationConfiguration
+import org.sonarsource.text.convertYamlToSmile
 import org.sonarsource.text.expandCommonBlock
 
 val codeGenerationConfiguration = extensions.findByType<CodeGenerationConfiguration>()
@@ -35,4 +36,33 @@ tasks.named<ProcessResources>("processResources") {
         exclude()
     }
     includeEmptyDirs = false
+
+    doLast {
+        val outputDir = destinationDir
+        val yamlFiles = fileTree(outputDir).matching {
+            include("$configurationPath/configuration/*.yaml")
+        }
+
+        yamlFiles.forEach { yamlFile ->
+            val smileFile = File(yamlFile.parentFile, yamlFile.nameWithoutExtension + ".sml")
+            convertYamlToSmile(yamlFile, smileFile)
+            yamlFile.delete()
+        }
+    }
+}
+
+tasks.named<ProcessResources>("processTestResources") {
+    doLast {
+        val outputDir = destinationDir
+        val yamlFiles = fileTree(outputDir).matching {
+            include("secretsConfiguration/**/*.yaml")
+            include("regex/**/*.yaml")
+        }
+
+        yamlFiles.forEach { yamlFile ->
+            val smileFile = File(yamlFile.parentFile, yamlFile.nameWithoutExtension + ".sml")
+            convertYamlToSmile(yamlFile, smileFile)
+            // YAML files are not deleted since some tests rely on them (e.g. schema validation)
+        }
+    }
 }

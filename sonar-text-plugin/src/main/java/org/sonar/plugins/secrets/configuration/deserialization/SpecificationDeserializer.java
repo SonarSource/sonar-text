@@ -18,14 +18,14 @@ package org.sonar.plugins.secrets.configuration.deserialization;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.smile.SmileFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import org.sonar.plugins.secrets.configuration.model.Specification;
 
 public class SpecificationDeserializer {
 
-  private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper MAPPER = new ObjectMapper(new SmileFactory());
 
   private SpecificationDeserializer() {
   }

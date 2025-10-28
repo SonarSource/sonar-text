@@ -18,6 +18,8 @@ package org.sonar.plugins.secrets.utils;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import org.sonar.plugins.secrets.SecretsSpecificationFilesDefinition;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 
 public class SecretPreFiltersTest extends AbstractSecretPreFiltersTest {
@@ -28,5 +30,10 @@ public class SecretPreFiltersTest extends AbstractSecretPreFiltersTest {
   @Override
   protected Collection<String> getExcludedRuleKeys() {
     return List.of();
+  }
+
+  @Override
+  protected Set<String> getSpecificationFiles() {
+    return SecretsSpecificationFilesDefinition.existingSecretSpecifications();
   }
 }

@@ -17,7 +17,7 @@
 package org.sonar.plugins.secrets.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.smile.SmileFactory;
 import com.networknt.schema.ValidationMessage;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -99,7 +99,7 @@ public abstract class AbstractRuleExampleTest {
 
   @Test
   void testSpecificationFileValidity() throws IOException {
-    var mapper = new ObjectMapper(new YAMLFactory());
+    var mapper = new ObjectMapper(new SmileFactory());
     var fileNames = specificationLoader.getSpecificationFilesForKey(check.getRuleKey().rule());
     for (String fileName : fileNames) {
       var specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(specificationLocation + fileName);
