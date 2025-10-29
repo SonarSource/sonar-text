@@ -169,7 +169,7 @@ public class TextAndSecretsSensor implements Sensor {
     // Retrieve list of files to analyse using the right FilePredicate
     boolean shouldAnalyzeAllFiles = shouldAnalyzeAllFiles(sensorContext);
     var notBinaryFilePredicate = notBinaryFilePredicate(sensorContext);
-    var filePredicate = constructGeneralFilePredicate(sensorContext, notBinaryFilePredicate, shouldAnalyzeAllFiles);
+    var filePredicate = constructTextAndSecretsPredicate(sensorContext, notBinaryFilePredicate, shouldAnalyzeAllFiles);
 
     List<InputFile> inputFiles = durationStatistics.timed(
       "applyFilePredicate" + DurationStatistics.SUFFIX_GENERAL,
@@ -180,6 +180,11 @@ public class TextAndSecretsSensor implements Sensor {
     durationStatistics.timed("analyzerTotal" + DurationStatistics.SUFFIX_GENERAL, () -> analyzer.analyzeFiles(inputFiles));
     logCheckBasedStatistics(suitableChecks);
     reportAllTrackedTextFilesMeasure(sensorContext, notBinaryFilePredicate);
+  }
+
+  private FilePredicate constructTextAndSecretsPredicate(SensorContext sensorContext, FilePredicate notBinaryFilePredicate, boolean analyzeAllFiles) {
+    // Every predicate will be additionally filtered to include only main files
+    return applyMainFilePredicate(sensorContext, constructGeneralFilePredicate(sensorContext, notBinaryFilePredicate, analyzeAllFiles));
   }
 
   private FilePredicate constructGeneralFilePredicate(SensorContext sensorContext, FilePredicate notBinaryFilePredicate, boolean analyzeAllFiles) {
@@ -288,6 +293,11 @@ public class TextAndSecretsSensor implements Sensor {
     return sensorContext.fileSystem().predicates().or(pathPatternsPredicates);
   }
 
+  protected static FilePredicate applyMainFilePredicate(SensorContext sensorContext, FilePredicate filePredicate) {
+    var predicates = sensorContext.fileSystem().predicates();
+    return predicates.and(predicates.hasType(InputFile.Type.MAIN), filePredicate);
+  }
+
   private static FilePredicate filterHiddenFiles(SensorContext sensorContext, FilePredicate filePredicate) {
     if (isHiddenFilesAnalysisSupported(sensorContext.runtime())) {
       var predicates = sensorContext.fileSystem().predicates();
@@ -320,11 +330,6 @@ public class TextAndSecretsSensor implements Sensor {
     return false;
   }
 
-  /**
-   * In SonarLint context we want to analyze all non-binary input files, even when they are not analyzed or assigned to a language.
-   * To avoid analyzing all non-binary files to reduce time and memory consumption in a non SonarLint context only files assigned to a
-   * language OR file with a text extension are analyzed.
-   */
   protected static List<InputFile> getInputFiles(SensorContext sensorContext, FilePredicate filePredicate) {
     List<InputFile> inputFiles = new ArrayList<>();
     var fileSystem = sensorContext.fileSystem();
