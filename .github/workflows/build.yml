@@ -12,23 +12,17 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  id-token: write
+  contents: write
+
 env:
-  # Global switches to enable/disable caching
-  GRADLE_CACHE_ENABLED: true
   SONAR_PROJECT_KEY: SonarSource_sonar-text
 
 jobs:
   build:
     runs-on: sonar-s-public
     name: Build
-    permissions:
-      id-token: write  # Required for Vault OIDC authentication
-      contents: write  # Required for repository access and tagging
-    outputs:
-      project-version: ${{ steps.build.outputs.project-version }}
-      gradle-cache-key: ${{ steps.compute-cache-key.outputs.cache-key }}
-      build-number: ${{ steps.build.outputs.BUILD_NUMBER }}
-      has-metadata-only: ${{ steps.check-metadata-only.outputs.has-metadata-only }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -36,36 +30,6 @@ jobs:
       - uses: jdx/mise-action@e3d7b8d67a7958d1207f6ed871e83b1ea780e7b0 # v3.3.1
         with:
           version: 2025.7.12
-      - name: Check if changes are metadata only
-        id: check-metadata-only
-        run: |
-          patterns=(
-            '^.*\/src\/main\/resources\/org\/sonar\/l10n\/[^\/]+\/rules\/.*$'
-            '^.*\/src\/main\/resources\/com\/sonar\/l10n\/[^\/]+\/rules\/.*$'
-            '^.*sonarpedia\.json$'
-            '^.*\.md$'
-          )
-          git remote set-head origin --auto
-          changed_files=$(git diff --name-only origin/HEAD)
-          for file in $changed_files; do
-            matched=false
-            for pattern in "${patterns[@]}"; do
-              if [[ $file =~ $pattern ]]; then
-                matched=true
-                break
-              fi
-            done
-            if [[ $matched == false ]]; then
-              echo "File '$file' does not match metadata patterns."
-              break
-            fi
-          done
-          if [[ $matched == false ]]; then
-            echo "All jobs will be executed"
-          else
-            echo "The changes contains only metadata files. The QA jobs will be skipped."
-          fi
-          echo "has-metadata-only=$matched" >> $GITHUB_OUTPUT
       - name: Checkout build logic only
         run: |
           git submodule update --init --depth 1 -- build-logic/common
@@ -75,47 +39,14 @@ jobs:
           export GRADLE_USER_HOME=${GITHUB_WORKSPACE}/.gradle
           mkdir -p ${GRADLE_USER_HOME}
           echo "GRADLE_USER_HOME=${GRADLE_USER_HOME}" >> $GITHUB_ENV
-          export TODAY=$(date '+%Y-%m-%d')
-          echo "TODAY=${TODAY}" >> $GITHUB_ENV
-          find . -name '*.gradle.kts' -type f -exec md5sum {} \; | sort && md5sum gradle/libs.versions.toml && md5sum gradle/wrapper/gradle-wrapper.properties && md5sum gradle.properties > gradle-md5-sums.txt
-          export GRADLE_CACHE_KEY=$(md5sum gradle-md5-sums.txt | awk '{ print $1 }')
-          echo "GRADLE_CACHE_KEY=${GRADLE_CACHE_KEY}" >> $GITHUB_ENV
-          rm gradle-md5-sums.txt
-      - name: Output Gradle Cache Key
-        id: compute-cache-key
-        run: |
-          echo "cache-key=${{ env.GRADLE_CACHE_KEY }}" >> $GITHUB_OUTPUT
-      - name: Cache Gradle Dependencies
-        id: gradle-cache
-        uses: SonarSource/ci-github-actions/cache@v1
-        if: ${{ env.GRADLE_CACHE_ENABLED }}
-        with:
-          path: ${{ env.GRADLE_USER_HOME }}
-          key: gradle-${{ env.GRADLE_CACHE_KEY }}
-          enableCrossOsArchive: true
       - name: Build, test and analyze
         id: build
         uses: SonarSource/ci-github-actions/build-gradle@v1
-        env:
-          ARTIFACTORY_DEPLOY_REPO_PRIVATE: sonarsource-public-qa
         with:
           deploy-pull-request: false
-          skip-tests: true
+          skip-tests: false
           use-develocity: true
-          gradle-args: --build-cache :build-logic-text:test -x sonar -x artifactoryPublish
-          disable-caching: ${{ env.GRADLE_CACHE_ENABLED != 'true' }}
+          run-shadow-scans: true
+          gradle-args: --build-cache -x artifactoryPublish
+          disable-caching: true
           public: true
-      - name: Upload test results
-        if: always() && ! cancelled()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
-        with:
-          name: test-results
-          path: '**/test-results/**/*.xml'
-      - name: Upload build reports
-        if: always()
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
-        with:
-          name: build-reports
-          path: |
-            build/reports/profile/profile-*.html
-            **/build/reports/tests/test/**

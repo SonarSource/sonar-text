@@ -2,21 +2,17 @@ name: Shadow Scans
 
 on:
   schedule:
-    # Run nightly at 17:00 AM UTC on master branch
     - cron: '0 17 * * *'
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   id-token: write
   contents: write
 
 env:
-  SONAR_PROJECT_KEY: "SonarSource_sonar-text"
+  SONAR_PROJECT_KEY: SonarSource_sonar-text
 
 jobs:
-  # ============================================================================
-  # SHADOW SCAN JOBS - SonarQube analysis on all SonarCloud instances
-  # ============================================================================
   shadow_scan_sqc:
     runs-on: sonar-m-public
     name: Build and Shadow Scan
@@ -41,7 +37,8 @@ jobs:
           deploy-pull-request: false
           run-shadow-scans: true
           use-develocity: true
-          gradle-args: --no-parallel
+          gradle-args: --build-cache --no-parallel -x artifactoryPublish
+          disable-caching: true
           public: true
       - uses: SonarSource/unified-dogfooding-actions/run-iris@v1
         with:
