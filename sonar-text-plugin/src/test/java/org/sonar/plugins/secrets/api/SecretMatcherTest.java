@@ -124,17 +124,24 @@ class SecretMatcherTest {
     assertThat(actualMatcher).behavesLike(expectedMatcher);
   }
 
-  @Test
-  void shouldFindIssueInMainFile() throws IOException {
+  static List<Arguments> shouldFindIssueInMainFile() {
+    return List.of(
+      Arguments.of(InputFile.Type.MAIN, true),
+      Arguments.of(InputFile.Type.TEST, false));
+  }
+
+  @ParameterizedTest
+  @MethodSource
+  void shouldFindIssueInMainFile(InputFile.Type type, boolean shouldRaise) throws IOException {
     var specification = ReferenceTestModel.constructMinimumSpecification();
     var rule = specification.getProvider().getRules().get(0);
     SecretMatcher actualMatcher = SecretMatcher.build(rule, mockDurationStatistics(), SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, true);
-    var inputFile = inputFile(Path.of(".env"), "rule matching pattern", null);
+    var inputFile = inputFile(Path.of(".env"), "rule matching pattern", null, type);
     var fileContext = inputFileContext(inputFile);
 
     var result = actualMatcher.findIn(fileContext);
 
-    assertThat(result).hasSize(1);
+    assertThat(result).hasSize(shouldRaise ? 1 : 0);
   }
 
   @ParameterizedTest

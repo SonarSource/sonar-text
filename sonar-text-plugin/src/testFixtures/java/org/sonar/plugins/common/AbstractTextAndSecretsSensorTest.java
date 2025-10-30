@@ -309,53 +309,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     }
   }
 
-  @ParameterizedTest
-  @ValueSource(strings = {"MAIN", "TEST"})
-  void shouldNotAnalyzeTestFile(InputFile.Type fileType) {
-    Check check = new ReportIssueAtLineOneCheck();
-    SensorContextTester context = sensorContext(check);
-    InputFile inputFile = inputFile(Path.of("Foo.java"), "some content", "java", fileType);
-
-    analyse(sensor(check), context, inputFile);
-    assertCorrectLogsForTextAndSecretsAnalysis(fileType == InputFile.Type.MAIN ? 1 : 0);
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"MAIN", "TEST"})
-  void shouldNotAnalyzeTestFilesInAnalyzeAllFilesMode(InputFile.Type fileType) {
-    Check check = new ReportIssueAtLineOneCheck();
-    SensorContextTester context = sensorContext(check);
-    context.setSettings(context.settings().setProperty("sonar.text.analyzeAllFiles", true));
-    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), "some content", null, fileType));
-    assertCorrectLogsForTextAndSecretsAnalysis(fileType == InputFile.Type.MAIN ? 1 : 0);
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"MAIN", "TEST"})
-  void shouldNotAnalyzeTestFilesWhenGitInclusionsDeactivated(InputFile.Type fileType) {
-    Check check = new ReportIssueAtLineOneCheck();
-    SensorContextTester context = sensorContext(check);
-    MapSettings settings = context.settings();
-    settings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "false");
-    analyse(sensor(check), context, inputFile(Path.of("Foo.java"), "some content", "java", fileType));
-
-    assertCorrectLogsForTextAndSecretsAnalysis(fileType == InputFile.Type.MAIN ? 1 : 0);
-  }
-
-  @ParameterizedTest
-  @ValueSource(strings = {"MAIN", "TEST"})
-  void shouldNotAnalyzeTestFilesWhenGitStatusIsUnsuccessful(InputFile.Type fileType) {
-    var check = new ReportIssueAtLineOneCheck();
-    var context = spy(sensorContext(check));
-    var sensor = spy(sensor(check));
-    var gitService = mock(GitService.class);
-    when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(false, Set.of()));
-    when(sensor.createGitService(any())).thenReturn(gitService);
-
-    analyse(sensor, context, inputFile(Path.of("Foo.java"), "some content", "java", fileType));
-    assertCorrectLogsForTextAndSecretsAnalysis(fileType == InputFile.Type.MAIN ? 1 : 0);
-  }
-
   @Test
   void shouldNotAnalyzeNonLanguageAssignedFilesInSonarQubeContext() {
     Check check = new ReportIssueAtLineOneCheck();
@@ -1000,31 +953,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     }
 
     assertThat(asString(context.allIssues())).hasSize(expectedIssuesSize);
-    assertThat(logTester.logs()).containsExactly(expectedLogs.toArray(new String[0]));
-  }
-
-  @Test
-  void shouldNotAnalyzeTestFilesForBinaryFileAnalysis() {
-    Check binaryFileCheck = new TestBinaryFileCheck();
-    SensorContextTester context = sensorContext(binaryFileCheck);
-    var sensor = sensor(binaryFileCheck);
-
-    analyse(sensor, context,
-      inputFile(Path.of("a.jks"), SENSITIVE_BIDI_CHARS, null, InputFile.Type.TEST));
-
-    var expectedLogs = List.of(
-      EXPECTED_PROCESSOR_LOG_LINE,
-      DEFAULT_THREAD_USAGE_LOG_LINE,
-      EXPECTED_SONAR_TEST_NOT_SET_LOG_LINE);
-
-    if (!isPublicSensor()) {
-      expectedLogs = new ArrayList<>(expectedLogs);
-      expectedLogs.addAll(List.of(
-        "Start fetching files for the binary file analysis",
-        "There are no files to be analyzed for the binary file analysis"));
-    }
-
-    assertThat(asString(context.allIssues())).isEmpty();
     assertThat(logTester.logs()).containsExactly(expectedLogs.toArray(new String[0]));
   }
 

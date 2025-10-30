@@ -23,7 +23,7 @@ import org.sonar.plugins.common.git.GitService;
 import org.sonar.plugins.common.git.NullGitService;
 import org.sonar.plugins.secrets.api.SpecificationConfiguration;
 
-import static org.sonar.plugins.secrets.api.PreFilterFactory.INCLUDE_ALL_FILES;
+import static org.sonar.plugins.secrets.api.PreFilterFactory.INCLUDE_ONLY_MAIN_FILES;
 import static org.sonar.plugins.secrets.api.PreFilterFactory.appendAutomaticNoTestFileFilter;
 
 public abstract class AbstractBinaryFileCheck extends Check {
@@ -39,7 +39,7 @@ public abstract class AbstractBinaryFileCheck extends Check {
    * @param gitService {@link GitService} instance to be used by checks like S7203
    */
   public void initialize(SpecificationConfiguration specificationConfiguration, GitService gitService) {
-    this.scopedFilePredicate = appendAutomaticNoTestFileFilter(INCLUDE_ALL_FILES, specificationConfiguration);
+    this.scopedFilePredicate = appendAutomaticNoTestFileFilter(INCLUDE_ONLY_MAIN_FILES, specificationConfiguration);
     this.gitService = gitService;
   }
 

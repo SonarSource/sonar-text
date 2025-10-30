@@ -28,6 +28,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultFileSystem;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
@@ -217,6 +218,26 @@ class PreFilterFactoryTest {
 
     var predicate = PreFilterFactory.createPredicate(new PreModule(), Selectivity.SPECIFIC, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, true);
     assertThat(predicate.test(ctx)).isEqualTo(shouldMatch);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"true", "false"})
+  void shouldNotAcceptTestFiles(boolean automaticTestDetectionEnabled) {
+    String projectKey = "myProject";
+    String filePath = "file.txt";
+    String baseDir = "/base/directory/";
+    var inputFile = spy(new TestInputFileBuilder(projectKey, filePath).setType(InputFile.Type.TEST).build());
+    URI uri = URI.create("file:" + baseDir + projectKey + "/" + filePath);
+    when(inputFile.uri()).thenReturn(uri);
+
+    DefaultFileSystem fileSystem = new DefaultFileSystem(Path.of(baseDir));
+
+    var ctx = mock(InputFileContext.class);
+    when(ctx.getInputFile()).thenReturn(inputFile);
+    when(ctx.getFileSystem()).thenReturn(fileSystem);
+
+    var predicate = PreFilterFactory.createPredicate(new PreModule(), Selectivity.SPECIFIC, new SpecificationConfiguration(automaticTestDetectionEnabled), true);
+    assertThat(predicate.test(ctx)).isFalse();
   }
 
   @ParameterizedTest
