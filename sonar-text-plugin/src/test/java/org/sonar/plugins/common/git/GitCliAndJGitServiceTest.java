@@ -42,7 +42,9 @@ class GitCliAndJGitServiceTest {
     try (var gitService = new GitCliAndJGitService(tempDir)) {
       var gitResult = gitService.retrieveUntrackedFileNames();
       assertThat(gitResult.isGitSuccessful()).isTrue();
-      assertThat(gitResult.untrackedFileNames()).isEmpty();
+      // We expect an empty file list, but in the CI there may be additional files related to gradle build
+      assertThat(gitResult.untrackedFileNames())
+        .allMatch(f -> f.equals("build_number.txt") || f.equals("gradle.properties.bak") || f.equals("null/null/evaluated_project_version.txt"));
     }
   }
 

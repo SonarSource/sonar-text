@@ -108,7 +108,7 @@ publishing {
 }
 
 publishingConfiguration {
-    pomName = "SonarSource Text Analyzer"
+    pomName = properties["projectTitle"] as String
     scmUrl = "https://github.com/SonarSource/sonar-text"
 
     license {

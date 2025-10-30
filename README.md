@@ -1,6 +1,6 @@
 # SonarText: detect Leaking Secrets, BIDI Characters and Hidden Text Vulnerabilities 
 
-[![Build Status](https://api.cirrus-ci.com/github/SonarSource/sonar-text.svg?branch=master)](https://cirrus-ci.com/github/SonarSource/sonar-text)
+[![Build Status](https://github.com/SonarSource/sonar-text/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/SonarSource/sonar-text)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=SonarSource_sonar-text&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=SonarSource_sonar-text)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=SonarSource_sonar-text&metric=coverage)](https://sonarcloud.io/summary/new_code?id=SonarSource_sonar-text)
 

@@ -24,12 +24,12 @@ plugins {
 tasks.artifactoryPublish { skip = true }
 
 artifactoryConfiguration {
-    buildName = providers.environmentVariable("CIRRUS_REPO_NAME").orElse("sonar-text")
+    buildName = providers.environmentVariable("PROJECT").orElse("sonar-text")
     artifactsToPublish = "org.sonarsource.text:sonar-text-plugin:jar"
     artifactsToDownload = ""
     repoKeyEnv = "ARTIFACTORY_DEPLOY_REPO"
     usernameEnv = "ARTIFACTORY_DEPLOY_USERNAME"
-    passwordEnv = "ARTIFACTORY_DEPLOY_PASSWORD"
+    passwordEnv = "ARTIFACTORY_DEPLOY_ACCESS_TOKEN"
 }
 
 spotless {
@@ -56,8 +56,17 @@ ruleApi {
     )
 }
 
+val projectTitle = properties["projectTitle"] as String
 sonar {
     properties {
+        property("sonar.projectName", projectTitle)
+        property("sonar.projectKey", System.getenv("SONAR_PROJECT_KEY"))
+        property("sonar.organization", "sonarsource")
+        property("sonar.exclusions", "**/build/**/*")
+        property("sonar.links.ci", "https://cirrus-ci.com/github/SonarSource/sonar-text-enterprise")
+        property("sonar.links.scm", "https://github.com/SonarSource/sonar-text-enterprise")
+        property("sonar.links.issue", "https://jira.sonarsource.com/browse/SECRETS")
+
         properties["sonar.sources"] as MutableCollection<String> +=
             gradle.includedBuild("build-logic-text").projectDir.resolve("src/main/java").toString()
         property("sonar.sca.exclusions", "private/its/benchmark/src/integrationTest/resources/sources/**")

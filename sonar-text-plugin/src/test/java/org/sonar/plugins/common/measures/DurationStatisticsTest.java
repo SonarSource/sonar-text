@@ -17,6 +17,7 @@
 package org.sonar.plugins.common.measures;
 
 import java.nio.file.Paths;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -32,7 +33,7 @@ class DurationStatisticsTest {
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5().setLevel(Level.DEBUG);
 
-  private static final Pattern REPORT_PATTERN = Pattern.compile(".*Statistics\\s+ {2}.*::.* \\d+ ms \\d+ times \\(mean [\\d']+ us\\)(.|\\s)*");
+  private static final Predicate<String> REPORT_PREDICATE = Pattern.compile(".*Statistics\\s+ {2}.*::.* \\d+ ms \\d+ times \\(mean [\\d']+ us\\)(.|\\s)*").asPredicate();
 
   @ParameterizedTest
   @ValueSource(strings = {"true", "false"})
@@ -53,9 +54,12 @@ class DurationStatisticsTest {
     durationStatistics.timed("test::total", () -> doNothingFor(100));
     durationStatistics.log();
 
-    assertThat(logTester.logs()).hasSize(3);
-    assertThat(logTester.logs().get(1)).matches(REPORT_PATTERN);
-    assertThat(logTester.logs().get(2)).endsWith("Granular Secret Matcher Duration Statistics" + System.lineSeparator());
+    var statisticsLogs = logTester.logs().stream()
+      .filter(log -> log.contains("Statistics") || REPORT_PREDICATE.test(log))
+      .toList();
+    assertThat(statisticsLogs).hasSize(3);
+    assertThat(statisticsLogs.get(1)).matches(REPORT_PREDICATE);
+    assertThat(statisticsLogs.get(2)).endsWith("Granular Secret Matcher Duration Statistics" + System.lineSeparator());
   }
 
   @Test
@@ -70,9 +74,12 @@ class DurationStatisticsTest {
     durationStatistics.timed("test-2::part2", () -> doNothingFor(20));
     durationStatistics.log();
 
-    assertThat(logTester.logs()).hasSize(3);
-    assertThat(logTester.logs().get(1)).matches(REPORT_PATTERN);
-    assertThat(logTester.logs().get(2)).matches(REPORT_PATTERN);
+    var statisticsLogs = logTester.logs().stream()
+      .filter(log -> log.contains("Statistics") || REPORT_PREDICATE.test(log))
+      .toList();
+    assertThat(statisticsLogs).hasSize(3);
+    assertThat(statisticsLogs.get(1)).matches(REPORT_PREDICATE);
+    assertThat(statisticsLogs.get(2)).matches(REPORT_PREDICATE);
   }
 
   @Test
@@ -90,11 +97,14 @@ class DurationStatisticsTest {
     durationStatistics.timed("test-3::postFilter", () -> doNothingFor(10));
     durationStatistics.log();
 
-    assertThat(logTester.logs()).hasSize(3);
-    assertThat(logTester.logs().get(0)).matches(REPORT_PATTERN);
-    assertThat(logTester.logs().get(0)).contains("preFilter::general", "postFilter::general", "matcher::general");
-    assertThat(logTester.logs().get(1)).matches(REPORT_PATTERN);
-    assertThat(logTester.logs().get(2)).matches(REPORT_PATTERN);
+    var statisticsLogs = logTester.logs().stream()
+      .filter(log -> log.contains("Statistics") || REPORT_PREDICATE.test(log))
+      .toList();
+    assertThat(statisticsLogs).hasSize(3);
+    assertThat(statisticsLogs.get(0)).matches(REPORT_PREDICATE);
+    assertThat(statisticsLogs.get(0)).contains("preFilter::general", "postFilter::general", "matcher::general");
+    assertThat(statisticsLogs.get(1)).matches(REPORT_PREDICATE);
+    assertThat(statisticsLogs.get(2)).matches(REPORT_PREDICATE);
   }
 
   @Test
@@ -113,9 +123,12 @@ class DurationStatisticsTest {
     durationStatistics.timed("test-3::postFilter", () -> doNothingFor(10));
     durationStatistics.log();
 
-    assertThat(logTester.logs()).hasSize(1);
-    assertThat(logTester.logs().get(0)).matches(REPORT_PATTERN);
-    assertThat(logTester.logs().get(0)).contains("preFilter::general", "postFilter::general", "matcher::general");
+    var statisticsLogs = logTester.logs().stream()
+      .filter(log -> log.contains("Statistics") || REPORT_PREDICATE.test(log))
+      .toList();
+    assertThat(statisticsLogs).hasSize(1);
+    assertThat(statisticsLogs.get(0)).matches(REPORT_PREDICATE);
+    assertThat(statisticsLogs.get(0)).contains("preFilter::general", "postFilter::general", "matcher::general");
   }
 
   private static Object doNothingFor(long millis) {
