@@ -56,10 +56,9 @@ ruleApi {
     )
 }
 
-val projectTitle = properties["projectTitle"] as String
 sonar {
     properties {
-        property("sonar.projectName", projectTitle)
+        property("sonar.projectName", "SonarText Enterprise")
         property("sonar.projectKey", System.getenv("SONAR_PROJECT_KEY"))
         property("sonar.organization", "sonarsource")
         property("sonar.exclusions", "**/build/**/*")
