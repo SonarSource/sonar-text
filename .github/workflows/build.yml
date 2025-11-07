@@ -17,9 +17,6 @@ permissions:
   id-token: write
   contents: write
 
-env:
-  SONAR_PROJECT_KEY: SonarSource_sonar-text
-
 jobs:
   build:
     runs-on: sonar-s-public
@@ -60,13 +57,4 @@ jobs:
           use-develocity: true
           gradle-args: "--build-cache -x artifactoryPublish -Dsonar.projectName=SonarText"
           disable-caching: true
-          run-shadow-scans: true
-
-      - uses: SonarSource/unified-dogfooding-actions/run-iris@v1
-        with:
-          primary_project_key: ${{ env.SONAR_PROJECT_KEY }}
-          primary_platform: Next
-          shadow1_project_key: ${{ env.SONAR_PROJECT_KEY }}
-          shadow1_platform: SQC-EU
-          shadow2_project_key: ${{ env.SONAR_PROJECT_KEY }}
-          shadow2_platform: SQC-US
+          shadow-scan: ${{ github.event_name == 'schedule' }}
