@@ -18,6 +18,7 @@ import org.sonarsource.cloudnative.gradle.enforceJarSize
 
 plugins {
     id("org.sonarsource.cloud-native.sonar-plugin")
+    id("org.sonarsource.cloud-native.license-file-generator")
     id("org.sonarsource.text.code-generation")
     id("org.sonarsource.text.specification-files-processing")
     `java-library`
@@ -83,12 +84,10 @@ tasks.jar {
 
 tasks.shadowJar {
     minimizeJar = true
-    exclude("META-INF/LICENSE*")
-    exclude("META-INF/NOTICE*")
     exclude("META-INF/*.RSA")
     exclude("META-INF/*.SF")
-    exclude("LICENSE*")
-    exclude("NOTICE*")
+    exclude("META-INF/*LICENSE*")
+    exclude("META-INF/*NOTICE*")
 
     val logger = project.logger
     doLast {

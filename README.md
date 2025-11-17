@@ -66,6 +66,18 @@ If your build failed, you can fix the formatting just by running:
 ./gradlew spotlessApply
 ```
 
+### Fix license packaging issues
+During the Gradle build, a license packaging check is executed.
+This check can also be triggered manually with `./gradlew validateLicenseFiles`.
+It checks if the license files of third party libraries are correctly packaged to the resource folder according to SonarSource standards.
+If your build failed, you can fix the license packaging by running:
+
+```shell
+./gradlew generateLicenseResources
+```
+
+Note that this overwrites your current license files in the `resources/licenses/THIRD_PARTY_LICENSES` folder.
+
 ### Update rule description
 
 Update all rule descriptions.
