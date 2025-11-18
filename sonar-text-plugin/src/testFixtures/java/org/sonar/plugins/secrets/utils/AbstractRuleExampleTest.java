@@ -18,7 +18,7 @@ package org.sonar.plugins.secrets.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.smile.SmileFactory;
-import com.networknt.schema.ValidationMessage;
+import com.networknt.schema.Error;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -39,7 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.sensor.issue.Issue;
-import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.api.PatternMatcher;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
@@ -112,10 +111,10 @@ public abstract class AbstractRuleExampleTest {
     }
   }
 
-  Supplier<String> validationMessageReport(String fileName, Set<ValidationMessage> validationMessages) {
+  Supplier<String> validationMessageReport(String fileName, List<Error> validationMessages) {
     return () -> {
       StringBuilder sb = new StringBuilder("file '%s' has %d validation errors:".formatted(fileName, validationMessages.size()));
-      for (ValidationMessage validationMessage : validationMessages) {
+      for (var validationMessage : validationMessages) {
         sb.append("\n- ").append(validationMessage.getMessage());
       }
       return sb.toString();
@@ -233,9 +232,5 @@ public abstract class AbstractRuleExampleTest {
       sb.append(stringToAdd);
     }
     return sb.toString();
-  }
-
-  public Check getInitializedCheck() {
-    return check;
   }
 }

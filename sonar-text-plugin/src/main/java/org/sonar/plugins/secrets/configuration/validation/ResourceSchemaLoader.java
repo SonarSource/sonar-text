@@ -18,11 +18,10 @@ package org.sonar.plugins.secrets.configuration.validation;
 
 import com.networknt.schema.AbsoluteIri;
 import com.networknt.schema.resource.InputStreamSource;
-import com.networknt.schema.resource.UriSchemaLoader;
-import java.io.IOException;
+import com.networknt.schema.resource.IriResourceLoader;
 import java.io.InputStream;
 
-final class ResourceSchemaLoader extends UriSchemaLoader {
+final class ResourceSchemaLoader extends IriResourceLoader {
 
   private final String localSchemaFolder;
 
@@ -31,26 +30,20 @@ final class ResourceSchemaLoader extends UriSchemaLoader {
   }
 
   @Override
-  public InputStreamSource getSchema(AbsoluteIri absoluteIri) {
-    var resourcePath = localSchemaFolder + absoluteIri.toString();
+  public InputStreamSource getResource(AbsoluteIri absoluteIri) {
+    var resourcePath = localSchemaFolder + absoluteIri;
     var resourceUrl = ResourceSchemaLoader.class.getResource(resourcePath);
     if (resourceUrl != null) {
       return new ResourceInputStreamSource(resourcePath);
     }
 
-    return super.getSchema(absoluteIri);
+    return super.getResource(absoluteIri);
   }
 
-  final class ResourceInputStreamSource implements InputStreamSource {
-
-    private final String resourcePath;
-
-    public ResourceInputStreamSource(String resourcePath) {
-      this.resourcePath = resourcePath;
-    }
+  record ResourceInputStreamSource(String resourcePath) implements InputStreamSource {
 
     @Override
-    public InputStream getInputStream() throws IOException {
+    public InputStream getInputStream() {
       return ResourceSchemaLoader.class.getResourceAsStream(resourcePath);
     }
   }
