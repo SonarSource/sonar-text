@@ -48,6 +48,7 @@ public class AuxiliaryPatternDeserializer extends JsonDeserializer<AuxiliaryPatt
       auxiliaryPattern.setPattern(value.get("pattern").asText());
       auxiliaryPattern.setMaxLineDistance(getOrNull(value, "maxLineDistance"));
       auxiliaryPattern.setMaxCharacterDistance(getOrNull(value, "maxCharDistance"));
+      auxiliaryPattern.setMaxLineLength(getOrNull(value, "maxLineLength"));
     }
     return auxiliaryPattern;
   }

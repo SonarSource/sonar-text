@@ -189,13 +189,48 @@ class AuxiliaryMatcherTest {
     auxiliaryPattern.setMaxLineDistance(1);
     var auxiliaryMatcher = AuxiliaryMatcher.build(auxiliaryPattern);
 
-    var content = "auxPattern " + "placeholder-".repeat(100) + " and candidate secret";
+    // Line exceeds default maxLineLength (1000), so it should be filtered out
+    var content = "auxPattern " + "x".repeat(1001) + " candidate secret";
     var candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
 
     var inputFileContext = inputFileContext(content);
     var result = auxiliaryMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
 
     assertThat(result).isEmpty();
+  }
+
+  @Test
+  void shouldFilterOutLinesExceedingMaxLineLength() throws IOException {
+    var auxiliaryPattern = constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_BEFORE, "auxPattern");
+    auxiliaryPattern.setMaxLineDistance(1);
+    auxiliaryPattern.setMaxLineLength(500);
+    var auxiliaryMatcher = AuxiliaryMatcher.build(auxiliaryPattern);
+
+    // Line exceeds maxLineLength (500), so it should be filtered out
+    var longLineContent = "auxPattern " + "x".repeat(600) + " candidate secret";
+    var candidateSecrets = candidateSecretMatcher.findIn(longLineContent, "<test-rule-id>");
+
+    var inputFileContext = inputFileContext(longLineContent);
+    var result = auxiliaryMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
+
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  void shouldNotFilterOutLinesBelowMaxLineLength() throws IOException {
+    var auxiliaryPattern = constructAuxiliaryPattern(AuxiliaryPatternType.PATTERN_BEFORE, "auxPattern");
+    auxiliaryPattern.setMaxLineDistance(1);
+    auxiliaryPattern.setMaxLineLength(500);
+    var auxiliaryMatcher = AuxiliaryMatcher.build(auxiliaryPattern);
+
+    // Line is below maxLineLength (500), so maxLineDistance check should apply normally
+    var shortLineContent = "auxPattern candidate secret";
+    var candidateSecrets = candidateSecretMatcher.findIn(shortLineContent, "<test-rule-id>");
+
+    var inputFileContext = inputFileContext(shortLineContent);
+    var result = auxiliaryMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
+
+    assertThat(result).containsExactlyElementsOf(candidateSecrets);
   }
 
 }

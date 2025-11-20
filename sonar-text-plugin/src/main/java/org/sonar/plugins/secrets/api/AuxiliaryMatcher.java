@@ -31,7 +31,7 @@ import static org.sonar.plugins.secrets.api.DistanceValidation.isBefore;
  * Matcher for auxiliary patterns, which can be found in the context of candidate secrets.
  */
 public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
-  private static final int MIN_LINE_LENGTH_TO_IGNORE_MAX_LINE_DISTANCE = 1000;
+  private static final int DEFAULT_MAX_LINE_LENGTH = 1000;
   private final AuxiliaryPattern auxiliaryPattern;
   private final PatternMatcher auxiliaryPatternMatcher;
 
@@ -100,11 +100,14 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
     return filteredCandidates;
   }
 
-  private static BiPredicate<Match, Match> ignoringLongLines(InputFileContext inputFileContext) {
+  private BiPredicate<Match, Match> ignoringLongLines(InputFileContext inputFileContext) {
+    int maxLineLength = auxiliaryPattern.getMaxLineLength() != null
+      ? auxiliaryPattern.getMaxLineLength()
+      : DEFAULT_MAX_LINE_LENGTH;
     return (Match auxMatch, Match candidateMatch) -> {
       int startLine = inputFileContext.offsetToLineNumber(candidateMatch.fileStartOffset());
       int lineLength = inputFileContext.lines().get(startLine - 1).length();
-      boolean isCandidateLineTooLong = lineLength >= MIN_LINE_LENGTH_TO_IGNORE_MAX_LINE_DISTANCE;
+      boolean isCandidateLineTooLong = lineLength >= maxLineLength;
       return !isCandidateLineTooLong;
     };
   }
