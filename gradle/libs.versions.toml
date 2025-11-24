@@ -1,11 +1,11 @@
 [versions]
-sonar-commons = "2.19.0.3575"
+sonar-commons = "2.20.0.4607"
 # Before updating the plugin-api version, make sure to check the compatibility matrix and stick to the lowest denominator
 # https://github.com/SonarSource/sonar-plugin-api?tab=readme-ov-file#compatibility
 sonar-plugin-api = "12.0.0.2960"
 sonarqube = "25.11.0.114957"
 sonar-java = "8.20.0.40630"
-sonar-scanner-gradle = "7.0.1.6134"
+sonar-scanner-gradle = "7.1.0.6387"
 sonar-orchestrator = "6.0.0.3852"
 sonar-license-api = "3.4"
 sonar-lint = "10.36.0.83732"
@@ -25,7 +25,7 @@ gradle-shadow = "9.2.2" # should be in sync with build-logic/common/gradle/libs.
 awaitility = "4.3.0"
 ahocorasick = "0.6.3"
 tink = "1.19.0"
-wiremock = "3.3.1"
+wiremock = "3.13.2"
 
 [libraries]
 sonar-analyzer-commons = { module = "org.sonarsource.analyzer-commons:sonar-analyzer-commons", version.ref = "sonar-commons" }
