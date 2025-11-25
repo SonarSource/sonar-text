@@ -43,7 +43,8 @@ public final class AutomaticTestFileFilter {
 
   private static boolean isFilenameTest(InputFileContext inputFileContext) {
     var filename = inputFileContext.getInputFile().filename().toLowerCase(Locale.ROOT);
-    return filename.startsWith("test") || filename.contains("test.") || filename.contains("tests.");
+    return filename.startsWith("test") || filename.contains("test.") || filename.contains("tests.") ||
+      filename.endsWith(".spec.js") || filename.endsWith(".spec.jsx") || filename.endsWith(".spec.ts") || filename.endsWith(".spec.tsx");
   }
 
   private static boolean isFileInDocOrTestDirectory(InputFileContext inputFileContext) {

@@ -100,7 +100,22 @@ class AutomaticTestFileFilterTest {
       arguments("latestnews.html", true),
       arguments("abc/latestnews.html", true),
       arguments("contestresults.js", true),
-      arguments("Protester.java", true));
+      arguments("Protester.java", true),
+      // JS/TS spec files that should be detected as tests
+      arguments("component.spec.js", false),
+      arguments("Utils.spec.jsx", false),
+      arguments("service.spec.ts", false),
+      arguments("Component.spec.tsx", false),
+      arguments("src/main/component.spec.js", false),
+      arguments("feature/user-auth/login.spec.ts", false),
+      // Files with "spec" that should NOT be detected as tests
+      arguments("specification.js", true),
+      arguments("inspect.ts", true),
+      arguments("component.spec.py", true),
+      arguments("component.spec.java", true),
+      arguments("spec-utils.js", true),
+      arguments("myspecial.js", true),
+      arguments("component.spec.js.md", true));
   }
 
   @ParameterizedTest
@@ -154,6 +169,21 @@ class AutomaticTestFileFilterTest {
       arguments("latestnews.html", true),
       arguments("abc/latestnews.html", true),
       arguments("contestresults.js", true),
-      arguments("Protester.java", true));
+      arguments("Protester.java", true),
+      // JS/TS spec files that should be detected as tests
+      arguments("component.spec.js", false),
+      arguments("Utils.spec.jsx", false),
+      arguments("service.spec.ts", false),
+      arguments("Component.spec.tsx", false),
+      arguments("src/main/component.spec.js", false),
+      arguments("feature/user-auth/login.spec.ts", false),
+      // Files with "spec" that should NOT be detected as tests
+      arguments("specification.js", true),
+      arguments("inspect.ts", true),
+      arguments("component.spec.py", true),
+      arguments("component.spec.java", true),
+      arguments("spec-utils.js", true),
+      arguments("myspecial.js", true),
+      arguments("component.spec.js.md", true));
   }
 }
