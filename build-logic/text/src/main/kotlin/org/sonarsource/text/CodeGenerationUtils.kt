@@ -44,13 +44,15 @@ fun Project.writeToFile(
     file(dir.resolve(filename)).writeText(content + LINE_SEPARATOR)
 }
 
-fun listSecretSpecificationFiles(specFilesLocation: Path) =
-    FileUtils.listFiles(
-        specFilesLocation.toFile(),
-        FileFilterUtils.suffixFileFilter(".yaml"),
-        // don't recurse into subdirectories
-        null
-    ).sorted()
+fun listSecretSpecificationFiles(
+    specFilesLocation: Path,
+    extension: String = ".yaml",
+) = FileUtils.listFiles(
+    specFilesLocation.toFile(),
+    FileFilterUtils.suffixFileFilter(extension),
+    // don't recurse into subdirectories
+    null
+).sorted()
 
 fun listCheckClasses(checkClassesLocation: Path) =
     FileUtils.listFiles(

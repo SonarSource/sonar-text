@@ -18,6 +18,7 @@ package org.sonarsource.text;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.smile.SmileFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.File;
 import java.io.IOException;
@@ -52,7 +53,8 @@ public class UpdatingSpecificationFilesGenerator {
   public static final Path RSPEC_LIST_PATH = Path.of("build/generated");
   private static final Charset CHARSET = StandardCharsets.UTF_8;
   private static final String LINE_SEPARATOR = "\n";
-  private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper SMILE_MAPPER = new ObjectMapper(new SmileFactory());
   private static final Pattern FORBIDDEN_SYMBOLS_IN_CHECK_NAME = Pattern.compile("[^\\p{IsAlphabetic}]");
 
   public final String packagePrefix;
@@ -94,7 +96,7 @@ public class UpdatingSpecificationFilesGenerator {
    * </ol>
    */
   public void performGeneration() {
-    var specificationsToLoad = new HashSet<>(listSecretSpecificationFiles(projectDir.resolve(locations.specFilesPathPrefix)));
+    var specificationsToLoad = new HashSet<>(listSecretSpecificationFiles(projectDir.resolve(locations.specFilesPathPrefix), ".sml"));
     if (testingEnvironment.testingEnabled) {
       specificationsToLoad.addAll(testingEnvironment.additionalSpecificationFiles(projectDir));
     }
@@ -277,7 +279,8 @@ public class UpdatingSpecificationFilesGenerator {
     return specificationFiles.stream()
       .map((File file) -> {
         try {
-          return MAPPER.readValue(file, JsonNode.class);
+          var mapper = file.getName().endsWith(".yaml") ? YAML_MAPPER : SMILE_MAPPER;
+          return mapper.readValue(file, JsonNode.class);
         } catch (IOException e) {
           throw new GenerationException("error while reading specification file " + file, e);
         }
