@@ -7,7 +7,6 @@ provider:
       rspecKey: exampleKey
       metadata:
         name: rule name
-        charset: "[0-9a-z\\/+]"
       detection:
         matching:
           pattern: "\\b(test pattern)\\b"
@@ -20,7 +19,6 @@ provider:
       rspecKey: exampleKey
       metadata:
         name: rule name
-        charset: "[0-9a-z\\/+]"
       detection:
         matching:
           pattern: "\\b(test pattern)\\b"

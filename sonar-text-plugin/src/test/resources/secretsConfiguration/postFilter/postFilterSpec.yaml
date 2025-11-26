@@ -2,22 +2,7 @@ provider:
   metadata:
       name: provider name
       category: Cloud Provider
-      references:
-        - description: Reference 1
-          link: https://docs.aws.amazon.com/IAM/...
-          type: Standards
-        - description: Reference 2
-          link: https://docs.aws.amazon.com/IAM/...
-          type: Documentation
-        - description: Reference 3
-          link: https://docs.aws.amazon.com/IAM/...
-          type: Conference Presentations
-        - description: Reference 4
-          link: https://docs.aws.amazon.com/IAM/...
-          type: Articles & blog posts
       message: provider message
-      fix: provider fix
-      impact: provider impact
   detection:
     matching:
       pattern: "\\b(provider matching pattern)\\b"
@@ -26,15 +11,7 @@ provider:
       rspecKey: exampleKey
       metadata:
         name: rule name
-        defaultProfile: false
-        charset: "[0-9a-z\\/+]"
         message: rule message
-        impact: rule impact
-        fix: rule fix
-        references:
-          - description: rule reference
-            link: https://docs.aws.amazon.com/IAM/...
-            type: Standards
       detection:
         matching:
           pattern: "\\b(rule matching pattern)\\b"

@@ -27,30 +27,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SpecificationTest {
 
   @Test
-  void providerMetadataShouldBeRetrievedWhenRuleMetadataFieldsAreNull() {
+  void shouldRetrieveProviderMetadataWhenMessageIsNull() {
     Specification specification = ReferenceTestModel.constructReferenceSpecification();
     RuleMetadata ruleMetadata = specification.getProvider().getRules().get(0).getMetadata();
-    ReferenceTestModel.setSpecificMetadataFieldsNull(ruleMetadata);
+    ReferenceTestModel.setMetadataMessageNull(ruleMetadata);
 
     ProviderMetadata providerMetadata = specification.getProvider().getMetadata();
 
-    assertThat(ruleMetadata.getFix()).isEqualTo(providerMetadata.getFix());
     assertThat(ruleMetadata.getMessage()).isEqualTo(providerMetadata.getMessage());
-    assertThat(ruleMetadata.getImpact()).isEqualTo(providerMetadata.getImpact());
-    assertThat(ruleMetadata.getReferences()).isEqualTo(providerMetadata.getReferences());
   }
 
   @Test
-  void metadataFieldsShouldBeNullAndNotThrowException() {
+  void shouldNotThrowExceptionWhenProviderMetadataMessageIsNull() {
     Specification specification = ReferenceTestModel.constructReferenceSpecification();
     RuleMetadata ruleMetadata = specification.getProvider().getRules().get(0).getMetadata();
-    ReferenceTestModel.setSpecificMetadataFieldsNull(ruleMetadata);
-    ReferenceTestModel.setSpecificMetadataFieldsNull(specification.getProvider().getMetadata());
+    ReferenceTestModel.setMetadataMessageNull(ruleMetadata);
+    ReferenceTestModel.setMetadataMessageNull(specification.getProvider().getMetadata());
 
-    assertThat(ruleMetadata.getFix()).isNull();
     assertThat(ruleMetadata.getMessage()).isNull();
-    assertThat(ruleMetadata.getImpact()).isNull();
-    assertThat(ruleMetadata.getReferences()).isNull();
   }
 
   @Test

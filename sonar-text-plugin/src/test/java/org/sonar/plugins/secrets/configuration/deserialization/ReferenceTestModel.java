@@ -39,8 +39,6 @@ import org.sonar.plugins.secrets.configuration.model.matching.filter.Statistical
 import org.sonar.plugins.secrets.configuration.model.matching.filter.TopLevelPostModule;
 import org.sonar.plugins.secrets.configuration.model.metadata.Metadata;
 import org.sonar.plugins.secrets.configuration.model.metadata.ProviderMetadata;
-import org.sonar.plugins.secrets.configuration.model.metadata.Reference;
-import org.sonar.plugins.secrets.configuration.model.metadata.ReferenceType;
 import org.sonar.plugins.secrets.configuration.model.metadata.RuleMetadata;
 
 public class ReferenceTestModel {
@@ -118,7 +116,6 @@ public class ReferenceTestModel {
   public static Specification constructReferenceSpecification() {
     Specification specification = constructMinimumSpecification();
 
-    enrichMetadata(specification.getProvider().getMetadata());
     enrichRule(specification.getProvider().getRules().get(0));
     specification.getProvider().setDetection(constructBasicDetection("\\b(provider matching pattern)\\b"));
 
@@ -129,28 +126,6 @@ public class ReferenceTestModel {
     enrichRuleMetadata(rule.getMetadata());
     enrichRuleExample(rule.getExamples().get(0));
     enrichDetection(rule.getDetection());
-  }
-
-  private static void enrichMetadata(ProviderMetadata providerMetadata) {
-    providerMetadata.setReferences(constructReferenceList());
-    providerMetadata.setFix("provider fix");
-    providerMetadata.setImpact("provider impact");
-  }
-
-  private static List<Reference> constructReferenceList() {
-    return List.of(
-      constructReference("Reference 1", ReferenceType.STANDARDS),
-      constructReference("Reference 2", ReferenceType.DOCUMENTATION),
-      constructReference("Reference 3", ReferenceType.CONFERENCE_PRESENTATIONS),
-      constructReference("Reference 4", ReferenceType.ARTICLES_AND_BLOG_POSTS));
-  }
-
-  private static Reference constructReference(String description, ReferenceType type) {
-    Reference reference = new Reference();
-    reference.setDescription(description);
-    reference.setLink("https://docs.aws.amazon.com/IAM/...");
-    reference.setType(type);
-    return reference;
   }
 
   public static void enrichDetection(Detection detection) {
@@ -230,13 +205,7 @@ public class ReferenceTestModel {
   }
 
   private static void enrichRuleMetadata(RuleMetadata ruleMetadata) {
-    ruleMetadata.setDefaultProfile(false);
-    ruleMetadata.setCharset("[0-9a-z\\/+]");
     ruleMetadata.setMessage("rule message");
-    ruleMetadata.setImpact("rule impact");
-    ruleMetadata.setFix("rule fix");
-    ruleMetadata.setReferences(
-      List.of(constructReference("rule reference", ReferenceType.STANDARDS)));
   }
 
   private static void enrichRuleExample(RuleExample example) {
@@ -247,11 +216,8 @@ public class ReferenceTestModel {
   // --------------------------------------------------------------------------------------
   // Methods to transform specific model elements
   // --------------------------------------------------------------------------------------
-  public static void setSpecificMetadataFieldsNull(Metadata metadata) {
-    metadata.setImpact(null);
-    metadata.setFix(null);
+  public static void setMetadataMessageNull(Metadata metadata) {
     metadata.setMessage(null);
-    metadata.setReferences(null);
   }
 
   public static void setDetectionFieldsNull(Detection detection) {
