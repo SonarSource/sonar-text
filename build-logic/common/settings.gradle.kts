@@ -36,7 +36,7 @@ dependencyResolutionManagement {
 }
 
 develocity {
-    server.set("https://develocity.sonar.build")
+    server.set("https://develocity-public.sonar.build/")
 }
 
 val isCI = System.getenv("CI") != null
