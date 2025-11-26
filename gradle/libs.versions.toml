@@ -61,7 +61,6 @@ google-re2j = { module = "com.google.re2j:re2j", version.ref = "re2j" }
 gradle-shadow = { module = "com.gradleup.shadow:shadow-gradle-plugin", version.ref = "gradle-shadow" }
 awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility"}
 ahocorasick = { module = "org.ahocorasick:ahocorasick", version.ref = "ahocorasick" }
-sarif = { module = "com.contrastsecurity:java-sarif", version = "2.0" }
 tink = { module = "com.google.crypto.tink:tink", version.ref = "tink" }
 wiremock = { module = "org.wiremock:wiremock", version.ref = "wiremock" }
 
