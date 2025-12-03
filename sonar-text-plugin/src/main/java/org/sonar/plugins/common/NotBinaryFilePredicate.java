@@ -32,7 +32,7 @@ import org.sonar.plugins.secrets.api.EntropyChecker;
 
 public class NotBinaryFilePredicate implements FilePredicate {
 
-  private static final List<String> DEFAULT_BINARY_EXTENSIONS = List.of(
+  public static final List<String> DEFAULT_BINARY_EXTENSIONS = List.of(
     "3dm",
     "3ds",
     "3g2",
