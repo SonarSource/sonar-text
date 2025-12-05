@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.SonarEdition;
@@ -88,6 +89,8 @@ public class TextAndSecretsSensor implements Sensor {
   protected final AnalysisWarningsWrapper analysisWarnings;
   private final SecretsSpecificationContainer secretsSpecificationContainer;
   private final CheckContainer checkContainer;
+  @Nullable
+  private final Boolean overrideAutomaticTestFileDetection;
   protected DurationStatistics durationStatistics;
   protected TelemetryReporter telemetryReporter;
   protected MemoryMonitor memoryMonitor;
@@ -106,11 +109,22 @@ public class TextAndSecretsSensor implements Sensor {
     AnalysisWarningsWrapper analysisWarnings,
     SecretsSpecificationContainer secretsSpecificationContainer,
     CheckContainer checkContainer) {
+    this(sonarRuntime, checkFactory, analysisWarnings, secretsSpecificationContainer, checkContainer, null);
+  }
+
+  public TextAndSecretsSensor(
+    SonarRuntime sonarRuntime,
+    CheckFactory checkFactory,
+    AnalysisWarningsWrapper analysisWarnings,
+    SecretsSpecificationContainer secretsSpecificationContainer,
+    CheckContainer checkContainer,
+    @Nullable Boolean overrideAutomaticTestFileDetection) {
     this.sonarRuntime = sonarRuntime;
     this.checkFactory = checkFactory;
     this.analysisWarnings = analysisWarnings;
     this.secretsSpecificationContainer = secretsSpecificationContainer;
     this.checkContainer = checkContainer;
+    this.overrideAutomaticTestFileDetection = overrideAutomaticTestFileDetection;
   }
 
   @Override
@@ -148,7 +162,10 @@ public class TextAndSecretsSensor implements Sensor {
       return;
     }
 
-    initializeChecks(activeChecks, new SpecificationConfiguration(enableAutomaticTestFileDetection(sensorContext)));
+    var automaticTestFileDetection = overrideAutomaticTestFileDetection != null
+      ? overrideAutomaticTestFileDetection
+      : enableAutomaticTestFileDetection(sensorContext);
+    initializeChecks(activeChecks, new SpecificationConfiguration(automaticTestFileDetection));
 
     runAnalysis(sensorContext, activeChecks);
 
