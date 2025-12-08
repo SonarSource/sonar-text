@@ -75,7 +75,7 @@ public final class AutomaticTestFileFilter {
   }
 
   private static boolean isTestDirectory(List<String> pathElements) {
-    return pathElements.contains("test") || pathElements.contains("tests");
+    return pathElements.contains("test") || pathElements.contains("tests") || pathElements.contains("mock") || pathElements.contains("mocks");
   }
 
   private static boolean hasEnding(List<String> pathElements, String text) {

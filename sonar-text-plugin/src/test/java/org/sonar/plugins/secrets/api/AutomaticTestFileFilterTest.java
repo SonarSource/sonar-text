@@ -115,7 +115,12 @@ class AutomaticTestFileFilterTest {
       arguments("component.spec.java", true),
       arguments("spec-utils.js", true),
       arguments("myspecial.js", true),
-      arguments("component.spec.js.md", true));
+      arguments("component.spec.js.md", true),
+      // Mocks are very specific for tests
+      arguments("mocks/file.json", false),
+      arguments("src/app/mocks/hohohoo.txt", false),
+      arguments("mock/file.json", false),
+      arguments("src/app/mock/merry.txt", false));
   }
 
   @ParameterizedTest
