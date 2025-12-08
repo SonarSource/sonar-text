@@ -1,14 +1,14 @@
 [versions]
-sonar-commons = "2.20.0.4607"
+sonar-commons = "2.21.0.4626"
 # Before updating the plugin-api version, make sure to check the compatibility matrix and stick to the lowest denominator
 # https://github.com/SonarSource/sonar-plugin-api?tab=readme-ov-file#compatibility
 sonar-plugin-api = "12.0.0.2960"
 sonarqube = "25.11.0.114957"
-sonar-java = "8.20.0.40630"
-sonar-scanner-gradle = "7.1.0.6387"
-sonar-orchestrator = "6.0.0.3852"
+sonar-java = "8.22.0.41895"
+sonar-scanner-gradle = "7.2.0.6526"
+sonar-orchestrator = "6.0.3.3907"
 sonar-license-api = "3.4"
-sonar-lint = "10.36.0.83732"
+sonar-lint = "10.37.1.83894"
 slf4j = "2.0.17"
 logback = "1.5.21"
 jackson = "2.20.1"
@@ -21,7 +21,7 @@ yguard = "4.1.1"
 eclipse-jgit = "7.4.0.202509020913-r"
 commons-io = "2.21.0"
 re2j = "1.8"
-gradle-shadow = "9.2.2" # should be in sync with build-logic/common/gradle/libs.versions.toml
+gradle-shadow = "9.3.0" # should be in sync with build-logic/common/gradle/libs.versions.toml
 awaitility = "4.3.0"
 ahocorasick = "0.6.3"
 tink = "1.19.0"
@@ -65,6 +65,6 @@ tink = { module = "com.google.crypto.tink:tink", version.ref = "tink" }
 wiremock = { module = "org.wiremock:wiremock", version.ref = "wiremock" }
 
 [plugins]
-buildconfig = { id = "com.github.gmazzo.buildconfig", version = "6.0.2" }
+buildconfig = { id = "com.github.gmazzo.buildconfig", version = "6.0.6" }
 jmh = { id = "me.champeau.jmh", version = "0.7.3" }
 graalvm-native = { id = "org.graalvm.buildtools.native", version = "0.11.3" }
