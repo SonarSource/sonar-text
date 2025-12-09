@@ -17,6 +17,9 @@ permissions:
   id-token: write
   contents: write
 
+env:
+  SONAR_PROJECT_KEY: "SonarSource_sonar-text"
+
 jobs:
   build:
     runs-on: sonar-s-public
@@ -51,13 +54,12 @@ jobs:
         id: build
         uses: SonarSource/ci-github-actions/build-gradle@v1
         with:
-          public: true
           deploy-pull-request: false
           skip-tests: false
           use-develocity: true
           gradle-args: "--build-cache -x artifactoryPublish -Dsonar.projectName=SonarText"
           disable-caching: true
-          shadow-scan: ${{ github.event_name == 'schedule' }}
+          run-shadow-scans: ${{ github.event_name == 'schedule' }}
 
   notify_slack:
     name: Notify Slack on Failure
