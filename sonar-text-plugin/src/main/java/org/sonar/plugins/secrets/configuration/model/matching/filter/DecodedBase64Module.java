@@ -22,11 +22,13 @@ import com.fasterxml.jackson.annotation.Nulls;
 import java.util.List;
 import javax.annotation.Nullable;
 
-public record DecodedBase64Module(List<String> matchEach, Alphabet alphabet) {
+public record DecodedBase64Module(List<String> matchEach, List<String> matchNot, Alphabet alphabet) {
   public DecodedBase64Module(
     @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> matchEach,
+    @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> matchNot,
     @Nullable Alphabet alphabet) {
     this.matchEach = matchEach;
+    this.matchNot = matchNot;
     this.alphabet = alphabet == null ? Alphabet.DEFAULT : alphabet;
   }
 

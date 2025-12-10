@@ -191,7 +191,7 @@ class PostFilterFactoryTest {
 
   @Test
   void shouldMatchOnBase64DecodedParts() {
-    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("\"alg\":"), DecodedBase64Module.Alphabet.DEFAULT), null, emptyList(), null, emptyList());
+    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("\"alg\":"), emptyList(), DecodedBase64Module.Alphabet.DEFAULT), null, emptyList(), null, emptyList());
     var postFilter = PostFilterFactory.createPredicate(postModule);
 
     assertThat(postFilter.test("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")).isTrue();
@@ -199,7 +199,7 @@ class PostFilterFactoryTest {
 
   @Test
   void shouldNotMatchOnMalformedBase64DecodedParts() {
-    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("\"alg\":"), DecodedBase64Module.Alphabet.DEFAULT), null, emptyList(), null, emptyList());
+    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("\"alg\":"), emptyList(), DecodedBase64Module.Alphabet.DEFAULT), null, emptyList(), null, emptyList());
     var postFilter = PostFilterFactory.createPredicate(postModule);
 
     assertThat(postFilter.test("1248163264128")).isFalse();
@@ -214,7 +214,8 @@ class PostFilterFactoryTest {
     "alg"info";false
     """, delimiter = ';')
   void shouldMatchEachOnBase64DecodedParts(String input, boolean shouldMatch) {
-    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("\"alg\":", "\"info\":"), DecodedBase64Module.Alphabet.DEFAULT), null, emptyList(), null, emptyList());
+    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("\"alg\":", "\"info\":"), emptyList(), DecodedBase64Module.Alphabet.DEFAULT), null, emptyList(), null,
+      emptyList());
     var postFilter = PostFilterFactory.createPredicate(postModule);
     var encodedInput = Base64.getEncoder().encodeToString(input.getBytes());
 
@@ -223,9 +224,69 @@ class PostFilterFactoryTest {
 
   @Test
   void shouldMatchOnBase64DecodedPartsInY64Mode() {
-    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("&s=consumersecret&"), DecodedBase64Module.Alphabet.Y64), null, emptyList(), null, emptyList());
+    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("&s=consumersecret&"), emptyList(), DecodedBase64Module.Alphabet.Y64), null, emptyList(), null,
+      emptyList());
     var postFilter = PostFilterFactory.createPredicate(postModule);
 
     assertThat(postFilter.test("dj0yJmk9VXNwOWg3R3NvRDkyJmQ9WVdrOU4xTlFhM1JVTlRRbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD0wYw--")).isTrue();
+  }
+
+  @Test
+  void shouldRejectOnMatchNotInBase64DecodedParts() {
+    var postModule = new TopLevelPostModule(new DecodedBase64Module(emptyList(), List.of("\"alg\":"), DecodedBase64Module.Alphabet.DEFAULT), null, emptyList(), null, emptyList());
+    var postFilter = PostFilterFactory.createPredicate(postModule);
+
+    // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9 decodes to {"alg":"HS256","typ":"JWT"} which contains "alg":
+    assertThat(postFilter.test("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")).isFalse();
+  }
+
+  @Test
+  void shouldAcceptWhenMatchNotPatternNotFound() {
+    var postModule = new TopLevelPostModule(new DecodedBase64Module(emptyList(), List.of("\"notFound\":"), DecodedBase64Module.Alphabet.DEFAULT), null, emptyList(), null,
+      emptyList());
+    var postFilter = PostFilterFactory.createPredicate(postModule);
+
+    // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9 decodes to {"alg":"HS256","typ":"JWT"} which doesn't contain "notFound":
+    assertThat(postFilter.test("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")).isTrue();
+  }
+
+  @ParameterizedTest
+  @CsvSource(textBlock = """
+    {"alg":"SHA256","info":"test"};true
+    {"alg":"SHA256","info":"secret"};false
+    {"alg":"SHA256"};false
+    {"info":"test"};false
+    {"key":"value"};false
+    """, delimiter = ';')
+  void shouldCombineMatchEachAndMatchNot(String input, boolean shouldMatch) {
+    // matchEach: must contain "alg": AND "info":
+    // matchNot: must NOT contain "secret"
+    var postModule = new TopLevelPostModule(
+      new DecodedBase64Module(List.of("\"alg\":", "\"info\":"), List.of("secret"), DecodedBase64Module.Alphabet.DEFAULT),
+      null, emptyList(), null, emptyList());
+    var postFilter = PostFilterFactory.createPredicate(postModule);
+    var encodedInput = Base64.getEncoder().encodeToString(input.getBytes());
+
+    assertThat(postFilter.test(encodedInput)).isEqualTo(shouldMatch);
+  }
+
+  @Test
+  void shouldRejectIfAnyMatchNotPatternMatches() {
+    // matchNot with multiple patterns - should reject if ANY matches (OR logic)
+    var postModule = new TopLevelPostModule(
+      new DecodedBase64Module(emptyList(), List.of("\"alg\":", "\"typ\":"), DecodedBase64Module.Alphabet.DEFAULT),
+      null, emptyList(), null, emptyList());
+    var postFilter = PostFilterFactory.createPredicate(postModule);
+
+    // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9 decodes to {"alg":"HS256","typ":"JWT"} which contains both
+    assertThat(postFilter.test("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")).isFalse();
+
+    // Test with content that has only one of the matchNot patterns
+    var inputWithOnlyAlg = Base64.getEncoder().encodeToString("{\"alg\":\"HS256\"}".getBytes());
+    assertThat(postFilter.test(inputWithOnlyAlg)).isFalse();
+
+    // Test with content that has none of the matchNot patterns
+    var inputWithNeither = Base64.getEncoder().encodeToString("{\"key\":\"value\"}".getBytes());
+    assertThat(postFilter.test(inputWithNeither)).isTrue();
   }
 }

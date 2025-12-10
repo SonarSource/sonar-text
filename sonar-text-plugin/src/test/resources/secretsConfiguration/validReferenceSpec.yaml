@@ -64,6 +64,8 @@ provider:
                 alphabet: default
                 matchEach:
                   - '"alg":'
+                matchNot:
+                  - '"test":'
               heuristicFilter:
                 heuristics:
                   - "uri"

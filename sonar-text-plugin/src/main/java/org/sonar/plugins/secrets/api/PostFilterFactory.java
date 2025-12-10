@@ -107,6 +107,9 @@ public final class PostFilterFactory {
       return false;
     }
     var decoded = new String(decodedBytes, StandardCharsets.UTF_8);
-    return decodedBase64Module.matchEach().stream().allMatch(decoded::contains);
+    var matchEachResult = decodedBase64Module.matchEach().isEmpty()
+      || decodedBase64Module.matchEach().stream().allMatch(decoded::contains);
+    var matchNotResult = decodedBase64Module.matchNot().stream().noneMatch(decoded::contains);
+    return matchEachResult && matchNotResult;
   }
 }
