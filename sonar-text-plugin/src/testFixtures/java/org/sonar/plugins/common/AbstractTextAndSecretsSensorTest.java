@@ -104,7 +104,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     The property "sonar.tests" is not set. To improve the analysis accuracy, we categorize a file as a test file if any of the following is true:
       * The filename starts with "test"
       * The filename contains "test." or "tests."
-      * Any directory in the file path is named: "doc", "docs", "test" or "tests"
+      * Any directory in the file path is named: "doc", "docs", "test", "tests", "mock" or "mocks"
       * Any directory in the file path has a name ending in "test" or "tests"
     """;
 
