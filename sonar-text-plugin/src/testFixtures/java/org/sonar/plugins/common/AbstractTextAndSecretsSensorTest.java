@@ -57,6 +57,7 @@ import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.check.Rule;
 import org.sonar.plugins.common.analyzer.Analyzer;
 import org.sonar.plugins.common.git.GitService;
+import org.sonar.plugins.common.measures.CiVendorFilesTelemetry;
 import org.sonar.plugins.common.measures.TelemetryReporter;
 import org.sonar.plugins.secrets.AbstractBinaryFileCheck;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
@@ -1300,6 +1301,46 @@ public abstract class AbstractTextAndSecretsSensorTest {
       hiddenInputFile(Path.of("d.txt"), "{}"));
 
     verify(context).addTelemetryProperty(TelemetryReporter.KEY_PREFIX + ALL_TRACKED_TEXT_FILES_MEASURE_KEY, "0");
+  }
+
+  @Test
+  void shouldSendCIVendorTelemetryWhenCIVendorFilesArePresent() {
+    var check = new ReportIssueAtLineOneCheck();
+    var binaryCheck = new TestBinaryFileCheck();
+    var context = spy(sensorContext(check, binaryCheck));
+    var sensor = sensor(check, binaryCheck);
+
+    var analyzedFile = inputFile(Path.of("a.txt"), "{}", "secrets");
+
+    var vendorKeys = CiVendorFilesTelemetry.CI_VENDOR_TO_REL_FILE_PATH.keySet();
+    var ciInputFiles = CiVendorFilesTelemetry.CI_VENDOR_TO_REL_FILE_PATH.values().stream().map(
+      relativePaths -> inputFile(Path.of(relativePaths), "{}"));
+    var inputFiles = Stream.concat(Stream.of(analyzedFile), ciInputFiles).toArray(InputFile[]::new);
+
+    analyse(sensor, context, inputFiles);
+
+    for (String vendorKey : vendorKeys) {
+      var telemetryKey = TelemetryReporter.KEY_PREFIX + "civendor_" + vendorKey;
+      verify(context).addTelemetryProperty(telemetryKey, "1");
+    }
+  }
+
+  @Test
+  void shouldNotSendCIVendorTelemetryWhenCIVendorFilesAreNotPresent() {
+    var check = new ReportIssueAtLineOneCheck();
+    var binaryCheck = new TestBinaryFileCheck();
+    var context = spy(sensorContext(check, binaryCheck));
+    var sensor = sensor(check, binaryCheck);
+
+    var vendorKeys = CiVendorFilesTelemetry.CI_VENDOR_TO_REL_FILE_PATH.keySet();
+
+    var analyzedFile = inputFile(Path.of("a.txt"), "{}", "secrets");
+    analyse(sensor, context, analyzedFile);
+
+    for (String vendorKey : vendorKeys) {
+      var telemetryKey = TelemetryReporter.KEY_PREFIX + "civendor_" + vendorKey;
+      verify(context).addTelemetryProperty(telemetryKey, "0");
+    }
   }
 
   private static void assertThatIssuesRaisedOnFiles(Collection<Issue> issues, InputFile... expectedFilesWithIssues) {

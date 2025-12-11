@@ -42,6 +42,7 @@ import org.sonar.plugins.common.git.GitCliAndJGitService;
 import org.sonar.plugins.common.git.GitService;
 import org.sonar.plugins.common.git.GitTrackedFilePredicate;
 import org.sonar.plugins.common.git.LazyGitService;
+import org.sonar.plugins.common.measures.CiVendorFilesTelemetry;
 import org.sonar.plugins.common.measures.DurationStatistics;
 import org.sonar.plugins.common.measures.MemoryMonitor;
 import org.sonar.plugins.common.measures.TelemetryReporter;
@@ -365,6 +366,7 @@ public class TextAndSecretsSensor implements Sensor {
     durationStatistics = new DurationStatistics(sensorContext.config());
     telemetryReporter = new TelemetryReporter(sensorContext);
     telemetryReporter.startRecordingSensorTime();
+    CiVendorFilesTelemetry.measureProjectsCIFilesInclusion(sensorContext, telemetryReporter);
     initializeParallelizationManager(sensorContext);
     initializeGitService(sensorContext);
     initializeOptionalConfigValue(sensorContext, REGEX_MATCH_TIMEOUT_KEY, RegexMatchingManager::setTimeoutMs);
@@ -495,7 +497,7 @@ public class TextAndSecretsSensor implements Sensor {
     return sensorContext.config().getBoolean(INCLUSIONS_ACTIVATION_KEY).orElse(INCLUSIONS_ACTIVATION_DEFAULT_VALUE);
   }
 
-  private static boolean isSonarLintContext(SonarRuntime runtime) {
+  public static boolean isSonarLintContext(SonarRuntime runtime) {
     return runtime.getProduct() == SonarProduct.SONARLINT;
   }
 
