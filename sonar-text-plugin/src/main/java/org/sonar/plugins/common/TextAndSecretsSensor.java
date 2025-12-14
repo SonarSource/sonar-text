@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
-import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.SonarEdition;
@@ -85,13 +84,10 @@ public class TextAndSecretsSensor implements Sensor {
   public static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
 
   protected final CheckFactory checkFactory;
-
   protected final SonarRuntime sonarRuntime;
   protected final AnalysisWarningsWrapper analysisWarnings;
   private final SecretsSpecificationContainer secretsSpecificationContainer;
   private final CheckContainer checkContainer;
-  @Nullable
-  private final Boolean overrideAutomaticTestFileDetection;
   protected DurationStatistics durationStatistics;
   protected TelemetryReporter telemetryReporter;
   protected MemoryMonitor memoryMonitor;
@@ -110,22 +106,11 @@ public class TextAndSecretsSensor implements Sensor {
     AnalysisWarningsWrapper analysisWarnings,
     SecretsSpecificationContainer secretsSpecificationContainer,
     CheckContainer checkContainer) {
-    this(sonarRuntime, checkFactory, analysisWarnings, secretsSpecificationContainer, checkContainer, null);
-  }
-
-  public TextAndSecretsSensor(
-    SonarRuntime sonarRuntime,
-    CheckFactory checkFactory,
-    AnalysisWarningsWrapper analysisWarnings,
-    SecretsSpecificationContainer secretsSpecificationContainer,
-    CheckContainer checkContainer,
-    @Nullable Boolean overrideAutomaticTestFileDetection) {
     this.sonarRuntime = sonarRuntime;
     this.checkFactory = checkFactory;
     this.analysisWarnings = analysisWarnings;
     this.secretsSpecificationContainer = secretsSpecificationContainer;
     this.checkContainer = checkContainer;
-    this.overrideAutomaticTestFileDetection = overrideAutomaticTestFileDetection;
   }
 
   @Override
@@ -163,15 +148,28 @@ public class TextAndSecretsSensor implements Sensor {
       return;
     }
 
-    var automaticTestFileDetection = overrideAutomaticTestFileDetection != null
-      ? overrideAutomaticTestFileDetection
-      : enableAutomaticTestFileDetection(sensorContext);
-    initializeChecks(activeChecks, new SpecificationConfiguration(automaticTestFileDetection));
+    initializeChecks(activeChecks, createSpecificationConfiguration(sensorContext));
 
     runAnalysis(sensorContext, activeChecks);
 
     processMetrics();
     cleanUp();
+  }
+
+  protected SpecificationConfiguration createSpecificationConfiguration(SensorContext sensorContext) {
+    var value = sensorContext.config().get(SONAR_TESTS_KEY).orElse("");
+    if (value.isBlank() && !isSonarLintContext(sensorContext.runtime())) {
+      var message = """
+        The property "%s" is not set. To improve the analysis accuracy, we categorize a file as a test file if any of the following is true:
+          * The filename starts with "test"
+          * The filename contains "test." or "tests."
+          * Any directory in the file path is named: "doc", "docs", "test", "tests", "mock" or "mocks"
+          * Any directory in the file path has a name ending in "test" or "tests"
+        """.formatted(SONAR_TESTS_KEY);
+      LOG.info(message);
+      return new SpecificationConfiguration(true);
+    }
+    return new SpecificationConfiguration(false);
   }
 
   protected void runAnalysis(SensorContext sensorContext, List<Check> activeChecks) {
@@ -320,22 +318,6 @@ public class TextAndSecretsSensor implements Sensor {
     // Temporarily exclude SonarLint context, as it's breaking integration tests, where sonar-plugin-api is retrieved from the classpath, and
     // not from the SQ-IDE library
     return !isSonarLintContext(sonarRuntime) && sonarRuntime.getApiVersion().isGreaterThanOrEqual(Analyzer.HIDDEN_FILES_SUPPORTED_API_VERSION);
-  }
-
-  protected static boolean enableAutomaticTestFileDetection(SensorContext sensorContext) {
-    var value = sensorContext.config().get(SONAR_TESTS_KEY).orElse("");
-    if (value.isBlank() && !isSonarLintContext(sensorContext.runtime())) {
-      var message = """
-        The property "%s" is not set. To improve the analysis accuracy, we categorize a file as a test file if any of the following is true:
-          * The filename starts with "test"
-          * The filename contains "test." or "tests."
-          * Any directory in the file path is named: "doc", "docs", "test", "tests", "mock" or "mocks"
-          * Any directory in the file path has a name ending in "test" or "tests"
-        """.formatted(SONAR_TESTS_KEY);
-      LOG.info(message);
-      return true;
-    }
-    return false;
   }
 
   /**

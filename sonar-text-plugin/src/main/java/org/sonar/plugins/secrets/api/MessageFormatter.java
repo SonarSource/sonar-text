@@ -16,17 +16,13 @@
  */
 package org.sonar.plugins.secrets.api;
 
-/**
- * The settings for {@link SpecificationBasedCheck} initialization.
- * @param automaticTestFileDetection enable the automatic test file detection.
- * @param messageFormatter formatter for secret issue messages.
- */
-public record SpecificationConfiguration(boolean automaticTestFileDetection, MessageFormatter messageFormatter) {
+import org.sonar.plugins.secrets.configuration.model.metadata.RuleMetadata;
 
-  public SpecificationConfiguration(boolean automaticTestFileDetection) {
-    this(automaticTestFileDetection, MessageFormatter.RULE_MESSAGE);
-  }
+@FunctionalInterface
+public interface MessageFormatter {
 
-  public static final SpecificationConfiguration AUTO_TEST_FILE_DETECTION_ENABLED = new SpecificationConfiguration(true);
-  public static final SpecificationConfiguration AUTO_TEST_FILE_DETECTION_DISABLED = new SpecificationConfiguration(false);
+  MessageFormatter RULE_MESSAGE = RuleMetadata::getMessage;
+  MessageFormatter RULE_NAME = RuleMetadata::getName;
+
+  String format(RuleMetadata metadata);
 }

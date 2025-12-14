@@ -88,9 +88,10 @@ public class SecretMatcher implements Matcher {
       .collect(toMap(NamedPostModule::getName, PostFilterFactory::createPredicate));
 
     var auxiliaryMatcher = AuxiliaryPatternMatcherFactory.build(rule.getDetection().getMatching());
+    var ruleMessage = specificationConfiguration.messageFormatter().format(rule.getMetadata());
     return new SecretMatcher(
       rule.getId(),
-      rule.getMetadata().getMessage(),
+      ruleMessage,
       rule.getSelectivity(),
       patternMatcher,
       auxiliaryMatcher,
