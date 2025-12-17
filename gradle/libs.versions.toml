@@ -26,6 +26,7 @@ awaitility = "4.3.0"
 ahocorasick = "0.6.3"
 tink = "1.20.0"
 wiremock = "3.13.2"
+ayza = "10.0.2"
 
 [libraries]
 sonar-analyzer-commons = { module = "org.sonarsource.analyzer-commons:sonar-analyzer-commons", version.ref = "sonar-commons" }
@@ -63,6 +64,7 @@ awaitility = { module = "org.awaitility:awaitility", version.ref = "awaitility"}
 ahocorasick = { module = "org.ahocorasick:ahocorasick", version.ref = "ahocorasick" }
 tink = { module = "com.google.crypto.tink:tink", version.ref = "tink" }
 wiremock = { module = "org.wiremock:wiremock", version.ref = "wiremock" }
+ayza-pem = { module = "io.github.hakky54:ayza-for-pem", version.ref = "ayza" }
 
 [plugins]
 buildconfig = { id = "com.github.gmazzo.buildconfig", version = "6.0.6" }
