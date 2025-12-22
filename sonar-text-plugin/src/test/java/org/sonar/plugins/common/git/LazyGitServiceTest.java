@@ -44,9 +44,9 @@ class LazyGitServiceTest {
   }
 
   @Test
-  void shouldInitializeServiceLazilyWhenRetrievingUntracked() {
+  void shouldInitializeServiceLazilyWhenRetrievingDirty() {
     verifyNoInteractions(mockSupplier);
-    lazyGitService.retrieveUntrackedFileNames();
+    lazyGitService.retrieveDirtyFileNames();
     verify(mockSupplier, times(1)).get();
   }
 
@@ -58,14 +58,14 @@ class LazyGitServiceTest {
   }
 
   @Test
-  void shouldDelegateRetrieveUntrackedFileNames() {
-    var expectedResult = new GitService.UntrackedFileNamesResult(true, Set.of("file1.txt"));
-    when(mockService.retrieveUntrackedFileNames()).thenReturn(expectedResult);
+  void shouldDelegateRetrieveDirtyFileNames() {
+    var expectedResult = new GitService.DirtyFileNamesResult(true, Set.of("file1.txt"));
+    when(mockService.retrieveDirtyFileNames()).thenReturn(expectedResult);
 
-    var result = lazyGitService.retrieveUntrackedFileNames();
+    var result = lazyGitService.retrieveDirtyFileNames();
 
     assertThat(result).isEqualTo(expectedResult);
-    verify(mockService, times(1)).retrieveUntrackedFileNames();
+    verify(mockService, times(1)).retrieveDirtyFileNames();
   }
 
   @Test
@@ -81,7 +81,7 @@ class LazyGitServiceTest {
 
   @Test
   void shouldCallCloseOnUnderlyingServiceWhenClosingAfterUsing() throws Exception {
-    lazyGitService.retrieveUntrackedFileNames();
+    lazyGitService.retrieveDirtyFileNames();
     lazyGitService.close();
     verify(mockService, times(1)).close();
   }
@@ -94,7 +94,7 @@ class LazyGitServiceTest {
 
   @Test
   void shouldReuseServiceInstance() {
-    lazyGitService.retrieveUntrackedFileNames();
+    lazyGitService.retrieveDirtyFileNames();
     lazyGitService.retrieveRepositoryMetadata();
     verify(mockSupplier, times(1)).get();
   }

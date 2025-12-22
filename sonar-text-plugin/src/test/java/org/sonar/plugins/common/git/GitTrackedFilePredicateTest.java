@@ -39,21 +39,21 @@ class GitTrackedFilePredicateTest {
 
   @ParameterizedTest
   @MethodSource
-  void shouldMatchSomeFilesWhenSomeUntracked(boolean isGitStatusSuccessful, Set<String> untrackedFiles, Map<String, Boolean> fileToExpectedMatch) {
+  void shouldMatchSomeFilesWhenSomeDirty(boolean isGitStatusSuccessful, Set<String> dirtyFiles, Map<String, Boolean> fileToExpectedMatch) {
     var gitService = mock(GitService.class);
-    when(gitService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(isGitStatusSuccessful, untrackedFiles));
+    when(gitService.retrieveDirtyFileNames()).thenReturn(new GitService.DirtyFileNamesResult(isGitStatusSuccessful, dirtyFiles));
     FilePredicate predicate = new GitTrackedFilePredicate(BASE_DIR, gitService, TextAndSecretsSensor.LANGUAGE_FILE_PREDICATE);
 
     for (Map.Entry<String, Boolean> entry : fileToExpectedMatch.entrySet()) {
-      String file = entry.getKey();
-      Boolean shouldMatch = entry.getValue();
+      var file = entry.getKey();
+      var shouldMatch = entry.getValue();
       assertThat(predicate.apply(inputFileFromPath(Path.of(file)))).isEqualTo(shouldMatch);
     }
   }
 
-  static Stream<Arguments> shouldMatchSomeFilesWhenSomeUntracked() {
-    String fooJavaPath = Path.of("src", "foo.java").toString();
-    String barJavaPath = Path.of("src", "bar.java").toString();
+  static Stream<Arguments> shouldMatchSomeFilesWhenSomeDirty() {
+    var fooJavaPath = Path.of("src", "foo.java").toString();
+    var barJavaPath = Path.of("src", "bar.java").toString();
     return Stream.of(
       Arguments.of(true, Set.of(), Map.of("a.txt", true)),
       Arguments.of(true, Set.of("a.txt"), Map.of("a.txt", false, "b.txt", true)),

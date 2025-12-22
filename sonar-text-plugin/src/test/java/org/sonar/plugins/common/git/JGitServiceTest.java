@@ -53,14 +53,14 @@ class JGitServiceTest {
   private static final Path BASE_DIR_PLACEHOLDER = Paths.get("fake-repo-dir");
 
   @Test
-  void shouldRetrieveNoUntrackedFilesFromCleanRepo(@TempDir Path tempDir) {
+  void shouldRetrieveNoDirtyFilesFromCleanRepo(@TempDir Path tempDir) {
     GitRepoBuilder.setupCleanRepo(tempDir);
 
     try (var gitService = new JGitService(tempDir)) {
-      var gitResult = gitService.retrieveUntrackedFileNames();
+      var gitResult = gitService.retrieveDirtyFileNames();
       assertThat(gitResult.isGitSuccessful()).isTrue();
       // We expect an empty file list, but in the CI there may be additional files related to gradle build
-      assertThat(gitResult.untrackedFileNames())
+      assertThat(gitResult.dirtyFileNames())
         .allMatch(f -> f.equals("build_number.txt") || f.equals("gradle.properties.bak") || f.equals("null/null/evaluated_project_version.txt"));
     }
   }
@@ -73,9 +73,9 @@ class JGitServiceTest {
     builder.build();
 
     try (var gitService = new JGitService(tempDir)) {
-      var gitResult = gitService.retrieveUntrackedFileNames();
+      var gitResult = gitService.retrieveDirtyFileNames();
       assertThat(gitResult.isGitSuccessful()).isTrue();
-      assertThat(gitResult.untrackedFileNames()).isEqualTo(untrackedFiles);
+      assertThat(gitResult.dirtyFileNames()).isEqualTo(untrackedFiles);
     }
   }
 
@@ -87,24 +87,40 @@ class JGitServiceTest {
       Arguments.of(Set.of("src/foo.java")));
   }
 
+  @Test
+  void shouldRetrieveModifiedFilesFromJGit(@TempDir Path tempDir) {
+    GitRepoBuilder.builder(tempDir)
+      .withTrackedFile("tracked.txt")
+      .withUnstagedModifiedFile("unstagedModified.txt")
+      .withStagedModifiedFile("stagedModified.txt")
+      .withStagedThenModifiedFile("stagedThenModified.txt")
+      .build();
+
+    try (var gitService = new JGitService(tempDir)) {
+      var gitResult = gitService.retrieveDirtyFileNames();
+      assertThat(gitResult.isGitSuccessful()).isTrue();
+      assertThat(gitResult.dirtyFileNames()).containsOnly("unstagedModified.txt", "stagedModified.txt", "stagedThenModified.txt");
+    }
+  }
+
   @ParameterizedTest
   @ValueSource(classes = {NoWorkTreeException.class, RuntimeException.class})
-  void shouldReturnUnsuccessfulStatusWhenRetrievingUntrackedAndJGitNotInit(Class<? extends Exception> exceptionClass) throws JGitSupplier.JGitInitializationException {
+  void shouldReturnUnsuccessfulStatusWhenRetrievingDirtyAndJGitNotInit(Class<? extends Exception> exceptionClass) throws JGitSupplier.JGitInitializationException {
     var expectedException = new JGitSupplier.JGitInitializationException(mock(exceptionClass));
     var jgitSupplier = mock(JGitSupplier.class);
     when(jgitSupplier.getGit(any())).thenThrow(expectedException);
     var gitService = new JGitService(BASE_DIR_PLACEHOLDER, jgitSupplier);
 
-    var gitResult = gitService.retrieveUntrackedFileNames();
+    var gitResult = gitService.retrieveDirtyFileNames();
     gitService.close();
 
-    assertThat(gitResult).isEqualTo(GitService.UntrackedFileNamesResult.UNSUCCESSFUL);
+    assertThat(gitResult).isEqualTo(GitService.DirtyFileNamesResult.UNSUCCESSFUL);
     assertThat(logTester.logs())
       .anySatisfy(line -> assertThat(line).contains("Exception querying Git data: " + expectedException.getMessage()));
   }
 
   @Test
-  void shouldReturnUnsuccessfulStatusWhenRetrievingUntrackedFails() throws GitAPIException {
+  void shouldReturnUnsuccessfulStatusWhenRetrievingDirtyFails() throws GitAPIException {
     var git = mock(Git.class);
     var status = mock(StatusCommand.class);
     when(git.status()).thenReturn(status);
@@ -115,10 +131,10 @@ class JGitServiceTest {
     when(jgitSupplier.getGit(any())).thenReturn(git);
 
     var gitService = new JGitService(BASE_DIR_PLACEHOLDER, jgitSupplier);
-    var gitResult = gitService.retrieveUntrackedFileNames();
+    var gitResult = gitService.retrieveDirtyFileNames();
     gitService.close();
 
-    assertThat(gitResult).isEqualTo(GitService.UntrackedFileNamesResult.UNSUCCESSFUL);
+    assertThat(gitResult).isEqualTo(GitService.DirtyFileNamesResult.UNSUCCESSFUL);
     assertThat(logTester.logs())
       .anySatisfy(line -> assertThat(line).contains("Exception querying Git data: " + expectedException.getMessage()));
   }

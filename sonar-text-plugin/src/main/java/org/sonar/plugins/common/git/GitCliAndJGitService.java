@@ -36,13 +36,13 @@ public class GitCliAndJGitService extends GitService {
   }
 
   @Override
-  public UntrackedFileNamesResult retrieveUntrackedFileNames() {
+  public DirtyFileNamesResult retrieveDirtyFileNames() {
     if (gitCliService.isAvailable()) {
-      LOG.info("Using Git CLI to retrieve untracked files");
-      return gitCliService.retrieveUntrackedFileNames();
+      LOG.info("Using Git CLI to retrieve dirty files");
+      return gitCliService.retrieveDirtyFileNames();
     }
-    LOG.info("Using JGit to retrieve untracked files");
-    return jGitService.retrieveUntrackedFileNames();
+    LOG.info("Using JGit to retrieve dirty files");
+    return jGitService.retrieveDirtyFileNames();
   }
 
   @Override

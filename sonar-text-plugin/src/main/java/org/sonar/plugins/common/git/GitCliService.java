@@ -32,7 +32,11 @@ import org.sonar.plugins.common.git.utils.ProcessBuilderWrapper;
 
 public final class GitCliService extends GitService {
   private static final Logger LOG = LoggerFactory.getLogger(GitCliService.class);
-  private static final String GIT_PORCELAIN_UNTRACKED_FILE_MARKER = "??";
+  private static final String GIT_PORCELAIN_UNTRACKED_MARKER = "??";
+  private static final String GIT_PORCELAIN_MODIFIED_UNSTAGED_MARKER = " M";
+  private static final String GIT_PORCELAIN_MODIFIED_STAGED_MARKER = "M ";
+  private static final String GIT_PORCELAIN_MODIFIED_BOTH_MARKER = "MM";
+  private static final int GIT_PORCELAIN_MARKER_LENGTH = 2;
   private static final String WHERE_EXE_LOCATION = System.getenv("systemroot") + "\\System32\\where.exe";
   private String gitCommand = "git";
   private boolean available = false;
@@ -71,27 +75,34 @@ public final class GitCliService extends GitService {
   }
 
   @Override
-  public UntrackedFileNamesResult retrieveUntrackedFileNames() {
+  public DirtyFileNamesResult retrieveDirtyFileNames() {
     if (!available) {
-      return UntrackedFileNamesResult.UNSUCCESSFUL;
+      return DirtyFileNamesResult.UNSUCCESSFUL;
     }
-    Set<String> untrackedFiles = ConcurrentHashMap.newKeySet();
+    Set<String> dirtyFiles = ConcurrentHashMap.newKeySet();
 
     try {
       var statusCommand = List.of(gitCommand, "-C", baseDir.toAbsolutePath().toString(), "status", "--untracked-files=all", "--porcelain");
       var status = execute(statusCommand, (String line) -> {
-        if (line.startsWith(GIT_PORCELAIN_UNTRACKED_FILE_MARKER)) {
-          untrackedFiles.add(line.substring(GIT_PORCELAIN_UNTRACKED_FILE_MARKER.length()).trim());
+        if (hasDirtyFileMarker(line)) {
+          dirtyFiles.add(line.substring(GIT_PORCELAIN_MARKER_LENGTH).trim());
         }
       });
       if (status != ProcessBuilderWrapper.Status.SUCCESS) {
-        return UntrackedFileNamesResult.UNSUCCESSFUL;
+        return DirtyFileNamesResult.UNSUCCESSFUL;
       }
     } catch (IOException e) {
-      return UntrackedFileNamesResult.UNSUCCESSFUL;
+      return DirtyFileNamesResult.UNSUCCESSFUL;
     }
 
-    return new UntrackedFileNamesResult(true, untrackedFiles);
+    return new DirtyFileNamesResult(true, dirtyFiles);
+  }
+
+  private static boolean hasDirtyFileMarker(String porcelainLine) {
+    return porcelainLine.startsWith(GIT_PORCELAIN_UNTRACKED_MARKER) ||
+      porcelainLine.startsWith(GIT_PORCELAIN_MODIFIED_UNSTAGED_MARKER) ||
+      porcelainLine.startsWith(GIT_PORCELAIN_MODIFIED_STAGED_MARKER) ||
+      porcelainLine.startsWith(GIT_PORCELAIN_MODIFIED_BOTH_MARKER);
   }
 
   @Override

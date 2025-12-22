@@ -53,7 +53,7 @@ class AbstractBinaryFileCheckTest {
   @Test
   void shouldReturnUnsuccessfulResultWhenRetrievingUntrackedAndGitServiceNotInitialized() {
     var stubCheck = new StubBinaryFileCheck();
-    assertThat(stubCheck.gitService.retrieveUntrackedFileNames()).isEqualTo(GitService.UntrackedFileNamesResult.UNSUCCESSFUL);
+    assertThat(stubCheck.gitService.retrieveDirtyFileNames()).isEqualTo(GitService.DirtyFileNamesResult.UNSUCCESSFUL);
     assertThat(logTester.logs(Level.DEBUG))
       .anySatisfy(line -> assertThat(line).contains("Git service has not been initialized, returning unsuccessful result"));
   }

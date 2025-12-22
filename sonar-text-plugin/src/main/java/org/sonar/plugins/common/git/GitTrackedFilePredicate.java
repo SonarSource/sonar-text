@@ -29,14 +29,14 @@ import org.sonar.api.batch.fs.InputFile;
 public class GitTrackedFilePredicate implements FilePredicate {
   private static final Logger LOG = LoggerFactory.getLogger(GitTrackedFilePredicate.class);
   private final Set<String> ignoredFileNames = new HashSet<>();
-  private final Set<String> untrackedFileNames;
+  private final Set<String> dirtyFileNames;
   private final boolean isGitStatusSuccessful;
   private final Path projectRootPath;
   private final FilePredicate defaultFilePredicate;
 
   public GitTrackedFilePredicate(Path baseDir, GitService gitService, FilePredicate defaultFilePredicate) {
-    var gitResult = gitService.retrieveUntrackedFileNames();
-    this.untrackedFileNames = gitResult.untrackedFileNames();
+    var gitResult = gitService.retrieveDirtyFileNames();
+    this.dirtyFileNames = gitResult.dirtyFileNames();
     this.isGitStatusSuccessful = gitResult.isGitSuccessful();
     this.projectRootPath = baseDir;
     if (!isGitStatusSuccessful) {
@@ -62,7 +62,7 @@ public class GitTrackedFilePredicate implements FilePredicate {
       LOG.debug("Unable to resolve git status for {}, falling back to analyzing the file if it's associated with a language", inputFile, e);
       return defaultFilePredicate.apply(inputFile);
     }
-    var result = !untrackedFileNames.contains(relativePath);
+    var result = !dirtyFileNames.contains(relativePath);
     if (!result) {
       ignoredFileNames.add(relativePath);
     }
@@ -77,12 +77,12 @@ public class GitTrackedFilePredicate implements FilePredicate {
     var numberOfIgnoredFiles = ignoredFileNames.size();
     if (numberOfIgnoredFiles > 0) {
       if (numberOfIgnoredFiles == 1) {
-        LOG.info("1 file is ignored because it is untracked by git");
+        LOG.info("1 file is ignored because it is untracked by git or has been modified");
       } else {
-        LOG.info("{} files are ignored because they are untracked by git", numberOfIgnoredFiles);
+        LOG.info("{} files are ignored because they are untracked by git or has been modified", numberOfIgnoredFiles);
       }
       var fileList = ignoredFileNames.stream().sorted().collect(Collectors.joining("\n\t"));
-      LOG.debug("Files untracked by git:\n\t{}", fileList);
+      LOG.debug("Files untracked by git or modified:\n\t{}", fileList);
     }
   }
 }

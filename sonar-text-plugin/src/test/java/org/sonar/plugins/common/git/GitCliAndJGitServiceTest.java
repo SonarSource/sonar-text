@@ -36,14 +36,14 @@ class GitCliAndJGitServiceTest {
   private static final Path BASE_DIR_PLACEHOLDER = Paths.get("fake-repo-dir");
 
   @Test
-  void shouldRetrieveNoUntrackedFilesFromCleanRepo(@TempDir Path tempDir) {
+  void shouldRetrieveNoDirtyFilesFromCleanRepo(@TempDir Path tempDir) {
     GitRepoBuilder.setupCleanRepo(tempDir);
 
     try (var gitService = new GitCliAndJGitService(tempDir)) {
-      var gitResult = gitService.retrieveUntrackedFileNames();
+      var gitResult = gitService.retrieveDirtyFileNames();
       assertThat(gitResult.isGitSuccessful()).isTrue();
       // We expect an empty file list, but in the CI there may be additional files related to gradle build
-      assertThat(gitResult.untrackedFileNames())
+      assertThat(gitResult.dirtyFileNames())
         .allMatch(f -> f.equals("build_number.txt") || f.equals("gradle.properties.bak") || f.equals("null/null/evaluated_project_version.txt"));
     }
   }
@@ -56,38 +56,38 @@ class GitCliAndJGitServiceTest {
       .build();
 
     try (var gitService = new GitCliAndJGitService(tempDir)) {
-      var gitResult = gitService.retrieveUntrackedFileNames();
+      var gitResult = gitService.retrieveDirtyFileNames();
       assertThat(gitResult.isGitSuccessful()).isTrue();
-      assertThat(gitResult.untrackedFileNames()).containsExactlyInAnyOrder("untracked1.txt", "untracked2.txt");
+      assertThat(gitResult.dirtyFileNames()).containsExactlyInAnyOrder("untracked1.txt", "untracked2.txt");
     }
   }
 
   @Test
-  void shouldRetrieveUntrackedFromCliWhenAvailable() {
+  void shouldRetrieveDirtyFromCliWhenAvailable() {
     var gitCliService = spy(GitCliService.createOsSpecificInstance(BASE_DIR_PLACEHOLDER));
-    when(gitCliService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of("a.txt")));
+    when(gitCliService.retrieveDirtyFileNames()).thenReturn(new GitService.DirtyFileNamesResult(true, Set.of("a.txt")));
     var jGitService = new JGitService(BASE_DIR_PLACEHOLDER);
     try (var gitService = new GitCliAndJGitService(gitCliService, jGitService)) {
-      var gitResult = gitService.retrieveUntrackedFileNames();
+      var gitResult = gitService.retrieveDirtyFileNames();
       assertThat(logTester.logs())
-        .anySatisfy(line -> assertThat(line).contains("Using Git CLI to retrieve untracked files"));
+        .anySatisfy(line -> assertThat(line).contains("Using Git CLI to retrieve dirty files"));
       assertThat(gitResult.isGitSuccessful()).isTrue();
-      assertThat(gitResult.untrackedFileNames()).contains("a.txt");
+      assertThat(gitResult.dirtyFileNames()).contains("a.txt");
     }
   }
 
   @Test
-  void shouldRetrieveUntrackedFromJGitWhenCliNotAvailable() {
+  void shouldRetrieveDirtyFromJGitWhenCliNotAvailable() {
     var gitCliService = spy(GitCliService.createOsSpecificInstance(BASE_DIR_PLACEHOLDER));
     when(gitCliService.isAvailable()).thenReturn(false);
     var jGitService = spy(new JGitService(BASE_DIR_PLACEHOLDER));
-    when(jGitService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of("a.txt")));
+    when(jGitService.retrieveDirtyFileNames()).thenReturn(new GitService.DirtyFileNamesResult(true, Set.of("a.txt")));
     try (var gitService = new GitCliAndJGitService(gitCliService, jGitService)) {
-      var gitResult = gitService.retrieveUntrackedFileNames();
+      var gitResult = gitService.retrieveDirtyFileNames();
       assertThat(logTester.logs())
-        .anySatisfy(line -> assertThat(line).contains("Using JGit to retrieve untracked files"));
+        .anySatisfy(line -> assertThat(line).contains("Using JGit to retrieve dirty files"));
       assertThat(gitResult.isGitSuccessful()).isTrue();
-      assertThat(gitResult.untrackedFileNames()).contains("a.txt");
+      assertThat(gitResult.dirtyFileNames()).contains("a.txt");
     }
   }
 

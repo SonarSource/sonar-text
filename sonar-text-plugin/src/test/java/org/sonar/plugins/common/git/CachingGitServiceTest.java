@@ -40,15 +40,15 @@ class CachingGitServiceTest {
   }
 
   @Test
-  void shouldRetrieveUntrackedFileNamesOnlyOnce() {
-    var expectedResult = new GitService.UntrackedFileNamesResult(true, Set.of("file1.txt"));
-    when(underlyingService.retrieveUntrackedFileNames()).thenReturn(expectedResult);
+  void shouldRetrieveDirtyFileNamesOnlyOnce() {
+    var expectedResult = new GitService.DirtyFileNamesResult(true, Set.of("file1.txt"));
+    when(underlyingService.retrieveDirtyFileNames()).thenReturn(expectedResult);
 
-    var result1 = cachingGitService.retrieveUntrackedFileNames();
-    var result2 = cachingGitService.retrieveUntrackedFileNames();
+    var result1 = cachingGitService.retrieveDirtyFileNames();
+    var result2 = cachingGitService.retrieveDirtyFileNames();
 
     assertThat(result1).isSameAs(result2).isEqualTo(expectedResult);
-    verify(underlyingService, times(1)).retrieveUntrackedFileNames();
+    verify(underlyingService, times(1)).retrieveDirtyFileNames();
   }
 
   @Test
@@ -70,10 +70,10 @@ class CachingGitServiceTest {
   }
 
   @Test
-  void shouldBeThreadSafeWhenRetrievingUntrackedFileNames() throws InterruptedException {
-    when(underlyingService.retrieveUntrackedFileNames()).thenReturn(new GitService.UntrackedFileNamesResult(true, Set.of("file1.txt")));
-    runConcurrently(cachingGitService::retrieveUntrackedFileNames);
-    verify(underlyingService, times(1)).retrieveUntrackedFileNames();
+  void shouldBeThreadSafeWhenRetrievingDirtyFileNames() throws InterruptedException {
+    when(underlyingService.retrieveDirtyFileNames()).thenReturn(new GitService.DirtyFileNamesResult(true, Set.of("file1.txt")));
+    runConcurrently(cachingGitService::retrieveDirtyFileNames);
+    verify(underlyingService, times(1)).retrieveDirtyFileNames();
   }
 
   @Test

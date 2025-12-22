@@ -26,7 +26,7 @@ public class CachingGitService extends GitService {
   private final GitService underlyingService;
 
   @Nullable
-  private GitService.UntrackedFileNamesResult untrackedFileNamesResult;
+  private GitService.DirtyFileNamesResult dirtyFileNamesResult;
 
   @Nullable
   private GitService.RepositoryMetadataResult repositoryMetadataResult;
@@ -36,11 +36,11 @@ public class CachingGitService extends GitService {
   }
 
   @Override
-  public synchronized GitService.UntrackedFileNamesResult retrieveUntrackedFileNames() {
-    if (untrackedFileNamesResult == null) {
-      untrackedFileNamesResult = underlyingService.retrieveUntrackedFileNames();
+  public synchronized GitService.DirtyFileNamesResult retrieveDirtyFileNames() {
+    if (dirtyFileNamesResult == null) {
+      dirtyFileNamesResult = underlyingService.retrieveDirtyFileNames();
     }
-    return untrackedFileNamesResult;
+    return dirtyFileNamesResult;
   }
 
   @Override

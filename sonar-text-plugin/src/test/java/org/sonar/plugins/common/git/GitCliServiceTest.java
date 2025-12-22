@@ -71,75 +71,78 @@ class GitCliServiceTest {
   }
 
   @Test
-  void shouldRetrieveNoUntrackedFilesFromCleanRepo(@TempDir Path tempDir) {
+  void shouldRetrieveNoDirtyFilesFromCleanRepo(@TempDir Path tempDir) {
     GitRepoBuilder.setupCleanRepo(tempDir);
 
     try (var gitService = GitCliService.createOsSpecificInstance(tempDir)) {
       if (!gitService.isAvailable()) {
         throw new TestAbortedException("Git CLI is not available in the test environment");
       }
-      var gitResult = gitService.retrieveUntrackedFileNames();
+      var gitResult = gitService.retrieveDirtyFileNames();
       assertThat(gitResult.isGitSuccessful()).isTrue();
-      assertThat(gitResult.untrackedFileNames()).isEmpty();
+      assertThat(gitResult.dirtyFileNames()).isEmpty();
     }
   }
 
   @Test
-  void shouldRetrieveUntrackedFiles(@TempDir Path tempDir) {
+  void shouldRetrieveDirtyFiles(@TempDir Path tempDir) {
     GitRepoBuilder.builder(tempDir)
       .withTrackedFile("tracked.txt")
       .withUntrackedFile("untracked.txt", "untracked2")
+      .withUnstagedModifiedFile("unstagedModified.txt")
+      .withStagedModifiedFile("stagedModified.txt")
+      .withStagedThenModifiedFile("stagedThenModified.txt")
       .build();
 
     try (var gitService = GitCliService.createOsSpecificInstance(tempDir)) {
       if (!gitService.isAvailable()) {
         throw new TestAbortedException("Git CLI is not available in the test environment");
       }
-      var gitResult = gitService.retrieveUntrackedFileNames();
+      var gitResult = gitService.retrieveDirtyFileNames();
       assertThat(gitResult.isGitSuccessful()).isTrue();
-      assertThat(gitResult.untrackedFileNames())
-        .containsOnly("untracked.txt", "untracked2");
+      assertThat(gitResult.dirtyFileNames())
+        .containsOnly("untracked.txt", "untracked2", "unstagedModified.txt", "stagedModified.txt", "stagedThenModified.txt");
     }
   }
 
   @Test
-  void shouldReturnUnsuccessfulStatusWhenRetrievingUntrackedAndCliNotAvailable() throws IOException {
+  void shouldReturnUnsuccessfulStatusWhenRetrievingDirtyAndCliNotAvailable() throws IOException {
     var wrapper = mock(ProcessBuilderWrapper.class);
     when(wrapper.execute(any(), any())).thenReturn(ProcessBuilderWrapper.Status.FAILURE);
     var gitService = GitCliService.createOsSpecificInstance(BASE_DIR_PLACEHOLDER, wrapper);
 
-    var result = gitService.retrieveUntrackedFileNames();
+    var result = gitService.retrieveDirtyFileNames();
     gitService.close();
 
-    assertThat(result).isEqualTo(GitService.UntrackedFileNamesResult.UNSUCCESSFUL);
+    assertThat(result).isEqualTo(GitService.DirtyFileNamesResult.UNSUCCESSFUL);
     assertThatDebugLogsAreEmptyOrWindowsGitExeNotFound();
   }
 
   @Test
-  void shouldReturnUnsuccessfulStatusWhenRetrievingUntrackedAndGitStatusFails() throws IOException {
+  void shouldReturnUnsuccessfulStatusWhenRetrievingDirtyAndGitStatusFails() throws IOException {
     var wrapper = mock(ProcessBuilderWrapper.class);
     when(wrapper.execute(any(), any())).thenReturn(ProcessBuilderWrapper.Status.SUCCESS);
     var gitService = spy(GitCliService.createOsSpecificInstance(BASE_DIR_PLACEHOLDER, wrapper));
 
     when(gitService.execute(any(), any())).thenReturn(ProcessBuilderWrapper.Status.FAILURE);
-    var result = gitService.retrieveUntrackedFileNames();
+    var result = gitService.retrieveDirtyFileNames();
     gitService.close();
 
-    assertThat(result).isEqualTo(GitService.UntrackedFileNamesResult.UNSUCCESSFUL);
+    assertThat(result).isEqualTo(GitService.DirtyFileNamesResult.UNSUCCESSFUL);
     assertThatDebugLogsAreEmptyOrWindowsGitExeNotFound();
   }
 
   @Test
-  void shouldReturnUnsuccessfulStatusWhenRetrievingUntrackedAndGitStatusCrashes() throws IOException {
+  void shouldReturnUnsuccessfulStatusWhenRetrievingDirtyAndGitStatusCrashes() throws IOException {
     var wrapper = mock(ProcessBuilderWrapper.class);
     when(wrapper.execute(any(), any())).thenReturn(ProcessBuilderWrapper.Status.SUCCESS);
     var gitService = spy(GitCliService.createOsSpecificInstance(BASE_DIR_PLACEHOLDER, wrapper));
 
     when(gitService.execute(any(), any())).thenThrow(new IOException("boom"));
-    var result = gitService.retrieveUntrackedFileNames();
+    var result = gitService.retrieveDirtyFileNames();
     gitService.close();
 
-    assertThat(result).isEqualTo(GitService.UntrackedFileNamesResult.UNSUCCESSFUL);
+    assertThat(result).isEqualTo(GitService.DirtyFileNamesResult.UNSUCCESSFUL);
     assertThatDebugLogsAreEmptyOrWindowsGitExeNotFound();
   }
 

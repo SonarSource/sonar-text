@@ -17,6 +17,7 @@
 package org.sonar.plugins.common.git;
 
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.RemoteConfig;
@@ -40,13 +41,17 @@ public class JGitService extends GitService {
   }
 
   @Override
-  public UntrackedFileNamesResult retrieveUntrackedFileNames() {
+  public DirtyFileNamesResult retrieveDirtyFileNames() {
     try (var git = jGitSupplier.getGit(baseDir)) {
       var status = git.status().call();
-      return new UntrackedFileNamesResult(true, status.getUntracked());
+      var dirtyFiles = new HashSet<String>();
+      dirtyFiles.addAll(status.getUntracked());
+      dirtyFiles.addAll(status.getModified());
+      dirtyFiles.addAll(status.getChanged());
+      return new DirtyFileNamesResult(true, dirtyFiles);
     } catch (JGitSupplier.JGitInitializationException | GitAPIException e) {
       LOG.debug("Exception querying Git data: {}", e.getMessage());
-      return UntrackedFileNamesResult.UNSUCCESSFUL;
+      return DirtyFileNamesResult.UNSUCCESSFUL;
     }
   }
 

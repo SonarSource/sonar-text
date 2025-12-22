@@ -29,9 +29,9 @@ public final class NullGitService extends GitService {
   }
 
   @Override
-  public GitService.UntrackedFileNamesResult retrieveUntrackedFileNames() {
+  public GitService.DirtyFileNamesResult retrieveDirtyFileNames() {
     logServiceNotInitialized();
-    return GitService.UntrackedFileNamesResult.UNSUCCESSFUL;
+    return GitService.DirtyFileNamesResult.UNSUCCESSFUL;
   }
 
   @Override

@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 public abstract class GitService implements AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(GitService.class);
 
-  public abstract UntrackedFileNamesResult retrieveUntrackedFileNames();
+  public abstract DirtyFileNamesResult retrieveDirtyFileNames();
 
   public abstract RepositoryMetadataResult retrieveRepositoryMetadata();
 
@@ -60,8 +60,8 @@ public abstract class GitService implements AutoCloseable {
     }
   }
 
-  public record UntrackedFileNamesResult(boolean isGitSuccessful, Set<String> untrackedFileNames) {
-    public static final UntrackedFileNamesResult UNSUCCESSFUL = new UntrackedFileNamesResult(false, Set.of());
+  public record DirtyFileNamesResult(boolean isGitSuccessful, Set<String> dirtyFileNames) {
+    public static final DirtyFileNamesResult UNSUCCESSFUL = new DirtyFileNamesResult(false, Set.of());
   }
 
   public record RepositoryMetadataResult(boolean isGitSuccessful, String projectName, String organizationName) {

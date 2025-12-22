@@ -34,8 +34,8 @@ public class LazyGitService extends GitService {
   }
 
   @Override
-  public UntrackedFileNamesResult retrieveUntrackedFileNames() {
-    return getService().retrieveUntrackedFileNames();
+  public DirtyFileNamesResult retrieveDirtyFileNames() {
+    return getService().retrieveDirtyFileNames();
   }
 
   @Override
