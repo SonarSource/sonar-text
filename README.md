@@ -136,7 +136,7 @@ There is also a way of running this check from the command line.
 
 # License
 
-Copyright 2021-2025 SonarSource.
+Copyright 2021-2026 SonarSource.
 
 SonarQube analyzers released after November 29, 2024, including patch fixes for prior versions,
 are published under the [Sonar Source-Available License Version 1 (SSALv1)](LICENSE.txt).
