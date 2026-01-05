@@ -8,7 +8,7 @@ sonar-java = "8.22.0.41895"
 sonar-scanner-gradle = "7.2.2.6593"
 sonar-orchestrator = "6.0.3.3907"
 sonar-license-api = "3.4"
-sonar-lint = "10.40.0.84108"
+sonar-lint = "10.41.0.84136"
 slf4j = "2.0.17"
 logback = "1.5.23"
 jackson = "2.20.1"
@@ -26,7 +26,7 @@ awaitility = "4.3.0"
 ahocorasick = "0.6.3"
 tink = "1.20.0"
 wiremock = "3.13.2"
-ayza = "10.0.2"
+ayza = "10.0.3"
 
 [libraries]
 sonar-analyzer-commons = { module = "org.sonarsource.analyzer-commons:sonar-analyzer-commons", version.ref = "sonar-commons" }
