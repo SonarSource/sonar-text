@@ -1,4 +1,2 @@
 [tools]
 java = "21.0"
-gradle = "9.2.1"
-
