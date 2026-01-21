@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,12 @@ import org.sonar.plugins.common.InputFileContext;
  */
 public final class AutomaticTestFileFilter {
   private static final Logger LOG = LoggerFactory.getLogger(AutomaticTestFileFilter.class);
+
+  private static final Set<String> FILENAME_PREFIXES = Set.of("test");
+  private static final Set<String> FILENAME_CONTAINS = Set.of("test.", "tests.");
+  private static final Set<String> FILENAME_SUFFIXES = Set.of(
+    ".spec.js", ".spec.jsx", ".spec.ts", ".spec.tsx",
+    "_spec.rb", "_test.rb");
 
   private AutomaticTestFileFilter() {
   }
@@ -43,8 +50,9 @@ public final class AutomaticTestFileFilter {
 
   private static boolean isFilenameTest(InputFileContext inputFileContext) {
     var filename = inputFileContext.getInputFile().filename().toLowerCase(Locale.ROOT);
-    return filename.startsWith("test") || filename.contains("test.") || filename.contains("tests.") ||
-      filename.endsWith(".spec.js") || filename.endsWith(".spec.jsx") || filename.endsWith(".spec.ts") || filename.endsWith(".spec.tsx");
+    return FILENAME_PREFIXES.stream().anyMatch(filename::startsWith) ||
+      FILENAME_CONTAINS.stream().anyMatch(filename::contains) ||
+      FILENAME_SUFFIXES.stream().anyMatch(filename::endsWith);
   }
 
   private static boolean isFileInDocOrTestDirectory(InputFileContext inputFileContext) {

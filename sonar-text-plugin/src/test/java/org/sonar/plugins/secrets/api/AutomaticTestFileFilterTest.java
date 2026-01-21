@@ -108,6 +108,12 @@ class AutomaticTestFileFilterTest {
       arguments("Component.spec.tsx", false),
       arguments("src/main/component.spec.js", false),
       arguments("feature/user-auth/login.spec.ts", false),
+      // Ruby spec files that should be detected as tests
+      arguments("User_spec.rb", false),
+      arguments("spec/models/user_spec.rb", false),
+      // Ruby test files that should be detected as tests
+      arguments("User_test.rb", false),
+      arguments("test/models/user_test.rb", false),
       // Files with "spec" that should NOT be detected as tests
       arguments("specification.js", true),
       arguments("inspect.ts", true),
@@ -182,6 +188,12 @@ class AutomaticTestFileFilterTest {
       arguments("Component.spec.tsx", false),
       arguments("src/main/component.spec.js", false),
       arguments("feature/user-auth/login.spec.ts", false),
+      // Ruby spec files that should be detected as tests
+      arguments("User_spec.rb", false),
+      arguments("spec/models/user_spec.rb", false),
+      // Ruby test files that should be detected as tests
+      arguments("User_test.rb", false),
+      arguments("test/models/user_test.rb", false),
       // Files with "spec" that should NOT be detected as tests
       arguments("specification.js", true),
       arguments("inspect.ts", true),
