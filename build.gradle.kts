@@ -45,7 +45,7 @@ spotless {
     kotlin {
         ktlint().setEditorConfigPath("$rootDir/build-logic/common/.editorconfig")
         target("/build-logic/text/src/**/*.kt")
-        licenseHeaderFile(rootProject.file("LICENSE_HEADER")).updateYearWithLatest(true)
+        licenseHeaderFile(rootProject.file("LICENSE_HEADER"))
     }
 }
 
