@@ -42,6 +42,10 @@ fun convertYamlToSmile(
     val yamlMapper = ObjectMapper(YAMLFactory())
     val smileMapper = ObjectMapper(SmileFactory())
 
-    val jsonNode = yamlMapper.readTree(yamlFile)
+    val jsonNode = try {
+        yamlMapper.readTree(yamlFile)
+    } catch (e: Exception) {
+        throw IllegalStateException("Unable to parse YAML file: ${yamlFile.path}", e)
+    }
     smileMapper.writeValue(smileFile, jsonNode)
 }

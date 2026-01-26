@@ -16,9 +16,12 @@
  */
 package org.sonar.plugins.secrets.configuration.model;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel;
 import org.sonar.plugins.secrets.configuration.model.matching.Detection;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.FileFilter;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 import org.sonar.plugins.secrets.configuration.model.metadata.ProviderMetadata;
 import org.sonar.plugins.secrets.configuration.model.metadata.RuleMetadata;
 
@@ -72,5 +75,19 @@ class SpecificationTest {
     assertThat(ruleDetection.getMatching()).isNull();
     assertThat(ruleDetection.getPre()).isNull();
     assertThat(ruleDetection.getPost()).isNull();
+  }
+
+  @Test
+  void shouldMergeProviderPreModuleWithRulePreModule() {
+    var specification = ReferenceTestModel.constructReferenceSpecification();
+    var preModule = new PreModule();
+    var rejectFilter = new FileFilter();
+    rejectFilter.setExt(List.of(".log"));
+    preModule.setReject(rejectFilter);
+    specification.getProvider().getDetection().setPre(preModule);
+
+    var ruleDetection = specification.getProvider().getRules().get(0).getDetection();
+
+    assertThat(ruleDetection.getPre().getReject().getExt()).containsExactly(".log", ".docker");
   }
 }

@@ -29,12 +29,12 @@ class PreModuleTest {
 
   @Test
   void shouldDeserializeToEmptyCollection() throws JsonProcessingException {
-    String input = """
+    var input = """
       include:
         content: []
         paths: null
       """;
-    PreModule preModule = MAPPER.readValue(input, PreModule.class);
+    var preModule = constructPreModule(input);
 
     assertThat(preModule.getReject()).isNull();
     assertThat(preModule.getInclude()).isNotNull();
@@ -42,5 +42,90 @@ class PreModuleTest {
     assertThat(preModule.getInclude().getContent()).isEmpty();
     assertThat(preModule.getInclude().getPaths()).isEmpty();
     assertThat(preModule.getInclude().getExt()).isEmpty();
+  }
+
+  @Test
+  void shouldMergeWhenBothAreNull() {
+    var result = PreModule.merge(null, null);
+    assertThat(result).isNull();
+  }
+
+  @Test
+  void shouldReturnOverrideWhenBaseIsNull() throws JsonProcessingException {
+    var override = constructPreModule("""
+      reject:
+        paths:
+          - path1
+      """);
+
+    var result = PreModule.merge(null, override);
+
+    assertThat(result).isSameAs(override);
+  }
+
+  @Test
+  void shouldReturnBaseWhenOverrideIsNull() throws JsonProcessingException {
+    var base = constructPreModule("""
+      reject:
+        ext:
+          - txt
+      """);
+
+    var result = PreModule.merge(base, null);
+
+    assertThat(result).isSameAs(base);
+  }
+
+  @Test
+  void shouldMergeBothIncludeAndRejectFilters() throws JsonProcessingException {
+    var base = MAPPER.readValue("""
+      include:
+        paths:
+          - path1
+        ext:
+          - txt
+      reject:
+        content:
+          - not-relevant
+      """, PreModule.class);
+
+    var override = MAPPER.readValue("""
+      include:
+        content:
+          - test
+        paths:
+          - path2
+      reject:
+        ext:
+          - log
+      """, PreModule.class);
+
+    var result = PreModule.merge(base, override);
+
+    assertThat(result.getInclude()).isNotNull();
+    assertThat(result.getInclude().getPaths()).containsExactly("path1", "path2");
+    assertThat(result.getInclude().getExt()).containsExactly("txt");
+    assertThat(result.getInclude().getContent()).containsExactly("test");
+
+    assertThat(result.getReject()).isNotNull();
+    assertThat(result.getReject().getPaths()).isEmpty();
+    assertThat(result.getReject().getContent()).containsExactly("not-relevant");
+    assertThat(result.getReject().getExt()).containsExactly("log");
+  }
+
+  @Test
+  void shouldMergeEmptyPreModules() {
+    var base = new PreModule();
+    var override = new PreModule();
+
+    var result = PreModule.merge(base, override);
+
+    assertThat(result).isNotNull();
+    assertThat(result.getInclude()).isNull();
+    assertThat(result.getReject()).isNull();
+  }
+
+  private static PreModule constructPreModule(String spec) throws JsonProcessingException {
+    return MAPPER.readValue(spec, PreModule.class);
   }
 }

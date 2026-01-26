@@ -81,8 +81,13 @@ provider:
           containsSecret: false
 ```
 
+When defining pre-filters both on provider and rule level, they are merged with rule-level pre-filter taking precedence over provider-level pre-filter.
+
 ### Issue location
-By default, the entire region matched by `matching.pattern` is highlighted as an issue. If pattern contains capturing groups (doesn't matter if they are named or not), the first capturing group is used to highlight the issue. So, if you are adding capturing groups (for example, to add a post filter for a named group representing part of a secret), make sure to also surround the entire pattern with parentheses. Otherwise, only the first capturing group will be highlighted.
+By default, the entire region matched by `matching.pattern` is highlighted as an issue.
+If pattern contains capturing groups (doesn't matter if they are named or not), the first capturing group is used to highlight the issue.
+So, if you are adding capturing groups (for example, to add a post filter for a named group representing part of a secret), make sure to also surround the entire pattern with parentheses.
+Otherwise, only the first capturing group will be highlighted.
 
 ### Reusing common blocks in secret specification
 You can reuse common blocks in the secret specification files. Common blocks are placed in separate files in the `common` directory of the `plugins/secrets` directory. A common block is represented as `${common/fileName.yaml}`; it will be substituted with the content of the file during build time. The block will have the same indentation as the `${common/fileName.yaml}` line.

@@ -47,4 +47,16 @@ public class PreModule {
     this.reject = reject;
   }
 
+  public static PreModule merge(@Nullable PreModule base, @Nullable PreModule override) {
+    if (base == null) {
+      return override;
+    } else if (override == null) {
+      return base;
+    }
+
+    var merged = new PreModule();
+    merged.include = FileFilter.merge(base.include, override.include);
+    merged.reject = FileFilter.merge(base.reject, override.reject);
+    return merged;
+  }
 }

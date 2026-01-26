@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
+import org.sonar.plugins.secrets.configuration.utils.SpecificationUtils;
 
 public class FileFilter {
   @JsonSetter(nulls = Nulls.SKIP)
@@ -51,5 +53,19 @@ public class FileFilter {
 
   public void setContent(List<String> content) {
     this.content = content;
+  }
+
+  public static FileFilter merge(@Nullable FileFilter base, @Nullable FileFilter override) {
+    if (base == null) {
+      return override;
+    } else if (override == null) {
+      return base;
+    }
+
+    var merged = new FileFilter();
+    merged.paths = SpecificationUtils.mergeLists(base.paths, override.paths);
+    merged.ext = SpecificationUtils.mergeLists(base.ext, override.ext);
+    merged.content = SpecificationUtils.mergeLists(base.content, override.content);
+    return merged;
   }
 }

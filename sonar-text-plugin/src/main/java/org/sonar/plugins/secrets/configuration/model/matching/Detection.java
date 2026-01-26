@@ -56,8 +56,8 @@ public class Detection {
 
   @CheckForNull
   public PreModule getPre() {
-    if (pre == null && associatedProviderDetectionExists()) {
-      return rule.getProvider().getDetection().getPre();
+    if (associatedProviderDetectionExists()) {
+      return PreModule.merge(rule.getProvider().getDetection().getPre(), pre);
     }
     return pre;
   }
