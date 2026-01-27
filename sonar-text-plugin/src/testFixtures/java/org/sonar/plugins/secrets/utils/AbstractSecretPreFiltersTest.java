@@ -21,10 +21,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.configuration.model.Rule;
+import org.sonar.plugins.secrets.configuration.model.matching.Detection;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.FileFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 
 import static org.assertj.core.api.Assertions.fail;
@@ -72,11 +76,31 @@ public abstract class AbstractSecretPreFiltersTest {
       ruleKey, ruleKey, getClass().getSimpleName()));
   }
 
+  @Test
+  void shouldEnsureAllSecretRulesHaveRejectExtensionFilters() {
+    var secretSpecFileNames = getSpecificationFiles();
+    var ruleKeysWithoutRejectExtFilters = getRuleKeysWithoutRejectExtFilters(secretSpecFileNames);
+    var softly = new SoftAssertions();
+    ruleKeysWithoutRejectExtFilters.forEach(ruleKey -> softly.fail(
+      "Rule '%s' is missing a pre.reject.ext filter. " +
+        "Add it to avoid running expensive regex on irrelevant files.",
+      ruleKey));
+    softly.assertAll();
+  }
+
   private List<String> getRuleKeysWithoutIncludePreFilters(Set<String> secretSpecFileNames) {
+    return getRuleKeysForRulesMatching(secretSpecFileNames, this::hasNoIncludePreFilter);
+  }
+
+  private List<String> getRuleKeysWithoutRejectExtFilters(Set<String> secretSpecFileNames) {
+    return getRuleKeysForRulesMatching(secretSpecFileNames, this::hasNoRejectExtFilter);
+  }
+
+  private List<String> getRuleKeysForRulesMatching(Set<String> secretSpecFileNames, Predicate<Rule> predicate) {
     var specificationLoader = new SecretsSpecificationLoader(specificationFilesLocation, secretSpecFileNames);
     return specificationLoader.getRulesMappedToKey().values().stream()
       .flatMap(Collection::stream)
-      .filter(this::hasNoIncludePreFilter)
+      .filter(predicate)
       .map(this::getRuleKey)
       .sorted()
       .collect(Collectors.toCollection(ArrayList::new)); // The list will get modified
@@ -87,8 +111,22 @@ public abstract class AbstractSecretPreFiltersTest {
   }
 
   private boolean hasNoIncludePreFilter(Rule rule) {
-    return Optional.ofNullable(rule.getDetection().getPre())
+    return Optional.ofNullable(rule.getDetection())
+      .filter(it -> it.getPre() != null && it.getPre().getInclude() != null)
+      .or(() -> Optional.ofNullable(rule.getProvider().getDetection()))
+      .map(Detection::getPre)
       .map(PreModule::getInclude)
+      .isEmpty();
+  }
+
+  private boolean hasNoRejectExtFilter(Rule rule) {
+    return Optional.ofNullable(rule.getDetection())
+      .filter(it -> it.getPre() != null && it.getPre().getReject() != null && !it.getPre().getReject().getExt().isEmpty())
+      .or(() -> Optional.ofNullable(rule.getProvider().getDetection()))
+      .map(Detection::getPre)
+      .map(PreModule::getReject)
+      .map(FileFilter::getExt)
+      .filter(ext -> !ext.isEmpty())
       .isEmpty();
   }
 }
