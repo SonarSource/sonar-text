@@ -55,3 +55,6 @@ project-version/evaluated_project_version.txt
 # ---- CI script generated files
 .github/workflows/scripts/node_modules/
 .github/workflows/scripts/coverage/
+
+# ---- Local Claude config
+CLAUDE.local.md
