@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.CheckForNull;
@@ -275,6 +276,11 @@ public class TestRegexScannerContext implements JavaFileScannerContext, RegexSca
   @Override
   public String getModuleKey() {
     return null;
+  }
+
+  @Override
+  public Optional<String> getFullyQualifiedModuleKey() {
+    return Optional.empty();
   }
 
   @CheckForNull
