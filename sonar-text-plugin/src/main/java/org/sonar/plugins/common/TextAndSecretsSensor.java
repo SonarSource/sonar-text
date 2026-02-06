@@ -18,6 +18,7 @@ package org.sonar.plugins.common;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -281,8 +282,11 @@ public class TextAndSecretsSensor implements Sensor {
    * Example: for 'exe', 'txt' and 'unknown', it will return true for 'txt' and 'unknown'
    * List of binary extension to exclude are provided by configuration key {@link TextAndSecretsSensor#EXCLUDED_FILE_SUFFIXES_KEY}
    */
-  private static NotBinaryFilePredicate notBinaryFilePredicate(SensorContext sensorContext) {
-    return new NotBinaryFilePredicate(sensorContext.config().getStringArray(TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY));
+  private NotBinaryFilePredicate notBinaryFilePredicate(SensorContext sensorContext) {
+    String[] excludedFileSuffixes = sensorContext.config().getStringArray(TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY);
+    List<String> cleanedSuffixes = cleanExcludedFileSuffixes(excludedFileSuffixes);
+    reportExcludedFileSuffix(cleanedSuffixes, telemetryReporter);
+    return new NotBinaryFilePredicate(cleanedSuffixes);
   }
 
   /**
@@ -489,5 +493,20 @@ public class TextAndSecretsSensor implements Sensor {
 
   private static boolean shouldAnalyzeAllFiles(SensorContext sensorContext) {
     return isSonarLintContext(sensorContext.runtime()) || sensorContext.config().getBoolean(ANALYZE_ALL_FILES_KEY).orElse(false);
+  }
+
+  private static List<String> cleanExcludedFileSuffixes(String[] excludedFileSuffixes) {
+    return Arrays.stream(excludedFileSuffixes)
+      .map(String::trim)
+      .map(value -> value.replaceAll("[^a-zA-Z0-9]", ""))
+      .filter(value -> !value.isEmpty())
+      .distinct()
+      .toList();
+  }
+
+  private static void reportExcludedFileSuffix(List<String> excludedFileSuffixes, TelemetryReporter telemetryReporter) {
+    if (!excludedFileSuffixes.isEmpty()) {
+      telemetryReporter.addListAsStringMeasure("excluded.user.suffix", excludedFileSuffixes);
+    }
   }
 }

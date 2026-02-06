@@ -17,12 +17,16 @@
 package org.sonar.plugins.common.analyzer;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.InputFileContext;
+import org.sonar.plugins.common.NotBinaryFilePredicate;
 import org.sonar.plugins.common.TextAndSecretsSensor;
 import org.sonar.plugins.common.measures.DurationStatistics;
 import org.sonar.plugins.common.measures.MemoryMonitor;
@@ -36,6 +40,7 @@ public final class TextAndSecretsAnalyzer extends Analyzer {
   private static final String ANALYSIS_NAME = "text and secrets analysis";
 
   private final CheckContainer checkContainer;
+  private final Map<String, Integer> extensionsFrequencyMap;
 
   public TextAndSecretsAnalyzer(
     SensorContext sensorContext,
@@ -47,6 +52,7 @@ public final class TextAndSecretsAnalyzer extends Analyzer {
     CheckContainer checkContainer) {
     super(sensorContext, parallelizationManager, durationStatistics, suitableChecks, ANALYSIS_NAME, telemetryReporter, memoryMonitor);
     this.checkContainer = checkContainer;
+    this.extensionsFrequencyMap = new ConcurrentHashMap<>();
   }
 
   @Override
@@ -70,9 +76,11 @@ public final class TextAndSecretsAnalyzer extends Analyzer {
    * We suppose here that all provided files have been whitelisted, so we don't expected binary files.
    * In case it still happen, we don't add the extension to the blacklist as we consider it to be an exception.
    */
-  private static boolean containsNoBinaryCharacters(InputFileContext inputFileContext) {
+  private boolean containsNoBinaryCharacters(InputFileContext inputFileContext) {
     boolean hasNonTextCharacters = inputFileContext.hasNonTextCharacters();
     if (hasNonTextCharacters) {
+      String fileExtension = NotBinaryFilePredicate.extension(inputFileContext.getInputFile().filename());
+      extensionsFrequencyMap.merge(fileExtension != null ? fileExtension : "", 1, Integer::sum);
       LOG.warn("The file '{}' contains binary data and will not be included in the text and secrets analysis.", inputFileContext.getInputFile());
       if (inputFileContext.getInputFile().language() != null) {
         LOG.warn("Please check this file and/or exclude it from the analysis with sonar.exclusions property.");
@@ -86,6 +94,29 @@ public final class TextAndSecretsAnalyzer extends Analyzer {
   public static List<Check> filterSuitableChecks(Collection<Check> checks) {
     return checks.stream()
       .filter(check -> !(check instanceof AbstractBinaryFileCheck))
+      .toList();
+  }
+
+  @Override
+  protected void processFileTelemetryMeasures() {
+    super.processFileTelemetryMeasures();
+    reportExcludedBinaryExtensions(extensionsFrequencyMap, telemetryReporter);
+  }
+
+  static void reportExcludedBinaryExtensions(Map<String, Integer> extensionsFrequencyMap, TelemetryReporter telemetryReporter) {
+    if (!extensionsFrequencyMap.isEmpty()) {
+      telemetryReporter.addListAsStringMeasure("excluded.binary.extensions", getFrequentKeys(extensionsFrequencyMap, 1000));
+    }
+  }
+
+  static List<String> getFrequentKeys(Map<String, Integer> frequencyMap, int limit) {
+    if (limit < 0) {
+      return Collections.emptyList();
+    }
+    return frequencyMap.entrySet().stream()
+      .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+      .map(Map.Entry::getKey)
+      .limit(limit)
       .toList();
   }
 }

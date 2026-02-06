@@ -16,7 +16,6 @@
  */
 package org.sonar.plugins.common;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -405,13 +404,13 @@ public class NotBinaryFilePredicate implements FilePredicate {
   private final Set<String> binaryFileExtensions;
   private final Set<String> binaryFileSuffixes;
 
-  public NotBinaryFilePredicate(String... additionalBinarySuffixes) {
+  public NotBinaryFilePredicate(List<String> additionalBinarySuffixes) {
     // initial capacity set the same as when calling new HashSet<>(DEFAULT_BINARY_EXTENSIONS)
     binaryFileExtensions = ConcurrentHashMap.newKeySet((int) (DEFAULT_BINARY_EXTENSIONS.size() / .75F) + 1);
     binaryFileExtensions.addAll(DEFAULT_BINARY_EXTENSIONS);
 
     var modifiableBinaryFileSuffixes = new HashSet<>(DEFAULT_BINARY_SUFFIXES);
-    Set<String> cleanedSuffixes = Arrays.stream(additionalBinarySuffixes)
+    Set<String> cleanedSuffixes = additionalBinarySuffixes.stream()
       .map(String::trim)
       .filter(value -> !value.isEmpty())
       .collect(Collectors.toSet());

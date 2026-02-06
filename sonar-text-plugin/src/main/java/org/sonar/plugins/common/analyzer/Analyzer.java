@@ -44,7 +44,7 @@ public class Analyzer {
   protected final DurationStatistics durationStatistics;
   private final List<Check> suitableChecks;
   private final String analysisName;
-  private final TelemetryReporter telemetryReporter;
+  protected final TelemetryReporter telemetryReporter;
   private final MemoryMonitor memoryMonitor;
   private final boolean supportedHiddenFileAnalysis;
   private final AtomicInteger analyzedFiles = new AtomicInteger(0);
@@ -172,7 +172,7 @@ public class Analyzer {
     }
   }
 
-  private void processFileTelemetryMeasures() {
+  protected void processFileTelemetryMeasures() {
     int numberOfAnalyzedFiles = this.analyzedFiles.get();
     LOG.debug("Analyzed files for the {}: {}", analysisName, numberOfAnalyzedFiles);
     telemetryReporter.addNumericMeasure(ANALYZED_FILES_MEASURE_KEY, numberOfAnalyzedFiles);

@@ -16,19 +16,30 @@
  */
 package org.sonar.plugins.common.analyzer;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.event.Level;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.rule.RuleKey;
+import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.api.utils.Version;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.common.measures.DurationStatistics;
+import org.sonar.plugins.common.measures.TelemetryReporter;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.configuration.deserialization.SpecificationDeserializer;
@@ -40,9 +51,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -54,6 +65,8 @@ import static org.sonar.plugins.secrets.utils.SmileConverter.convertYamlToSmileS
 @ExtendWith(MockitoExtension.class)
 class TextAndSecretsAnalyzerTest {
 
+  @RegisterExtension
+  public LogTesterJUnit5 logTester = new LogTesterJUnit5().setLevel(Level.INFO);
   @Mock(answer = RETURNS_DEEP_STUBS)
   private SensorContext sensorContext;
   @Mock
@@ -79,6 +92,7 @@ class TextAndSecretsAnalyzerTest {
 
   private TextAndSecretsAnalyzer textAndSecretsAnalyzer;
   private Specification testSpec;
+  private TelemetryReporter telemetryReporter;
 
   @BeforeEach
   void setUp() {
@@ -145,10 +159,11 @@ class TextAndSecretsAnalyzerTest {
     checksContainer.initialize(List.of(checkWithPreFilter, checkWithoutPreFilter, checkWithMultiplePreFilters),
       specLoader, durationStatistics);
 
+    telemetryReporter = mock(TelemetryReporter.class);
     textAndSecretsAnalyzer = new TextAndSecretsAnalyzer(
       sensorContext, mock(), durationStatistics,
       List.of(checkWithPreFilter, checkWithoutPreFilter, checkWithMultiplePreFilters),
-      mock(), mock(), checksContainer);
+      telemetryReporter, mock(), checksContainer);
   }
 
   @Test
@@ -159,7 +174,7 @@ class TextAndSecretsAnalyzerTest {
 
   @Test
   void shouldAnalyzeFileWithTrieMatches() {
-    var inputFileContext = createMockInputFileContext("This contains password and secret tokens with api key");
+    var inputFileContext = createMockInputFileContext("This contains password and secret tokens with api key", "", false);
 
     textAndSecretsAnalyzer.analyzeAllChecks(inputFileContext);
 
@@ -171,7 +186,7 @@ class TextAndSecretsAnalyzerTest {
 
   @Test
   void shouldAnalyzeFileWithoutTrieMatches() {
-    var inputFileContext = createMockInputFileContext("This contains no matching content");
+    var inputFileContext = createMockInputFileContext("This contains no matching content", "", false);
 
     textAndSecretsAnalyzer.analyzeAllChecks(inputFileContext);
 
@@ -183,7 +198,7 @@ class TextAndSecretsAnalyzerTest {
 
   @Test
   void shouldAnalyzeFileWithPartialTrieMatches() {
-    var inputFileContext = createMockInputFileContext("This contains only password and some other text");
+    var inputFileContext = createMockInputFileContext("This contains only password and some other text", "", false);
 
     textAndSecretsAnalyzer.analyzeAllChecks(inputFileContext);
 
@@ -208,7 +223,7 @@ class TextAndSecretsAnalyzerTest {
       List.of(checkWithPreFilter, checkWithoutPreFilter, checkWithMultiplePreFilters, checkWithOverlappingPreFilter),
       mock(), mock(), checksContainer);
 
-    var inputFileContext = createMockInputFileContext("PASSWORD: ${{ password_env }}");
+    var inputFileContext = createMockInputFileContext("PASSWORD: ${{ password_env }}", "", false);
 
     textAndSecretsAnalyzer.analyzeAllChecks(inputFileContext);
 
@@ -236,7 +251,7 @@ class TextAndSecretsAnalyzerTest {
       List.of(checkWithMultiplePreFilters, checkWithDuplicatedPreFilter),
       mock(), mock(), checksContainer);
 
-    var inputFileContext = createMockInputFileContext("The word token should be captured by two checks");
+    var inputFileContext = createMockInputFileContext("The word token should be captured by two checks", "", false);
 
     textAndSecretsAnalyzer.analyzeAllChecks(inputFileContext);
 
@@ -247,10 +262,10 @@ class TextAndSecretsAnalyzerTest {
 
   @Test
   void shouldMatchCorrectlyWithMultithreading() throws InterruptedException {
-    var inputFileContext1 = createMockInputFileContext(generateLongText("password"));
-    var inputFileContext2 = createMockInputFileContext(generateLongText("TOKEN"));
-    var inputFileContext3 = createMockInputFileContext(generateLongText("secret"));
-    var inputFileContext4 = createMockInputFileContext(generateLongText("API_KEY"));
+    var inputFileContext1 = createMockInputFileContext(generateLongText("password"), "", false);
+    var inputFileContext2 = createMockInputFileContext(generateLongText("TOKEN"), "", false);
+    var inputFileContext3 = createMockInputFileContext(generateLongText("secret"), "", false);
+    var inputFileContext4 = createMockInputFileContext(generateLongText("API_KEY"), "", false);
 
     var executor = newFixedThreadPool(4);
     List.of(inputFileContext1, inputFileContext2, inputFileContext3, inputFileContext4).forEach(context -> {
@@ -275,6 +290,46 @@ class TextAndSecretsAnalyzerTest {
     verify(checkWithOverlappingPreFilter, never()).analyze(not(eq(inputFileContext1)));
   }
 
+  @Test
+  void shouldReportTelemetryCorrectlyWhenFileContainsBinaryCharacters() {
+    List<String> fileNames = List.of("file.exe", "file.exe.dll", "file.exe.exe", "file", "file", "file");
+    for (String fileName : fileNames) {
+      textAndSecretsAnalyzer.shouldAnalyzeFile(createMockInputFileContext("", fileName, true));
+    }
+    textAndSecretsAnalyzer.shouldAnalyzeFile(createMockInputFileContext("", "file.java", false));
+    textAndSecretsAnalyzer.processFileTelemetryMeasures();
+
+    verify(telemetryReporter).addListAsStringMeasure("excluded.binary.extensions", List.of("", "exe", "dll"));
+  }
+
+  @Test
+  void shouldNotReportTelemetryWhenNoFileWithBinaryCharacters() {
+    textAndSecretsAnalyzer.shouldAnalyzeFile(createMockInputFileContext("", "file.java", false));
+    textAndSecretsAnalyzer.processFileTelemetryMeasures();
+
+    verify(telemetryReporter, never()).addListAsStringMeasure(any(), any());
+  }
+
+  @ParameterizedTest
+  @MethodSource("provideGetFrequentKeysTestData")
+  void shouldCorrectlyGetFrequentKeys(Map<String, Integer> map, int limit, List<String> result) {
+    List<String> frequentKeys = TextAndSecretsAnalyzer.getFrequentKeys(map, limit);
+
+    assertThat(frequentKeys).isEqualTo(result);
+  }
+
+  public static Stream<Arguments> provideGetFrequentKeysTestData() {
+    return Stream.of(
+      Arguments.of(Map.of("key1", 5, "key2", 10, "key3", 6, "key4", 2, "key5", 11), 3, List.of("key5", "key2", "key3")),
+      Arguments.of(Map.of("key1", 5, "key2", 10, "key3", 6, "key4", 2, "key5", 11), 5, List.of("key5", "key2", "key3", "key1", "key4")),
+      Arguments.of(Map.of("key1", 5, "key2", 10, "key3", 6, "key4", 2, "key5", 11), 7, List.of("key5", "key2", "key3", "key1", "key4")),
+      Arguments.of(Map.of("key1", 5, "key2", 10, "key3", 6, "key4", 2, "key5", 11), -2, Collections.emptyList()),
+      Arguments.of(Map.of("key1", 5, "key2", 10, "key3", 6, "key4", 2, "key5", 11), 0, Collections.emptyList()),
+      Arguments.of(Map.of(), 0, Collections.emptyList()),
+      Arguments.of(Map.of(), -2, Collections.emptyList()),
+      Arguments.of(Map.of(), 2, Collections.emptyList()));
+  }
+
   private static String generateLongText(String keyword) {
     var longText = new StringBuilder();
     var each = 100;
@@ -287,10 +342,14 @@ class TextAndSecretsAnalyzerTest {
     return longText.toString();
   }
 
-  private InputFileContext createMockInputFileContext(String content) {
+  private InputFileContext createMockInputFileContext(String content, String fileName, boolean hasBinaryCharacters) {
     var inputFileContext = mock(InputFileContext.class);
-    when(inputFileContext.content()).thenReturn(content);
-    doNothing().when(inputFileContext).flushIssues();
+    lenient().when(inputFileContext.hasNonTextCharacters()).thenReturn(hasBinaryCharacters);
+    lenient().when(inputFileContext.content()).thenReturn(content);
+    lenient().doNothing().when(inputFileContext).flushIssues();
+    var inputFile = mock(InputFile.class);
+    lenient().when(inputFile.filename()).thenReturn(fileName);
+    lenient().when(inputFileContext.getInputFile()).thenReturn(inputFile);
     return inputFileContext;
   }
 }

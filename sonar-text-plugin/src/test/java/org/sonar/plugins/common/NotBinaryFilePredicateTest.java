@@ -17,16 +17,23 @@
 package org.sonar.plugins.common;
 
 import java.nio.file.Path;
+import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.slf4j.event.Level;
 import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class NotBinaryFilePredicateTest {
 
+  @RegisterExtension
+  public LogTesterJUnit5 logTester = new LogTesterJUnit5().setLevel(Level.INFO);
+
   @Test
   void all_values() {
-    NotBinaryFilePredicate predicate = new NotBinaryFilePredicate(".foo", ".foo.bar", "_my_suffix", "", "oo.");
+    NotBinaryFilePredicate predicate = new NotBinaryFilePredicate(List.of(".foo", ".foo.bar", "_my_suffix", "", "oo."));
     assertThat(predicate.apply(inputFile("foo.foo"))).isFalse();
     assertThat(predicate.apply(inputFile("foo.exe"))).isFalse();
     assertThat(predicate.apply(inputFile("foo.EXE"))).isFalse();
@@ -74,7 +81,7 @@ class NotBinaryFilePredicateTest {
 
   @Test
   void shouldReturnCorrectlyIfAnExtensionWasNewlyAdded() {
-    NotBinaryFilePredicate predicate = new NotBinaryFilePredicate(".foo");
+    NotBinaryFilePredicate predicate = new NotBinaryFilePredicate(List.of(".foo"));
     boolean addFooExtension = predicate.addBinaryFileExtension("foo");
     boolean addBarExtension1 = predicate.addBinaryFileExtension("bar");
     boolean addBarExtension2 = predicate.addBinaryFileExtension("bar");

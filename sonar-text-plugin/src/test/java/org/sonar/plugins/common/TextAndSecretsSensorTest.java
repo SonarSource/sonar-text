@@ -27,7 +27,7 @@ import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME;
 import static org.sonar.plugins.common.TestUtils.activeRules;
 import static org.sonar.plugins.common.TestUtils.toRuleKeys;
 
-public class TextAndSecretsSensorTest extends AbstractTextAndSecretsSensorTest {
+class TextAndSecretsSensorTest extends AbstractTextAndSecretsSensorTest {
 
   private static final TestUtils TEST_UTILS = new TestUtils();
 

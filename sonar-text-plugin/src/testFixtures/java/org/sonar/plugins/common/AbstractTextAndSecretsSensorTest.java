@@ -40,6 +40,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.event.Level;
@@ -81,6 +82,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.sonar.plugins.common.TestUtils.SONARCLOUD_RUNTIME;
 import static org.sonar.plugins.common.TestUtils.SONARLINT_RUNTIME;
+import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME;
 import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME_WITHOUT_HIDDEN_FILES_SUPPORT;
 import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME_WITHOUT_TELEMETRY_SUPPORT;
 import static org.sonar.plugins.common.TestUtils.asString;
@@ -1341,6 +1343,53 @@ public abstract class AbstractTextAndSecretsSensorTest {
       var telemetryKey = TelemetryReporter.KEY_PREFIX + "civendor_" + vendorKey;
       verify(context).addTelemetryProperty(telemetryKey, "0");
     }
+  }
+
+  @ParameterizedTest
+  @MethodSource("provideUserExcludedSuffixesData")
+  void shouldReportCleanedExcludedUserSuffixes(String suffixes, String result) {
+    var context = spy(testUtils().defaultSensorContext());
+    context.settings().setProperty("sonar.text.excluded.file.suffixes", suffixes);
+    Check check = new ReportIssueAtLineOneCheck();
+    var sensor = sensor(check);
+
+    sensor.execute(context);
+
+    verify(context).addTelemetryProperty("text.excluded.user.suffix", result);
+  }
+
+  static Stream<Arguments> provideUserExcludedSuffixesData() {
+    return Stream.of(
+      Arguments.of("dll,exe,zip", "[\"dll\", \"exe\", \"zip\"]"),
+      Arguments.of("dll,exe,dll,zip,dll", "[\"dll\", \"exe\", \"zip\"]"),
+      Arguments.of("dll,exe,dll,zip,dll", "[\"dll\", \"exe\", \"zip\"]"),
+      Arguments.of("dll,exe,dll, zip ,dll, ,", "[\"dll\", \"exe\", \"zip\"]"),
+      Arguments.of("dll,$e$$$xe$$,dll, zip ,dll, ,", "[\"dll\", \"exe\", \"zip\"]"),
+      Arguments.of("dll,$$$$$$$,$e$$$xe$$,dll, zip ,dll, ,", "[\"dll\", \"exe\", \"zip\"]"),
+      Arguments.of("dll,$,,$e$$$xe$$,dll, zip ,dll, ,", "[\"dll\", \"exe\", \"zip\"]"));
+  }
+
+  @Test
+  void shouldNotReportUserExcludedSuffixesWhenEmpty() {
+    var context = spy(SensorContextTester.create(Path.of(".")).setRuntime(SONARQUBE_RUNTIME));
+    context.settings().setProperty("sonar.text.excluded.file.suffixes", "");
+    Check check = new ReportIssueAtLineOneCheck();
+    var sensor = sensor(check);
+
+    sensor.execute(context);
+
+    verify(context, never()).addTelemetryProperty(eq("text.excluded.user.suffix"), any());
+  }
+
+  @Test
+  void shouldNotReportUserExcludedSuffixesNotProvided() {
+    var context = spy(SensorContextTester.create(Path.of(".")).setRuntime(SONARQUBE_RUNTIME));
+    Check check = new ReportIssueAtLineOneCheck();
+    var sensor = sensor(check);
+
+    sensor.execute(context);
+
+    verify(context, never()).addTelemetryProperty(eq("text.excluded.user.suffix"), any());
   }
 
   private static void assertThatIssuesRaisedOnFiles(Collection<Issue> issues, InputFile... expectedFilesWithIssues) {
