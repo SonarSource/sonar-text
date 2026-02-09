@@ -33,16 +33,20 @@ public class TelemetryReporter {
   private static final Version TELEMETRY_SUPPORTED_API_VERSION = Version.create(10, 9);
   private static final int MAX_BYTES = 16 * 1024;
   private static final Logger LOG = LoggerFactory.getLogger(TelemetryReporter.class);
+  // Property key to enable log, currently using the DurationStatistics one
+  private static final String PROPERTY_KEY = "sonar.text.duration.statistics";
 
   private final SensorContext sensorContext;
   private final Map<String, Integer> numericMeasures;
   private final Map<String, String> stringMeasures;
   private long startRecordingTimeMs;
+  private final boolean shouldLogTelemetry;
 
   public TelemetryReporter(SensorContext sensorContext) {
     this.sensorContext = sensorContext;
     this.numericMeasures = new HashMap<>();
     this.stringMeasures = new HashMap<>();
+    this.shouldLogTelemetry = sensorContext.config().getBoolean(PROPERTY_KEY).orElse(false);
   }
 
   public void startRecordingSensorTime() {
@@ -89,8 +93,15 @@ public class TelemetryReporter {
     if (isTelemetrySupported) {
       // addTelemetryProperty is added in 10.9:
       // https://github.com/SonarSource/sonar-plugin-api/releases/tag/10.9.0.2362
-      numericMeasures.forEach((key, numericValue) -> sensorContext.addTelemetryProperty(key, numericValue.toString()));
-      stringMeasures.forEach(sensorContext::addTelemetryProperty);
+      numericMeasures.forEach((key, numericValue) -> logAndAddTelemetry(key, numericValue.toString()));
+      stringMeasures.forEach(this::logAndAddTelemetry);
     }
+  }
+
+  private void logAndAddTelemetry(String key, String value) {
+    if (shouldLogTelemetry) {
+      LOG.debug("Reporting telemetry: {}={}", key, value);
+    }
+    sensorContext.addTelemetryProperty(key, value);
   }
 }

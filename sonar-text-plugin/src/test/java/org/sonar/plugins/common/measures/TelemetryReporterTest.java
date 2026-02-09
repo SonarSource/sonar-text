@@ -158,4 +158,19 @@ class TelemetryReporterTest {
 
     verify(context, never()).addTelemetryProperty(any(), any());
   }
+
+  @Test
+  void shouldLogTelemetryWhenDurationStatisticsEnabled() {
+    var context = spy(SensorContextTester.create(Path.of(".")).setRuntime(SONARQUBE_RUNTIME));
+    context.settings().setProperty("sonar.text.duration.statistics", "true");
+    var sensorTelemetry = new TelemetryReporter(context);
+    sensorTelemetry.addStringMeasure("key1", "value");
+    sensorTelemetry.addNumericMeasure("key2", 2);
+    sensorTelemetry.report();
+
+    logTester.logs();
+    assertThat(logTester.logs())
+      .contains("Reporting telemetry: text.key1=value")
+      .contains("Reporting telemetry: text.key2=2");
+  }
 }
