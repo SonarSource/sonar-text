@@ -89,10 +89,11 @@ class TextAndSecretsAnalyzerTest {
   private RuleKey ruleKeyWithMultiplePreFilters;
   @Mock
   private RuleKey ruleKeyWithOverlappingPreFilter;
+  @Mock
+  private TelemetryReporter telemetryReporter;
 
   private TextAndSecretsAnalyzer textAndSecretsAnalyzer;
   private Specification testSpec;
-  private TelemetryReporter telemetryReporter;
 
   @BeforeEach
   void setUp() {
@@ -159,7 +160,6 @@ class TextAndSecretsAnalyzerTest {
     checksContainer.initialize(List.of(checkWithPreFilter, checkWithoutPreFilter, checkWithMultiplePreFilters),
       specLoader, durationStatistics);
 
-    telemetryReporter = mock(TelemetryReporter.class);
     textAndSecretsAnalyzer = new TextAndSecretsAnalyzer(
       sensorContext, mock(), durationStatistics,
       List.of(checkWithPreFilter, checkWithoutPreFilter, checkWithMultiplePreFilters),
