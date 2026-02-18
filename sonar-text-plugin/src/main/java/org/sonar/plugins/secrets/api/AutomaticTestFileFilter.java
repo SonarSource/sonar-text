@@ -35,8 +35,25 @@ public final class AutomaticTestFileFilter {
   private static final Set<String> FILENAME_PREFIXES = Set.of("test");
   private static final Set<String> FILENAME_CONTAINS = Set.of("test.", "tests.");
   private static final Set<String> FILENAME_SUFFIXES = Set.of(
+    // JavaScript/TypeScript spec files
     ".spec.js", ".spec.jsx", ".spec.ts", ".spec.tsx",
-    "_spec.rb", "_test.rb");
+    // Ruby spec/test files
+    "_spec.rb", "_test.rb",
+    // Perl test files
+    ".t");
+
+  // Directory names commonly used for test files and test fixtures
+  private static final Set<String> TEST_DIRECTORIES = Set.of(
+    // Generic
+    "test", "tests", "e2e",
+    // Generic mock directories
+    "mock", "mocks",
+    // JavaScript/TypeScript (Jest, Vitest)
+    "__tests__", "__fixtures__",
+    // Go test data directory
+    "testdata",
+    // PHP, Python test fixtures
+    "fixtures");
 
   private AutomaticTestFileFilter() {
   }
@@ -83,7 +100,7 @@ public final class AutomaticTestFileFilter {
   }
 
   private static boolean isTestDirectory(List<String> pathElements) {
-    return pathElements.contains("test") || pathElements.contains("tests") || pathElements.contains("mock") || pathElements.contains("mocks");
+    return pathElements.stream().anyMatch(TEST_DIRECTORIES::contains);
   }
 
   private static boolean hasEnding(List<String> pathElements, String text) {

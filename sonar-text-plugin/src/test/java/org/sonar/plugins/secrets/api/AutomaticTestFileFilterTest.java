@@ -126,7 +126,28 @@ class AutomaticTestFileFilterTest {
       arguments("mocks/file.json", false),
       arguments("src/app/mocks/hohohoo.txt", false),
       arguments("mock/file.json", false),
-      arguments("src/app/mock/merry.txt", false));
+      arguments("src/app/mock/merry.txt", false),
+      // Perl test files (.t extension)
+      arguments("something.t", false),
+      arguments("lib/Foo/Bar.t", false),
+      // t/ directory alone does not filter non-.t files
+      arguments("t/basic.pl", true),
+      arguments("t/t0001-basic.sh", true),
+      // JS __tests__ directory
+      arguments("__tests__/component.js", false),
+      arguments("src/__tests__/login.ts", false),
+      // JS __fixtures__ directory
+      arguments("__fixtures__/data.json", false),
+      arguments("src/__fixtures__/mock-data.json", false),
+      // Go testdata directory
+      arguments("testdata/config.json", false),
+      arguments("pkg/testdata/golden.txt", false),
+      // PHP/Python fixtures directory
+      arguments("fixtures/example.php", false),
+      arguments("src/fixtures/data.json", false),
+      // e2e test directory
+      arguments("e2e/login.ts", false),
+      arguments("src/e2e/integration.js", false));
   }
 
   @ParameterizedTest
@@ -201,6 +222,9 @@ class AutomaticTestFileFilterTest {
       arguments("component.spec.java", true),
       arguments("spec-utils.js", true),
       arguments("myspecial.js", true),
-      arguments("component.spec.js.md", true));
+      arguments("component.spec.js.md", true),
+      // Perl test files (.t extension) - filename detection still works
+      arguments("something.t", false),
+      arguments("lib/Foo/Bar.t", false));
   }
 }
