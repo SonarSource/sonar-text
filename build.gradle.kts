@@ -23,7 +23,7 @@ plugins {
 
 tasks.artifactoryPublish { skip = true }
 
-val cliArtifacts = setOf("linux-x86_64", "linux-arm64", "macos-arm64", "windows-x64-64")
+val cliArtifacts = setOf("linux-x86-64", "linux-arm64", "macos-arm64", "windows-x64-64")
     .joinToString(",") { it -> "com.sonarsource.text:sonar-secrets:exe:$it" }
 
 artifactoryConfiguration {
