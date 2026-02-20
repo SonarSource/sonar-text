@@ -23,9 +23,12 @@ plugins {
 
 tasks.artifactoryPublish { skip = true }
 
+val cliArtifacts = setOf("linux-x86_64", "linux-arm64", "macos-arm64", "windows-x64-64")
+    .joinToString(",") { it -> "com.sonarsource.text:sonar-secrets:exe:$it" }
+
 artifactoryConfiguration {
     buildName = providers.environmentVariable("PROJECT").orElse("sonar-text")
-    artifactsToPublish = "org.sonarsource.text:sonar-text-plugin:jar"
+    artifactsToPublish = "org.sonarsource.text:sonar-text-plugin:jar," + cliArtifacts
     artifactsToDownload = ""
     repoKeyEnv = "ARTIFACTORY_DEPLOY_REPO"
     usernameEnv = "ARTIFACTORY_DEPLOY_USERNAME"
