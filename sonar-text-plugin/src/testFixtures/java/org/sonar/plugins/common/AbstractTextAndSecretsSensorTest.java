@@ -1314,9 +1314,9 @@ public abstract class AbstractTextAndSecretsSensorTest {
 
     var analyzedFile = inputFile(Path.of("a.txt"), "{}", "secrets");
 
-    var vendorKeys = CiVendorFilesTelemetry.CI_VENDOR_TO_REL_FILE_PATH.keySet();
-    var ciInputFiles = CiVendorFilesTelemetry.CI_VENDOR_TO_REL_FILE_PATH.values().stream().map(
-      relativePaths -> inputFile(Path.of(relativePaths), "{}"));
+    var vendorKeys = CiVendorFilesTelemetry.CI_VENDOR_TO_REL_FILE_PATHS.keySet();
+    var ciInputFiles = CiVendorFilesTelemetry.CI_VENDOR_TO_REL_FILE_PATHS.values().stream().map(
+      relativePaths -> inputFile(Path.of(relativePaths.iterator().next()), "{}"));
     var inputFiles = Stream.concat(Stream.of(analyzedFile), ciInputFiles).toArray(InputFile[]::new);
 
     analyse(sensor, context, inputFiles);
@@ -1334,7 +1334,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     var context = spy(sensorContext(check, binaryCheck));
     var sensor = sensor(check, binaryCheck);
 
-    var vendorKeys = CiVendorFilesTelemetry.CI_VENDOR_TO_REL_FILE_PATH.keySet();
+    var vendorKeys = CiVendorFilesTelemetry.CI_VENDOR_TO_REL_FILE_PATHS.keySet();
 
     var analyzedFile = inputFile(Path.of("a.txt"), "{}", "secrets");
     analyse(sensor, context, analyzedFile);

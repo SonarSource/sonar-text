@@ -17,6 +17,7 @@
 package org.sonar.plugins.common.measures;
 
 import java.util.Map;
+import java.util.Set;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.plugins.common.TextAndSecretsSensor;
 
@@ -24,17 +25,18 @@ public class CiVendorFilesTelemetry {
 
   private static final String TELEMETRY_INFIX = "civendor_";
 
-  public static final Map<String, String> CI_VENDOR_TO_REL_FILE_PATH = Map.of(
-    "travisci", ".travis.yml",
-    "jenkins", "Jenkinsfile",
-    "circleci", ".circleci/config.yml",
-    "gitlab", ".gitlab-ci.yml",
-    "appveyor", "appveyor.yml",
-    "azurepipelines", "azure-pipelines.yml",
-    "bamboo", "bamboo.yml",
-    "buildkite", ".buildkite/pipeline.yml",
-    "bitbucketpipelines", "bitbucket-pipelines.yml",
-    "semaphore", ".semaphore/semaphore.yml");
+  public static final Map<String, Set<String>> CI_VENDOR_TO_REL_FILE_PATHS = Map.ofEntries(
+    Map.entry("travisci", Set.of(".travis.yml")),
+    Map.entry("jenkins", Set.of("Jenkinsfile")),
+    Map.entry("circleci", Set.of(".circleci/config.yml")),
+    Map.entry("gitlab", Set.of(".gitlab-ci.yml")),
+    Map.entry("appveyor", Set.of("appveyor.yml")),
+    Map.entry("azurepipelines", Set.of("azure-pipelines.yml")),
+    Map.entry("bamboo", Set.of("bamboo.yml")),
+    Map.entry("buildkite", Set.of(".buildkite/pipeline.yml")),
+    Map.entry("bitbucketpipelines", Set.of("bitbucket-pipelines.yml")),
+    Map.entry("semaphore", Set.of(".semaphore/semaphore.yml")),
+    Map.entry("dockercompose", Set.of("docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml")));
 
   private CiVendorFilesTelemetry() {
     // only static methods
@@ -48,12 +50,12 @@ public class CiVendorFilesTelemetry {
 
     var fileSystem = sensorContext.fileSystem();
 
-    for (Map.Entry<String, String> stringStringEntry : CI_VENDOR_TO_REL_FILE_PATH.entrySet()) {
-      var vendor = stringStringEntry.getKey();
-      var relativePath = stringStringEntry.getValue();
+    for (Map.Entry<String, Set<String>> entry : CI_VENDOR_TO_REL_FILE_PATHS.entrySet()) {
+      var vendor = entry.getKey();
+      var relativePaths = entry.getValue();
       // We only look for path's relative to the root
-      var filePredicate = fileSystem.predicates().hasRelativePath(relativePath);
-      var hasFilesForVendor = fileSystem.hasFiles(filePredicate);
+      var hasFilesForVendor = relativePaths.stream()
+        .anyMatch(path -> fileSystem.hasFiles(fileSystem.predicates().hasRelativePath(path)));
       telemetryReporter.addNumericMeasure(TELEMETRY_INFIX + vendor, hasFilesForVendor ? 1 : 0);
     }
   }

@@ -31,12 +31,13 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.sonar.plugins.common.TestUtils.inputFile;
-import static org.sonar.plugins.common.measures.CiVendorFilesTelemetry.CI_VENDOR_TO_REL_FILE_PATH;
+import static org.sonar.plugins.common.measures.CiVendorFilesTelemetry.CI_VENDOR_TO_REL_FILE_PATHS;
 
 class CiVendorFilesTelemetryTest {
 
   static Stream<Arguments> shouldReportTelemetryForTheDefaultCases() {
-    return CI_VENDOR_TO_REL_FILE_PATH.entrySet().stream().map(entry -> arguments(entry.getValue(), entry.getKey()));
+    return CI_VENDOR_TO_REL_FILE_PATHS.entrySet().stream()
+      .flatMap(entry -> entry.getValue().stream().map(path -> arguments(path, entry.getKey())));
   }
 
   @MethodSource
@@ -64,7 +65,7 @@ class CiVendorFilesTelemetryTest {
 
     CiVendorFilesTelemetry.measureProjectsCIFilesInclusion(sensorContext, sensorTelemetry);
 
-    for (String vendor : CI_VENDOR_TO_REL_FILE_PATH.keySet()) {
+    for (String vendor : CI_VENDOR_TO_REL_FILE_PATHS.keySet()) {
       if (vendorsToRaiseTelemetryOn.contains(vendor)) {
         verify(sensorTelemetry).addNumericMeasure("civendor_" + vendor, 1);
       } else {
