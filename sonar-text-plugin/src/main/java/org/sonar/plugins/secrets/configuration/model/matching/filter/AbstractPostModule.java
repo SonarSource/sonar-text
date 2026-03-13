@@ -22,7 +22,7 @@ import java.util.List;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
 
-public abstract sealed class AbstractPostModule permits NamedPostModule,TopLevelPostModule {
+public abstract sealed class AbstractPostModule permits NamedPostModule, TopLevelPostModule {
 
   @Nullable
   private HeuristicsFilter heuristicFilter;
