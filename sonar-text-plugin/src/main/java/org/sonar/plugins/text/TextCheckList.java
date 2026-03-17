@@ -19,10 +19,11 @@ package org.sonar.plugins.text;
 import java.util.List;
 import org.sonar.plugins.text.checks.BIDICharacterCheck;
 import org.sonar.plugins.text.checks.TagBlockCheck;
+import org.sonar.plugins.text.checks.VariationSelectorCheck;
 
 public class TextCheckList {
 
-  public static final List<Class<?>> TEXT_CHECKS = List.of(BIDICharacterCheck.class, TagBlockCheck.class);
+  public static final List<Class<?>> TEXT_CHECKS = List.of(BIDICharacterCheck.class, TagBlockCheck.class, VariationSelectorCheck.class);
 
   public List<Class<?>> checks() {
     return TEXT_CHECKS;

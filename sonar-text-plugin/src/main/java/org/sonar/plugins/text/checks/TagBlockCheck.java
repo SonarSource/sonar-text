@@ -16,144 +16,66 @@
  */
 package org.sonar.plugins.text.checks;
 
-import java.util.ArrayList;
 import java.util.List;
 import org.sonar.check.Rule;
 import org.sonar.plugins.common.InputFileContext;
-import org.sonar.plugins.common.measures.DurationStatistics;
-import org.sonar.plugins.text.api.TextCheck;
+import org.sonar.plugins.text.api.AbstractUnicodeSequenceCheck;
 
 @Rule(key = "S7628")
-public class TagBlockCheck extends TextCheck {
+public class TagBlockCheck extends AbstractUnicodeSequenceCheck {
 
   public static final String MESSAGE_FORMAT = "This line contains the hidden text \"%s\" starting at column %d. " +
     "Make sure that using Unicode tag blocks is intentional and safe here.";
   private static final int BLACK_FLAG_EMOJI_CODE_POINT = 0x1F3F4;
   private static final int CANCEL_TAG_CODE_POINT = 0xE007F;
-  private DurationStatistics durationStatistics;
 
-  public void initialize(DurationStatistics durationStatistics) {
-    this.durationStatistics = durationStatistics;
+  @Override
+  protected boolean isSequenceChar(int codePoint) {
+    // 0xE0001 is the "language" tag, not used for text
+    return codePoint >= 0xE0020 && codePoint <= 0xE007F;
   }
 
   @Override
-  public void analyze(InputFileContext ctx) {
-    durationStatistics.timed(getRuleKey().rule() + DurationStatistics.SUFFIX_TOTAL, new TagBlockFileAnalyzer(ctx)::analyze);
+  protected void reportSequence(InputFileContext ctx, int lineNumber, int startColumn, List<Integer> sequenceChars) {
+    var hiddenText = sequenceChars.stream()
+      .map(TagBlockCheck::convertTagCharToChar)
+      .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append)
+      .toString();
+
+    if (!hiddenText.isBlank() && hiddenText.length() > 1) {
+      ctx.reportTextIssue(getRuleKey(), lineNumber, MESSAGE_FORMAT.formatted(hiddenText, startColumn));
+    }
   }
 
   /**
-   * Makes the check stateless to allow parallel analysis of files.
+   * Skip over flag emoji sequences which contain legitimate tag characters.
+   * Flag emojis are sequences with a black flag emoji (U+1F3F4), followed by tag characters
+   * corresponding to the country code, then an optional cancel tag (U+E007F).
+   * For example, for the flag of England: U+1F3F4 U+E0067 U+E0062 U+E0065 U+E006E U+E0067 U+E007F
    */
-  private class TagBlockFileAnalyzer {
-    private final InputFileContext ctx;
-    // Not initialized until a tag sequence is found to avoid unnecessary allocations
-    private List<Integer> tagSequence;
-    private Integer tagSequenceStartIndex;
-    private Integer currentColumnNumber;
-
-    public TagBlockFileAnalyzer(InputFileContext ctx) {
-      this.ctx = ctx;
+  @Override
+  protected int skipOver(String line, int index) {
+    if (line.codePointAt(index) != BLACK_FLAG_EMOJI_CODE_POINT) {
+      return -1;
     }
-
-    public void analyze() {
-      List<String> lines = ctx.lines();
-      for (var lineOffset = 0; lineOffset < lines.size(); lineOffset++) {
-        checkLine(ctx, lines.get(lineOffset), lineOffset + 1);
-      }
-    }
-
-    private void checkLine(InputFileContext ctx, String lineContent, int lineNumber) {
-      currentColumnNumber = 1;
-      var i = 0;
-      while (i < lineContent.length()) {
-        var currentCodePoint = lineContent.codePointAt(i);
-
-        // Skip flag emoji sequences which contain legitimate tag characters
-        if (isBlackFlagEmoji(currentCodePoint)) {
-          i = getIndexAfterFlagEmoji(lineContent, i);
-          currentColumnNumber++;
-          continue;
-        }
-
-        if (isTag(currentCodePoint)) {
-          if (!isTagSequenceOngoing()) {
-            initTagSequence(i);
-          }
-          tagSequence.add(currentCodePoint);
-        } else if (isTagSequenceOngoing()) {
-          flushTagSequence(ctx, lineNumber);
-        }
-        i += Character.charCount(lineContent.codePointAt(i));
-        currentColumnNumber++;
-      }
-
-      // Report tag sequence at end of line if it exists
-      if (isTagSequenceOngoing()) {
-        flushTagSequence(ctx, lineNumber);
-      }
-    }
-
-    private void initTagSequence(int startIndex) {
-      tagSequenceStartIndex = startIndex;
-      if (tagSequence == null) {
-        tagSequence = new ArrayList<>();
-      }
-    }
-
-    private boolean isTagSequenceOngoing() {
-      return tagSequenceStartIndex != null;
-    }
-
-    /**
-     * Skip over a flag emoji sequence in the text.
-     * Flag emojis are sequences with a black flag emoji (U+1F3F4), followed by tag characters corresponding
-     * to the country code, then an optional cancel tag (U+E007F).
-     * For example, for the flag of England: U+1F3F4 U+E0067 U+E0062 U+E0065 U+E006E U+E0067 U+E007F
-     */
-    private int getIndexAfterFlagEmoji(String text, int startIndex) {
-      var currentPosition = startIndex + Character.charCount(BLACK_FLAG_EMOJI_CODE_POINT);
-      while (currentPosition < text.length()) {
-        var codePoint = text.codePointAt(currentPosition);
-        if (!isTag(codePoint)) {
-          // Not a tag character, so it is the end of the sequence
-          break;
-        }
-        if (codePoint == CANCEL_TAG_CODE_POINT) {
-          // Cancel tag, so the end of the sequence is after it
-          currentPosition += Character.charCount(CANCEL_TAG_CODE_POINT);
-          break;
-        }
-        currentPosition += Character.charCount(codePoint);
-      }
-      return currentPosition;
-    }
-
-    private void flushTagSequence(InputFileContext ctx, int lineNumber) {
-      var hiddenText = tagSequence.stream()
-        .map(TagBlockCheck::convertTagCharToChar)
-        .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append)
-        .toString();
-
-      if (!hiddenText.isBlank() && hiddenText.length() > 1) {
-        var tagSequenceStartColumnNumber = currentColumnNumber - tagSequence.size();
-        ctx.reportTextIssue(
-          getRuleKey(),
-          lineNumber,
-          MESSAGE_FORMAT.formatted(hiddenText, tagSequenceStartColumnNumber));
-      }
-
-      tagSequence.clear();
-      tagSequenceStartIndex = null;
-    }
+    return getIndexAfterFlagEmoji(line, index);
   }
 
-  private static boolean isTag(int charCodePoint) {
-    // 0xE0001 is the "language" tag, not used for text
-    return charCodePoint >= 0xE0020 && charCodePoint <= 0xE007F;
-  }
-
-  private static boolean isBlackFlagEmoji(int charCodePoint) {
-    return charCodePoint == BLACK_FLAG_EMOJI_CODE_POINT;
+  private int getIndexAfterFlagEmoji(String text, int startIndex) {
+    var currentPosition = startIndex + Character.charCount(BLACK_FLAG_EMOJI_CODE_POINT);
+    while (currentPosition < text.length()) {
+      var codePoint = text.codePointAt(currentPosition);
+      if (!isSequenceChar(codePoint)) {
+        // Not a tag character, so it is the end of the sequence
+        return currentPosition;
+      }
+      currentPosition += Character.charCount(codePoint);
+      if (codePoint == CANCEL_TAG_CODE_POINT) {
+        // Cancel tag marks the end of the sequence
+        return currentPosition;
+      }
+    }
+    return currentPosition;
   }
 
   private static char convertTagCharToChar(int tagCharCodePoint) {

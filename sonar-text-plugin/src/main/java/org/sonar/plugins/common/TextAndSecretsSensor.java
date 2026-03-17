@@ -59,8 +59,8 @@ import org.sonar.plugins.secrets.configuration.SecretsSpecificationContainer;
 import org.sonar.plugins.secrets.utils.CheckContainer;
 import org.sonar.plugins.text.TextCheckList;
 import org.sonar.plugins.text.TextRuleDefinition;
+import org.sonar.plugins.text.api.AbstractUnicodeSequenceCheck;
 import org.sonar.plugins.text.checks.BIDICharacterCheck;
-import org.sonar.plugins.text.checks.TagBlockCheck;
 
 public class TextAndSecretsSensor implements Sensor {
 
@@ -402,8 +402,8 @@ public class TextAndSecretsSensor implements Sensor {
           specificationBasedCheck.initialize(secretsSpecificationContainer.getSpecificationLoader(), durationStatistics, specificationConfiguration);
         } else if (activeCheck instanceof BIDICharacterCheck bidiCharacterCheck) {
           bidiCharacterCheck.initialize(durationStatistics);
-        } else if (activeCheck instanceof TagBlockCheck tagBlockCheck) {
-          tagBlockCheck.initialize(durationStatistics);
+        } else if (activeCheck instanceof AbstractUnicodeSequenceCheck unicodeSequenceCheck) {
+          unicodeSequenceCheck.initialize(durationStatistics);
         }
       }
     });

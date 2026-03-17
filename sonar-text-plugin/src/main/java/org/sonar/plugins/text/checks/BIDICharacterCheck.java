@@ -137,6 +137,6 @@ public class BIDICharacterCheck extends TextCheck {
       columnToReport = unclosedIsolateColumns.getFirst();
     }
 
-    ctx.reportTextIssue(getRuleKey(), lineNumber, String.format(MESSAGE_FORMAT, columnToReport + 1));
+    ctx.reportTextIssue(getRuleKey(), lineNumber, MESSAGE_FORMAT.formatted(columnToReport + 1));
   }
 }

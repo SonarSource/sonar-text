@@ -1,0 +1,29 @@
+{
+  "title": "Consecutive Unicode Variation Selectors should not be used",
+  "type": "VULNERABILITY",
+  "code": {
+    "impacts": {
+      "SECURITY": "HIGH"
+    },
+    "attribute": "TRUSTWORTHY"
+  },
+  "status": "ready",
+  "remediation": {
+    "func": "Constant\/Issue",
+    "constantCost": "5min"
+  },
+  "tags": [
+    "cwe"
+  ],
+  "defaultSeverity": "Major",
+  "ruleSpecification": "RSPEC-8522",
+  "sqKey": "S8522",
+  "scope": "All",
+  "quickfix": "unknown",
+  "securityStandards": {
+    "CWE": [
+      94,
+      506
+    ]
+  }
+}

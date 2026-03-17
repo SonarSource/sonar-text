@@ -1,0 +1,62 @@
+<p>Consecutive Unicode Variation Selectors can be used to hide executable code inside source files, making it invisible to human reviewers.</p>
+<h2>Why is this an issue?</h2>
+<p>Unicode Variation Selectors (U+FE00–U+FE0F and U+E0100–U+E01EF) are invisible characters that normally select an alternate rendering for a
+preceding base character — for example, choosing between a text and emoji presentation of a symbol.</p>
+<p>When multiple variation selectors appear consecutively after a single character, they can encode hidden data. Each selector’s offset from the start
+of its Unicode range maps to a numeric value, and the resulting sequence of values can be decoded as UTF-8 bytes to reveal an arbitrary payload.</p>
+<p>This technique was used in the GlassWorm supply chain attack, where malicious actors embedded invisible payloads in Visual Studio Code extensions
+and npm packages. Since variation selectors render as nothing in virtually all code editors, terminals, version control diff views, and code review
+interfaces, the hidden content escapes detection during manual review and most automated scans.</p>
+<h3>What is the potential impact?</h3>
+<p>If this code was not written by you or a trusted author, the consecutive variation selectors may encode a hidden payload that is executed at
+runtime.</p>
+<p>Such a payload could:</p>
+<ul>
+  <li>steal developer credentials, authentication tokens, and secrets from the local environment</li>
+  <li>exfiltrate data from the host machine or CI/CD runner</li>
+  <li>propagate through the supply chain by using stolen tokens to publish further compromised packages or extensions</li>
+  <li>establish persistent access to developer machines</li>
+</ul>
+<h2>How to fix it</h2>
+<p>Open the affected file in an editor or tool that reveals non-printable characters — such as <code>cat -A</code>, a hex editor, or a modern IDE with
+hidden character visualization enabled — and remove the consecutive variation selector characters.</p>
+<h3>Code examples</h3>
+<h4>Noncompliant code example</h4>
+<p>The string below appears to contain only the letter <code>a</code>, but eight consecutive variation selectors follow it on the same line, encoding
+the hidden text <code>alert(1)</code>:</p>
+<pre data-diff-id="1" data-diff-type="noncompliant">
+const payload = "a󠅡󠅬󠅥󠅲󠅴󠄨󠄱󠄩"; // Noncompliant: consecutive variation selectors encode a hidden payload
+</pre>
+<h4>Compliant solution</h4>
+<pre data-diff-id="1" data-diff-type="compliant">
+const payload = "a";
+</pre>
+<h3>How does this work?</h3>
+<p>Each variation selector in the ranges U+FE00–U+FE0F and U+E0100–U+E01EF encodes a byte value: characters in the first range map to values 0–15 by
+subtracting <code>0xFE00</code>, and characters in the second range map to values 16–255 by subtracting <code>0xE0100</code> and adding 16. A sequence
+of consecutive selectors therefore encodes a sequence of bytes, which can be decoded as UTF-8 text and executed, for example with
+<code>eval()</code>.</p>
+<p>A single variation selector after an appropriate base character can be legitimate (for instance, U+FE0F selects the emoji presentation of many
+symbols). The rule flags only sequences of two or more consecutive selectors, which have no standard use and strongly indicate hidden content.</p>
+<h2>Resources</h2>
+<h3>Articles &amp; blog posts</h3>
+<ul>
+  <li>Snyk - <a href="https://snyk.io/articles/defending-against-glassworm/">Defending Against Glassworm: The Invisible Malware That’s Rewriting
+  Supply Chain Security</a></li>
+  <li>Aikido Security - <a href="https://www.aikido.dev/blog/glassworm-returns-unicode-attack-github-npm-vscode">Glassworm Returns: Invisible Unicode
+  Attacks</a></li>
+</ul>
+<h3>Standards</h3>
+<ul>
+  <li>Unicode Standard - <a href="https://www.unicode.org/charts/PDF/UFE00.pdf">Variation Selectors</a></li>
+  <li>Unicode Standard - <a href="https://www.unicode.org/charts/PDF/UE0100.pdf">Variation Selectors Supplement</a></li>
+  <li>Wikipedia - <a href="https://en.wikipedia.org/wiki/Variation_Selectors_(Unicode_block)">Variation Selectors (Unicode block)</a></li>
+  <li>CWE - <a href="https://cwe.mitre.org/data/definitions/94">CWE-94 - Improper Control of Generation of Code ('Code Injection')</a></li>
+  <li>CWE - <a href="https://cwe.mitre.org/data/definitions/506">CWE-506 - Embedded Malicious Code</a></li>
+</ul>
+<h3>Related rules</h3>
+<ul>
+  <li>{rule:text:S6389} - Using bidirectional characters is security-sensitive</li>
+  <li>{rule:text:S7628} - Using Unicode tag blocks is security-sensitive</li>
+</ul>
+
