@@ -39,4 +39,10 @@ public class VariationSelectorCheck extends AbstractUnicodeSequenceCheck {
   protected void reportSequence(InputFileContext ctx, int lineNumber, int startColumn, List<Integer> sequenceChars) {
     ctx.reportTextIssue(getRuleKey(), lineNumber, MESSAGE_FORMAT.formatted(sequenceChars.size(), startColumn));
   }
+
+  @Override
+  protected int minSequenceLength() {
+    // 2 or 3 consecutive variation selectors can often appear as artifacts of copy-paste and shouldn't hold any malicious payload
+    return 4;
+  }
 }

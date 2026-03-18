@@ -33,7 +33,7 @@ class VariationSelectorCheckTest {
     check.initialize(mockDurationStatistics());
     var inputFile = inputFileFromPath(Path.of("src", "test", "resources", "checks", "VariationSelectorCheck", "test.js"));
     assertThat(analyze(check, inputFile)).containsExactly(
-      "text:S8522 [3:0-3:26] This line contains 2 consecutive Variation Selector characters starting at column 21. Make sure that using consecutive variation selectors is intentional and safe here.",
-      "text:S8522 [5:0-5:30] This line contains 3 consecutive Variation Selector characters starting at column 21. Make sure that using consecutive variation selectors is intentional and safe here.");
+      "text:S8522 [5:0-5:32] This line contains 4 consecutive Variation Selector characters starting at column 21. Make sure that using consecutive variation selectors is intentional and safe here.",
+      "text:S8522 [8:0-8:109] This line contains 8 consecutive Variation Selector characters starting at column 19. Make sure that using consecutive variation selectors is intentional and safe here.");
   }
 }
