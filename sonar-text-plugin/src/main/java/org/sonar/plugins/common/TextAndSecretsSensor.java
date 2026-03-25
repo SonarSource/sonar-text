@@ -153,6 +153,7 @@ public class TextAndSecretsSensor implements Sensor {
 
     runAnalysis(sensorContext, activeChecks);
 
+    afterAnalysis(activeChecks);
     processMetrics();
     cleanUp();
   }
@@ -443,6 +444,10 @@ public class TextAndSecretsSensor implements Sensor {
   }
 
   protected void logCheckBasedStatistics(List<Check> activeChecks) {
+    // nothing to do here for this class
+  }
+
+  protected void afterAnalysis(List<Check> activeChecks) {
     // nothing to do here for this class
   }
 
