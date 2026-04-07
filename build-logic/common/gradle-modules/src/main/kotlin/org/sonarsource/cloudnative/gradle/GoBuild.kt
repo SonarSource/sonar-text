@@ -1,10 +1,10 @@
 /*
  * SonarSource Cloud Native Gradle Modules
- * Copyright (C) 2024-2026 SonarSource Sàrl
+ * Copyright (C) SonarSource Sàrl
  * mailto:info AT sonarsource DOT com
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the Sonar Source-Available License Version 1, as published by SonarSource Sàrl.
+ * You can redistribute and/or modify this program under the terms of
+ * the Sonar Source-Available License Version 1, as published by SonarSource Sàrl.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,6 +16,7 @@
  */
 package org.sonarsource.cloudnative.gradle
 
+import java.io.File
 import org.gradle.api.Project
 import org.gradle.api.file.FileTree
 import org.gradle.api.file.RegularFile
@@ -72,3 +73,14 @@ fun Project.goSources(): FileTree =
         include("**/*.go")
         exclude("build/**", "**/*_generated.go")
     }
+
+fun convertLicenseHeaderToGoCommentStyle(inputFile: File): String {
+    val lines = inputFile.readLines()
+
+    if (lines.size <= 2) return ""
+
+    // drop(1) removes the first, dropLast(1) removes the last
+    return lines.drop(1).dropLast(1).joinToString("\n") { line ->
+        line.replace(" *", "//")
+    }.plus("\n\n")
+}

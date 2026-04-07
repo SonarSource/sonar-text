@@ -1,10 +1,10 @@
 /*
  * SonarSource Cloud Native Gradle Modules
- * Copyright (C) 2024-2026 SonarSource Sàrl
+ * Copyright (C) SonarSource Sàrl
  * mailto:info AT sonarsource DOT com
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the Sonar Source-Available License Version 1, as published by SonarSource Sàrl.
+ * You can redistribute and/or modify this program under the terms of
+ * the Sonar Source-Available License Version 1, as published by SonarSource Sàrl.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -20,6 +20,7 @@ import java.nio.file.StandardCopyOption
 import org.sonarsource.cloudnative.gradle.AnalyzerLicensingPackagingRenderer
 import org.sonarsource.cloudnative.gradle.LicenseGenerationConfig
 import org.sonarsource.cloudnative.gradle.areDirectoriesEqual
+import org.sonarsource.cloudnative.gradle.areFilesEqual
 import org.sonarsource.cloudnative.gradle.copyDirectory
 
 plugins {
@@ -67,7 +68,11 @@ tasks.register("validateLicenseFiles") {
     dependsOn("generateLicenseReport")
 
     doLast {
-        if (!areDirectoriesEqual(buildLicenseOutputToCopyDir.asFile, resourceThirdPartyDir.asFile, logger)) {
+        val thirdPartyLicenseEquality = areDirectoriesEqual(buildLicenseOutputToCopyDir.asFile, resourceThirdPartyDir.asFile, logger)
+        val sonarLicenseFile = licenseGenerationConfig.projectLicenseFile.get()
+        val sonarLicenseFileEquality =
+            areFilesEqual(sonarLicenseFile, resourceLicenseDir.file("LICENSE.txt").asFile, File("LICENSE.txt"), logger)
+        if (!thirdPartyLicenseEquality || !sonarLicenseFileEquality) {
             val message = """
                 [FAILURE] License file validation failed!
                 Generated license files differ from committed files at $resourceThirdPartyDir.

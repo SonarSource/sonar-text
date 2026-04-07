@@ -1,10 +1,10 @@
 /*
  * SonarSource Cloud Native Gradle Modules
- * Copyright (C) 2024-2026 SonarSource Sàrl
+ * Copyright (C) SonarSource Sàrl
  * mailto:info AT sonarsource DOT com
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the Sonar Source-Available License Version 1, as published by SonarSource Sàrl.
+ * You can redistribute and/or modify this program under the terms of
+ * the Sonar Source-Available License Version 1, as published by SonarSource Sàrl.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -30,6 +30,29 @@ import org.gradle.api.tasks.Exec
 import org.gradle.internal.os.OperatingSystem
 
 fun isCi() = System.getenv("CI")?.equals("true") == true
+
+/**
+ * Resolves the absolute path of an executable by searching the PATH environment variable.
+ * This works around a JDK 21 issue where process creation may not properly resolve executables from PATH.
+ * Falls back to the bare executable name if not found (letting the OS handle resolution).
+ */
+fun findExecutable(name: String): String {
+    val pathSeparator = File.pathSeparator
+    val executableExtensions = if (OperatingSystem.current().isWindows) listOf(".exe", ".cmd", ".bat", "") else listOf("")
+    val pathDirs = System.getenv("PATH")
+        ?.split(pathSeparator)
+        ?.filter { it.isNotBlank() }
+        ?: return name
+    for (dir in pathDirs) {
+        for (ext in executableExtensions) {
+            val candidate = File(dir, "$name$ext")
+            if (candidate.isFile && candidate.canExecute()) {
+                return candidate.absolutePath
+            }
+        }
+    }
+    return name
+}
 
 fun Project.signingCondition(): Boolean {
     val branch = System.getenv("GITHUB_REF_NAME") ?: System.getenv("CIRRUS_BRANCH") ?: ""
@@ -100,7 +123,7 @@ fun checkJarEntriesPathUniqueness(file: File) {
 
 fun Project.commitHashProvider(ref: String = "HEAD") =
     providers.exec {
-        commandLine("git", "rev-parse", ref)
+        commandLine(findExecutable("git"), "rev-parse", ref)
     }.standardOutput.asText
 
 fun getPlatform(): String {

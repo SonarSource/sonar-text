@@ -1,10 +1,10 @@
 /*
  * SonarSource Cloud Native Gradle Modules
- * Copyright (C) 2024-2026 SonarSource Sàrl
+ * Copyright (C) SonarSource Sàrl
  * mailto:info AT sonarsource DOT com
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the Sonar Source-Available License Version 1, as published by SonarSource Sàrl.
+ * You can redistribute and/or modify this program under the terms of
+ * the Sonar Source-Available License Version 1, as published by SonarSource Sàrl.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -20,9 +20,12 @@ import org.sonarsource.cloudnative.gradle.GO_LICENSES_OUTPUT_DIR
 import org.sonarsource.cloudnative.gradle.GoBuild
 import org.sonarsource.cloudnative.gradle.allGoSourcesAndMakeScripts
 import org.sonarsource.cloudnative.gradle.crossCompileEnv
+import org.sonarsource.cloudnative.gradle.findExecutable
 import org.sonarsource.cloudnative.gradle.goLangCiLintVersion
 import org.sonarsource.cloudnative.gradle.goVersion
 import org.sonarsource.cloudnative.gradle.isCi
+
+val dockerExecutable = findExecutable("docker")
 
 val goBuildExtension = extensions.findByType<GoBuild>() ?: extensions.create<GoBuild>("goBuild")
 
@@ -49,7 +52,7 @@ val buildDockerImage by tasks.registering(Exec::class) {
     val noTrafficInspection = "false" == System.getProperty("trafficInspection")
 
     val arguments = buildList {
-        add("docker")
+        add(dockerExecutable)
         add("buildx")
         add("build")
         add("--file")
@@ -102,7 +105,7 @@ val dockerTasks = goBuildExtension.dockerCommands.map { tasksToCommands ->
 
             val workDir = goBuildExtension.dockerWorkDir.get()
             commandLine(
-                "docker",
+                dockerExecutable,
                 "run",
                 "--rm",
                 "--network=host",
