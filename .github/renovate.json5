@@ -92,6 +92,5 @@
       ],
       "enabled": false
     }
-  ],
-  "reviewers": ["team:security-cloud-squad"]
+  ]
 }
