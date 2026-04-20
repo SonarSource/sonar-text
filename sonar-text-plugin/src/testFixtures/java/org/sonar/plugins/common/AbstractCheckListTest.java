@@ -33,7 +33,9 @@ public abstract class AbstractCheckListTest {
     int expectedCount = 0;
     for (var checksPackage : checksPackagePaths()) {
       try (Stream<Path> list = Files.walk(checksPackage)) {
-        expectedCount += (int) list.filter(file -> file.toString().endsWith("Check.java")).count();
+        expectedCount += (int) list.filter(file -> file.toString().endsWith("Check.java")
+          && !file.toFile().getName().startsWith("Abstract"))
+          .count();
       }
     }
     List<Class<?>> checkClassList = checkClassList();
