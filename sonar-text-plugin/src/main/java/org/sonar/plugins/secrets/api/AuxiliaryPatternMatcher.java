@@ -27,13 +27,13 @@ public interface AuxiliaryPatternMatcher {
   DefaultAuxiliaryMatcher NO_FILTERING_AUXILIARY_MATCHER = new DefaultAuxiliaryMatcher();
 
   /**
-   * Filters the list of {@link Match candidateMatches} based on the content. The actual filtering behavior is dependent on the actual implementation.
+   * Filters the list of {@link CandidateMatch candidateMatches} based on the content. The actual filtering behavior is dependent on the actual implementation.
    * @param candidateMatches matches to be filtered
    * @param inputFileContext inputFileContext containing the content where the matches where found
    * @param ruleId id of the rule this matcher stems from. Useful for logging.
    * @return list of filtered matches
    */
-  List<Match> filter(List<Match> candidateMatches, InputFileContext inputFileContext, String ruleId);
+  List<CandidateMatch> filter(List<CandidateMatch> candidateMatches, InputFileContext inputFileContext, String ruleId);
 
   /**
    * Returns a new {@link AuxiliaryPatternMatcher}, which conjuncts the results of this {@link AuxiliaryPatternMatcher} and the provided secondMatcher.
@@ -68,7 +68,7 @@ public interface AuxiliaryPatternMatcher {
   class DefaultAuxiliaryMatcher implements AuxiliaryPatternMatcher {
 
     @Override
-    public List<Match> filter(List<Match> candidateMatches, InputFileContext inputFileContext, String ruleId) {
+    public List<CandidateMatch> filter(List<CandidateMatch> candidateMatches, InputFileContext inputFileContext, String ruleId) {
       return candidateMatches;
     }
   }

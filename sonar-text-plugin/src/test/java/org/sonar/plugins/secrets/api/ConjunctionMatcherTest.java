@@ -39,10 +39,10 @@ class ConjunctionMatcherTest {
     AuxiliaryPatternMatcher conjunctionMatcher = MATCHER_AFTER.and(MATCHER_BEFORE);
 
     String content = "before candidate secret after";
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
+    List<CandidateMatch> candidateSecrets = candidateSecretMatcher.findMatches(content, "<test-rule-id>");
 
     InputFileContext inputFileContext = inputFileContext(content);
-    List<Match> result = conjunctionMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
+    List<CandidateMatch> result = conjunctionMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
 
     assertThat(conjunctionMatcher).isInstanceOf(ConjunctionMatcher.class);
     assertThat(result).containsExactlyElementsOf(candidateSecrets);
@@ -53,10 +53,10 @@ class ConjunctionMatcherTest {
   void conjunctionMatcherShouldRemoveCandidateSecret(String content) throws IOException {
     AuxiliaryPatternMatcher conjunctionMatcher = MATCHER_AFTER.and(MATCHER_BEFORE);
 
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
+    List<CandidateMatch> candidateSecrets = candidateSecretMatcher.findMatches(content, "<test-rule-id>");
 
     InputFileContext inputFileContext = inputFileContext(content);
-    List<Match> result = conjunctionMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
+    List<CandidateMatch> result = conjunctionMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
 
     assertThat(conjunctionMatcher).isInstanceOf(ConjunctionMatcher.class);
     assertThat(result).isEmpty();

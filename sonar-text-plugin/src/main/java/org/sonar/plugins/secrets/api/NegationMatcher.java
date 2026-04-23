@@ -35,8 +35,8 @@ public class NegationMatcher implements AuxiliaryPatternMatcher {
   }
 
   @Override
-  public List<Match> filter(List<Match> candidateMatches, InputFileContext inputFileContext, String ruleId) {
-    List<Match> matches = matcher.filter(candidateMatches, inputFileContext, ruleId);
+  public List<CandidateMatch> filter(List<CandidateMatch> candidateMatches, InputFileContext inputFileContext, String ruleId) {
+    List<CandidateMatch> matches = matcher.filter(candidateMatches, inputFileContext, ruleId);
     return candidateMatches.stream()
       .filter(candidate -> !matches.contains(candidate))
       .collect(Collectors.toList());

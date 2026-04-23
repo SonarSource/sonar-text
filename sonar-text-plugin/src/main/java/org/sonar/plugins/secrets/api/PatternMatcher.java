@@ -79,43 +79,43 @@ public class PatternMatcher {
   }
 
   /**
-   * Returns a list of {@link Match matches} which are detected using the {@link Pattern pattern} field.
+   * Returns a list of {@link CandidateMatch matches} which are detected using the {@link Pattern pattern} field.
    *
    * @param content     to be matched on
    * @param ruleId      of the {@link org.sonar.plugins.secrets.configuration.model.Rule}, for logging purposes.
-   * @return list of {@link Match matches} detected in the content
+   * @return list of {@link CandidateMatch matches} detected in the content
    */
-  public List<Match> findIn(String content, String ruleId) {
-    return findIn(content, ruleId, emptyList());
+  public List<CandidateMatch> findMatches(String content, String ruleId) {
+    return findMatches(content, ruleId, emptyList());
   }
 
   /**
-   * Returns a list of {@link Match matches} which are detected using the {@link Pattern pattern} field.
+   * Returns a list of {@link CandidateMatch matches} which are detected using the {@link Pattern pattern} field.
    *
    * @param content     to be matched on
    * @param ruleId      of the {@link org.sonar.plugins.secrets.configuration.model.Rule}, for logging purposes.
-   * @param expectedNamedGroups set of names of named capturing groups to be returned in the {@link Match} object
-   * @return list of {@link Match matches} detected in the content
+   * @param expectedNamedGroups set of names of named capturing groups to be returned in the {@link CandidateMatch} object
+   * @return list of {@link CandidateMatch matches} detected in the content
    */
-  public List<Match> findIn(String content, String ruleId, Collection<String> expectedNamedGroups) {
+  public List<CandidateMatch> findMatches(String content, String ruleId, Collection<String> expectedNamedGroups) {
     if (pattern == null) {
       return emptyList();
     }
-    List<Match> matches = new ArrayList<>();
+    List<CandidateMatch> matches = new ArrayList<>();
     var matcher = pattern.matcher(new InterruptibleCharSequence(content));
 
     boolean executedSuccessfully = RegexMatchingManager.runRegexMatchingWithTimeout(() -> {
       while (matcher.find()) {
         var matchResult = matcher.toMatchResult();
         if (matcher.groupCount() == 0) {
-          matches.add(new Match(matchResult.group(), matchResult.start(), matchResult.end(), emptyMap()));
+          matches.add(new CandidateMatch(matchResult.group(), matchResult.start(), matchResult.end(), emptyMap()));
         } else {
           var namedMatches = expectedNamedGroups.stream()
             .filter(it -> matcher.group(it) != null)
-            .collect(toMap(Function.identity(), it -> new Match(matcher.group(it), matcher.start(it), matcher.end(it), emptyMap())));
+            .collect(toMap(Function.identity(), it -> new CandidateMatch(matcher.group(it), matcher.start(it), matcher.end(it), emptyMap())));
 
           // convention for issue location: the first group takes precedence
-          matches.add(new Match(matchResult.group(1), matchResult.start(1), matchResult.end(1), namedMatches));
+          matches.add(new CandidateMatch(matchResult.group(1), matchResult.start(1), matchResult.end(1), namedMatches));
         }
       }
     }, pattern.pattern(), ruleId);

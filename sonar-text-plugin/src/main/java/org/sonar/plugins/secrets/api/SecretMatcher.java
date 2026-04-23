@@ -20,9 +20,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.common.measures.DurationStatistics;
+import org.sonar.plugins.secrets.api.filters.FilterOutcome;
+import org.sonar.plugins.secrets.api.filters.PostFilter;
+import org.sonar.plugins.secrets.api.filters.PostFilterFactory;
+import org.sonar.plugins.secrets.api.filters.PreFilterFactory;
+import org.sonar.plugins.secrets.api.filters.SkippedFilter;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.Selectivity;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.NamedPostModule;
@@ -40,8 +47,8 @@ public class SecretMatcher implements Matcher {
   private final PatternMatcher patternMatcher;
   private final AuxiliaryPatternMatcher auxiliaryPatternMatcher;
   private final Predicate<InputFileContext> preFilter;
-  private final Predicate<String> postFilter;
-  private final Map<String, Predicate<String>> postFilterByGroup;
+  private final PostFilter postFilter;
+  private final Map<String, PostFilter> postFilterByGroup;
 
   private final DurationStatistics durationStatistics;
 
@@ -51,8 +58,8 @@ public class SecretMatcher implements Matcher {
     PatternMatcher patternMatcher,
     AuxiliaryPatternMatcher auxiliaryPatternMatcher,
     Predicate<InputFileContext> preFilter,
-    Predicate<String> postFilter,
-    Map<String, Predicate<String>> postFilterByGroup,
+    PostFilter postFilter,
+    Map<String, PostFilter> postFilterByGroup,
     DurationStatistics durationStatistics) {
     this.ruleId = ruleId;
     this.ruleSelectivity = ruleSelectivity;
@@ -82,10 +89,11 @@ public class SecretMatcher implements Matcher {
     var patternMatcher = PatternMatcher.build(rule.getDetection().getMatching());
     Predicate<InputFileContext> preFilter = PreFilterFactory.createPredicate(
       rule.getDetection().getPre(), rule.getSelectivity(), specificationConfiguration, shouldExecuteContentPreFilters);
-    Predicate<String> postFilter = PostFilterFactory.createPredicate(rule.getDetection().getPost());
+    Set<SkippedFilter> skippedFilters = specificationConfiguration.skippedFilters();
+    PostFilter postFilter = PostFilterFactory.createFilter(rule.getDetection().getPost(), skippedFilters);
     var postFilterByGroup = Optional.ofNullable(rule.getDetection().getPost()).stream()
       .flatMap(it -> it.getGroups().stream())
-      .collect(toMap(NamedPostModule::getName, PostFilterFactory::createPredicate));
+      .collect(toMap(NamedPostModule::getName, namedPost -> PostFilterFactory.createFilter(namedPost, skippedFilters)));
 
     var auxiliaryMatcher = AuxiliaryPatternMatcherFactory.build(rule.getDetection().getMatching());
     var ruleMessage = specificationConfiguration.messageFormatter().format(rule.getMetadata());
@@ -102,7 +110,7 @@ public class SecretMatcher implements Matcher {
   }
 
   @Override
-  public List<Match> findIn(InputFileContext fileContext) {
+  public List<MatchResult> findIn(InputFileContext fileContext) {
     boolean isRejectedOnPreFilter = durationStatistics.timed(
       getRuleId() + DurationStatistics.SUFFIX_PRE,
       () -> !preFilter.test(fileContext));
@@ -111,34 +119,61 @@ public class SecretMatcher implements Matcher {
     }
 
     String content = fileContext.content();
-    List<Match> secretsFilteredOnContext = durationStatistics.timed(
+    List<CandidateMatch> secretsFilteredOnContext = durationStatistics.timed(
       getRuleId() + DurationStatistics.SUFFIX_MATCHER,
       () -> {
-        List<Match> candidateSecrets = patternMatcher.findIn(content, getRuleId(), postFilterByGroup.keySet());
+        List<CandidateMatch> candidateSecrets = patternMatcher.findMatches(content, getRuleId(), postFilterByGroup.keySet());
         return auxiliaryPatternMatcher.filter(candidateSecrets, fileContext, getRuleId());
       });
 
     return secretsFilteredOnContext.stream()
-      .filter(match -> durationStatistics.timed(
+      .map(match -> new MatchResult(match, durationStatistics.timed(
         getRuleId() + DurationStatistics.SUFFIX_POST,
-        () -> postFilter.test(match.text()) && match.groups().entrySet().stream()
-          .allMatch(entry -> postFilterByGroup.getOrDefault(entry.getKey(), s -> true).test(entry.getValue().text()))))
+        () -> applyPostFilters(match))))
+      .filter(accepted -> accepted.outcome().passed())
       .toList();
+  }
+
+  private FilterOutcome applyPostFilters(CandidateMatch match) {
+    FilterOutcome outcome = postFilter.apply(match.text());
+    if (!outcome.passed()) {
+      return outcome;
+    }
+    for (var entry : match.groups().entrySet()) {
+      PostFilter groupFilter = postFilterByGroup.getOrDefault(entry.getKey(), PostFilter.ACCEPT_ALL);
+      outcome = outcome.combine(groupFilter.apply(entry.getValue().text()));
+    }
+    return outcome;
   }
 
   public String getRuleId() {
     return ruleId;
   }
 
-  public String getMessageFromRule() {
-    return ruleMessage;
+  /**
+   * Returns the issue message for a specific filtered match. When any filter was skipped, the message is
+   * amended with a suffix listing the reasons (composed from {@link SkippedFilter#lowConfidenceLabel}) so the finding
+   * is surfaced as low-confidence.
+   *
+   * @param outcome the filter outcome for a candidate match
+   * @return the issue message, potentially amended with a low-confidence suffix
+   */
+  public String getMessageForCandidate(FilterOutcome outcome) {
+    Set<SkippedFilter> skipped = outcome.skipped();
+    if (skipped.isEmpty()) {
+      return ruleMessage;
+    }
+    String reasons = skipped.stream()
+      .map(SkippedFilter::lowConfidenceLabel)
+      .collect(Collectors.joining(", "));
+    return ruleMessage + " (" + reasons + ")";
   }
 
-  Predicate<String> getPostFilter() {
+  PostFilter getPostFilter() {
     return postFilter;
   }
 
-  public Map<String, Predicate<String>> getPostFilterByGroup() {
+  public Map<String, PostFilter> getPostFilterByGroup() {
     return postFilterByGroup;
   }
 

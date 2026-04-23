@@ -14,19 +14,26 @@
  * You should have received a copy of the Sonar Source-Available License
  * along with this program; if not, see https://sonarsource.com/license/ssal/
  */
-package org.sonar.plugins.common;
+package org.sonar.plugins.secrets.api;
 
-import org.sonar.api.Plugin;
+import java.util.Map;
 
-class TextAndSecretsPluginTest extends AbstractPluginTest {
+/**
+ * Result of applying pattern matcher to a text.
+ *
+ * @param text            matched text
+ * @param fileStartOffset inclusive start offset
+ * @param fileEndOffset   exclusive end offset
+ * @param groups          map containing matches per named group
+ */
+public record CandidateMatch(String text, int fileStartOffset, int fileEndOffset, Map<String, CandidateMatch> groups) {
 
   @Override
-  protected Plugin getPlugin() {
-    return new TextAndSecretsPlugin();
-  }
-
-  @Override
-  protected int getExpectedExtensionCount() {
-    return 15;
+  public String toString() {
+    return "CandidateMatch{" +
+      "text='" + text + '\'' +
+      ", fileStartOffset=" + fileStartOffset +
+      ", fileEndOffset=" + fileEndOffset +
+      '}';
   }
 }

@@ -38,10 +38,10 @@ class NegationMatcherTest {
     AuxiliaryPatternMatcher negationMatcher = MATCHER_BEFORE.negate();
 
     String content = "candidate secret another candidate secret";
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
+    List<CandidateMatch> candidateSecrets = candidateSecretMatcher.findMatches(content, "<test-rule-id>");
 
     InputFileContext inputFileContext = inputFileContext(content);
-    List<Match> result = negationMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
+    List<CandidateMatch> result = negationMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
 
     assertThat(negationMatcher).isInstanceOf(NegationMatcher.class);
     assertThat(result).containsExactlyElementsOf(candidateSecrets);
@@ -54,10 +54,10 @@ class NegationMatcherTest {
 
     AuxiliaryPatternMatcher negationMatcher = conjunctionMatcher.negate();
     String content = "candidate secret around another candidate secret after";
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
+    List<CandidateMatch> candidateSecrets = candidateSecretMatcher.findMatches(content, "<test-rule-id>");
 
     InputFileContext inputFileContext = inputFileContext(content);
-    List<Match> result = negationMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
+    List<CandidateMatch> result = negationMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
 
     assertThat(negationMatcher).isInstanceOf(NegationMatcher.class);
     assertThat(result).containsExactlyElementsOf(candidateSecrets);
@@ -69,10 +69,10 @@ class NegationMatcherTest {
 
     AuxiliaryPatternMatcher negationMatcher = disjunctionMatcher.negate();
     String content = "candidate secret before another candidate secret";
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
+    List<CandidateMatch> candidateSecrets = candidateSecretMatcher.findMatches(content, "<test-rule-id>");
 
     InputFileContext inputFileContext = inputFileContext(content);
-    List<Match> result = negationMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
+    List<CandidateMatch> result = negationMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
 
     assertThat(negationMatcher).isInstanceOf(NegationMatcher.class);
     assertThat(result)
@@ -85,10 +85,10 @@ class NegationMatcherTest {
     AuxiliaryPatternMatcher negationMatcher = MATCHER_BEFORE.negate();
 
     String content = "before candidate secret after another candidate secret";
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
+    List<CandidateMatch> candidateSecrets = candidateSecretMatcher.findMatches(content, "<test-rule-id>");
 
     InputFileContext inputFileContext = inputFileContext(content);
-    List<Match> result = negationMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
+    List<CandidateMatch> result = negationMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
 
     assertThat(negationMatcher).isInstanceOf(NegationMatcher.class);
     assertThat(result).isEmpty();
@@ -99,10 +99,10 @@ class NegationMatcherTest {
     AuxiliaryPatternMatcher negationMatcher = MATCHER_BEFORE.negate();
 
     String content = "candidate secret before candidate secret after";
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
+    List<CandidateMatch> candidateSecrets = candidateSecretMatcher.findMatches(content, "<test-rule-id>");
 
     InputFileContext inputFileContext = inputFileContext(content);
-    List<Match> result = negationMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
+    List<CandidateMatch> result = negationMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
 
     assertThat(negationMatcher).isInstanceOf(NegationMatcher.class);
     assertThat(result)
@@ -115,10 +115,10 @@ class NegationMatcherTest {
     AuxiliaryPatternMatcher negationMatcher = MATCHER_BEFORE.negate();
 
     String content = "candidate secret after another candidate secret";
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
+    List<CandidateMatch> candidateSecrets = candidateSecretMatcher.findMatches(content, "<test-rule-id>");
 
     InputFileContext inputFileContext = inputFileContext(content);
-    List<Match> result = negationMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
+    List<CandidateMatch> result = negationMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
 
     assertThat(negationMatcher).isInstanceOf(NegationMatcher.class);
     assertThat(result).containsExactlyElementsOf(candidateSecrets);

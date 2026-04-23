@@ -32,8 +32,8 @@ class DistanceValidationTest {
 
   @Test
   void testFirstBeforeSecondMatch() {
-    Match first = new Match("text", 10, 21, emptyMap());
-    Match second = new Match("text", 21, 30, emptyMap());
+    CandidateMatch first = new CandidateMatch("text", 10, 21, emptyMap());
+    CandidateMatch second = new CandidateMatch("text", 21, 30, emptyMap());
 
     assertThat(isBefore(first, second)).isTrue();
     assertThat(isAfter(first, second)).isFalse();
@@ -44,8 +44,8 @@ class DistanceValidationTest {
   @ParameterizedTest(name = "{0}")
   @MethodSource
   void matchesShouldNotBeBeforeAndAfter(String testName, int secondMatchStartOffset, int secondMatchEndOffset) {
-    Match first = new Match("text", 10, 20, emptyMap());
-    Match second = new Match("text", secondMatchStartOffset, secondMatchEndOffset, emptyMap());
+    CandidateMatch first = new CandidateMatch("text", 10, 20, emptyMap());
+    CandidateMatch second = new CandidateMatch("text", secondMatchStartOffset, secondMatchEndOffset, emptyMap());
 
     assertThat(isBefore(first, second)).isFalse();
     assertThat(isAfter(first, second)).isFalse();
@@ -56,15 +56,15 @@ class DistanceValidationTest {
   static Stream<Arguments> matchesShouldNotBeBeforeAndAfter() {
     return Stream.of(
       Arguments.of("Overlapping Matches", 15, 30),
-      Arguments.of("Enclosed Match", 15, 17),
+      Arguments.of("Enclosed CandidateMatch", 15, 17),
       Arguments.of("Sharing one character", 19, 25));
   }
 
   @ParameterizedTest(name = "{0}")
   @MethodSource
   void testInDistanceOfIsCalculatedCorrect(String testName, int secondMatchStartOffset, int secondMatchEndOffset, boolean isInRange) {
-    Match first = new Match("text", 10, 20, emptyMap());
-    Match second = new Match("text", secondMatchStartOffset, secondMatchEndOffset, emptyMap());
+    CandidateMatch first = new CandidateMatch("text", 10, 20, emptyMap());
+    CandidateMatch second = new CandidateMatch("text", secondMatchStartOffset, secondMatchEndOffset, emptyMap());
 
     int maxDistance = 3;
     assertThat(inDistanceOf(first, second, maxDistance)).isEqualTo(isInRange);
@@ -72,17 +72,17 @@ class DistanceValidationTest {
 
   static Stream<Arguments> testInDistanceOfIsCalculatedCorrect() {
     return Stream.of(
-      Arguments.of("Second Match after first out of range", 23, 30, true),
-      Arguments.of("Second Match after first in range", 24, 30, false),
-      Arguments.of("Second Match before first out of range", 0, 6, false),
-      Arguments.of("Second Match before first in range", 0, 7, true),
-      Arguments.of("Second Match wrapping first", 0, 30, true),
-      Arguments.of("Second Match wrapping first", 9, 21, true),
-      Arguments.of("Second Match overlapping first", 5, 15, true),
-      Arguments.of("Second Match overlapping first", 9, 15, true),
-      Arguments.of("Second Match overlapping first", 15, 21, true),
-      Arguments.of("Second Match overlapping first", 15, 25, true),
-      Arguments.of("First Match wrapping second", 15, 15, true),
-      Arguments.of("First Match wrapping second", 11, 29, true));
+      Arguments.of("Second CandidateMatch after first out of range", 23, 30, true),
+      Arguments.of("Second CandidateMatch after first in range", 24, 30, false),
+      Arguments.of("Second CandidateMatch before first out of range", 0, 6, false),
+      Arguments.of("Second CandidateMatch before first in range", 0, 7, true),
+      Arguments.of("Second CandidateMatch wrapping first", 0, 30, true),
+      Arguments.of("Second CandidateMatch wrapping first", 9, 21, true),
+      Arguments.of("Second CandidateMatch overlapping first", 5, 15, true),
+      Arguments.of("Second CandidateMatch overlapping first", 9, 15, true),
+      Arguments.of("Second CandidateMatch overlapping first", 15, 21, true),
+      Arguments.of("Second CandidateMatch overlapping first", 15, 25, true),
+      Arguments.of("First CandidateMatch wrapping second", 15, 15, true),
+      Arguments.of("First CandidateMatch wrapping second", 11, 29, true));
   }
 }

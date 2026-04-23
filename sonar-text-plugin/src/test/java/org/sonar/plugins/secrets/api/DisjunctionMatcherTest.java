@@ -40,10 +40,10 @@ class DisjunctionMatcherTest {
   void disjunctionMatcherShouldNotRemoveCandidateSecret(String content) throws IOException {
     AuxiliaryPatternMatcher disjunctionMatcher = MATCHER_AFTER.or(MATCHER_BEFORE);
 
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn(content, "<test-rule-id>");
+    List<CandidateMatch> candidateSecrets = candidateSecretMatcher.findMatches(content, "<test-rule-id>");
 
     InputFileContext inputFileContext = inputFileContext(content);
-    List<Match> result = disjunctionMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
+    List<CandidateMatch> result = disjunctionMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
 
     assertThat(disjunctionMatcher).isInstanceOf(DisjunctionMatcher.class);
     assertThat(result).containsExactlyElementsOf(candidateSecrets);
@@ -54,10 +54,10 @@ class DisjunctionMatcherTest {
     AuxiliaryPatternMatcher disjunctionMatcher = MATCHER_AFTER.or(MATCHER_BEFORE);
 
     String content = "candidate secret";
-    List<Match> candidateSecrets = candidateSecretMatcher.findIn("candidate secret", "<test-rule-id>");
+    List<CandidateMatch> candidateSecrets = candidateSecretMatcher.findMatches("candidate secret", "<test-rule-id>");
 
     InputFileContext inputFileContext = inputFileContext(content);
-    List<Match> result = disjunctionMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
+    List<CandidateMatch> result = disjunctionMatcher.filter(candidateSecrets, inputFileContext, "<test-rule-id>");
 
     assertThat(disjunctionMatcher).isInstanceOf(DisjunctionMatcher.class);
     assertThat(result).isEmpty();

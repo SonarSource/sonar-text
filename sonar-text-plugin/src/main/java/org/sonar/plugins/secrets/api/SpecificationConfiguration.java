@@ -16,15 +16,25 @@
  */
 package org.sonar.plugins.secrets.api;
 
+import java.util.Set;
+import org.sonar.plugins.secrets.api.filters.SkippedFilter;
+
 /**
  * The settings for {@link SpecificationBasedCheck} initialization.
+ *
  * @param automaticTestFileDetection enable the automatic test file detection.
- * @param messageFormatter formatter for secret issue messages.
+ * @param skippedFilters         filters to skip as requested by the caller; each skipped filter lets a specific
+ *                                   filter pass candidates it would otherwise reject, with affected findings tagged
+ *                                   accordingly.
+ * @param messageFormatter           formatter for secret issue messages.
  */
-public record SpecificationConfiguration(boolean automaticTestFileDetection, MessageFormatter messageFormatter) {
+public record SpecificationConfiguration(
+  boolean automaticTestFileDetection,
+  Set<SkippedFilter> skippedFilters,
+  MessageFormatter messageFormatter) {
 
   public SpecificationConfiguration(boolean automaticTestFileDetection) {
-    this(automaticTestFileDetection, MessageFormatter.RULE_MESSAGE);
+    this(automaticTestFileDetection, Set.of(), MessageFormatter.RULE_MESSAGE);
   }
 
   public static final SpecificationConfiguration AUTO_TEST_FILE_DETECTION_ENABLED = new SpecificationConfiguration(true);

@@ -16,23 +16,14 @@
  */
 package org.sonar.plugins.secrets.api;
 
-import org.junit.jupiter.api.Test;
+import org.sonar.plugins.secrets.api.filters.FilterOutcome;
 
-import static java.util.Collections.emptyMap;
-import static org.assertj.core.api.Assertions.assertThat;
-
-class MatchTest {
-
-  @Test
-  void constructorShouldFunctionAsExpected() {
-    String text = "text";
-    int fileStartOffset = 10;
-    int fileEndOffset = 20;
-    Match match = new Match(text, fileStartOffset, fileEndOffset, emptyMap());
-
-    assertThat(match.text()).isEqualTo(text);
-    assertThat(match.fileStartOffset()).isEqualTo(fileStartOffset);
-    assertThat(match.fileEndOffset()).isEqualTo(fileEndOffset);
-    assertThat(match).hasToString("Match{text='text', fileStartOffset=10, fileEndOffset=20}");
-  }
+/**
+ * A match paired with the aggregate outcome from the filter pipelines that accepted it.
+ *
+ * @param match   the original regex match
+ * @param outcome the combined filter outcome (always {@code passed}); {@code outcome.skipped()} lists any filters
+ *                that were skipped, so downstream reporting can mark the finding as low-confidence.
+ */
+public record MatchResult(CandidateMatch match, FilterOutcome outcome) {
 }

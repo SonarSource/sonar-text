@@ -14,19 +14,16 @@
  * You should have received a copy of the Sonar Source-Available License
  * along with this program; if not, see https://sonarsource.com/license/ssal/
  */
-package org.sonar.plugins.common;
+package org.sonar.plugins.secrets.api.filters;
 
-import org.sonar.api.Plugin;
+/**
+ * A post-filter that evaluates a candidate secret string and returns a {@link FilterOutcome} indicating whether the
+ * candidate passed and which filters, if any, were skipped.
+ */
+@FunctionalInterface
+public interface PostFilter {
 
-class TextAndSecretsPluginTest extends AbstractPluginTest {
+  FilterOutcome apply(String candidateSecret);
 
-  @Override
-  protected Plugin getPlugin() {
-    return new TextAndSecretsPlugin();
-  }
-
-  @Override
-  protected int getExpectedExtensionCount() {
-    return 15;
-  }
+  PostFilter ACCEPT_ALL = candidateSecret -> FilterOutcome.ACCEPTED;
 }

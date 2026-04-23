@@ -38,9 +38,9 @@ public class ConjunctionMatcher implements AuxiliaryPatternMatcher {
   }
 
   @Override
-  public List<Match> filter(List<Match> regexMatch, InputFileContext inputFileContext, String ruleId) {
-    List<Match> matchesLeft = matcherLeft.filter(regexMatch, inputFileContext, ruleId);
-    List<Match> matchesRight = matcherRight.filter(regexMatch, inputFileContext, ruleId);
+  public List<CandidateMatch> filter(List<CandidateMatch> regexMatch, InputFileContext inputFileContext, String ruleId) {
+    List<CandidateMatch> matchesLeft = matcherLeft.filter(regexMatch, inputFileContext, ruleId);
+    List<CandidateMatch> matchesRight = matcherRight.filter(regexMatch, inputFileContext, ruleId);
     matchesRight.retainAll(matchesLeft);
     return matchesRight;
   }

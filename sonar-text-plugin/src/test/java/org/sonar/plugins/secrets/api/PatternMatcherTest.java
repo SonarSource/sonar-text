@@ -34,21 +34,21 @@ class PatternMatcherTest {
   @Test
   void testWithNoSuppliedPattern() {
     PatternMatcher noDetectionMatcher = PatternMatcher.build((Matching) null);
-    List<Match> matches = noDetectionMatcher.findIn("test", "<test-rule-id>");
+    List<CandidateMatch> matches = noDetectionMatcher.findMatches("test", "<test-rule-id>");
     assertThat(matches).isEmpty();
   }
 
   @Test
   void patternMatcherShouldNotRelyOnRegexDelimiters() {
     PatternMatcher patternMatcher = new PatternMatcher("pattern");
-    List<Match> matches = patternMatcher.findIn("pattern pattern", "<test-rule-id>");
+    List<CandidateMatch> matches = patternMatcher.findMatches("pattern pattern", "<test-rule-id>");
     assertThat(matches).hasSize(2);
   }
 
   @Test
   void patternMatcherShouldProduceTwoMatchesWithDelimiters() {
     PatternMatcher patternMatcher = new PatternMatcher("\\b(pattern)\\b");
-    List<Match> matches = patternMatcher.findIn("pattern pattern", "<test-rule-id>");
+    List<CandidateMatch> matches = patternMatcher.findMatches("pattern pattern", "<test-rule-id>");
     assertThat(matches).hasSize(2);
   }
 
@@ -57,7 +57,7 @@ class PatternMatcherTest {
     RegexMatchingManager.setTimeoutMs(100);
     RegexMatchingManager.setUninterruptibleTimeoutMs(100);
     PatternMatcher patternMatcher = new PatternMatcher("(x+x+x+x+x+x+x+x+x+x+)+y");
-    List<Match> matches = patternMatcher.findIn("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "<test-rule-id>");
+    List<CandidateMatch> matches = patternMatcher.findMatches("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "<test-rule-id>");
     assertThat(matches).isEmpty();
     assertThat(logTester.logs())
       .containsExactly("Running pattern in rule with id \"<test-rule-id>\" on content of length 40 has timed out after 100ms. Related pattern is \"(x+x+x+x+x+x+x+x+x+x+)+y\".");
@@ -68,7 +68,7 @@ class PatternMatcherTest {
     RegexMatchingManager.setTimeoutMs(100);
     RegexMatchingManager.setUninterruptibleTimeoutMs(100);
     PatternMatcher patternMatcher = new PatternMatcher("(\\d+|(x+x+x+x+x+x+x+x+x+x+)+y)");
-    List<Match> matches = patternMatcher.findIn("1234xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "<test-rule-id>");
+    List<CandidateMatch> matches = patternMatcher.findMatches("1234xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "<test-rule-id>");
     assertThat(matches).hasSize(1);
     assertThat(logTester.logs()).containsExactly(
       "Running pattern in rule with id \"<test-rule-id>\" on content of length 44 has timed out after 100ms. Related pattern is \"(\\\\d+|(x+x+x+x+x+x+x+x+x+x+)+y)\".");
@@ -78,7 +78,7 @@ class PatternMatcherTest {
   void testCreationFromPattern() {
     var patternMatcher = PatternMatcher.build("pattern");
 
-    var matches = patternMatcher.findIn("line with pattern", "<test-rule-id>");
+    var matches = patternMatcher.findMatches("line with pattern", "<test-rule-id>");
 
     assertThat(matches).hasSize(1);
   }
@@ -90,13 +90,13 @@ class PatternMatcherTest {
     var ruleId = "<test-rule-id>";
     var namedGroups = List.of("prefix", "suffix");
 
-    var matches = patternMatcher.findIn(content, ruleId, namedGroups);
+    var matches = patternMatcher.findMatches(content, ruleId, namedGroups);
 
     assertThat(matches).hasSize(1);
     assertThat(matches.get(0).groups())
       .hasSize(2)
-      .containsEntry("prefix", new Match("Match1", 0, 6, emptyMap()))
-      .containsEntry("suffix", new Match("Match2", 7, 13, emptyMap()));
+      .containsEntry("prefix", new CandidateMatch("Match1", 0, 6, emptyMap()))
+      .containsEntry("suffix", new CandidateMatch("Match2", 7, 13, emptyMap()));
   }
 
   @Test
@@ -106,12 +106,12 @@ class PatternMatcherTest {
     var ruleId = "<test-rule-id>";
     var namedGroups = List.of("prefix", "suffix");
 
-    var matches = patternMatcher.findIn(content, ruleId, namedGroups);
+    var matches = patternMatcher.findMatches(content, ruleId, namedGroups);
 
     assertThat(matches).hasSize(1);
     assertThat(matches.get(0).groups())
       .hasSize(1)
-      .containsEntry("prefix", new Match("Match1", 0, 6, emptyMap()))
+      .containsEntry("prefix", new CandidateMatch("Match1", 0, 6, emptyMap()))
       .doesNotContainKey("suffix");
   }
 
@@ -122,7 +122,7 @@ class PatternMatcherTest {
     var ruleId = "<test-rule-id>";
     var namedGroups = List.of("prefix", "suffix");
 
-    var matches = patternMatcher.findIn(content, ruleId, namedGroups);
+    var matches = patternMatcher.findMatches(content, ruleId, namedGroups);
 
     assertThat(matches).hasSize(1);
     assertThat(matches.get(0).text())

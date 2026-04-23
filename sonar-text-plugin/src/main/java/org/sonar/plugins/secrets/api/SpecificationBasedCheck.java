@@ -59,9 +59,12 @@ public abstract class SpecificationBasedCheck extends AbstractSpecificationBased
     for (SecretMatcher secretMatcher : matchers) {
       if (ruleFilter.test(secretMatcher.getRuleId())) {
         durationStatistics.timed(secretMatcher.getRuleId() + DurationStatistics.SUFFIX_TOTAL, () -> secretMatcher.findIn(ctx))
-          .stream()
-          .map(match -> ctx.newTextRangeFromFileOffsets(match.fileStartOffset(), match.fileEndOffset()))
-          .forEach(textRange -> ctx.reportIssueOnTextRange(getRuleKey(), secretMatcher.getRuleSelectivity(), textRange, secretMatcher.getMessageFromRule()));
+          .forEach(acceptedMatch -> {
+            var match = acceptedMatch.match();
+            var textRange = ctx.newTextRangeFromFileOffsets(match.fileStartOffset(), match.fileEndOffset());
+            ctx.reportIssueOnTextRange(getRuleKey(), secretMatcher.getRuleSelectivity(), textRange,
+              secretMatcher.getMessageForCandidate(acceptedMatch.outcome()));
+          });
       }
     }
   }

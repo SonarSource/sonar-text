@@ -50,17 +50,17 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
   }
 
   @Override
-  public List<Match> filter(List<Match> candidateMatches, InputFileContext inputFileContext, String ruleId) {
-    List<Match> auxiliaryMatches = auxiliaryPatternMatcher.findIn(inputFileContext.content(), ruleId);
+  public List<CandidateMatch> filter(List<CandidateMatch> candidateMatches, InputFileContext inputFileContext, String ruleId) {
+    List<CandidateMatch> auxiliaryMatches = auxiliaryPatternMatcher.findMatches(inputFileContext.content(), ruleId);
     if (auxiliaryMatches.isEmpty()) {
       return new ArrayList<>();
     }
-    BiPredicate<Match, Match> comparisonFunction = createComparisonFunction(inputFileContext);
+    BiPredicate<CandidateMatch, CandidateMatch> comparisonFunction = createComparisonFunction(inputFileContext);
     return filterBasedOnFunction(candidateMatches, auxiliaryMatches, comparisonFunction);
   }
 
-  private BiPredicate<Match, Match> createComparisonFunction(InputFileContext inputFileContext) {
-    BiPredicate<Match, Match> result;
+  private BiPredicate<CandidateMatch, CandidateMatch> createComparisonFunction(InputFileContext inputFileContext) {
+    BiPredicate<CandidateMatch, CandidateMatch> result;
     if (AuxiliaryPatternType.PATTERN_BEFORE == auxiliaryPattern.getType()) {
       result = DistanceValidation::isBefore;
     } else if (AuxiliaryPatternType.PATTERN_AFTER == auxiliaryPattern.getType()) {
@@ -86,11 +86,12 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
     return result;
   }
 
-  private static List<Match> filterBasedOnFunction(List<Match> candidateMatches, List<Match> auxiliaryMatches, BiPredicate<Match, Match> comparisonFunction) {
-    List<Match> filteredCandidates = new ArrayList<>();
+  private static List<CandidateMatch> filterBasedOnFunction(List<CandidateMatch> candidateMatches, List<CandidateMatch> auxiliaryMatches,
+    BiPredicate<CandidateMatch, CandidateMatch> comparisonFunction) {
+    List<CandidateMatch> filteredCandidates = new ArrayList<>();
 
-    for (Match regexMatch : candidateMatches) {
-      for (Match auxiliaryMatch : auxiliaryMatches) {
+    for (CandidateMatch regexMatch : candidateMatches) {
+      for (CandidateMatch auxiliaryMatch : auxiliaryMatches) {
         if (comparisonFunction.test(auxiliaryMatch, regexMatch)) {
           filteredCandidates.add(regexMatch);
           break;
@@ -100,11 +101,11 @@ public class AuxiliaryMatcher implements AuxiliaryPatternMatcher {
     return filteredCandidates;
   }
 
-  private BiPredicate<Match, Match> ignoringLongLines(InputFileContext inputFileContext) {
+  private BiPredicate<CandidateMatch, CandidateMatch> ignoringLongLines(InputFileContext inputFileContext) {
     int maxLineLength = auxiliaryPattern.getMaxLineLength() != null
       ? auxiliaryPattern.getMaxLineLength()
       : DEFAULT_MAX_LINE_LENGTH;
-    return (Match auxMatch, Match candidateMatch) -> {
+    return (CandidateMatch auxMatch, CandidateMatch candidateMatch) -> {
       int startLine = inputFileContext.offsetToLineNumber(candidateMatch.fileStartOffset());
       int lineLength = inputFileContext.lines().get(startLine - 1).length();
       boolean isCandidateLineTooLong = lineLength >= maxLineLength;

@@ -99,6 +99,18 @@ public class TextAndSecretsPlugin implements Plugin {
           "It's not possible to analyze files or directories starting with a dot on UNIX systems.")
         .subCategory(GENERAL_SUBCATEGORY)
         .onConfigScopes(ConfigScope.PROJECT)
+        .build(),
+
+      PropertyDefinition.builder(TextAndSecretsSensor.DISABLE_ENTROPY_FILTER_KEY)
+        .defaultValue(String.valueOf(TextAndSecretsSensor.DISABLE_ENTROPY_FILTER_DEFAULT_VALUE))
+        .category(TextAndSecretsSensor.TEXT_CATEGORY)
+        .name("Disable the entropy filter for secret detection")
+        .description("When enabled, low-entropy matches that would normally be filtered out are raised as low-confidence issues. " +
+          "This helps surface potential fake or example secrets in benchmark or evaluation projects. " +
+          "Other post-filters are unaffected.")
+        .type(PropertyType.BOOLEAN)
+        .onConfigScopes(ConfigScope.PROJECT)
+        .subCategory(GENERAL_SUBCATEGORY)
         .build());
   }
 }

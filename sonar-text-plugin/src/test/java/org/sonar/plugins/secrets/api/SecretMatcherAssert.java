@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.regex.Pattern;
 import org.assertj.core.api.AbstractAssert;
+import org.sonar.plugins.secrets.api.filters.FilterOutcome;
 
 public class SecretMatcherAssert extends AbstractAssert<SecretMatcherAssert, SecretMatcher> {
 
@@ -59,7 +60,9 @@ public class SecretMatcherAssert extends AbstractAssert<SecretMatcherAssert, Sec
 
   public SecretMatcherAssert postFilterBehavesLike(SecretMatcher expectedMatcher) {
     for (String string : testStringsForPostFilter) {
-      if (actual.getPostFilter().test(string) != expectedMatcher.getPostFilter().test(string)) {
+      FilterOutcome actualResult = actual.getPostFilter().apply(string);
+      FilterOutcome expectedResult = expectedMatcher.getPostFilter().apply(string);
+      if (!actualResult.equals(expectedResult)) {
         failWithMessage("Expected post filter to behave identical, but found different behavior on \"%s\"", string);
       }
     }
@@ -70,10 +73,12 @@ public class SecretMatcherAssert extends AbstractAssert<SecretMatcherAssert, Sec
     }
     for (var entry : actualPostFiltersByGroup.entrySet()) {
       var key = entry.getKey();
-      var actualPredicate = entry.getValue();
-      var expectedPredicate = expectedPostFiltersByGroup.get(key);
+      var actualFilter = entry.getValue();
+      var expectedFilter = expectedPostFiltersByGroup.get(key);
       for (var string : testStringsForPostFilter) {
-        if (actualPredicate.test(string) != expectedPredicate.test(string)) {
+        FilterOutcome actualResult = actualFilter.apply(string);
+        FilterOutcome expectedResult = expectedFilter.apply(string);
+        if (!actualResult.equals(expectedResult)) {
           failWithMessage("Expected post filter for group \"%s\" to behave identical, but found different behavior on \"%s\"", key, string);
         }
       }

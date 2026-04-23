@@ -16,24 +16,23 @@
  */
 package org.sonar.plugins.secrets.api;
 
-import java.util.Map;
+import org.junit.jupiter.api.Test;
 
-/**
- * Result of applying pattern matcher to a text.
- *
- * @param text            matched text
- * @param fileStartOffset inclusive start offset
- * @param fileEndOffset   exclusive end offset
- * @param groups          map containing matches per named group
- */
-public record Match(String text, int fileStartOffset, int fileEndOffset, Map<String, Match> groups) {
+import static java.util.Collections.emptyMap;
+import static org.assertj.core.api.Assertions.assertThat;
 
-  @Override
-  public String toString() {
-    return "Match{" +
-      "text='" + text + '\'' +
-      ", fileStartOffset=" + fileStartOffset +
-      ", fileEndOffset=" + fileEndOffset +
-      '}';
+class CandidateMatchTest {
+
+  @Test
+  void constructorShouldFunctionAsExpected() {
+    String text = "text";
+    int fileStartOffset = 10;
+    int fileEndOffset = 20;
+    CandidateMatch match = new CandidateMatch(text, fileStartOffset, fileEndOffset, emptyMap());
+
+    assertThat(match.text()).isEqualTo(text);
+    assertThat(match.fileStartOffset()).isEqualTo(fileStartOffset);
+    assertThat(match.fileEndOffset()).isEqualTo(fileEndOffset);
+    assertThat(match).hasToString("CandidateMatch{text='text', fileStartOffset=10, fileEndOffset=20}");
   }
 }

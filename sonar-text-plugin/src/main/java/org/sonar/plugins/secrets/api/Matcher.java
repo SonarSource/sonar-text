@@ -18,16 +18,19 @@ package org.sonar.plugins.secrets.api;
 
 import java.util.List;
 import org.sonar.plugins.common.InputFileContext;
+import org.sonar.plugins.secrets.api.filters.FilterOutcome;
 
 /**
- * A base interface for all matchers that will be used to find matches in the input file.
+ * A base interface for all matchers that run a complete matching pipeline against an input file.
+ * Implementations return only matches that survived every pre- and post-filter stage, each paired
+ * with the {@link FilterOutcome} describing how they got there.
  */
 public interface Matcher {
   /**
-   * Returns a list of {@link Match matches} found in {@link InputFileContext}.
+   * Runs the full matching pipeline against {@link InputFileContext} and returns the accepted matches.
    *
    * @param fileContext the file that will be scanned.
-   * @return list of matches.
+   * @return list of matches that passed the pipeline, each carrying its filter outcome.
    */
-  List<Match> findIn(InputFileContext fileContext);
+  List<MatchResult> findIn(InputFileContext fileContext);
 }

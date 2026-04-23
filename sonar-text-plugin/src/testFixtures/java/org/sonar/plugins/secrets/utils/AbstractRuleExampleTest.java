@@ -152,10 +152,10 @@ public abstract class AbstractRuleExampleTest {
 
   private List<TextRange> calculatePossibleRanges(RuleExample ruleExample, InputFileContext ctx, String ruleId) {
     var matching = new Matching();
-    // `Matcher#findIn` uses `Matcher#find`, so the pattern doesn't need to match the entire string
+    // `Matcher#findMatches` uses `Matcher#find`, so the pattern doesn't need to match the entire string
     matching.setPattern("(" + Pattern.quote(ruleExample.getMatch().stripTrailing()) + ")");
     var matcher = PatternMatcher.build(matching);
-    var matches = matcher.findIn(ruleExample.getText(), ruleId);
+    var matches = matcher.findMatches(ruleExample.getText(), ruleId);
     return matches.stream().map(m -> ctx.newTextRangeFromFileOffsets(m.fileStartOffset(), m.fileEndOffset())).toList();
   }
 

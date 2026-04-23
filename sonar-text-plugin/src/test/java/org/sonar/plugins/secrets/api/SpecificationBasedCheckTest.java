@@ -26,6 +26,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.sonar.check.Rule;
+import org.sonar.plugins.secrets.api.filters.SkippedFilter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -116,6 +117,38 @@ class SpecificationBasedCheckTest {
       Arguments.of("multipleOptimizableRules.sml", true),
       Arguments.of("singleNonOptimizableRule.sml", true),
       Arguments.of("multipleNonOptimizableRules.sml", true));
+  }
+
+  @Test
+  void checkShouldRaiseFakeSecretIssueWhenEntropyFilterDisabledAndSecretHasLowEntropy() throws IOException {
+    String specificationLocation = "secretsConfiguration/postFilter/";
+    Set<String> specifications = Set.of("postFilterSpec.sml");
+    var specificationLoader = new SecretsSpecificationLoader(specificationLocation, specifications);
+
+    var configWithEntropyDisabled = new SpecificationConfiguration(true, Set.of(SkippedFilter.ENTROPY_FILTER), MessageFormatter.RULE_MESSAGE);
+    String fileContent = "rule matching pattern";
+    ExampleCheck exampleCheck = new ExampleCheck();
+    exampleCheck.initialize(specificationLoader, mockDurationStatistics(), configWithEntropyDisabled);
+
+    assertThat(analyze(exampleCheck, fileContent)).containsExactly(
+      "secrets:exampleKey [1:0-1:21] rule message (low-confidence match, entropy filter is disabled)");
+  }
+
+  @Test
+  void checkShouldNotRaiseFakeSecretIssueWhenEntropyFilterDisabledAndSecretHasHighEntropy() throws IOException {
+    String specificationLocation = "secretsConfiguration/postFilter/";
+    Set<String> specifications = Set.of("postFilterSpec.sml");
+    var specificationLoader = new SecretsSpecificationLoader(specificationLocation, specifications);
+    // Lower the threshold to 3f so that "rule matching pattern" (entropy ~3.76) passes as high entropy
+    specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().getStatisticalFilter().setThreshold(3f);
+
+    var configWithEntropyDisabled = new SpecificationConfiguration(true, Set.of(SkippedFilter.ENTROPY_FILTER), MessageFormatter.RULE_MESSAGE);
+    String fileContent = "rule matching pattern";
+    ExampleCheck exampleCheck = new ExampleCheck();
+    exampleCheck.initialize(specificationLoader, mockDurationStatistics(), configWithEntropyDisabled);
+
+    assertThat(analyze(exampleCheck, fileContent)).containsExactly(
+      "secrets:exampleKey [1:0-1:21] rule message");
   }
 
   @Rule(key = "exampleKey")

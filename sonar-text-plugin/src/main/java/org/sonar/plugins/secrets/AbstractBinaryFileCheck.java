@@ -23,8 +23,8 @@ import org.sonar.plugins.common.git.GitService;
 import org.sonar.plugins.common.git.NullGitService;
 import org.sonar.plugins.secrets.api.SpecificationConfiguration;
 
-import static org.sonar.plugins.secrets.api.PreFilterFactory.INCLUDE_ONLY_MAIN_FILES;
-import static org.sonar.plugins.secrets.api.PreFilterFactory.appendAutomaticNoTestFileFilter;
+import static org.sonar.plugins.secrets.api.filters.PreFilterFactory.INCLUDE_ONLY_MAIN_FILES;
+import static org.sonar.plugins.secrets.api.filters.PreFilterFactory.appendAutomaticNoTestFileFilter;
 
 public abstract class AbstractBinaryFileCheck extends Check {
 

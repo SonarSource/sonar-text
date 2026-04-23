@@ -19,8 +19,10 @@ package org.sonar.plugins.common;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
@@ -51,9 +53,11 @@ import org.sonar.plugins.common.warnings.AnalysisWarningsWrapper;
 import org.sonar.plugins.common.warnings.DefaultAnalysisWarningsWrapper;
 import org.sonar.plugins.secrets.SecretsCheckList;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
+import org.sonar.plugins.secrets.api.MessageFormatter;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.api.SpecificationConfiguration;
+import org.sonar.plugins.secrets.api.filters.SkippedFilter;
 import org.sonar.plugins.secrets.api.task.RegexMatchingManager;
 import org.sonar.plugins.secrets.configuration.SecretsSpecificationContainer;
 import org.sonar.plugins.secrets.utils.CheckContainer;
@@ -80,6 +84,8 @@ public class TextAndSecretsSensor implements Sensor {
   public static final String THREAD_NUMBER_KEY = "sonar.text.threads";
   public static final String TEXT_CATEGORY = "Secrets";
   public static final String SONAR_TESTS_KEY = "sonar.tests";
+  public static final String DISABLE_ENTROPY_FILTER_KEY = "sonar.secrets.disableEntropyFilter";
+  public static final boolean DISABLE_ENTROPY_FILTER_DEFAULT_VALUE = false;
   public static final String ALL_TRACKED_TEXT_FILES_MEASURE_KEY = "all_tracked_text_files_count";
   public static final String SENSOR_DISABLED_MEASURE_KEY = "is_sensor_disabled";
   public static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
@@ -159,6 +165,7 @@ public class TextAndSecretsSensor implements Sensor {
   }
 
   protected SpecificationConfiguration createSpecificationConfiguration(SensorContext sensorContext) {
+    Set<SkippedFilter> skippedFilters = resolveSkippedFilters(sensorContext);
     var value = sensorContext.config().get(SONAR_TESTS_KEY).orElse("");
     if (value.isBlank() && !isSonarLintContext(sensorContext.runtime())) {
       var message = """
@@ -169,9 +176,17 @@ public class TextAndSecretsSensor implements Sensor {
           * Any directory in the file path has a name ending in "test" or "tests"
         """.formatted(SONAR_TESTS_KEY);
       LOG.info(message);
-      return new SpecificationConfiguration(true);
+      return new SpecificationConfiguration(true, skippedFilters, MessageFormatter.RULE_MESSAGE);
     }
-    return new SpecificationConfiguration(false);
+    return new SpecificationConfiguration(false, skippedFilters, MessageFormatter.RULE_MESSAGE);
+  }
+
+  private static Set<SkippedFilter> resolveSkippedFilters(SensorContext sensorContext) {
+    EnumSet<SkippedFilter> skippedFilters = EnumSet.noneOf(SkippedFilter.class);
+    if (sensorContext.config().getBoolean(DISABLE_ENTROPY_FILTER_KEY).orElse(DISABLE_ENTROPY_FILTER_DEFAULT_VALUE)) {
+      skippedFilters.add(SkippedFilter.ENTROPY_FILTER);
+    }
+    return Set.copyOf(skippedFilters);
   }
 
   protected void runAnalysis(SensorContext sensorContext, List<Check> activeChecks) {
