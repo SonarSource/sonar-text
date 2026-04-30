@@ -53,8 +53,8 @@ class TextRuleDefinitionTest extends AbstractRuleDefinitionTest {
 
     RulesDefinition.Rule ruleS6389 = repository.rule("S6389");
     assertThat(ruleS6389).isNotNull();
-    assertThat(ruleS6389.name()).isEqualTo("Using bidirectional characters is security-sensitive");
+    assertThat(ruleS6389.name()).isEqualTo("Source code should not contain bidirectional control characters");
     assertThat(ruleS6389.activatedByDefault()).isTrue();
-    assertThat(ruleS6389.type()).isEqualTo(RuleType.SECURITY_HOTSPOT);
+    assertThat(ruleS6389.type()).isEqualTo(RuleType.VULNERABILITY);
   }
 }
