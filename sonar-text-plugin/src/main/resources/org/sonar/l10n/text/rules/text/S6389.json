@@ -1,6 +1,6 @@
 {
-  "title": "Using bidirectional characters is security-sensitive",
-  "type": "SECURITY_HOTSPOT",
+  "title": "Source code should not contain bidirectional control characters",
+  "type": "VULNERABILITY",
   "code": {
     "impacts": {
       "SECURITY": "MEDIUM"
@@ -13,7 +13,8 @@
     "constantCost": "5min"
   },
   "tags": [
-    "cwe"
+    "cwe",
+    "former-hotspot"
   ],
   "defaultSeverity": "Major",
   "ruleSpecification": "RSPEC-6389",

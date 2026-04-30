@@ -1,6 +1,6 @@
 {
-  "title": "Using Unicode tag blocks is security-sensitive",
-  "type": "SECURITY_HOTSPOT",
+  "title": "Unicode tag blocks should not be used",
+  "type": "VULNERABILITY",
   "code": {
     "impacts": {
       "SECURITY": "MEDIUM"
@@ -13,7 +13,8 @@
     "constantCost": "5min"
   },
   "tags": [
-    "cwe"
+    "cwe",
+    "former-hotspot"
   ],
   "defaultSeverity": "Major",
   "ruleSpecification": "RSPEC-7628",
