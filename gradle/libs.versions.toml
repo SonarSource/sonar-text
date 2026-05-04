@@ -28,6 +28,7 @@ tink = "1.21.0"
 wiremock = "3.13.2"
 ayza = "10.0.4"
 bouncycastle = "1.84"
+bcrypt = "0.10.2"
 
 [libraries]
 sonar-analyzer-commons = { module = "org.sonarsource.analyzer-commons:sonar-analyzer-commons", version.ref = "sonar-commons" }
@@ -67,6 +68,7 @@ tink = { module = "com.google.crypto.tink:tink", version.ref = "tink" }
 wiremock = { module = "org.wiremock:wiremock", version.ref = "wiremock" }
 ayza-pem = { module = "io.github.hakky54:ayza-for-pem", version.ref = "ayza" }
 bc-pkix-jdk18on = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bouncycastle" }
+bcrypt = { module = "at.favre.lib:bcrypt", version.ref = "bcrypt" }
 
 [plugins]
 buildconfig = { id = "com.github.gmazzo.buildconfig", version = "6.0.9" }
