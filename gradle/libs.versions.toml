@@ -3,30 +3,30 @@ sonar-commons = "2.21.0.4626"
 # Before updating the plugin-api version, make sure to check the compatibility matrix and stick to the lowest denominator
 # https://github.com/SonarSource/sonar-plugin-api?tab=readme-ov-file#compatibility
 sonar-plugin-api = "12.0.0.2960"
-sonarqube = "26.2.0.119303"
-sonar-java = "8.24.0.42567"
+sonarqube = "26.3.0.120487"
+sonar-java = "8.26.0.42915"
 sonar-scanner-gradle = "7.2.3.7755"
 sonar-orchestrator = "6.1.0.3962"
 sonar-license-api = "3.4"
-sonar-lint = "10.45.0.84373"
+sonar-lint = "10.47.0.84936"
 slf4j = "2.0.17"
 logback = "1.5.32"
-jackson = "2.21.1"
+jackson = "2.21.2"
 json-schema-validator = "2.0.1"
 pico-cli = "4.7.7"
 junit = "6.0.3"
 assertj = "3.27.7"
-mockito = "5.22.0"
+mockito = "5.23.0"
 yguard = "4.1.1"
-eclipse-jgit = "7.5.0.202512021534-r"
+eclipse-jgit = "7.6.0.202603022253-r"
 commons-io = "2.21.0"
 re2j = "1.8"
-gradle-shadow = "9.3.1" # should be in sync with build-logic/common/gradle/libs.versions.toml
+gradle-shadow = "9.4.1" # should be in sync with build-logic/common/gradle/libs.versions.toml
 awaitility = "4.3.0"
 ahocorasick = "0.6.3"
-tink = "1.20.0"
+tink = "1.21.0"
 wiremock = "3.13.2"
-ayza = "10.0.3"
+ayza = "10.0.4"
 bouncycastle = "1.84"
 
 [libraries]
@@ -69,6 +69,6 @@ ayza-pem = { module = "io.github.hakky54:ayza-for-pem", version.ref = "ayza" }
 bc-pkix-jdk18on = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bouncycastle" }
 
 [plugins]
-buildconfig = { id = "com.github.gmazzo.buildconfig", version = "6.0.7" }
+buildconfig = { id = "com.github.gmazzo.buildconfig", version = "6.0.9" }
 jmh = { id = "me.champeau.jmh", version = "0.7.3" }
-graalvm-native = { id = "org.graalvm.buildtools.native", version = "0.11.4" }
+graalvm-native = { id = "org.graalvm.buildtools.native", version = "0.11.5" }
