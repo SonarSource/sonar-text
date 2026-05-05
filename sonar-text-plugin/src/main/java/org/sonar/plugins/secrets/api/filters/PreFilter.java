@@ -14,19 +14,18 @@
  * You should have received a copy of the Sonar Source-Available License
  * along with this program; if not, see https://sonarsource.com/license/ssal/
  */
-package org.sonar.plugins.common;
+package org.sonar.plugins.secrets.api.filters;
 
-import org.sonar.api.Plugin;
+import org.sonar.plugins.common.InputFileContext;
 
-class TextAndSecretsPluginTest extends AbstractPluginTest {
+/**
+ * A pre-filter that evaluates an {@link InputFileContext} and returns a {@link FilterOutcome} indicating whether the
+ * file should be analyzed and which filters, if any, were skipped.
+ */
+@FunctionalInterface
+public interface PreFilter {
 
-  @Override
-  protected Plugin getPlugin() {
-    return new TextAndSecretsPlugin();
-  }
+  FilterOutcome apply(InputFileContext fileContext);
 
-  @Override
-  protected int getExpectedExtensionCount() {
-    return 16;
-  }
+  PreFilter ACCEPT_ALL = fileContext -> FilterOutcome.ACCEPTED;
 }

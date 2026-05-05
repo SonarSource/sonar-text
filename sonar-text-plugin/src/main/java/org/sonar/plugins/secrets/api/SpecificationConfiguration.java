@@ -23,9 +23,9 @@ import org.sonar.plugins.secrets.api.filters.SkippedFilter;
  * The settings for {@link SpecificationBasedCheck} initialization.
  *
  * @param automaticTestFileDetection enable the automatic test file detection.
- * @param skippedFilters         filters to skip as requested by the caller; each skipped filter lets a specific
- *                                   filter pass candidates it would otherwise reject, with affected findings tagged
- *                                   accordingly.
+ * @param skippedFilters             immutable set of filters to skip as requested by the caller; each skipped filter
+ *                                   lets a specific filter pass candidates it would otherwise reject, with affected
+ *                                   findings tagged accordingly.
  * @param messageFormatter           formatter for secret issue messages.
  */
 public record SpecificationConfiguration(

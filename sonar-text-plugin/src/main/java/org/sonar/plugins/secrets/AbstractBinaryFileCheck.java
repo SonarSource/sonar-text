@@ -16,30 +16,33 @@
  */
 package org.sonar.plugins.secrets;
 
-import java.util.function.Predicate;
 import org.sonar.plugins.common.Check;
-import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.common.git.GitService;
 import org.sonar.plugins.common.git.NullGitService;
 import org.sonar.plugins.secrets.api.SpecificationConfiguration;
-
-import static org.sonar.plugins.secrets.api.filters.PreFilterFactory.INCLUDE_ONLY_MAIN_FILES;
-import static org.sonar.plugins.secrets.api.filters.PreFilterFactory.appendAutomaticNoTestFileFilter;
+import org.sonar.plugins.secrets.api.filters.PreFilter;
+import org.sonar.plugins.secrets.api.filters.PreFilterFactory;
+import org.sonar.plugins.secrets.api.filters.SkippedFilter;
 
 public abstract class AbstractBinaryFileCheck extends Check {
 
-  protected Predicate<InputFileContext> scopedFilePredicate;
+  protected PreFilter scopedFilePreFilter;
   protected GitService gitService = NullGitService.INSTANCE;
 
   /**
-   * Initialize this check by creating a scope based file predicate and providing a {@link GitService} instance.
+   * Initialize this check by creating a scope-based {@link PreFilter} and providing a {@link GitService} instance.
    * This method should be called by the sensor before analyzing files.
    *
-   * @param specificationConfiguration configuration if test files should be automatically detected
+   * <p>The {@link PreFilter} is built via {@link PreFilterFactory#createFilter} so binary checks honor
+   * {@link SkippedFilter#TEST_FILES_FILTER} the same way spec-based checks do: when the filter is in the
+   * skipped-filter set, auto-detected test files pass through with the skipped marker so callers can tag
+   * the issue message as low-confidence.
+   *
+   * @param specificationConfiguration test-file detection settings, skipped filters, and message formatting
    * @param gitService {@link GitService} instance to be used by checks like S7203
    */
   public void initialize(SpecificationConfiguration specificationConfiguration, GitService gitService) {
-    this.scopedFilePredicate = appendAutomaticNoTestFileFilter(INCLUDE_ONLY_MAIN_FILES, specificationConfiguration);
+    this.scopedFilePreFilter = PreFilterFactory.createFilter(null, null, specificationConfiguration, true);
     this.gitService = gitService;
   }
 

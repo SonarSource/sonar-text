@@ -32,10 +32,6 @@ public record FilterOutcome(boolean passed, Set<SkippedFilter> skipped) {
   public static final FilterOutcome ACCEPTED = new FilterOutcome(true, Collections.emptySet());
   public static final FilterOutcome REJECTED = new FilterOutcome(false, Collections.emptySet());
 
-  public FilterOutcome {
-    skipped = skipped.isEmpty() ? Set.of() : Set.copyOf(skipped);
-  }
-
   public static FilterOutcome passedWithSkipped(SkippedFilter skippedFilter) {
     return new FilterOutcome(true, Set.of(skippedFilter));
   }
@@ -56,6 +52,6 @@ public record FilterOutcome(boolean passed, Set<SkippedFilter> skipped) {
     var union = EnumSet.noneOf(SkippedFilter.class);
     union.addAll(this.skipped);
     union.addAll(other.skipped);
-    return new FilterOutcome(true, union);
+    return new FilterOutcome(true, Set.copyOf(union));
   }
 }

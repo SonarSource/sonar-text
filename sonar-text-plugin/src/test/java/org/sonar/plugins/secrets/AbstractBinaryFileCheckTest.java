@@ -40,7 +40,7 @@ class AbstractBinaryFileCheckTest {
     var specificationConfiguration = mock(SpecificationConfiguration.class);
     var gitService = mock(GitService.class);
     stubCheck.initialize(specificationConfiguration, gitService);
-    assertThat(stubCheck.scopedFilePredicate).isNotNull();
+    assertThat(stubCheck.scopedFilePreFilter).isNotNull();
     assertThat(stubCheck.gitService).isEqualTo(gitService);
   }
 

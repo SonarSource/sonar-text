@@ -92,6 +92,7 @@ import static org.sonar.plugins.common.TestUtils.inputFileFromPath;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
 import static org.sonar.plugins.common.TextAndSecretsSensor.ALL_TRACKED_TEXT_FILES_MEASURE_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.DISABLE_ENTROPY_FILTER_KEY;
+import static org.sonar.plugins.common.TextAndSecretsSensor.DISABLE_TEST_FILE_DETECTION_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.SENSOR_DISABLED_MEASURE_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.SONAR_TESTS_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.TEXT_INCLUSIONS_DEFAULT_VALUE;
@@ -145,6 +146,21 @@ public abstract class AbstractTextAndSecretsSensorTest {
     var context = testUtils().sonarqubeSensorContext();
 
     assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters()).doesNotContain(SkippedFilter.ENTROPY_FILTER);
+  }
+
+  @Test
+  void createSpecificationConfigurationShouldHaveTestFilesFilterSkippedWhenDisableTestFileDetectionIsTrue() {
+    var context = testUtils().sonarqubeSensorContext();
+    context.settings().setProperty(DISABLE_TEST_FILE_DETECTION_KEY, "true");
+
+    assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters()).contains(SkippedFilter.TEST_FILES_FILTER);
+  }
+
+  @Test
+  void createSpecificationConfigurationShouldNotSkipTestFilesFilterByDefault() {
+    var context = testUtils().sonarqubeSensorContext();
+
+    assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters()).isEmpty();
   }
 
   @Test

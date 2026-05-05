@@ -37,6 +37,19 @@ class SpecificationConfigurationTest {
   }
 
   @Test
+  void skippedFiltersCanContainTestFilesFilter() {
+    var config = new SpecificationConfiguration(false, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE);
+    assertThat(config.skippedFilters()).containsExactly(SkippedFilter.TEST_FILES_FILTER);
+  }
+
+  @Test
+  void skippedFiltersCanContainBothFilters() {
+    var config = new SpecificationConfiguration(false,
+      Set.of(SkippedFilter.ENTROPY_FILTER, SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE);
+    assertThat(config.skippedFilters()).containsExactlyInAnyOrder(SkippedFilter.ENTROPY_FILTER, SkippedFilter.TEST_FILES_FILTER);
+  }
+
+  @Test
   void autoTestFileDetectionEnabledConstantHasNoOverrides() {
     assertThat(SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED.skippedFilters()).isEmpty();
   }

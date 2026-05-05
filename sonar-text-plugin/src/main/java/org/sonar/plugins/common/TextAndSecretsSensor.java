@@ -86,6 +86,8 @@ public class TextAndSecretsSensor implements Sensor {
   public static final String SONAR_TESTS_KEY = "sonar.tests";
   public static final String DISABLE_ENTROPY_FILTER_KEY = "sonar.secrets.disableEntropyFilter";
   public static final boolean DISABLE_ENTROPY_FILTER_DEFAULT_VALUE = false;
+  public static final String DISABLE_TEST_FILE_DETECTION_KEY = "sonar.secrets.disableTestFileDetection";
+  public static final boolean DISABLE_TEST_FILE_DETECTION_DEFAULT_VALUE = false;
   public static final String ALL_TRACKED_TEXT_FILES_MEASURE_KEY = "all_tracked_text_files_count";
   public static final String SENSOR_DISABLED_MEASURE_KEY = "is_sensor_disabled";
   public static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
@@ -165,9 +167,14 @@ public class TextAndSecretsSensor implements Sensor {
   }
 
   protected SpecificationConfiguration createSpecificationConfiguration(SensorContext sensorContext) {
-    Set<SkippedFilter> skippedFilters = resolveSkippedFilters(sensorContext);
-    var value = sensorContext.config().get(SONAR_TESTS_KEY).orElse("");
-    if (value.isBlank() && !isSonarLintContext(sensorContext.runtime())) {
+    var skippedFilters = resolveSkippedFilters(sensorContext);
+    var automaticTestFileDetection = resolveAutomaticTestFileDetection(sensorContext);
+    return new SpecificationConfiguration(automaticTestFileDetection, skippedFilters, MessageFormatter.RULE_MESSAGE);
+  }
+
+  private static boolean resolveAutomaticTestFileDetection(SensorContext sensorContext) {
+    var sonarTestsValue = sensorContext.config().get(SONAR_TESTS_KEY).orElse("");
+    if (sonarTestsValue.isBlank() && !isSonarLintContext(sensorContext.runtime())) {
       var message = """
         The property "%s" is not set. To improve the analysis accuracy, we categorize a file as a test file if any of the following is true:
           * The filename starts with "test"
@@ -176,15 +183,18 @@ public class TextAndSecretsSensor implements Sensor {
           * Any directory in the file path has a name ending in "test" or "tests"
         """.formatted(SONAR_TESTS_KEY);
       LOG.info(message);
-      return new SpecificationConfiguration(true, skippedFilters, MessageFormatter.RULE_MESSAGE);
+      return true;
     }
-    return new SpecificationConfiguration(false, skippedFilters, MessageFormatter.RULE_MESSAGE);
+    return false;
   }
 
   private static Set<SkippedFilter> resolveSkippedFilters(SensorContext sensorContext) {
     EnumSet<SkippedFilter> skippedFilters = EnumSet.noneOf(SkippedFilter.class);
     if (sensorContext.config().getBoolean(DISABLE_ENTROPY_FILTER_KEY).orElse(DISABLE_ENTROPY_FILTER_DEFAULT_VALUE)) {
       skippedFilters.add(SkippedFilter.ENTROPY_FILTER);
+    }
+    if (sensorContext.config().getBoolean(DISABLE_TEST_FILE_DETECTION_KEY).orElse(DISABLE_TEST_FILE_DETECTION_DEFAULT_VALUE)) {
+      skippedFilters.add(SkippedFilter.TEST_FILES_FILTER);
     }
     return Set.copyOf(skippedFilters);
   }

@@ -111,6 +111,17 @@ public class TextAndSecretsPlugin implements Plugin {
         .type(PropertyType.BOOLEAN)
         .onConfigScopes(ConfigScope.PROJECT)
         .subCategory(GENERAL_SUBCATEGORY)
+        .build(),
+
+      PropertyDefinition.builder(TextAndSecretsSensor.DISABLE_TEST_FILE_DETECTION_KEY)
+        .defaultValue(String.valueOf(TextAndSecretsSensor.DISABLE_TEST_FILE_DETECTION_DEFAULT_VALUE))
+        .category(TextAndSecretsSensor.TEXT_CATEGORY)
+        .name("Disable automatic test-file detection for secret detection")
+        .description("When enabled, automatically detected test files are analyzed and findings are raised as low-confidence issues. " +
+          "This property has no effect on files explicitly classified as tests through the \"sonar.tests\" property.")
+        .type(PropertyType.BOOLEAN)
+        .onConfigScopes(ConfigScope.PROJECT)
+        .subCategory(GENERAL_SUBCATEGORY)
         .build());
   }
 }

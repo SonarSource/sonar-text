@@ -20,14 +20,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.common.measures.DurationStatistics;
 import org.sonar.plugins.secrets.api.filters.FilterOutcome;
 import org.sonar.plugins.secrets.api.filters.PostFilter;
 import org.sonar.plugins.secrets.api.filters.PostFilterFactory;
+import org.sonar.plugins.secrets.api.filters.PreFilter;
 import org.sonar.plugins.secrets.api.filters.PreFilterFactory;
 import org.sonar.plugins.secrets.api.filters.SkippedFilter;
 import org.sonar.plugins.secrets.configuration.model.Rule;
@@ -46,7 +44,7 @@ public class SecretMatcher implements Matcher {
   private final String ruleMessage;
   private final PatternMatcher patternMatcher;
   private final AuxiliaryPatternMatcher auxiliaryPatternMatcher;
-  private final Predicate<InputFileContext> preFilter;
+  private final PreFilter preFilter;
   private final PostFilter postFilter;
   private final Map<String, PostFilter> postFilterByGroup;
 
@@ -57,7 +55,7 @@ public class SecretMatcher implements Matcher {
     Selectivity ruleSelectivity,
     PatternMatcher patternMatcher,
     AuxiliaryPatternMatcher auxiliaryPatternMatcher,
-    Predicate<InputFileContext> preFilter,
+    PreFilter preFilter,
     PostFilter postFilter,
     Map<String, PostFilter> postFilterByGroup,
     DurationStatistics durationStatistics) {
@@ -87,10 +85,10 @@ public class SecretMatcher implements Matcher {
     SpecificationConfiguration specificationConfiguration,
     boolean shouldExecuteContentPreFilters) {
     var patternMatcher = PatternMatcher.build(rule.getDetection().getMatching());
-    Predicate<InputFileContext> preFilter = PreFilterFactory.createPredicate(
+    var preFilter = PreFilterFactory.createFilter(
       rule.getDetection().getPre(), rule.getSelectivity(), specificationConfiguration, shouldExecuteContentPreFilters);
-    Set<SkippedFilter> skippedFilters = specificationConfiguration.skippedFilters();
-    PostFilter postFilter = PostFilterFactory.createFilter(rule.getDetection().getPost(), skippedFilters);
+    var skippedFilters = specificationConfiguration.skippedFilters();
+    var postFilter = PostFilterFactory.createFilter(rule.getDetection().getPost(), skippedFilters);
     var postFilterByGroup = Optional.ofNullable(rule.getDetection().getPost()).stream()
       .flatMap(it -> it.getGroups().stream())
       .collect(toMap(NamedPostModule::getName, namedPost -> PostFilterFactory.createFilter(namedPost, skippedFilters)));
@@ -111,15 +109,15 @@ public class SecretMatcher implements Matcher {
 
   @Override
   public List<MatchResult> findIn(InputFileContext fileContext) {
-    boolean isRejectedOnPreFilter = durationStatistics.timed(
+    var preOutcome = durationStatistics.timed(
       getRuleId() + DurationStatistics.SUFFIX_PRE,
-      () -> !preFilter.test(fileContext));
-    if (isRejectedOnPreFilter) {
+      () -> preFilter.apply(fileContext));
+    if (!preOutcome.passed()) {
       return Collections.emptyList();
     }
 
-    String content = fileContext.content();
-    List<CandidateMatch> secretsFilteredOnContext = durationStatistics.timed(
+    var content = fileContext.content();
+    var secretsFilteredOnContext = durationStatistics.timed(
       getRuleId() + DurationStatistics.SUFFIX_MATCHER,
       () -> {
         List<CandidateMatch> candidateSecrets = patternMatcher.findMatches(content, getRuleId(), postFilterByGroup.keySet());
@@ -127,9 +125,12 @@ public class SecretMatcher implements Matcher {
       });
 
     return secretsFilteredOnContext.stream()
-      .map(match -> new MatchResult(match, durationStatistics.timed(
-        getRuleId() + DurationStatistics.SUFFIX_POST,
-        () -> applyPostFilters(match))))
+      .map(match -> {
+        var outcome = durationStatistics.timed(
+          getRuleId() + DurationStatistics.SUFFIX_POST,
+          () -> preOutcome.combine(applyPostFilters(match)));
+        return new MatchResult(match, outcome);
+      })
       .filter(accepted -> accepted.outcome().passed())
       .toList();
   }
@@ -152,21 +153,15 @@ public class SecretMatcher implements Matcher {
 
   /**
    * Returns the issue message for a specific filtered match. When any filter was skipped, the message is
-   * amended with a suffix listing the reasons (composed from {@link SkippedFilter#lowConfidenceLabel}) so the finding
-   * is surfaced as low-confidence.
+   * amended with a suffix that combines a single {@link SkippedFilter#LOW_CONFIDENCE_PREFIX} with the
+   * comma-separated names (from {@link SkippedFilter#filterName()}) of the skipped filters, so the finding is
+   * surfaced as low-confidence.
    *
    * @param outcome the filter outcome for a candidate match
    * @return the issue message, potentially amended with a low-confidence suffix
    */
   public String getMessageForCandidate(FilterOutcome outcome) {
-    Set<SkippedFilter> skipped = outcome.skipped();
-    if (skipped.isEmpty()) {
-      return ruleMessage;
-    }
-    String reasons = skipped.stream()
-      .map(SkippedFilter::lowConfidenceLabel)
-      .collect(Collectors.joining(", "));
-    return ruleMessage + " (" + reasons + ")";
+    return SkippedFilter.appendLowConfidenceSuffix(ruleMessage, outcome.skipped());
   }
 
   PostFilter getPostFilter() {

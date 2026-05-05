@@ -34,59 +34,78 @@ import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 import static java.util.function.Predicate.not;
 
 /**
- * The Factory class for producing a Predicate from {@link PreModule}.
+ * The Factory class for producing a {@link PreFilter} from {@link PreModule}.
  */
 public final class PreFilterFactory {
   private static final Logger LOG = LoggerFactory.getLogger(PreFilterFactory.class);
   private static final Predicate<InputFileContext> NO_LANGUAGE_PREDICATE = ctx -> ctx.getInputFile().language() == null;
   private static final Predicate<InputFileContext> AUTOMATIC_NO_TEST_FILE_FILTER = AutomaticTestFileFilter.isNotAutomaticallyDetectedTestFile();
 
-  public static final Predicate<InputFileContext> INCLUDE_ONLY_MAIN_FILES = ctx -> InputFile.Type.MAIN == ctx.getInputFile().type();
+  static final Predicate<InputFileContext> INCLUDE_ONLY_MAIN_FILES = ctx -> InputFile.Type.MAIN == ctx.getInputFile().type();
 
   private PreFilterFactory() {
   }
 
   /**
-   * Produce a predicate from {@link PreModule}.
+   * Produce a {@link PreFilter} from {@link PreModule}.
+   * <p>
+   * When {@link SkippedFilter#TEST_FILES_FILTER} is in {@link SpecificationConfiguration#skippedFilters()}, files that
+   * would have been rejected by the automatic test-file filter are passed through with a {@link FilterOutcome} that
+   * carries {@link SkippedFilter#TEST_FILES_FILTER} so callers can annotate findings as low-confidence.
    *
    * @param pre                            the input {@link PreModule}
+   * @param selectivity                    the rule selectivity, or {@code null} when not applicable (e.g. binary checks)
    * @param specificationConfiguration     the configuration
    * @param shouldExecuteContentPreFilters whether content pre-filters should be executed or they have been executed earlier
-   * @return a predicate
+   * @return a {@link PreFilter}
    */
-  public static Predicate<InputFileContext> createPredicate(
+  public static PreFilter createFilter(
     @Nullable PreModule pre,
-    Selectivity selectivity,
+    @Nullable Selectivity selectivity,
     SpecificationConfiguration specificationConfiguration,
     boolean shouldExecuteContentPreFilters) {
-    var predicate = appendSelectivityPredicate(INCLUDE_ONLY_MAIN_FILES, selectivity);
-    predicate = appendAutomaticNoTestFileFilter(predicate, specificationConfiguration);
+    var selectivityPredicate = appendSelectivityPredicate(INCLUDE_ONLY_MAIN_FILES, selectivity);
+    var rejectIncludePredicate = buildRejectIncludePredicate(pre, shouldExecuteContentPreFilters);
+    var automaticTestFileDetectionEnabled = specificationConfiguration.automaticTestFileDetection();
+    var testFilesFilterSkipped = specificationConfiguration.skippedFilters().contains(SkippedFilter.TEST_FILES_FILTER);
 
+    return (InputFileContext ctx) -> {
+      if (!selectivityPredicate.test(ctx)) {
+        return FilterOutcome.REJECTED;
+      }
+      var isTestFile = automaticTestFileDetectionEnabled && !AUTOMATIC_NO_TEST_FILE_FILTER.test(ctx);
+      if (isTestFile && !testFilesFilterSkipped) {
+        return FilterOutcome.REJECTED;
+      }
+      if (!rejectIncludePredicate.test(ctx)) {
+        return FilterOutcome.REJECTED;
+      }
+      return isTestFile
+        ? FilterOutcome.passedWithSkipped(SkippedFilter.TEST_FILES_FILTER)
+        : FilterOutcome.ACCEPTED;
+    };
+  }
+
+  private static Predicate<InputFileContext> buildRejectIncludePredicate(
+    @Nullable PreModule pre, boolean shouldExecuteContentPreFilters) {
+    Predicate<InputFileContext> predicate = ctx -> true;
     if (pre == null) {
       return predicate;
     }
-
-    FileFilter include = pre.getInclude();
-    FileFilter reject = pre.getReject();
+    var reject = pre.getReject();
     if (reject != null) {
       predicate = predicate.and(ctx -> notMatches(reject, ctx));
     }
+    var include = pre.getInclude();
     if (include != null) {
       predicate = predicate.and(ctx -> matches(include, ctx, shouldExecuteContentPreFilters));
     }
     return predicate;
   }
 
-  static Predicate<InputFileContext> appendSelectivityPredicate(Predicate<InputFileContext> predicate, Selectivity selectivity) {
+  static Predicate<InputFileContext> appendSelectivityPredicate(Predicate<InputFileContext> predicate, @Nullable Selectivity selectivity) {
     if (selectivity == Selectivity.ANALYZER_GENERIC) {
       return predicate.and(NO_LANGUAGE_PREDICATE);
-    }
-    return predicate;
-  }
-
-  public static Predicate<InputFileContext> appendAutomaticNoTestFileFilter(Predicate<InputFileContext> predicate, SpecificationConfiguration specificationConfiguration) {
-    if (specificationConfiguration.automaticTestFileDetection()) {
-      return predicate.and(AUTOMATIC_NO_TEST_FILE_FILTER);
     }
     return predicate;
   }

@@ -17,6 +17,7 @@
 package org.sonar.plugins.secrets.api;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -25,6 +26,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.check.Rule;
 import org.sonar.plugins.secrets.api.filters.SkippedFilter;
 
@@ -33,6 +35,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.sonar.plugins.common.TestUtils.analyze;
+import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.mockDurationStatistics;
 
 class SpecificationBasedCheckTest {
@@ -121,34 +124,65 @@ class SpecificationBasedCheckTest {
 
   @Test
   void checkShouldRaiseFakeSecretIssueWhenEntropyFilterDisabledAndSecretHasLowEntropy() throws IOException {
-    String specificationLocation = "secretsConfiguration/postFilter/";
-    Set<String> specifications = Set.of("postFilterSpec.sml");
-    var specificationLoader = new SecretsSpecificationLoader(specificationLocation, specifications);
-
     var configWithEntropyDisabled = new SpecificationConfiguration(true, Set.of(SkippedFilter.ENTROPY_FILTER), MessageFormatter.RULE_MESSAGE);
-    String fileContent = "rule matching pattern";
-    ExampleCheck exampleCheck = new ExampleCheck();
-    exampleCheck.initialize(specificationLoader, mockDurationStatistics(), configWithEntropyDisabled);
+    var exampleCheck = initializeExampleCheck("secretsConfiguration/postFilter/", "postFilterSpec.sml", configWithEntropyDisabled);
 
-    assertThat(analyze(exampleCheck, fileContent)).containsExactly(
-      "secrets:exampleKey [1:0-1:21] rule message (low-confidence match, entropy filter is disabled)");
+    assertThat(analyze(exampleCheck, "rule matching pattern")).containsExactly(
+      "secrets:exampleKey [1:0-1:21] rule message (low-confidence match, disabled filters: entropy)");
   }
 
   @Test
   void checkShouldNotRaiseFakeSecretIssueWhenEntropyFilterDisabledAndSecretHasHighEntropy() throws IOException {
-    String specificationLocation = "secretsConfiguration/postFilter/";
-    Set<String> specifications = Set.of("postFilterSpec.sml");
-    var specificationLoader = new SecretsSpecificationLoader(specificationLocation, specifications);
+    var specificationLoader = new SecretsSpecificationLoader("secretsConfiguration/postFilter/", Set.of("postFilterSpec.sml"));
     // Lower the threshold to 3f so that "rule matching pattern" (entropy ~3.76) passes as high entropy
     specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().getStatisticalFilter().setThreshold(3f);
-
     var configWithEntropyDisabled = new SpecificationConfiguration(true, Set.of(SkippedFilter.ENTROPY_FILTER), MessageFormatter.RULE_MESSAGE);
-    String fileContent = "rule matching pattern";
-    ExampleCheck exampleCheck = new ExampleCheck();
-    exampleCheck.initialize(specificationLoader, mockDurationStatistics(), configWithEntropyDisabled);
+    var exampleCheck = initializeExampleCheck(specificationLoader, configWithEntropyDisabled);
 
-    assertThat(analyze(exampleCheck, fileContent)).containsExactly(
+    assertThat(analyze(exampleCheck, "rule matching pattern")).containsExactly(
       "secrets:exampleKey [1:0-1:21] rule message");
+  }
+
+  @Test
+  void checkShouldRaiseLowConfidenceIssueWhenTestFilesFilterDisabledAndFileIsAutomaticallyDetectedTestFile() throws IOException {
+    var config = new SpecificationConfiguration(true, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE);
+    var exampleCheck = initializeExampleCheck("secretsConfiguration/", "validMinSpec.sml", config);
+
+    String fileContent = "The content contains the rule matching pattern and various other characters.";
+    var testFile = inputFile(Path.of("test.env"), fileContent, null, InputFile.Type.MAIN);
+
+    assertThat(analyze(exampleCheck, testFile)).containsExactly(
+      "secrets:exampleKey [1:25-1:46] provider message (low-confidence match, disabled filters: automatic test file detection)");
+  }
+
+  @Test
+  void checkShouldNotRaiseIssueInAutomaticTestFileByDefault() throws IOException {
+    var exampleCheck = initializeExampleCheck("secretsConfiguration/", "validMinSpec.sml", SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED);
+
+    String fileContent = "The content contains the rule matching pattern and various other characters.";
+    var testFile = inputFile(Path.of("test.env"), fileContent, null, InputFile.Type.MAIN);
+
+    assertThat(analyze(exampleCheck, testFile)).isEmpty();
+  }
+
+  @Test
+  void checkShouldRaiseNormalIssueInNonTestFileEvenWhenTestFilesFilterDisabled() throws IOException {
+    var config = new SpecificationConfiguration(true, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE);
+    var exampleCheck = initializeExampleCheck("secretsConfiguration/", "validMinSpec.sml", config);
+
+    String fileContent = "The content contains the rule matching pattern and various other characters.";
+    assertThat(analyze(exampleCheck, fileContent)).containsExactly(
+      "secrets:exampleKey [1:25-1:46] provider message");
+  }
+
+  private static ExampleCheck initializeExampleCheck(String specificationLocation, String specificationFile, SpecificationConfiguration config) {
+    return initializeExampleCheck(new SecretsSpecificationLoader(specificationLocation, Set.of(specificationFile)), config);
+  }
+
+  private static ExampleCheck initializeExampleCheck(SecretsSpecificationLoader specificationLoader, SpecificationConfiguration config) {
+    var exampleCheck = new ExampleCheck();
+    exampleCheck.initialize(specificationLoader, mockDurationStatistics(), config);
+    return exampleCheck;
   }
 
   @Rule(key = "exampleKey")

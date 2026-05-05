@@ -35,6 +35,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.secrets.api.filters.FilterOutcome;
 import org.sonar.plugins.secrets.api.filters.PostFilter;
+import org.sonar.plugins.secrets.api.filters.PreFilter;
 import org.sonar.plugins.secrets.api.filters.SkippedFilter;
 import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel;
 import org.sonar.plugins.secrets.configuration.model.Rule;
@@ -65,7 +66,7 @@ class SecretMatcherTest {
       rule.getSelectivity(),
       patternMatcher,
       AuxiliaryPatternMatcher.NO_FILTERING_AUXILIARY_MATCHER,
-      file -> true,
+      PreFilter.ACCEPT_ALL,
       PostFilter.ACCEPT_ALL,
       emptyMap(),
       mockDurationStatistics());
@@ -105,7 +106,7 @@ class SecretMatcherTest {
       rule.getSelectivity(),
       patternMatcher,
       constructReferenceAuxiliaryMatcher(),
-      file -> true,
+      PreFilter.ACCEPT_ALL,
       expectedPostFilter,
       Map.of("groupName", expectedGroupFilter),
       mockDurationStatistics());
@@ -126,7 +127,7 @@ class SecretMatcherTest {
       rule.getSelectivity(),
       patternMatcher,
       AuxiliaryPatternMatcher.NO_FILTERING_AUXILIARY_MATCHER,
-      file -> true,
+      PreFilter.ACCEPT_ALL,
       PostFilter.ACCEPT_ALL,
       emptyMap(),
       mockDurationStatistics());
@@ -140,6 +141,53 @@ class SecretMatcherTest {
     return List.of(
       Arguments.of(InputFile.Type.MAIN, true),
       Arguments.of(InputFile.Type.TEST, false));
+  }
+
+  @Test
+  void getMessageForCandidateAppendsLabelWhenTestFilesFilterSkipped() {
+    Rule rule = ReferenceTestModel.constructMinimumSpecification().getProvider().getRules().get(0);
+    SecretMatcher matcher = SecretMatcher.build(rule, mockDurationStatistics(), SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, true);
+
+    var match = new CandidateMatch("secret", 0, 6, Map.of());
+    var acceptedMatch = new MatchResult(match, FilterOutcome.passedWithSkipped(SkippedFilter.TEST_FILES_FILTER));
+    assertThat(matcher.getMessageForCandidate(acceptedMatch.outcome()))
+      .isEqualTo(rule.getMetadata().getMessage() + " (low-confidence match, disabled filters: automatic test file detection)");
+  }
+
+  @Test
+  void findInMarksMatchesInAutomaticallyDetectedTestFileAsSkippedWhenFilterDisabled() throws IOException {
+    var config = new SpecificationConfiguration(true, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE);
+
+    var results = findInMinimumSpecMatcher(config, "test.env");
+
+    assertThat(results).hasSize(1);
+    assertThat(results.get(0).outcome().passed()).isTrue();
+    assertThat(results.get(0).outcome().skipped()).contains(SkippedFilter.TEST_FILES_FILTER);
+  }
+
+  @Test
+  void findInReturnsAcceptedForNonTestFileWhenTestFilesFilterDisabled() throws IOException {
+    var config = new SpecificationConfiguration(true, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE);
+
+    var results = findInMinimumSpecMatcher(config, ".env");
+
+    assertThat(results).hasSize(1);
+    assertThat(results.get(0).outcome().passed()).isTrue();
+    assertThat(results.get(0).outcome().skipped()).isEmpty();
+  }
+
+  @Test
+  void findInFiltersOutAutomaticTestFileByDefault() throws IOException {
+    var results = findInMinimumSpecMatcher(SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, "test.env");
+
+    assertThat(results).isEmpty();
+  }
+
+  private static List<MatchResult> findInMinimumSpecMatcher(SpecificationConfiguration config, String filePath) throws IOException {
+    var rule = ReferenceTestModel.constructMinimumSpecification().getProvider().getRules().get(0);
+    var matcher = SecretMatcher.build(rule, mockDurationStatistics(), config, true);
+    var fileContext = inputFileContext(inputFile(Path.of(filePath), "rule matching pattern", null, InputFile.Type.MAIN));
+    return matcher.findIn(fileContext);
   }
 
   @ParameterizedTest
@@ -173,7 +221,7 @@ class SecretMatcherTest {
 
     var match = new CandidateMatch("AAAAAAAAAAAAAAAA", 0, 16, Map.of());
     var acceptedMatch = new MatchResult(match, FilterOutcome.passedWithSkipped(SkippedFilter.ENTROPY_FILTER));
-    assertThat(matcher.getMessageForCandidate(acceptedMatch.outcome())).isEqualTo(rule.getMetadata().getMessage() + " (low-confidence match, entropy filter is disabled)");
+    assertThat(matcher.getMessageForCandidate(acceptedMatch.outcome())).isEqualTo(rule.getMetadata().getMessage() + " (low-confidence match, disabled filters: entropy)");
   }
 
   @Test
@@ -194,7 +242,7 @@ class SecretMatcherTest {
     var groupMatch = new CandidateMatch("AAAAAAAAAAAAAAAA", 0, 16, Map.of());
     var match = new CandidateMatch("AAAAAAAAAAAAAAAA", 0, 16, Map.of("secret", groupMatch));
     var acceptedMatch = new MatchResult(match, FilterOutcome.passedWithSkipped(SkippedFilter.ENTROPY_FILTER));
-    assertThat(matcher.getMessageForCandidate(acceptedMatch.outcome())).isEqualTo(rule.getMetadata().getMessage() + " (low-confidence match, entropy filter is disabled)");
+    assertThat(matcher.getMessageForCandidate(acceptedMatch.outcome())).isEqualTo(rule.getMetadata().getMessage() + " (low-confidence match, disabled filters: entropy)");
   }
 
   @Test
@@ -208,7 +256,7 @@ class SecretMatcherTest {
     // below the threshold of 4.2, so the low-confidence suffix must be appended via the group-level check.
     var acceptedMatch = new MatchResult(match, FilterOutcome.passedWithSkipped(SkippedFilter.ENTROPY_FILTER));
     assertThat(matcher.getMessageForCandidate(acceptedMatch.outcome()))
-      .isEqualTo(rule.getMetadata().getMessage() + " (low-confidence match, entropy filter is disabled)");
+      .isEqualTo(rule.getMetadata().getMessage() + " (low-confidence match, disabled filters: entropy)");
   }
 
   @Test
@@ -219,6 +267,19 @@ class SecretMatcherTest {
     var match = new CandidateMatch("AAAAAAAAAAAAAAAA", 0, 16, Map.of());
     var acceptedMatch = new MatchResult(match, ACCEPTED);
     assertThat(matcher.getMessageForCandidate(acceptedMatch.outcome())).isEqualTo(rule.getMetadata().getMessage());
+  }
+
+  @Test
+  void getMessageForCandidateGroupsAllSkippedFiltersUnderSingleLowConfidencePrefix() {
+    Rule rule = ReferenceTestModel.constructMinimumSpecification().getProvider().getRules().get(0);
+    SecretMatcher matcher = SecretMatcher.build(rule, mockDurationStatistics(), SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, true);
+
+    var outcome = FilterOutcome.passedWithSkipped(SkippedFilter.ENTROPY_FILTER)
+      .combine(FilterOutcome.passedWithSkipped(SkippedFilter.TEST_FILES_FILTER));
+    String message = matcher.getMessageForCandidate(outcome);
+    assertThat(message)
+      .isEqualTo(rule.getMetadata().getMessage() + " (low-confidence match, disabled filters: entropy, automatic test file detection)");
+    assertThat(message.split("low-confidence match")).hasSize(2);
   }
 
   @Test

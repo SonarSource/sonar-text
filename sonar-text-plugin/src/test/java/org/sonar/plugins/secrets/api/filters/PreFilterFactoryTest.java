@@ -22,8 +22,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.Set;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -33,6 +34,7 @@ import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultFileSystem;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.plugins.common.InputFileContext;
+import org.sonar.plugins.secrets.api.MessageFormatter;
 import org.sonar.plugins.secrets.api.SpecificationConfiguration;
 import org.sonar.plugins.secrets.configuration.model.Selectivity;
 import org.sonar.plugins.secrets.configuration.model.matching.Detection;
@@ -98,14 +100,14 @@ class PreFilterFactoryTest {
   void testFiltersFromYamlFragments(String input, String filename, boolean shouldMatch) throws IOException {
     Detection detection = MAPPER.readValue(input, Detection.class);
 
-    Predicate<InputFileContext> predicate = PreFilterFactory.createPredicate(detection.getPre(), Selectivity.SPECIFIC, new SpecificationConfiguration(false), true);
+    var filter = PreFilterFactory.createFilter(detection.getPre(), Selectivity.SPECIFIC, new SpecificationConfiguration(false), true);
 
     InputFileContext ctx = mock(InputFileContext.class);
     when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder("myProject", filename).build());
     when(ctx.getFileSystem()).thenReturn(new DefaultFileSystem(Path.of(".")));
     when(ctx.lines()).thenReturn(List.of());
 
-    assertThat(predicate.test(ctx)).isEqualTo(shouldMatch);
+    assertThat(filter.apply(ctx).passed()).isEqualTo(shouldMatch);
   }
 
   static Stream<Arguments> inputs() {
@@ -197,9 +199,9 @@ class PreFilterFactoryTest {
     when(ctx.getInputFile()).thenReturn(inputFile);
     when(ctx.getFileSystem()).thenReturn(fileSystem);
 
-    var predicate = PreFilterFactory.createPredicate(preModule, Selectivity.SPECIFIC, configuration, true);
+    var filter = PreFilterFactory.createFilter(preModule, Selectivity.SPECIFIC, configuration, true);
 
-    assertThat(predicate.test(ctx))
+    assertThat(filter.apply(ctx).passed())
       .withFailMessage("Input file uri: " + inputFile.uri().getPath())
       .isEqualTo(expected);
   }
@@ -217,28 +219,70 @@ class PreFilterFactoryTest {
     when(ctx.getInputFile()).thenReturn(inputFile);
     when(ctx.getFileSystem()).thenReturn(fileSystem);
 
-    var predicate = PreFilterFactory.createPredicate(new PreModule(), Selectivity.SPECIFIC, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, true);
-    assertThat(predicate.test(ctx)).isEqualTo(shouldMatch);
+    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, true);
+    assertThat(filter.apply(ctx).passed()).isEqualTo(shouldMatch);
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"true", "false"})
   void shouldNotAcceptTestFiles(boolean automaticTestDetectionEnabled) {
+    var ctx = fileContext("file.txt", "/base/directory/", InputFile.Type.TEST);
+    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, new SpecificationConfiguration(automaticTestDetectionEnabled), true);
+    assertThat(filter.apply(ctx).passed()).isFalse();
+  }
+
+  @Test
+  void createFilterReturnsAcceptedForNonTestMainFile() {
+    var ctx = fileContext("src/file.txt", "/base/directory/", InputFile.Type.MAIN);
+    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, new SpecificationConfiguration(true), true);
+    assertThat(filter.apply(ctx)).isEqualTo(FilterOutcome.ACCEPTED);
+  }
+
+  @Test
+  void createFilterReturnsRejectedForAutomaticTestFileWhenFilterEnabled() {
+    var ctx = fileContext("test_secrets.txt", "/base/directory/", InputFile.Type.MAIN);
+    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, new SpecificationConfiguration(true), true);
+    assertThat(filter.apply(ctx)).isEqualTo(FilterOutcome.REJECTED);
+  }
+
+  @Test
+  void createFilterReturnsPassedWithSkippedForAutomaticTestFileWhenFilterDisabled() {
+    var ctx = fileContext("test_secrets.txt", "/base/directory/", InputFile.Type.MAIN);
+    var config = new SpecificationConfiguration(true, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE);
+    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, config, true);
+    var outcome = filter.apply(ctx);
+    assertThat(outcome.passed()).isTrue();
+    assertThat(outcome.skipped()).containsExactly(SkippedFilter.TEST_FILES_FILTER);
+  }
+
+  @Test
+  void createFilterReturnsAcceptedForAutomaticTestFileWhenAutomaticDetectionIsOff() {
+    var ctx = fileContext("test_secrets.txt", "/base/directory/", InputFile.Type.MAIN);
+    // When automatic test detection is off (user configured sonar.tests), the automatic filter is never
+    // applied — skipping it via --disable-test-file-detection has no effect.
+    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, new SpecificationConfiguration(false), true);
+    assertThat(filter.apply(ctx)).isEqualTo(FilterOutcome.ACCEPTED);
+  }
+
+  @Test
+  void createFilterRejectsExplicitTestFileTypeEvenWhenTestFilesFilterDisabled() {
+    var ctx = fileContext("file.txt", "/base/directory/", InputFile.Type.TEST);
+    // When a file is explicitly classified as Type.TEST (user configured sonar.tests), it's rejected before
+    // the automatic filter runs — skipping that filter has no effect.
+    var config = new SpecificationConfiguration(true, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE);
+    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, config, true);
+    assertThat(filter.apply(ctx)).isEqualTo(FilterOutcome.REJECTED);
+  }
+
+  private static InputFileContext fileContext(String filePath, String baseDir, InputFile.Type type) {
     String projectKey = "myProject";
-    String filePath = "file.txt";
-    String baseDir = "/base/directory/";
-    var inputFile = spy(new TestInputFileBuilder(projectKey, filePath).setType(InputFile.Type.TEST).build());
-    URI uri = URI.create("file:" + baseDir + projectKey + "/" + filePath);
-    when(inputFile.uri()).thenReturn(uri);
-
-    DefaultFileSystem fileSystem = new DefaultFileSystem(Path.of(baseDir));
-
+    var inputFile = spy(new TestInputFileBuilder(projectKey, filePath).setType(type).build());
+    when(inputFile.uri()).thenReturn(URI.create("file:" + baseDir + projectKey + "/" + filePath));
     var ctx = mock(InputFileContext.class);
     when(ctx.getInputFile()).thenReturn(inputFile);
-    when(ctx.getFileSystem()).thenReturn(fileSystem);
-
-    var predicate = PreFilterFactory.createPredicate(new PreModule(), Selectivity.SPECIFIC, new SpecificationConfiguration(automaticTestDetectionEnabled), true);
-    assertThat(predicate.test(ctx)).isFalse();
+    when(ctx.getFileSystem()).thenReturn(new DefaultFileSystem(Path.of(baseDir)));
+    when(ctx.lines()).thenReturn(List.of());
+    return ctx;
   }
 
   @ParameterizedTest
