@@ -483,6 +483,8 @@ public abstract class AbstractTextAndSecretsSensorTest {
       inputFile(Path.of("my.pem"), SENSITIVE_BIDI_CHARS, null),
       inputFile(Path.of("ccc.config"), SENSITIVE_BIDI_CHARS, null),
       inputFile(Path.of(".env"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of("something.env"), SENSITIVE_BIDI_CHARS, null),
+      inputFile(Path.of("something", ".env"), SENSITIVE_BIDI_CHARS, null),
       inputFile(Path.of(".aws", "config"), SENSITIVE_BIDI_CHARS, null),
       // doesn't match the pattern
       inputFile(Path.of("foo", "bar"), SENSITIVE_BIDI_CHARS, null));
@@ -493,6 +495,8 @@ public abstract class AbstractTextAndSecretsSensorTest {
       "The file 'script/start.sh' contains binary data and will not be included in the text and secrets analysis.",
       "The file 'my.pem' contains binary data and will not be included in the text and secrets analysis.",
       "The file '.env' contains binary data and will not be included in the text and secrets analysis.",
+      "The file 'something.env' contains binary data and will not be included in the text and secrets analysis.",
+      "The file 'something/.env' contains binary data and will not be included in the text and secrets analysis.",
       "The file 'win.ps1' contains binary data and will not be included in the text and secrets analysis.",
       "The file 'run.bash' contains binary data and will not be included in the text and secrets analysis.",
       "The file 'ccc.config' contains binary data and will not be included in the text and secrets analysis.",
