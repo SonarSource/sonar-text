@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -195,6 +196,11 @@ public class TextAndSecretsSensor implements Sensor {
     }
     if (sensorContext.config().getBoolean(DISABLE_TEST_FILE_DETECTION_KEY).orElse(DISABLE_TEST_FILE_DETECTION_DEFAULT_VALUE)) {
       skippedFilters.add(SkippedFilter.TEST_FILES_FILTER);
+    }
+
+    if (!skippedFilters.isEmpty()) {
+      var filterNames = skippedFilters.stream().map(SkippedFilter::filterName).collect(Collectors.joining(", "));
+      LOG.info("The secret analysis will skip the following filters per user configuration: {}", filterNames);
     }
     return Set.copyOf(skippedFilters);
   }

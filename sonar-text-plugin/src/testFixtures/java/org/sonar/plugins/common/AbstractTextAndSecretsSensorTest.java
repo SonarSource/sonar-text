@@ -134,36 +134,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
   protected abstract String sensorName();
 
   @Test
-  void createSpecificationConfigurationShouldHaveEntropyFilterDisabledWhenPropertyIsTrue() {
-    var context = testUtils().sonarqubeSensorContext();
-    context.settings().setProperty(DISABLE_ENTROPY_FILTER_KEY, "true");
-
-    assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters()).contains(SkippedFilter.ENTROPY_FILTER);
-  }
-
-  @Test
-  void createSpecificationConfigurationShouldHaveEntropyFilterEnabledByDefault() {
-    var context = testUtils().sonarqubeSensorContext();
-
-    assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters()).doesNotContain(SkippedFilter.ENTROPY_FILTER);
-  }
-
-  @Test
-  void createSpecificationConfigurationShouldHaveTestFilesFilterSkippedWhenDisableTestFileDetectionIsTrue() {
-    var context = testUtils().sonarqubeSensorContext();
-    context.settings().setProperty(DISABLE_TEST_FILE_DETECTION_KEY, "true");
-
-    assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters()).contains(SkippedFilter.TEST_FILES_FILTER);
-  }
-
-  @Test
-  void createSpecificationConfigurationShouldNotSkipTestFilesFilterByDefault() {
-    var context = testUtils().sonarqubeSensorContext();
-
-    assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters()).isEmpty();
-  }
-
-  @Test
   public void shouldDescribeWithoutErrors() {
     DefaultSensorDescriptor descriptor = new DefaultSensorDescriptor();
     SensorContextTester sensorContext = testUtils().defaultSensorContext();
@@ -1427,6 +1397,42 @@ public abstract class AbstractTextAndSecretsSensorTest {
     sensor.execute(context);
 
     verify(context, never()).addTelemetryProperty(eq("text.excluded.user.suffix"), any());
+  }
+
+  @Test
+  void createSpecificationConfigurationShouldHaveEntropyFilterDisabledWhenPropertyIsTrue() {
+    var context = testUtils().sonarqubeSensorContext();
+    context.settings().setProperty(DISABLE_ENTROPY_FILTER_KEY, "true");
+
+    assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters()).contains(SkippedFilter.ENTROPY_FILTER);
+    assertThat(logTester.logs()).contains("The secret analysis will skip the following filters per user configuration: entropy");
+  }
+
+  @Test
+  void createSpecificationConfigurationShouldNotDisableFilterByDefault() {
+    var context = testUtils().sonarqubeSensorContext();
+
+    assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters()).isEmpty();
+    assertThat(logTester.logs()).noneMatch(log -> log.startsWith("The secret analysis will skip the following filters per user configuration"));
+  }
+
+  @Test
+  void createSpecificationConfigurationShouldHaveTestFilesFilterSkippedWhenDisableTestFileDetectionIsTrue() {
+    var context = testUtils().sonarqubeSensorContext();
+    context.settings().setProperty(DISABLE_TEST_FILE_DETECTION_KEY, "true");
+
+    assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters()).contains(SkippedFilter.TEST_FILES_FILTER);
+    assertThat(logTester.logs()).contains("The secret analysis will skip the following filters per user configuration: automatic test file detection");
+  }
+
+  @Test
+  void createSpecificationConfigurationShouldSkipBothFilterWhenBothAreDisabledByConfiguration() {
+    var context = testUtils().sonarqubeSensorContext();
+    context.settings().setProperty(DISABLE_ENTROPY_FILTER_KEY, "true");
+    context.settings().setProperty(DISABLE_TEST_FILE_DETECTION_KEY, "true");
+
+    assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters()).containsExactlyInAnyOrder(SkippedFilter.ENTROPY_FILTER, SkippedFilter.TEST_FILES_FILTER);
+    assertThat(logTester.logs()).contains("The secret analysis will skip the following filters per user configuration: entropy, automatic test file detection");
   }
 
   private static void assertThatIssuesRaisedOnFiles(Collection<Issue> issues, InputFile... expectedFilesWithIssues) {
