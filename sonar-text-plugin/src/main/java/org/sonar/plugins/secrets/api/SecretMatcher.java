@@ -27,6 +27,7 @@ import org.sonar.plugins.secrets.api.filters.PostFilter;
 import org.sonar.plugins.secrets.api.filters.PostFilterFactory;
 import org.sonar.plugins.secrets.api.filters.PreFilter;
 import org.sonar.plugins.secrets.api.filters.PreFilterFactory;
+import org.sonar.plugins.secrets.api.filters.RejectionLogContext;
 import org.sonar.plugins.secrets.api.filters.SkippedFilter;
 import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.Selectivity;
@@ -88,10 +89,11 @@ public class SecretMatcher implements Matcher {
     var preFilter = PreFilterFactory.createFilter(
       rule.getDetection().getPre(), rule.getSelectivity(), specificationConfiguration, shouldExecuteContentPreFilters);
     var skippedFilters = specificationConfiguration.skippedFilters();
-    var postFilter = PostFilterFactory.createFilter(rule.getDetection().getPost(), skippedFilters);
+    var rejectionLogger = specificationConfiguration.rejectionLogger();
+    var postFilter = PostFilterFactory.createFilter(rule.getDetection().getPost(), skippedFilters, rejectionLogger);
     var postFilterByGroup = Optional.ofNullable(rule.getDetection().getPost()).stream()
       .flatMap(it -> it.getGroups().stream())
-      .collect(toMap(NamedPostModule::getName, namedPost -> PostFilterFactory.createFilter(namedPost, skippedFilters)));
+      .collect(toMap(NamedPostModule::getName, namedPost -> PostFilterFactory.createFilter(namedPost, skippedFilters, rejectionLogger)));
 
     var auxiliaryMatcher = AuxiliaryPatternMatcherFactory.build(rule.getDetection().getMatching());
     var ruleMessage = specificationConfiguration.messageFormatter().format(rule.getMetadata());
@@ -128,21 +130,24 @@ public class SecretMatcher implements Matcher {
       .map(match -> {
         var outcome = durationStatistics.timed(
           getRuleId() + DurationStatistics.SUFFIX_POST,
-          () -> preOutcome.combine(applyPostFilters(match)));
+          () -> preOutcome.combine(applyPostFilters(match, fileContext)));
         return new MatchResult(match, outcome);
       })
       .filter(accepted -> accepted.outcome().passed())
       .toList();
   }
 
-  private FilterOutcome applyPostFilters(CandidateMatch match) {
-    FilterOutcome outcome = postFilter.apply(match.text());
+  private FilterOutcome applyPostFilters(CandidateMatch match, InputFileContext fileContext) {
+    var context = new RejectionLogContext(getRuleId(), fileContext, match.fileStartOffset());
+    FilterOutcome outcome = postFilter.apply(match.text(), context);
     if (!outcome.passed()) {
       return outcome;
     }
     for (var entry : match.groups().entrySet()) {
       PostFilter groupFilter = postFilterByGroup.getOrDefault(entry.getKey(), PostFilter.ACCEPT_ALL);
-      outcome = outcome.combine(groupFilter.apply(entry.getValue().text()));
+      // Reuses the primary match's offset for group rejections as a diagnostic approximation; the actual group offset
+      // may differ but the primary location is enough for a specifier to find the spot in their file.
+      outcome = outcome.combine(groupFilter.apply(entry.getValue().text(), context));
     }
     return outcome;
   }

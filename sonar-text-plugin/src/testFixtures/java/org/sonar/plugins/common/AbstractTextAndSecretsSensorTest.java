@@ -91,6 +91,8 @@ import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.inputFileFromPath;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
 import static org.sonar.plugins.common.TextAndSecretsSensor.ALL_TRACKED_TEXT_FILES_MEASURE_KEY;
+import static org.sonar.plugins.common.TextAndSecretsSensor.DEBUG_LOG_REJECTED_CANDIDATES_KEY;
+import static org.sonar.plugins.common.TextAndSecretsSensor.DEBUG_LOG_REJECTED_CANDIDATES_LIMIT_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.DISABLE_ENTROPY_FILTER_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.DISABLE_TEST_FILE_DETECTION_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.SENSOR_DISABLED_MEASURE_KEY;
@@ -1433,6 +1435,28 @@ public abstract class AbstractTextAndSecretsSensorTest {
 
     assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters()).containsExactlyInAnyOrder(SkippedFilter.ENTROPY_FILTER, SkippedFilter.TEST_FILES_FILTER);
     assertThat(logTester.logs()).contains("The secret analysis will skip the following filters per user configuration: entropy, automatic test file detection");
+  }
+
+  @Test
+  void rejectionLoggerDisabledByDefault() {
+    var context = testUtils().sonarqubeSensorContext();
+
+    var config = sensor(context).createSpecificationConfiguration(context);
+
+    assertThat(config.rejectionLogger().isEnabled()).isFalse();
+  }
+
+  @Test
+  void rejectionLoggerEnabledWhenPropertyIsTrue() {
+    var context = testUtils().sonarqubeSensorContext();
+    context.settings().setProperty(DEBUG_LOG_REJECTED_CANDIDATES_KEY, "true");
+    context.settings().setProperty(DEBUG_LOG_REJECTED_CANDIDATES_LIMIT_KEY, "7");
+
+    var config = sensor(context).createSpecificationConfiguration(context);
+
+    assertThat(config.rejectionLogger().isEnabled()).isTrue();
+    assertThat(logTester.logs()).anyMatch(log -> log.contains("Post-filter rejection logging is enabled")
+      && log.contains("max 7 entries per rule per file"));
   }
 
   private static void assertThatIssuesRaisedOnFiles(Collection<Issue> issues, InputFile... expectedFilesWithIssues) {

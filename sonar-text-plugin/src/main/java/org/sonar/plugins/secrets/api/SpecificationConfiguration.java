@@ -17,6 +17,7 @@
 package org.sonar.plugins.secrets.api;
 
 import java.util.Set;
+import org.sonar.plugins.secrets.api.filters.RejectionLogger;
 import org.sonar.plugins.secrets.api.filters.SkippedFilter;
 
 /**
@@ -27,14 +28,21 @@ import org.sonar.plugins.secrets.api.filters.SkippedFilter;
  *                                   lets a specific filter pass candidates it would otherwise reject, with affected
  *                                   findings tagged accordingly.
  * @param messageFormatter           formatter for secret issue messages.
+ * @param rejectionLogger            logger used by post-filters to emit debug lines when a candidate is rejected.
+ *                                   Pass {@link RejectionLogger#DISABLED} (the default) to opt out.
  */
 public record SpecificationConfiguration(
   boolean automaticTestFileDetection,
   Set<SkippedFilter> skippedFilters,
-  MessageFormatter messageFormatter) {
+  MessageFormatter messageFormatter,
+  RejectionLogger rejectionLogger) {
+
+  public SpecificationConfiguration(boolean automaticTestFileDetection, Set<SkippedFilter> skippedFilters, MessageFormatter messageFormatter) {
+    this(automaticTestFileDetection, skippedFilters, messageFormatter, RejectionLogger.DISABLED);
+  }
 
   public SpecificationConfiguration(boolean automaticTestFileDetection) {
-    this(automaticTestFileDetection, Set.of(), MessageFormatter.RULE_MESSAGE);
+    this(automaticTestFileDetection, Set.of(), MessageFormatter.RULE_MESSAGE, RejectionLogger.DISABLED);
   }
 
   public static final SpecificationConfiguration AUTO_TEST_FILE_DETECTION_ENABLED = new SpecificationConfiguration(true);

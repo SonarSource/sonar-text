@@ -32,17 +32,18 @@ public class Heuristics {
   private static final Logger LOG = LoggerFactory.getLogger(Heuristics.class);
 
   public static boolean matchesHeuristics(String candidateSecret, List<String> heuristics) {
-    return heuristics.stream().anyMatch(heuristic -> {
-      switch (heuristic) {
-        case "path":
-          return isPath(candidateSecret);
-        case "uri":
-          return isUri(candidateSecret);
-        default:
-          LOG.warn("Heuristic with the name `{}` is not supported", heuristic);
-          return false;
+    return heuristics.stream().anyMatch(heuristic -> matchesHeuristic(candidateSecret, heuristic));
+  }
+
+  public static boolean matchesHeuristic(String candidateSecret, String heuristic) {
+    return switch (heuristic) {
+      case "path" -> isPath(candidateSecret);
+      case "uri" -> isUri(candidateSecret);
+      default -> {
+        LOG.warn("Heuristic with the name `{}` is not supported", heuristic);
+        yield false;
       }
-    });
+    };
   }
 
   public static boolean isPath(String input) {

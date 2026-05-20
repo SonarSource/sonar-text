@@ -58,6 +58,7 @@ import org.sonar.plugins.secrets.api.MessageFormatter;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.api.SpecificationConfiguration;
+import org.sonar.plugins.secrets.api.filters.RejectionLogger;
 import org.sonar.plugins.secrets.api.filters.SkippedFilter;
 import org.sonar.plugins.secrets.api.task.RegexMatchingManager;
 import org.sonar.plugins.secrets.configuration.SecretsSpecificationContainer;
@@ -89,6 +90,14 @@ public class TextAndSecretsSensor implements Sensor {
   public static final boolean DISABLE_ENTROPY_FILTER_DEFAULT_VALUE = false;
   public static final String DISABLE_TEST_FILE_DETECTION_KEY = "sonar.secrets.disableTestFileDetection";
   public static final boolean DISABLE_TEST_FILE_DETECTION_DEFAULT_VALUE = false;
+  /**
+   * Internal debug switch (off by default) that enables per-candidate debug logging when a post-filter rejects a
+   * match.
+   */
+  public static final String DEBUG_LOG_REJECTED_CANDIDATES_KEY = "sonar.text.debug.logRejectedCandidates";
+  public static final boolean DEBUG_LOG_REJECTED_CANDIDATES_DEFAULT_VALUE = false;
+  public static final String DEBUG_LOG_REJECTED_CANDIDATES_LIMIT_KEY = "sonar.text.debug.logRejectedCandidates.maxPerRulePerFile";
+  public static final int DEBUG_LOG_REJECTED_CANDIDATES_LIMIT_DEFAULT_VALUE = 20;
   public static final String ALL_TRACKED_TEXT_FILES_MEASURE_KEY = "all_tracked_text_files_count";
   public static final String SENSOR_DISABLED_MEASURE_KEY = "is_sensor_disabled";
   public static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
@@ -170,7 +179,19 @@ public class TextAndSecretsSensor implements Sensor {
   protected SpecificationConfiguration createSpecificationConfiguration(SensorContext sensorContext) {
     var skippedFilters = resolveSkippedFilters(sensorContext);
     var automaticTestFileDetection = resolveAutomaticTestFileDetection(sensorContext);
-    return new SpecificationConfiguration(automaticTestFileDetection, skippedFilters, MessageFormatter.RULE_MESSAGE);
+    var rejectionLogger = resolveRejectionLogger(sensorContext);
+    return new SpecificationConfiguration(automaticTestFileDetection, skippedFilters, MessageFormatter.RULE_MESSAGE, rejectionLogger);
+  }
+
+  protected static RejectionLogger resolveRejectionLogger(SensorContext sensorContext) {
+    boolean enabled = sensorContext.config().getBoolean(DEBUG_LOG_REJECTED_CANDIDATES_KEY)
+      .orElse(DEBUG_LOG_REJECTED_CANDIDATES_DEFAULT_VALUE);
+    if (!enabled) {
+      return RejectionLogger.DISABLED;
+    }
+    int limit = sensorContext.config().getInt(DEBUG_LOG_REJECTED_CANDIDATES_LIMIT_KEY)
+      .orElse(DEBUG_LOG_REJECTED_CANDIDATES_LIMIT_DEFAULT_VALUE);
+    return RejectionLogger.create(limit);
   }
 
   private static boolean resolveAutomaticTestFileDetection(SensorContext sensorContext) {

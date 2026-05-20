@@ -90,7 +90,7 @@ class SecretMatcherTest {
     Predicate<String> statisticalFilter = candidateSecret -> !EntropyChecker.hasLowEntropy(candidateSecret, 4.2f);
     expectedPredicate = expectedPredicate.and(statisticalFilter).and(patternNotFilter);
     final Predicate<String> finalExpectedPredicate = expectedPredicate;
-    var expectedGroupFilter = (PostFilter) candidateSecret -> {
+    var expectedGroupFilter = (PostFilter) (candidateSecret, context) -> {
       String base64Decoded = null;
       try {
         base64Decoded = new String(Base64.decode(candidateSecret), StandardCharsets.UTF_8);
@@ -99,7 +99,7 @@ class SecretMatcherTest {
       boolean passed = !Heuristics.matchesHeuristics(candidateSecret, List.of("uri")) && base64Decoded != null && base64Decoded.equals("\"alg\":");
       return passed ? FilterOutcome.ACCEPTED : FilterOutcome.REJECTED;
     };
-    PostFilter expectedPostFilter = candidateSecret -> finalExpectedPredicate.test(candidateSecret) ? FilterOutcome.ACCEPTED : FilterOutcome.REJECTED;
+    PostFilter expectedPostFilter = (candidateSecret, context) -> finalExpectedPredicate.test(candidateSecret) ? FilterOutcome.ACCEPTED : FilterOutcome.REJECTED;
     SecretMatcher expectedMatcher = new SecretMatcher(
       rule.getId(),
       rule.getMetadata().getMessage(),

@@ -21,9 +21,14 @@ import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mockito;
+import org.slf4j.event.Level;
+import org.sonar.api.testfixtures.log.LogTesterJUnit5;
+import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.DecodedBase64Module;
@@ -35,6 +40,9 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PostFilterFactoryTest {
+
+  @RegisterExtension
+  LogTesterJUnit5 logTester = new LogTesterJUnit5().setLevel(Level.DEBUG);
 
   private static Matching matching;
 
@@ -371,5 +379,91 @@ class PostFilterFactoryTest {
 
     assertThat(result.passed()).isTrue();
     assertThat(result.skipped()).doesNotContain(SkippedFilter.ENTROPY_FILTER);
+  }
+
+  @Test
+  void shouldNotLogRejectionsWhenLoggerIsDisabled() {
+    var postModule = ReferenceTestModel.constructPostModule();
+    var filter = PostFilterFactory.createFilter(postModule, Set.of(), RejectionLogger.DISABLED);
+
+    filter.apply("low entropy secret", contextFor("S6290", "file.txt", 10));
+
+    assertThat(logTester.logs(Level.DEBUG))
+      .noneMatch(line -> line.contains("Rejecting candidate"));
+  }
+
+  @Test
+  void shouldLogStatisticalRejectionWithEntropyAndThreshold() {
+    var postModule = new TopLevelPostModule(null, null, emptyList(), statisticalFilterWithThreshold(4.2f), emptyList());
+    var filter = PostFilterFactory.createFilter(postModule, Set.of(), RejectionLogger.create(5));
+
+    filter.apply("rule matching pattern", contextFor("S6290", "file.txt", 10));
+
+    assertThat(logTester.logs(Level.DEBUG))
+      .anyMatch(line -> line.contains("Rejecting candidate")
+        && line.contains("rule=S6290")
+        && line.contains("file=file.txt")
+        && line.contains("by statistical (entropy)")
+        && line.contains("entropy=")
+        && line.contains("threshold=4.200"));
+  }
+
+  @Test
+  void shouldLogPatternNotRejectionWithMatchingPattern() {
+    var postModule = new TopLevelPostModule(null, null, List.of("foo", "EXAMPLEKEY", "bar"), null, emptyList());
+    var filter = PostFilterFactory.createFilter(postModule, Set.of(), RejectionLogger.create(5));
+
+    filter.apply("candidate EXAMPLEKEY here", contextFor("S6290", "file.txt", 10));
+
+    assertThat(logTester.logs(Level.DEBUG))
+      .anyMatch(line -> line.contains("Rejecting candidate")
+        && line.contains("by patternNot: EXAMPLEKEY"));
+  }
+
+  @Test
+  void shouldLogHeuristicsRejectionWithMatchingName() {
+    var postModule = new TopLevelPostModule(null, heuristicsFilterFor("path", "uri"), emptyList(), null, emptyList());
+    var filter = PostFilterFactory.createFilter(postModule, Set.of(), RejectionLogger.create(5));
+
+    filter.apply("https://sonarsource.com", contextFor("S6290", "file.txt", 10));
+
+    assertThat(logTester.logs(Level.DEBUG))
+      .anyMatch(line -> line.contains("Rejecting candidate")
+        && line.contains("by heuristics: uri"));
+  }
+
+  @Test
+  void shouldLogDecodedBase64Rejection() {
+    var postModule = new TopLevelPostModule(
+      new DecodedBase64Module(List.of("\"alg\":"), emptyList(), DecodedBase64Module.Alphabet.DEFAULT),
+      null, emptyList(), null, emptyList());
+    var filter = PostFilterFactory.createFilter(postModule, Set.of(), RejectionLogger.create(5));
+
+    filter.apply("1248163264128", contextFor("S6290", "file.txt", 10));
+
+    assertThat(logTester.logs(Level.DEBUG))
+      .anyMatch(line -> line.contains("Rejecting candidate")
+        && line.contains("by decodedBase64"));
+  }
+
+  @Test
+  void rejectionLogMustNotIncludeCandidate() {
+    var postModule = new TopLevelPostModule(null, null, List.of("EXAMPLEKEY"), null, emptyList());
+    var filter = PostFilterFactory.createFilter(postModule, Set.of(), RejectionLogger.create(5));
+
+    filter.apply("MySensitiveValue EXAMPLEKEY here", contextFor("S6290", "file.txt", 10));
+
+    var rejectionLines = logTester.logs(Level.DEBUG).stream()
+      .filter(line -> line.contains("Rejecting candidate"))
+      .toList();
+    assertThat(rejectionLines)
+      .isNotEmpty()
+      .allSatisfy(line -> assertThat(line).doesNotContain("MySensitiveValue"));
+  }
+
+  private static RejectionLogContext contextFor(String ruleId, String displayName, int offset) {
+    var fileContext = Mockito.mock(InputFileContext.class);
+    Mockito.when(fileContext.toString()).thenReturn(displayName);
+    return new RejectionLogContext(ruleId, fileContext, offset);
   }
 }

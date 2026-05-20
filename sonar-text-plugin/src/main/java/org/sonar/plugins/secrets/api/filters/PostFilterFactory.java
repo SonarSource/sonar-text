@@ -19,18 +19,15 @@ package org.sonar.plugins.secrets.api.filters;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.sonar.plugins.secrets.api.EntropyChecker;
 import org.sonar.plugins.secrets.api.Heuristics;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.AbstractPostModule;
-import org.sonar.plugins.secrets.configuration.model.matching.filter.DecodedBase64Module;
-import org.sonar.plugins.secrets.configuration.model.matching.filter.HeuristicsFilter;
-import org.sonar.plugins.secrets.configuration.model.matching.filter.StatisticalFilter;
 
 /**
  * Factory class to create a post-filter based on the post module configuration.
@@ -40,7 +37,6 @@ import org.sonar.plugins.secrets.configuration.model.matching.filter.Statistical
  * own the affected filter. {@link #createFilter(AbstractPostModule, Set)} itself does not need to change.
  */
 public final class PostFilterFactory {
-  private static final Logger LOG = LoggerFactory.getLogger(PostFilterFactory.class);
 
   private static final List<PostFilterHandler> HANDLERS = List.of(
     new DecodedBase64Handler(),
@@ -52,29 +48,44 @@ public final class PostFilterFactory {
   }
 
   /**
-   * Creates a structured post-filter with no filters skipped.
+   * Creates a structured post-filter with no filters skipped and rejection logging disabled.
    */
   public static PostFilter createFilter(@Nullable AbstractPostModule post) {
-    return createFilter(post, Set.of());
+    return createFilter(post, Set.of(), RejectionLogger.DISABLED);
+  }
+
+  /**
+   * Creates a structured post-filter with rejection logging disabled.
+   */
+  public static PostFilter createFilter(@Nullable AbstractPostModule post, Set<SkippedFilter> skippedFilters) {
+    return createFilter(post, skippedFilters, RejectionLogger.DISABLED);
   }
 
   /**
    * Creates a structured post-filter based on the post module configuration.
    *
-   * <p>For each filter type present in {@code post}, a {@link PostFilter} is built by the corresponding handler. Each
-   * handler is responsible for knowing whether any of the {@code skippedFilters} applies to it. The resulting
-   * filters are combined into a single pipeline that reduces their outcomes with {@link FilterOutcome#combine}.
+   * <p>For each filter type present in {@code post}, a {@link FilteringPostFilter} is built by the corresponding
+   * handler. Each handler returns a {@link FilteringResult} carrying both the {@link FilterOutcome} and an optional
+   * detail string about why a candidate was rejected. {@link #withRejectionLogging} then wraps each filter so the
+   * {@code rejectionLogger} can emit a debug line — handlers themselves never reference the logger.
    *
-   * @param post               deserialized post module configuration
-   * @param skippedFilters filters to skip as requested by the caller
+   * @param post            deserialized post module configuration
+   * @param skippedFilters  filters to skip as requested by the caller
+   * @param rejectionLogger logger used to emit debug lines on rejection; pass {@link RejectionLogger#DISABLED} to opt out
    */
-  public static PostFilter createFilter(@Nullable AbstractPostModule post, Set<SkippedFilter> skippedFilters) {
+  public static PostFilter createFilter(@Nullable AbstractPostModule post, Set<SkippedFilter> skippedFilters, RejectionLogger rejectionLogger) {
     if (post == null) {
       return PostFilter.ACCEPT_ALL;
     }
 
     List<PostFilter> filters = HANDLERS.stream()
-      .map(h -> h.build(post, skippedFilters))
+      .map(h -> {
+        FilteringPostFilter inner = h.build(post, skippedFilters);
+        if (inner == null) {
+          return null;
+        }
+        return withRejectionLogging(inner, rejectionLogger);
+      })
       .filter(Objects::nonNull)
       .toList();
 
@@ -82,10 +93,10 @@ public final class PostFilterFactory {
       return PostFilter.ACCEPT_ALL;
     }
 
-    return (String candidateSecret) -> {
+    return (String candidateSecret, RejectionLogContext context) -> {
       FilterOutcome aggregate = FilterOutcome.ACCEPTED;
       for (PostFilter filter : filters) {
-        FilterOutcome outcome = filter.apply(candidateSecret);
+        FilterOutcome outcome = filter.apply(candidateSecret, context);
         if (!outcome.passed()) {
           return FilterOutcome.REJECTED;
         }
@@ -96,98 +107,150 @@ public final class PostFilterFactory {
   }
 
   /**
-   * Builds a {@link PostFilter} for a specific filter type (e.g., statistical, pattern-not). Returns {@code null} when
-   * the filter type is not present in the given module.
+   * Adapts a {@link FilteringPostFilter} (which carries a description string) into the public {@link PostFilter}
+   * type (which only carries {@link FilterOutcome}). On rejection, the wrapper forwards the description to
+   * {@code rejectionLogger}; on accept, the description is ignored.
+   *
+   * <p>Only the {@code inner} filter's own rejection triggers a log line — the outer pipeline short-circuits on the
+   * first failing filter, so wrappers for later filters are never reached. This keeps each log line correctly
+   * attributed to the specific filter that rejected the candidate.
+   */
+  private static PostFilter withRejectionLogging(FilteringPostFilter inner, RejectionLogger rejectionLogger) {
+    return (candidate, context) -> {
+      FilteringResult result = inner.apply(candidate);
+      if (!result.outcome().passed()) {
+        rejectionLogger.log(context, result.details());
+      }
+      return result.outcome();
+    };
+  }
+
+  /**
+   * Internal counterpart to {@link PostFilter} that also returns the safe-to-log description explaining a rejection.
+   * Kept package-private because callers outside the factory only see the wrapped {@link PostFilter}.
+   */
+  @FunctionalInterface
+  interface FilteringPostFilter {
+    FilteringResult apply(String candidateSecret);
+  }
+
+  /**
+   * Outcome of a single {@link FilteringPostFilter} evaluation, together with a safe-to-log description of the
+   * decision. On rejection the description identifies the filter and any specifics that help a specifier locate the
+   * mis-tuned setting (e.g. {@code "patternNot: index=1"}, {@code "statistical (entropy): entropy=2.710, threshold=3.500"}).
+   * On acceptance the description is empty and never read. It must not contain the candidate text or rule patterns.
+   */
+  record FilteringResult(FilterOutcome outcome, String details) {
+    static final FilteringResult ACCEPTED = new FilteringResult(FilterOutcome.ACCEPTED, "");
+
+    static FilteringResult rejected(String details) {
+      return new FilteringResult(FilterOutcome.REJECTED, details);
+    }
+  }
+
+  /**
+   * Builds a {@link FilteringPostFilter} for a specific filter type (e.g., statistical, pattern-not). Returns
+   * {@code null} when the filter type is not present in the given module.
    */
   interface PostFilterHandler {
     @Nullable
-    PostFilter build(AbstractPostModule module, Set<SkippedFilter> skippedFilters);
+    FilteringPostFilter build(AbstractPostModule module, Set<SkippedFilter> skippedFilters);
   }
 
   private static final class DecodedBase64Handler implements PostFilterHandler {
     @Override
-    public PostFilter build(AbstractPostModule module, Set<SkippedFilter> skippedFilters) {
-      DecodedBase64Module decodedBase64Module = module.getDecodedBase64Module();
+    public FilteringPostFilter build(AbstractPostModule module, Set<SkippedFilter> skippedFilters) {
+      var decodedBase64Module = module.getDecodedBase64Module();
       if (decodedBase64Module == null) {
         return null;
       }
-      return candidate -> matchBase64Decoded(decodedBase64Module, candidate) ? FilterOutcome.ACCEPTED : FilterOutcome.REJECTED;
+      return candidate -> {
+        var stringToDecode = switch (decodedBase64Module.alphabet()) {
+          case Y64 -> candidate.replace('.', '+').replace('_', '/').replace('-', '=');
+          case DEFAULT -> candidate;
+        };
+        byte[] decodedBytes;
+        try {
+          decodedBytes = Base64.getDecoder().decode(stringToDecode);
+        } catch (IllegalArgumentException iae) {
+          return FilteringResult.rejected("decodedBase64: invalid encoding");
+        }
+        var decoded = new String(decodedBytes, StandardCharsets.UTF_8);
+        if (!decodedBase64Module.matchEach().isEmpty()
+          && !decodedBase64Module.matchEach().stream().allMatch(decoded::contains)) {
+          return FilteringResult.rejected("decodedBase64: matchEach not satisfied");
+        }
+        if (decodedBase64Module.matchNot().stream().anyMatch(decoded::contains)) {
+          return FilteringResult.rejected("decodedBase64: matchNot matched");
+        }
+        return FilteringResult.ACCEPTED;
+      };
     }
   }
 
   private static final class PatternNotHandler implements PostFilterHandler {
     @Override
-    public PostFilter build(AbstractPostModule module, Set<SkippedFilter> skippedFilters) {
-      List<String> patternNot = module.getPatternNot();
+    public FilteringPostFilter build(AbstractPostModule module, Set<SkippedFilter> skippedFilters) {
+      var patternNot = module.getPatternNot();
       if (patternNot.isEmpty()) {
         return null;
       }
-      Pattern compiled = Pattern.compile(pipePatternNot(patternNot));
-      return candidate -> compiled.matcher(candidate).find() ? FilterOutcome.REJECTED : FilterOutcome.ACCEPTED;
+      var patterns = patternNot.stream()
+        .map(pattern -> Map.entry(pattern, Pattern.compile(pattern)))
+        .toList();
+
+      return candidate -> {
+        for (var entry : patterns) {
+          if (entry.getValue().matcher(candidate).find()) {
+            return FilteringResult.rejected("patternNot: " + entry.getKey());
+          }
+        }
+        return FilteringResult.ACCEPTED;
+      };
     }
   }
 
   private static final class HeuristicsHandler implements PostFilterHandler {
     @Override
-    public PostFilter build(AbstractPostModule module, Set<SkippedFilter> skippedFilters) {
-      HeuristicsFilter heuristicFilter = module.getHeuristicFilter();
+    public FilteringPostFilter build(AbstractPostModule module, Set<SkippedFilter> skippedFilters) {
+      var heuristicFilter = module.getHeuristicFilter();
       if (heuristicFilter == null) {
         return null;
       }
-      return candidate -> Heuristics.matchesHeuristics(candidate, heuristicFilter.getHeuristics())
-        ? FilterOutcome.REJECTED
-        : FilterOutcome.ACCEPTED;
+      var heuristics = heuristicFilter.getHeuristics();
+      // Check each named heuristic individually so we can report which one matched. Heuristic names ("path", "uri")
+      // are a fixed, well-known vocabulary, not rule data.
+      return candidate -> {
+        for (var h : heuristics) {
+          if (Heuristics.matchesHeuristic(candidate, h)) {
+            return FilteringResult.rejected("heuristics: " + h);
+          }
+        }
+        return FilteringResult.ACCEPTED;
+      };
     }
   }
 
   private static final class StatisticalFilterHandler implements PostFilterHandler {
     @Override
-    public PostFilter build(AbstractPostModule module, Set<SkippedFilter> skippedFilters) {
-      StatisticalFilter statisticalFilter = module.getStatisticalFilter();
+    public FilteringPostFilter build(AbstractPostModule module, Set<SkippedFilter> skippedFilters) {
+      var statisticalFilter = module.getStatisticalFilter();
       if (statisticalFilter == null) {
         return null;
       }
-      boolean entropyFilterDisabled = skippedFilters.contains(SkippedFilter.ENTROPY_FILTER);
+      var entropyFilterDisabled = skippedFilters.contains(SkippedFilter.ENTROPY_FILTER);
+      var threshold = statisticalFilter.getThreshold();
       return candidate -> {
-        boolean lowEntropy = EntropyChecker.hasLowEntropy(candidate, statisticalFilter.getThreshold());
-        if (!lowEntropy) {
-          return FilterOutcome.ACCEPTED;
+        var entropy = EntropyChecker.calculateShannonEntropy(candidate);
+        if (entropy >= threshold) {
+          return FilteringResult.ACCEPTED;
         }
-        return entropyFilterDisabled ? FilterOutcome.passedWithSkipped(SkippedFilter.ENTROPY_FILTER) : FilterOutcome.REJECTED;
+        if (entropyFilterDisabled) {
+          return new FilteringResult(FilterOutcome.passedWithSkipped(SkippedFilter.ENTROPY_FILTER), "");
+        }
+        return FilteringResult.rejected(String.format(Locale.ROOT, "statistical (entropy): entropy=%.3f, threshold=%.3f", entropy, threshold));
       };
     }
   }
 
-  static String pipePatternNot(List<String> patternNot) {
-    var sb = new StringBuilder();
-    for (var i = 0; i < patternNot.size(); i++) {
-      sb.append("(?:");
-      sb.append(patternNot.get(i));
-      sb.append(")");
-      if (i != patternNot.size() - 1) {
-        sb.append("|");
-      }
-    }
-    return sb.toString();
-  }
-
-  static boolean matchBase64Decoded(DecodedBase64Module decodedBase64Module, String candidateSecret) {
-    byte[] decodedBytes;
-    var stringToDecode = switch (decodedBase64Module.alphabet()) {
-      case Y64 -> candidateSecret.replace('.', '+').replace('_', '/').replace('-', '=');
-      case DEFAULT -> candidateSecret;
-    };
-    try {
-      decodedBytes = Base64.getDecoder().decode(stringToDecode);
-    } catch (IllegalArgumentException iae) {
-      LOG.debug("Base64 decoding failed for input: {} (decoded with alphabet {})", stringToDecode, decodedBase64Module.alphabet());
-      // If decoding failed, then this is not what we were looking for
-      return false;
-    }
-    var decoded = new String(decodedBytes, StandardCharsets.UTF_8);
-    var matchEachResult = decodedBase64Module.matchEach().isEmpty()
-      || decodedBase64Module.matchEach().stream().allMatch(decoded::contains);
-    var matchNotResult = decodedBase64Module.matchNot().stream().noneMatch(decoded::contains);
-    return matchEachResult && matchNotResult;
-  }
 }
