@@ -260,7 +260,7 @@ public class TextAndSecretsSensor implements Sensor {
       return notBinaryFilePredicate;
     }
 
-    var nonHiddenLanguageFilesPredicate = filterHiddenFiles(sensorContext, LANGUAGE_FILE_PREDICATE);
+    var nonHiddenLanguageFilesPredicate = filterHiddenFiles(sensorContext);
 
     // if the property is inactive, we prevent jgit from being initialized
     if (!isGitAndInclusionsActive(sensorContext)) {
@@ -335,11 +335,8 @@ public class TextAndSecretsSensor implements Sensor {
    * Example: for 'exe', 'txt' and 'unknown', it will return true for 'txt' and 'unknown'
    * List of binary extension to exclude are provided by configuration key {@link TextAndSecretsSensor#EXCLUDED_FILE_SUFFIXES_KEY}
    */
-  private NotBinaryFilePredicate notBinaryFilePredicate(SensorContext sensorContext) {
-    String[] excludedFileSuffixes = sensorContext.config().getStringArray(TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY);
-    List<String> cleanedSuffixes = cleanExcludedFileSuffixes(excludedFileSuffixes);
-    reportExcludedFileSuffix(cleanedSuffixes, telemetryReporter);
-    return new NotBinaryFilePredicate(cleanedSuffixes);
+  private static NotBinaryFilePredicate notBinaryFilePredicate(SensorContext sensorContext) {
+    return new NotBinaryFilePredicate(resolveCleanedExcludedSuffixes(sensorContext));
   }
 
   /**
@@ -361,14 +358,14 @@ public class TextAndSecretsSensor implements Sensor {
     return sensorContext.fileSystem().predicates().or(pathPatternsPredicates);
   }
 
-  private static FilePredicate filterHiddenFiles(SensorContext sensorContext, FilePredicate filePredicate) {
+  private static FilePredicate filterHiddenFiles(SensorContext sensorContext) {
     if (isHiddenFilesAnalysisSupported(sensorContext.runtime())) {
       var predicates = sensorContext.fileSystem().predicates();
       FilePredicate onlyNonHiddenFiles = inputFile -> !inputFile.isHidden();
-      return predicates.and(onlyNonHiddenFiles, filePredicate);
+      return predicates.and(onlyNonHiddenFiles, TextAndSecretsSensor.LANGUAGE_FILE_PREDICATE);
     }
     // In SonarLint context, we do not support hidden files analysis
-    return filePredicate;
+    return TextAndSecretsSensor.LANGUAGE_FILE_PREDICATE;
   }
 
   private static boolean isHiddenFilesAnalysisSupported(SonarRuntime sonarRuntime) {
@@ -406,6 +403,7 @@ public class TextAndSecretsSensor implements Sensor {
     telemetryReporter = new TelemetryReporter(sensorContext);
     telemetryReporter.startRecordingSensorTime();
     CiVendorFilesTelemetry.measureProjectsCIFilesInclusion(sensorContext, telemetryReporter);
+    reportConfigurationTelemetry(sensorContext);
     initializeParallelizationManager(sensorContext);
     initializeGitService(sensorContext);
     initializeOptionalConfigValue(sensorContext, REGEX_MATCH_TIMEOUT_KEY, RegexMatchingManager::setTimeoutMs);
@@ -478,7 +476,7 @@ public class TextAndSecretsSensor implements Sensor {
       var baseDir = sensorContext.fileSystem().baseDir().toPath();
       gitTrackedFilePredicate = durationStatistics.timed(
         "trackedByGitPredicate" + DurationStatistics.SUFFIX_GENERAL,
-        () -> new GitTrackedFilePredicate(baseDir, gitService, filterHiddenFiles(sensorContext, LANGUAGE_FILE_PREDICATE)));
+        () -> new GitTrackedFilePredicate(baseDir, gitService, filterHiddenFiles(sensorContext)));
     }
   }
 
@@ -561,9 +559,27 @@ public class TextAndSecretsSensor implements Sensor {
       .toList();
   }
 
+  private static List<String> resolveCleanedExcludedSuffixes(SensorContext sensorContext) {
+    String[] excludedFileSuffixes = sensorContext.config().getStringArray(EXCLUDED_FILE_SUFFIXES_KEY);
+    return cleanExcludedFileSuffixes(excludedFileSuffixes);
+  }
+
+  private void reportConfigurationTelemetry(SensorContext sensorContext) {
+    reportExcludedFileSuffix(resolveCleanedExcludedSuffixes(sensorContext), telemetryReporter);
+    reportDisabledFilters(sensorContext, telemetryReporter);
+  }
+
   private static void reportExcludedFileSuffix(List<String> excludedFileSuffixes, TelemetryReporter telemetryReporter) {
     if (!excludedFileSuffixes.isEmpty()) {
       telemetryReporter.addListAsStringMeasure("excluded.user.suffix", excludedFileSuffixes);
     }
+  }
+
+  private static void reportDisabledFilters(SensorContext sensorContext, TelemetryReporter telemetryReporter) {
+    boolean entropyFilterDisabled = sensorContext.config().getBoolean(DISABLE_ENTROPY_FILTER_KEY).orElse(DISABLE_ENTROPY_FILTER_DEFAULT_VALUE);
+    telemetryReporter.addNumericMeasure("secrets.disable_entropy_filter", entropyFilterDisabled ? 1 : 0);
+
+    boolean testFileDetectionDisabled = sensorContext.config().getBoolean(DISABLE_TEST_FILE_DETECTION_KEY).orElse(DISABLE_TEST_FILE_DETECTION_DEFAULT_VALUE);
+    telemetryReporter.addNumericMeasure("secrets.disable_test_file_detection", testFileDetectionDisabled ? 1 : 0);
   }
 }

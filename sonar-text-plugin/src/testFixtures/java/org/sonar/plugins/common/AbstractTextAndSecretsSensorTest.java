@@ -41,6 +41,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.event.Level;
@@ -103,6 +104,8 @@ import static org.sonar.plugins.common.TextAndSecretsSensor.TEXT_INCLUSIONS_DEFA
 @Isolated
 public abstract class AbstractTextAndSecretsSensorTest {
 
+  private static final String DISABLE_ENTROPY_FILTER_TELEMETRY_KEY = "text.secrets.disable_entropy_filter";
+  private static final String DISABLE_TEST_FILE_DETECTION_TELEMETRY_KEY = "text.secrets.disable_test_file_detection";
   private static final String SENSITIVE_BIDI_CHARS = "\u0002\u0004";
   private static final int AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();
   private static final String EXPECTED_PROCESSOR_LOG_LINE = "Available processors: " + AVAILABLE_PROCESSORS;
@@ -1365,6 +1368,28 @@ public abstract class AbstractTextAndSecretsSensorTest {
     sensor.execute(context);
 
     verify(context).addTelemetryProperty("text.excluded.user.suffix", result);
+  }
+
+  @ParameterizedTest
+  @CsvSource({
+    "false, false",
+    "true,  false",
+    "false, true",
+    "true,  true"
+  })
+  void shouldReportDisabledFilters(boolean disableEntropy, boolean disableTestFileDetection) {
+    var context = testUtils().defaultSensorContext();
+    if (disableEntropy) {
+      context.settings().setProperty(DISABLE_ENTROPY_FILTER_KEY, "true");
+    }
+    if (disableTestFileDetection) {
+      context.settings().setProperty(DISABLE_TEST_FILE_DETECTION_KEY, "true");
+    }
+    sensor(new ReportIssueAtLineOneCheck()).execute(context);
+
+    assertThat(context.getTelemetryProperties())
+      .containsEntry(DISABLE_ENTROPY_FILTER_TELEMETRY_KEY, disableEntropy ? "1" : "0")
+      .containsEntry(DISABLE_TEST_FILE_DETECTION_TELEMETRY_KEY, disableTestFileDetection ? "1" : "0");
   }
 
   static Stream<Arguments> provideUserExcludedSuffixesData() {
