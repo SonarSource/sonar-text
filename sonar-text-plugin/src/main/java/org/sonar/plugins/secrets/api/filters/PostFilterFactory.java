@@ -19,6 +19,7 @@ package org.sonar.plugins.secrets.api.filters;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.function.Function;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -80,7 +81,7 @@ public final class PostFilterFactory {
 
     List<PostFilter> filters = HANDLERS.stream()
       .map(h -> {
-        FilteringPostFilter inner = h.build(post, skippedFilters);
+        Function<String, FilteringResult> inner = h.build(post, skippedFilters);
         if (inner == null) {
           return null;
         }
@@ -115,7 +116,7 @@ public final class PostFilterFactory {
    * first failing filter, so wrappers for later filters are never reached. This keeps each log line correctly
    * attributed to the specific filter that rejected the candidate.
    */
-  private static PostFilter withRejectionLogging(FilteringPostFilter inner, RejectionLogger rejectionLogger) {
+  private static PostFilter withRejectionLogging(Function<String, FilteringResult> inner, RejectionLogger rejectionLogger) {
     return (candidate, context) -> {
       FilteringResult result = inner.apply(candidate);
       if (!result.outcome().passed()) {
@@ -123,15 +124,6 @@ public final class PostFilterFactory {
       }
       return result.outcome();
     };
-  }
-
-  /**
-   * Internal counterpart to {@link PostFilter} that also returns the safe-to-log description explaining a rejection.
-   * Kept package-private because callers outside the factory only see the wrapped {@link PostFilter}.
-   */
-  @FunctionalInterface
-  interface FilteringPostFilter {
-    FilteringResult apply(String candidateSecret);
   }
 
   /**
@@ -154,12 +146,12 @@ public final class PostFilterFactory {
    */
   interface PostFilterHandler {
     @Nullable
-    FilteringPostFilter build(AbstractPostModule module, Set<SkippedFilter> skippedFilters);
+    Function<String, FilteringResult> build(AbstractPostModule module, Set<SkippedFilter> skippedFilters);
   }
 
   private static final class DecodedBase64Handler implements PostFilterHandler {
     @Override
-    public FilteringPostFilter build(AbstractPostModule module, Set<SkippedFilter> skippedFilters) {
+    public Function<String, FilteringResult> build(AbstractPostModule module, Set<SkippedFilter> skippedFilters) {
       var decodedBase64Module = module.getDecodedBase64Module();
       if (decodedBase64Module == null) {
         return null;
@@ -190,7 +182,7 @@ public final class PostFilterFactory {
 
   private static final class PatternNotHandler implements PostFilterHandler {
     @Override
-    public FilteringPostFilter build(AbstractPostModule module, Set<SkippedFilter> skippedFilters) {
+    public Function<String, FilteringResult> build(AbstractPostModule module, Set<SkippedFilter> skippedFilters) {
       var patternNot = module.getPatternNot();
       if (patternNot.isEmpty()) {
         return null;
@@ -212,7 +204,7 @@ public final class PostFilterFactory {
 
   private static final class HeuristicsHandler implements PostFilterHandler {
     @Override
-    public FilteringPostFilter build(AbstractPostModule module, Set<SkippedFilter> skippedFilters) {
+    public Function<String, FilteringResult> build(AbstractPostModule module, Set<SkippedFilter> skippedFilters) {
       var heuristicFilter = module.getHeuristicFilter();
       if (heuristicFilter == null) {
         return null;
@@ -233,7 +225,7 @@ public final class PostFilterFactory {
 
   private static final class StatisticalFilterHandler implements PostFilterHandler {
     @Override
-    public FilteringPostFilter build(AbstractPostModule module, Set<SkippedFilter> skippedFilters) {
+    public Function<String, FilteringResult> build(AbstractPostModule module, Set<SkippedFilter> skippedFilters) {
       var statisticalFilter = module.getStatisticalFilter();
       if (statisticalFilter == null) {
         return null;
