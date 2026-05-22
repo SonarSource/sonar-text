@@ -205,6 +205,7 @@ class RegexMatchingManagerTest {
 
   static class DummyObject {
     void method() {
+      // intentionally empty, used as a dummy method for testing
     }
   }
 

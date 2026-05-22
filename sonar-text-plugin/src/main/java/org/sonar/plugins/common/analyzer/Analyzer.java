@@ -83,6 +83,7 @@ public class Analyzer {
   /**
    * Analyzers can override this method to filter the {@link InputFileContext} they want to analyze.
    * By default, no filtering is done.
+   * @param inputFileContext the context of the input file to check
    */
   protected boolean shouldAnalyzeFile(InputFileContext inputFileContext) {
     return true;
