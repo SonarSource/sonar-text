@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.function.Supplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sonar.api.batch.fs.FilePredicate;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.check.Rule;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.InputFileContext;
@@ -31,7 +33,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class CheckContainerTest {
@@ -39,12 +45,14 @@ class CheckContainerTest {
   private CheckContainer checkContainer;
   private SecretsSpecificationLoader specificationLoader;
   private DurationStatistics durationStatistics;
+  private FilePredicate filePredicate;
 
   @BeforeEach
   void setUp() {
     checkContainer = new CheckContainer();
     specificationLoader = mock(SecretsSpecificationLoader.class);
     durationStatistics = mock(DurationStatistics.class);
+    filePredicate = file -> true;
   }
 
   @Test
@@ -53,7 +61,7 @@ class CheckContainerTest {
     when(durationStatistics.timed(anyString(), any(Supplier.class)))
       .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
 
-    checkContainer.initialize(checks, specificationLoader, durationStatistics);
+    checkContainer.initialize(checks, specificationLoader, durationStatistics, filePredicate);
 
     assertThat(checkContainer.isInitialized()).isTrue();
   }
@@ -65,11 +73,11 @@ class CheckContainerTest {
       .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
 
     // First initialization
-    checkContainer.initialize(checks, specificationLoader, durationStatistics);
+    checkContainer.initialize(checks, specificationLoader, durationStatistics, filePredicate);
     assertThat(checkContainer.isInitialized()).isTrue();
 
     // Second initialization should be skipped
-    checkContainer.initialize(checks, specificationLoader, durationStatistics);
+    checkContainer.initialize(checks, specificationLoader, durationStatistics, filePredicate);
 
     assertThat(checkContainer.isInitialized()).isTrue();
   }
@@ -77,6 +85,9 @@ class CheckContainerTest {
   @Test
   void shouldThrowExceptionWhenAnalyzingWithoutInitialization() {
     var inputFileContext = mock(InputFileContext.class);
+    var inputFile = mock(InputFile.class);
+    when(inputFileContext.getInputFile()).thenReturn(inputFile);
+    when(inputFile.filename()).thenReturn("filename");
 
     assertThatThrownBy(() -> checkContainer.analyze(inputFileContext))
       .isInstanceOf(IllegalStateException.class)
@@ -86,6 +97,9 @@ class CheckContainerTest {
   @Test
   void shouldThrowExceptionWhenAnalyzingWithRuleIdWithoutInitialization() {
     var inputFileContext = mock(InputFileContext.class);
+    var inputFile = mock(InputFile.class);
+    when(inputFileContext.getInputFile()).thenReturn(inputFile);
+    when(inputFile.filename()).thenReturn("filename");
 
     assertThatThrownBy(() -> checkContainer.analyze(inputFileContext, "ruleId"))
       .isInstanceOf(IllegalStateException.class)
@@ -95,6 +109,49 @@ class CheckContainerTest {
   @Test
   void shouldReturnFalseForIsInitializedBeforeInitialization() {
     assertThat(checkContainer.isInitialized()).isFalse();
+  }
+
+  @Test
+  void shouldRunOnlyNonSecretChecksWhenSecretsExclusionPredicateRejectsFile() {
+    var secretCheck = spy(new StubSpecificationBasedCheck());
+    doNothing().when(secretCheck).analyze(any(InputFileContext.class));
+    var nonSecretCheck = spy(new StubNonSpecificationCheck());
+    when(durationStatistics.timed(anyString(), any(Supplier.class)))
+      .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
+
+    checkContainer.initialize(List.of(secretCheck, nonSecretCheck), specificationLoader, durationStatistics, file -> false);
+
+    var inputFileContext = mock(InputFileContext.class);
+    var inputFile = mock(InputFile.class);
+    when(inputFileContext.getInputFile()).thenReturn(inputFile);
+
+    checkContainer.analyze(inputFileContext);
+
+    verify(secretCheck, never()).analyze(inputFileContext);
+    verify(nonSecretCheck).analyze(inputFileContext);
+    verify(inputFileContext).flushIssues();
+  }
+
+  @Test
+  void shouldRunAllChecksWhenSecretsExclusionPredicateAcceptsFile() {
+    var secretCheck = spy(new StubSpecificationBasedCheck());
+    doNothing().when(secretCheck).analyze(any(InputFileContext.class));
+    var nonSecretCheck = spy(new StubNonSpecificationCheck());
+    when(durationStatistics.timed(anyString(), any(Supplier.class)))
+      .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
+
+    checkContainer.initialize(List.of(secretCheck, nonSecretCheck), specificationLoader, durationStatistics, file -> true);
+
+    var inputFileContext = mock(InputFileContext.class);
+    var inputFile = mock(InputFile.class);
+    when(inputFileContext.getInputFile()).thenReturn(inputFile);
+    when(inputFileContext.content()).thenReturn("any content");
+
+    checkContainer.analyze(inputFileContext);
+
+    verify(secretCheck).analyze(inputFileContext);
+    verify(nonSecretCheck).analyze(inputFileContext);
+    verify(inputFileContext).flushIssues();
   }
 
   @Rule(key = "exampleSpecificationBasedCheck")

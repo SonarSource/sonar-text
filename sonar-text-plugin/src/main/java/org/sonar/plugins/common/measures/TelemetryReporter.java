@@ -16,8 +16,8 @@
  */
 package org.sonar.plugins.common.measures;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,6 +35,8 @@ public class TelemetryReporter {
   private static final Logger LOG = LoggerFactory.getLogger(TelemetryReporter.class);
   // Property key to enable log, currently using the DurationStatistics one
   private static final String PROPERTY_KEY = "sonar.text.duration.statistics";
+  public static final String SENSOR_DISABLED_MEASURE_KEY = "is_sensor_disabled";
+  public static final String ALL_TRACKED_TEXT_FILES_MEASURE_KEY = "all_tracked_text_files_count";
 
   private final SensorContext sensorContext;
   private final Map<String, Integer> numericMeasures;
@@ -69,7 +71,7 @@ public class TelemetryReporter {
     return this;
   }
 
-  public void addListAsStringMeasure(String key, List<String> list) {
+  public void addListAsStringMeasure(String key, Collection<String> list) {
     if (list.isEmpty()) {
       return;
     }

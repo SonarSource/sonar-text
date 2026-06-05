@@ -46,6 +46,7 @@ import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.Version;
 import org.sonar.plugins.common.measures.DurationStatistics;
+import org.sonar.plugins.common.predicates.TextAndSecretsPredicates;
 import org.sonar.plugins.common.warnings.AnalysisWarningsWrapper;
 import org.sonar.plugins.secrets.SecretsCheckList;
 import org.sonar.plugins.text.TextCheckList;
@@ -201,7 +202,8 @@ public class TestUtils {
 
   private static MapSettings createDefaultSettings() {
     var mapSettings = new MapSettings();
-    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "**/*.txt");
+    mapSettings.setProperty(TextAndSecretsPredicates.TEXT_INCLUSIONS_KEY, "**/*.txt");
+    mapSettings.setProperty(TextAndSecretsPredicates.EXCLUDED_FILE_SUFFIXES_KEY, TextAndSecretsPredicates.EXCLUDED_FILE_SUFFIXES_DEFAULT_VALUE);
     return mapSettings;
   }
 

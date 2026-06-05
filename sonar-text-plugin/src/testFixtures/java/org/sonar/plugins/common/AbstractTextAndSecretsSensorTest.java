@@ -61,6 +61,7 @@ import org.sonar.plugins.common.analyzer.Analyzer;
 import org.sonar.plugins.common.git.GitService;
 import org.sonar.plugins.common.measures.CiVendorFilesTelemetry;
 import org.sonar.plugins.common.measures.TelemetryReporter;
+import org.sonar.plugins.common.predicates.TextAndSecretsPredicates;
 import org.sonar.plugins.secrets.AbstractBinaryFileCheck;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
@@ -91,14 +92,11 @@ import static org.sonar.plugins.common.TestUtils.asString;
 import static org.sonar.plugins.common.TestUtils.inputFile;
 import static org.sonar.plugins.common.TestUtils.inputFileFromPath;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
-import static org.sonar.plugins.common.TextAndSecretsSensor.ALL_TRACKED_TEXT_FILES_MEASURE_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.DEBUG_LOG_REJECTED_CANDIDATES_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.DEBUG_LOG_REJECTED_CANDIDATES_LIMIT_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.DISABLE_ENTROPY_FILTER_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.DISABLE_TEST_FILE_DETECTION_KEY;
-import static org.sonar.plugins.common.TextAndSecretsSensor.SENSOR_DISABLED_MEASURE_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.SONAR_TESTS_KEY;
-import static org.sonar.plugins.common.TextAndSecretsSensor.TEXT_INCLUSIONS_DEFAULT_VALUE;
 
 // The class is executed in isolation from other test classes, because of shouldNotLeakThreads() method.
 @Isolated
@@ -378,7 +376,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     MapSettings mapSettings = context.settings();
-    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, "*.txt,*.csv");
+    mapSettings.setProperty(TextAndSecretsPredicates.TEXT_INCLUSIONS_KEY, "*.txt,*.csv");
     context.setSettings(mapSettings);
     analyse(sensor(check), context,
       inputFile(Path.of("Foo.txt"), SENSITIVE_BIDI_CHARS, null),
@@ -396,7 +394,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     MapSettings mapSettings = context.settings();
-    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, ".txt,.csv");
+    mapSettings.setProperty(TextAndSecretsPredicates.TEXT_INCLUSIONS_KEY, ".txt,.csv");
     context.setSettings(mapSettings);
     analyse(sensor(check), context,
       inputFile(Path.of("Foo.txt"), "abc", null),
@@ -410,7 +408,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     MapSettings mapSettings = context.settings();
-    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, ".env");
+    mapSettings.setProperty(TextAndSecretsPredicates.TEXT_INCLUSIONS_KEY, ".env");
     context.setSettings(mapSettings);
     analyse(sensor(check), context,
       inputFile(Path.of(".env"), SENSITIVE_BIDI_CHARS, null),
@@ -427,7 +425,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     MapSettings mapSettings = context.settings();
-    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, ".aws/config");
+    mapSettings.setProperty(TextAndSecretsPredicates.TEXT_INCLUSIONS_KEY, ".aws/config");
     context.setSettings(mapSettings);
     analyse(sensor(check), context,
       inputFile(Path.of(".aws", "config"), SENSITIVE_BIDI_CHARS, null),
@@ -445,7 +443,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     SensorContextTester context = sensorContext(check);
     MapSettings mapSettings = context.settings();
     // INCLUDED_FILE_SUFFIXES_KEY is set to default value
-    mapSettings.setProperty(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY, TEXT_INCLUSIONS_DEFAULT_VALUE);
+    mapSettings.setProperty(TextAndSecretsPredicates.TEXT_INCLUSIONS_KEY, TextAndSecretsPredicates.TEXT_INCLUSIONS_DEFAULT_VALUE);
     context.setSettings(mapSettings);
     analyse(sensor(check), context,
       inputFile(Path.of("script", "start.sh"), SENSITIVE_BIDI_CHARS, null),
@@ -549,7 +547,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
       .contains("The file 'src/test/resources/binary-files/Foo.unknown1' contains binary data and will not be included in the text and secrets analysis.")
       .contains("The file 'src/test/resources/binary-files/Foo.unknown2' contains binary data and will not be included in the text and secrets analysis.")
       .contains("The file 'src/test/resources/binary-files/Bar.unknown1' contains binary data and will not be included in the text and secrets analysis.");
-
   }
 
   @Test
@@ -703,7 +700,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
     MapSettings settings = context.settings();
-    settings.setProperty(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY, "false");
+    settings.setProperty(TextAndSecretsPredicates.INCLUSIONS_ACTIVATION_KEY, "false");
     var sensor = sensor(check);
     var sensorSpy = spy(sensor);
     var gitService = mock(GitService.class);
@@ -800,7 +797,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     assertThat(logTester.logs()).containsExactly(
       "The text and secrets analysis was deactivated using the property \"sonar.text.activate\"",
       "Experiencing any issues with the text and secrets analysis? Please report them at https://community.sonarsource.com/tag/secrets - your feedback helps us improve the product!");
-    verify(context).addTelemetryProperty(TelemetryReporter.KEY_PREFIX + SENSOR_DISABLED_MEASURE_KEY, "1");
+    verify(context).addTelemetryProperty(TelemetryReporter.KEY_PREFIX + TelemetryReporter.SENSOR_DISABLED_MEASURE_KEY, "1");
   }
 
   @Test
@@ -1103,6 +1100,54 @@ public abstract class AbstractTextAndSecretsSensorTest {
   }
 
   @Test
+  void shouldAnalyzeAllNonBinaryFilesInSonarlintContext() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.setRuntime(SONARLINT_RUNTIME);
+    analyse(sensor(check), context,
+      inputFile(Path.of("a.txt"), "{}"),
+      inputFile(Path.of("b.txt"), "{}"));
+    assertThat(context.allIssues()).hasSize(2);
+    assertCorrectLogsForTextAndSecretsAnalysis(2, false);
+  }
+
+  @Test
+  void shouldAnalyzeOnlyLanguageAssignedFilesWhenInclusionsIsDeactivated() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.settings().setProperty("sonar.text.inclusions.activate", "false");
+    analyse(sensor(check), context,
+      inputFile(Path.of("a.txt"), "{}", "secrets"),
+      inputFile(Path.of("b.txt"), "{}", "secrets"),
+      hiddenInputFile(Path.of("c.txt"), "{}", "secrets"),
+      hiddenInputFile(Path.of("d.txt"), "{}"));
+    assertThat(context.allIssues()).hasSize(2);
+    assertCorrectLogsForTextAndSecretsAnalysis(2,
+      "Retrieving only language associated files, \"sonar.text.inclusions.activate\" property is deactivated");
+  }
+
+  @Test
+  void shouldAnalyzeOnlyLanguageAssignedFilesWhenGitIsUnavailable() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    var sensorSpy = spy(sensor(check));
+    var gitService = mock(GitService.class);
+    when(gitService.retrieveDirtyFileNames()).thenReturn(new GitService.DirtyFileNamesResult(false, Set.of()));
+    when(sensorSpy.createGitService(any())).thenReturn(gitService);
+    var fileWithLanguage = inputFile(Path.of("a.txt"), "{}", "secrets");
+    analyse(sensorSpy, context,
+      fileWithLanguage,
+      inputFile(Path.of("b.txt"), "{}"),
+      hiddenInputFile(Path.of("c.txt"), "{}", "secrets"),
+      hiddenInputFile(Path.of("d.txt"), "{}"));
+
+    assertThatIssuesRaisedOnFiles(context.allIssues(), fileWithLanguage);
+    assertCorrectLogsForTextAndSecretsAnalysis(1,
+      "Retrieving only language associated files, make sure to run the analysis " +
+        "inside a git repository to make use of inclusions specified via \"sonar.text.inclusions\"");
+  }
+
+  @Test
   void shouldAnalyzeAllTrackedHiddenFiles() {
     Check binaryFileCheck = new TestBinaryFileCheck();
     Check reportIssueAtLineOneCheck = new ReportIssueAtLineOneCheck();
@@ -1111,7 +1156,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     var sensor = spy(sensor(binaryFileCheck, reportIssueAtLineOneCheck));
     var gitService = mock(GitService.class);
     when(gitService.retrieveDirtyFileNames())
-      .thenReturn(new GitService.DirtyFileNamesResult(true, Set.of(".untracked", ".hidden" + File.pathSeparator + "untracked.jks", ".untrackedSecrets")));
+      .thenReturn(new GitService.DirtyFileNamesResult(true, Set.of(".untracked", ".hidden" + File.separator + "untracked.jks", ".untrackedSecrets")));
     when(sensor.createGitService(any())).thenReturn(gitService);
 
     var hiddenFile = hiddenInputFile(Path.of(".a"), "{}");
@@ -1132,7 +1177,8 @@ public abstract class AbstractTextAndSecretsSensorTest {
       assertThatIssuesRaisedOnFiles(context.allIssues(), hiddenFile, hiddenDirectoryFile, hiddenBinaryFile, untrackedHiddenBinaryFile);
     }
 
-    assertCorrectLogsForTextAndSecretsAnalysis(4);
+    assertThat(logTester.logs()).contains("The file '.keystore' contains binary data and will not be included in the text and secrets analysis.");
+    assertCorrectLogsForTextAndSecretsAnalysis(3);
   }
 
   @Test
@@ -1232,7 +1278,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
     var analysisTimeMeasureKey = TelemetryReporter.KEY_PREFIX + "sensor_time_ms_" + sensor.getEditionName().toLowerCase(Locale.ROOT);
     var fileMeasureKey = TelemetryReporter.KEY_PREFIX + Analyzer.ANALYZED_FILES_MEASURE_KEY;
     var hiddenFileMeasureKey = TelemetryReporter.KEY_PREFIX + Analyzer.ANALYZED_HIDDEN_FILES_MEASURE_KEY;
-    var allTrackedTextFilesMeasureKey = TelemetryReporter.KEY_PREFIX + ALL_TRACKED_TEXT_FILES_MEASURE_KEY;
+    var allTrackedTextFilesMeasureKey = TelemetryReporter.KEY_PREFIX + TelemetryReporter.ALL_TRACKED_TEXT_FILES_MEASURE_KEY;
     var expectedFilesCount = isPublicSensor() ? "2" : "4";
     var expectedHiddenFilesCount = isPublicSensor() ? "1" : "2";
     verify(context).addTelemetryProperty(eq(analysisTimeMeasureKey), argThat(value -> Integer.parseInt(value) > 0));
@@ -1314,7 +1360,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
       hiddenInputFile(Path.of("c.txt"), "{}", "secrets"),
       hiddenInputFile(Path.of("d.txt"), "{}"));
 
-    verify(context).addTelemetryProperty(TelemetryReporter.KEY_PREFIX + ALL_TRACKED_TEXT_FILES_MEASURE_KEY, "0");
+    verify(context).addTelemetryProperty(TelemetryReporter.KEY_PREFIX + TelemetryReporter.ALL_TRACKED_TEXT_FILES_MEASURE_KEY, "0");
   }
 
   @Test
@@ -1361,13 +1407,89 @@ public abstract class AbstractTextAndSecretsSensorTest {
   @MethodSource("provideUserExcludedSuffixesData")
   void shouldReportCleanedExcludedUserSuffixes(String suffixes, String result) {
     var context = spy(testUtils().defaultSensorContext());
+    context.settings().setProperty("sonar.secrets.excluded.file.suffixes", suffixes);
+    Check check = new ReportIssueAtLineOneCheck();
+    var sensor = sensor(check);
+
+    sensor.execute(context);
+
+    assertThat(context.getTelemetryProperties()).containsEntry("text.secrets.excluded.user.suffix", result);
+    verify(context).addTelemetryProperty("text.secrets.excluded.user.suffix", result);
+  }
+
+  static Stream<Arguments> provideUserExcludedSuffixesData() {
+    return Stream.of(
+      Arguments.of(".adoc", "[\".adoc\"]"),
+      Arguments.of("a,b", "[\"a\", \"b\"]"),
+      Arguments.of("a,b,b", "[\"a\", \"b\"]"),
+      Arguments.of("a,.b, ,", "[\"a\", \".b\"]"));
+  }
+
+  @ParameterizedTest
+  @MethodSource("provideDeprecatedUserExcludedSuffixesData")
+  void shouldReportCleanedDeprecatedExcludedUserSuffixes(String suffixes, String result) {
+    var context = spy(testUtils().defaultSensorContext());
     context.settings().setProperty("sonar.text.excluded.file.suffixes", suffixes);
     Check check = new ReportIssueAtLineOneCheck();
     var sensor = sensor(check);
 
     sensor.execute(context);
 
+    assertThat(context.getTelemetryProperties()).containsEntry("text.excluded.user.suffix", result);
     verify(context).addTelemetryProperty("text.excluded.user.suffix", result);
+  }
+
+  static Stream<Arguments> provideDeprecatedUserExcludedSuffixesData() {
+    return Stream.of(
+      Arguments.of("dll,exe,zip", "[\"dll\", \"exe\", \"zip\"]"),
+      Arguments.of("dll,exe,dll,zip,dll", "[\"dll\", \"exe\", \"zip\"]"),
+      Arguments.of("dll,exe,dll,zip,dll", "[\"dll\", \"exe\", \"zip\"]"),
+      Arguments.of("dll,exe,dll, zip ,dll, ,", "[\"dll\", \"exe\", \"zip\"]"),
+      Arguments.of("dll,$e$$$xe$$,dll, zip ,dll, ,", "[\"dll\", \"exe\", \"zip\"]"),
+      Arguments.of("dll,$$$$$$$,$e$$$xe$$,dll, zip ,dll, ,", "[\"dll\", \"exe\", \"zip\"]"),
+      Arguments.of("dll,$,,$e$$$xe$$,dll, zip ,dll, ,", "[\"dll\", \"exe\", \"zip\"]"));
+  }
+
+  @Test
+  void shouldNotReportUserExcludedSuffixesWhenDefaultValue() {
+    var context = spy(SensorContextTester.create(Path.of(".")).setRuntime(SONARQUBE_RUNTIME));
+    context.settings().setProperty(TextAndSecretsPredicates.EXCLUDED_FILE_SUFFIXES_KEY, TextAndSecretsPredicates.EXCLUDED_FILE_SUFFIXES_DEFAULT_VALUE);
+    Check check = new ReportIssueAtLineOneCheck();
+    var sensor = sensor(check);
+
+    sensor.execute(context);
+
+    assertThat(context.getTelemetryProperties()).doesNotContainKey("text.secrets.excluded.user.suffix");
+    verify(context, never()).addTelemetryProperty(eq("text.secrets.excluded.user.suffix"), any());
+  }
+
+  @Test
+  void shouldNotReportDeprecatedUserExcludedSuffixesWhenEmpty() {
+    var context = spy(SensorContextTester.create(Path.of(".")).setRuntime(SONARQUBE_RUNTIME));
+    context.settings().setProperty(TextAndSecretsPredicates.DEPRECATED_EXCLUDED_BINARY_FILE_SUFFIXES_KEY, "");
+    Check check = new ReportIssueAtLineOneCheck();
+    var sensor = sensor(check);
+
+    sensor.execute(context);
+
+    assertThat(context.getTelemetryProperties()).doesNotContainKey("text.excluded.user.suffix");
+    verify(context, never()).addTelemetryProperty(eq("text.excluded.user.suffix"), any());
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    "text.excluded.user.suffix",
+    "text.secrets.excluded.user.suffix"
+  })
+  void shouldNotReportUserExcludedSuffixesNotProvided(String telemetryKey) {
+    var context = spy(SensorContextTester.create(Path.of(".")).setRuntime(SONARQUBE_RUNTIME));
+    Check check = new ReportIssueAtLineOneCheck();
+    var sensor = sensor(check);
+
+    sensor.execute(context);
+
+    assertThat(context.getTelemetryProperties()).doesNotContainKey(telemetryKey);
+    verify(context, never()).addTelemetryProperty(eq(telemetryKey), any());
   }
 
   @ParameterizedTest
@@ -1390,40 +1512,6 @@ public abstract class AbstractTextAndSecretsSensorTest {
     assertThat(context.getTelemetryProperties())
       .containsEntry(DISABLE_ENTROPY_FILTER_TELEMETRY_KEY, disableEntropy ? "1" : "0")
       .containsEntry(DISABLE_TEST_FILE_DETECTION_TELEMETRY_KEY, disableTestFileDetection ? "1" : "0");
-  }
-
-  static Stream<Arguments> provideUserExcludedSuffixesData() {
-    return Stream.of(
-      Arguments.of("dll,exe,zip", "[\"dll\", \"exe\", \"zip\"]"),
-      Arguments.of("dll,exe,dll,zip,dll", "[\"dll\", \"exe\", \"zip\"]"),
-      Arguments.of("dll,exe,dll,zip,dll", "[\"dll\", \"exe\", \"zip\"]"),
-      Arguments.of("dll,exe,dll, zip ,dll, ,", "[\"dll\", \"exe\", \"zip\"]"),
-      Arguments.of("dll,$e$$$xe$$,dll, zip ,dll, ,", "[\"dll\", \"exe\", \"zip\"]"),
-      Arguments.of("dll,$$$$$$$,$e$$$xe$$,dll, zip ,dll, ,", "[\"dll\", \"exe\", \"zip\"]"),
-      Arguments.of("dll,$,,$e$$$xe$$,dll, zip ,dll, ,", "[\"dll\", \"exe\", \"zip\"]"));
-  }
-
-  @Test
-  void shouldNotReportUserExcludedSuffixesWhenEmpty() {
-    var context = spy(SensorContextTester.create(Path.of(".")).setRuntime(SONARQUBE_RUNTIME));
-    context.settings().setProperty("sonar.text.excluded.file.suffixes", "");
-    Check check = new ReportIssueAtLineOneCheck();
-    var sensor = sensor(check);
-
-    sensor.execute(context);
-
-    verify(context, never()).addTelemetryProperty(eq("text.excluded.user.suffix"), any());
-  }
-
-  @Test
-  void shouldNotReportUserExcludedSuffixesNotProvided() {
-    var context = spy(SensorContextTester.create(Path.of(".")).setRuntime(SONARQUBE_RUNTIME));
-    Check check = new ReportIssueAtLineOneCheck();
-    var sensor = sensor(check);
-
-    sensor.execute(context);
-
-    verify(context, never()).addTelemetryProperty(eq("text.excluded.user.suffix"), any());
   }
 
   @Test
@@ -1453,13 +1541,105 @@ public abstract class AbstractTextAndSecretsSensorTest {
   }
 
   @Test
-  void createSpecificationConfigurationShouldSkipBothFilterWhenBothAreDisabledByConfiguration() {
+  void createSpecificationConfigurationShouldSkipBothFiltersWhenBothAreDisabledByConfiguration() {
     var context = testUtils().sonarqubeSensorContext();
     context.settings().setProperty(DISABLE_ENTROPY_FILTER_KEY, "true");
     context.settings().setProperty(DISABLE_TEST_FILE_DETECTION_KEY, "true");
 
     assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters()).containsExactlyInAnyOrder(SkippedFilter.ENTROPY_FILTER, SkippedFilter.TEST_FILES_FILTER);
     assertThat(logTester.logs()).contains("The secret analysis will skip the following filters per user configuration: entropy, automatic test file detection");
+  }
+
+  @Rule(key = "FileIssue")
+  public static class SpecCheck extends SpecificationBasedCheck {
+    public void analyze(InputFileContext ctx) {
+      ctx.reportIssueOnFile(getRuleKey(), "testIssue");
+    }
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    // rejected extensions
+    "file.md, false",
+    "file.adoc, false",
+    "file.html, false",
+    "file.example, false",
+    "file.sample, false",
+    "file.template, false",
+    "file.dist, false",
+    "file.mdx, false",
+    ".env.dist, false",
+    "foo.bar.md, false",
+
+    // control file
+    "foo.txt, true"
+  })
+  void shouldNotAnalyzeSpecCheckOnRejectedFiles(String fileName, boolean shouldRaiseSpecificationBasedIssue) {
+    Check specCheck = new SpecCheck();
+    InputFile inputFile = inputFile(Path.of(fileName), "");
+    SensorContextTester context = testUtils().defaultSensorContext();
+    context.settings().setProperty(TextAndSecretsPredicates.TEXT_INCLUSIONS_KEY, "**/" + fileName);
+    analyse(sensor(specCheck), context, inputFile);
+
+    Collection<Issue> issues = context.allIssues();
+    if (shouldRaiseSpecificationBasedIssue) {
+      assertThatIssuesRaisedOnFiles(issues, inputFile);
+    } else {
+      assertThat(issues).isEmpty();
+    }
+
+    assertCorrectLogsForTextAndSecretsAnalysis(1, false);
+  }
+
+  @Test
+  void shouldStillRunTextCheckOnRejectedFileWhileSkippingSpecCheck() {
+    Check textCheck = new ReportIssueAtLineOneCheck();
+    Check specCheck = new SpecCheck();
+    InputFile inputFile = inputFile(Path.of("readme.md"), "");
+    SensorContextTester context = testUtils().defaultSensorContext();
+    context.settings().setProperty(TextAndSecretsPredicates.TEXT_INCLUSIONS_KEY, "**/readme.md");
+    analyse(sensor(textCheck, specCheck), context, inputFile);
+
+    Collection<Issue> issues = context.allIssues();
+    assertThat(issues)
+      .extracting(issue -> issue.ruleKey().rule())
+      .containsExactly("IssueAtLineOne");
+  }
+
+  @ParameterizedTest
+  @CsvSource(value = {
+    // configured suffix overrides the default list, so .md is no longer excluded but .custom now is
+    ".custom, foo.custom, false",
+    ".custom, foo.md, true",
+    "CustomSuffix, fooCustomSuffix, false"
+  })
+  void shouldExcludeSpecCheckBasedOnUserConfiguredSuffix(String configuredSuffix, String fileName, boolean shouldRaiseIssue) {
+    Check specCheck = new SpecCheck();
+    InputFile inputFile = inputFile(Path.of(fileName), "");
+    SensorContextTester context = testUtils().defaultSensorContext();
+    context.settings().setProperty(TextAndSecretsPredicates.TEXT_INCLUSIONS_KEY, "**/" + fileName);
+    context.settings().setProperty(TextAndSecretsPredicates.EXCLUDED_FILE_SUFFIXES_KEY, configuredSuffix);
+    analyse(sensor(specCheck), context, inputFile);
+
+    if (shouldRaiseIssue) {
+      assertThatIssuesRaisedOnFiles(context.allIssues(), inputFile);
+    } else {
+      assertThat(context.allIssues()).isEmpty();
+    }
+  }
+
+  @Test
+  void shouldExcludeSpecCheckOnSuffixFromDeprecatedKeyAndLogWarning() {
+    Check specCheck = new SpecCheck();
+    InputFile inputFile = inputFile(Path.of("foo.legacy"), "");
+    SensorContextTester context = testUtils().defaultSensorContext();
+    context.settings().setProperty(TextAndSecretsPredicates.TEXT_INCLUSIONS_KEY, "**/foo.legacy");
+    context.settings().setProperty(TextAndSecretsPredicates.DEPRECATED_EXCLUDED_BINARY_FILE_SUFFIXES_KEY, ".legacy");
+    analyse(sensor(specCheck), context, inputFile);
+
+    assertThat(context.allIssues()).isEmpty();
+    assertThat(logTester.logs(Level.WARN))
+      .anyMatch(log -> log.contains("\"sonar.text.excluded.file.suffixes\" is deprecated"));
   }
 
   @Test

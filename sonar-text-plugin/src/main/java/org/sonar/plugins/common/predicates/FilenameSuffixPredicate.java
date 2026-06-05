@@ -14,19 +14,21 @@
  * You should have received a copy of the Sonar Source-Available License
  * along with this program; if not, see https://sonarsource.com/license/ssal/
  */
-package org.sonar.plugins.common;
+package org.sonar.plugins.common.predicates;
 
-import org.sonar.api.Plugin;
+import org.sonar.api.batch.fs.FilePredicate;
+import org.sonar.api.batch.fs.InputFile;
 
-class TextAndSecretsPluginTest extends AbstractPluginTest {
+public class FilenameSuffixPredicate implements FilePredicate {
 
-  @Override
-  protected Plugin getPlugin() {
-    return new TextAndSecretsPlugin();
+  private final String suffix;
+
+  public FilenameSuffixPredicate(String suffix) {
+    this.suffix = suffix;
   }
 
   @Override
-  protected int getExpectedExtensionCount() {
-    return 17;
+  public boolean apply(InputFile inputFile) {
+    return inputFile.filename().endsWith(suffix);
   }
 }

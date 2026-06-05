@@ -37,6 +37,7 @@ import org.junit.jupiter.api.extension.TestInstantiationException;
 import org.junit.jupiter.api.function.Executable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.plugins.common.InputFileContext;
@@ -126,9 +127,10 @@ public abstract class AbstractRuleExampleTest {
       var context = sensorContext(check);
       var exampleFileName = ruleExample.getFileName() != null ? ruleExample.getFileName() : "file.txt";
       var inputFileContext = new InputFileContext(context, inputFile(Path.of(exampleFileName), ruleExample.getText()));
+      FilePredicate secretPredicate = file -> true;
 
       var checksContainer = new CheckContainer();
-      checksContainer.initialize(Set.of(check), specificationLoader, mockDurationStatistics());
+      checksContainer.initialize(Set.of(check), specificationLoader, mockDurationStatistics(), secretPredicate);
       checksContainer.analyze(inputFileContext, rule.getId());
 
       var issues = context.allIssues();

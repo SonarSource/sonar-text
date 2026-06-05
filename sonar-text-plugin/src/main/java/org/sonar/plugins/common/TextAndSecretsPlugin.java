@@ -21,6 +21,7 @@ import org.sonar.api.Plugin;
 import org.sonar.api.PropertyType;
 import org.sonar.api.config.PropertyDefinition;
 import org.sonar.api.config.PropertyDefinition.ConfigScope;
+import org.sonar.plugins.common.predicates.TextAndSecretsPredicates;
 import org.sonar.plugins.common.warnings.DefaultAnalysisWarningsWrapper;
 import org.sonar.plugins.secrets.SecretsLanguage;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
@@ -68,9 +69,9 @@ public class TextAndSecretsPlugin implements Plugin {
         .subCategory(GENERAL_SUBCATEGORY)
         .build(),
 
-      PropertyDefinition.builder(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_KEY)
+      PropertyDefinition.builder(TextAndSecretsPredicates.INCLUSIONS_ACTIVATION_KEY)
         .index(2)
-        .defaultValue(String.valueOf(TextAndSecretsSensor.INCLUSIONS_ACTIVATION_DEFAULT_VALUE))
+        .defaultValue(String.valueOf(TextAndSecretsPredicates.INCLUSIONS_ACTIVATION_DEFAULT_VALUE))
         .name("Activate inclusion of custom file path patterns")
         .description("Disabling custom file path patterns ensures that only files associated to a language will get analyzed.")
         .type(PropertyType.BOOLEAN)
@@ -79,24 +80,35 @@ public class TextAndSecretsPlugin implements Plugin {
         .subCategory(GENERAL_SUBCATEGORY)
         .build(),
 
-      PropertyDefinition.builder(TextAndSecretsSensor.EXCLUDED_FILE_SUFFIXES_KEY)
-        .defaultValue("")
+      PropertyDefinition.builder(TextAndSecretsPredicates.EXCLUDED_FILE_SUFFIXES_KEY)
+        .defaultValue(TextAndSecretsPredicates.EXCLUDED_FILE_SUFFIXES_DEFAULT_VALUE)
         .category(TextAndSecretsSensor.TEXT_CATEGORY)
-        .name("Additional binary file suffixes")
+        .name("Secrets analysis excluded file suffixes")
         .multiValues(true)
-        .description("Additional list of binary file suffixes that should not be analyzed with rules targeting text files.")
+        .description("List of file suffixes that should not be analyzed with the secrets analysis.")
         .subCategory(GENERAL_SUBCATEGORY)
         .onConfigScopes(ConfigScope.PROJECT)
         .build(),
 
-      PropertyDefinition.builder(TextAndSecretsSensor.TEXT_INCLUSIONS_KEY)
-        .defaultValue(TextAndSecretsSensor.TEXT_INCLUSIONS_DEFAULT_VALUE)
+      PropertyDefinition.builder(TextAndSecretsPredicates.DEPRECATED_EXCLUDED_BINARY_FILE_SUFFIXES_KEY)
+        .defaultValue("")
+        .category(TextAndSecretsSensor.TEXT_CATEGORY)
+        .name("(Deprecated) Additional binary file suffixes")
+        .multiValues(true)
+        .description(
+          "Deprecated. Please migrate excluded file suffixes to '%s'. Additional list of binary file suffixes that should not be analyzed with rules targeting text files."
+            .formatted(TextAndSecretsPredicates.EXCLUDED_FILE_SUFFIXES_KEY))
+        .subCategory(GENERAL_SUBCATEGORY)
+        .onConfigScopes(ConfigScope.PROJECT)
+        .build(),
+
+      PropertyDefinition.builder(TextAndSecretsPredicates.TEXT_INCLUSIONS_KEY)
+        .defaultValue(TextAndSecretsPredicates.TEXT_INCLUSIONS_DEFAULT_VALUE)
         .category(TextAndSecretsSensor.TEXT_CATEGORY)
         .name("List of file path patterns to include")
         .multiValues(true)
         .description("List of file path patterns that should be analyzed with rules targeting text files (ie. Secret rules, BIDI rule), " +
-          "in addition to those associated to a language. This is only applied when the scanner detects a git repository. " +
-          "It's not possible to analyze files or directories starting with a dot on UNIX systems.")
+          "in addition to those associated to a language. This is only applied when the scanner detects a git repository. ")
         .subCategory(GENERAL_SUBCATEGORY)
         .onConfigScopes(ConfigScope.PROJECT)
         .build(),

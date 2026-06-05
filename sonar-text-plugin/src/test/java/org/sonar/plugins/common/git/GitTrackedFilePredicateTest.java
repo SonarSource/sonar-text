@@ -25,7 +25,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.sonar.api.batch.fs.FilePredicate;
-import org.sonar.plugins.common.TextAndSecretsSensor;
+import org.sonar.plugins.common.predicates.TextAndSecretsPredicates;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -42,7 +42,7 @@ class GitTrackedFilePredicateTest {
   void shouldMatchSomeFilesWhenSomeDirty(boolean isGitStatusSuccessful, Set<String> dirtyFiles, Map<String, Boolean> fileToExpectedMatch) {
     var gitService = mock(GitService.class);
     when(gitService.retrieveDirtyFileNames()).thenReturn(new GitService.DirtyFileNamesResult(isGitStatusSuccessful, dirtyFiles));
-    FilePredicate predicate = new GitTrackedFilePredicate(BASE_DIR, gitService, TextAndSecretsSensor.LANGUAGE_FILE_PREDICATE);
+    FilePredicate predicate = new GitTrackedFilePredicate(BASE_DIR, gitService, TextAndSecretsPredicates.LANGUAGE_FILE_PREDICATE);
 
     for (Map.Entry<String, Boolean> entry : fileToExpectedMatch.entrySet()) {
       var file = entry.getKey();

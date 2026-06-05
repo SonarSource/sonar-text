@@ -14,24 +14,28 @@
  * You should have received a copy of the Sonar Source-Available License
  * along with this program; if not, see https://sonarsource.com/license/ssal/
  */
-package org.sonar.plugins.common;
+package org.sonar.plugins.common.predicates;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.secrets.api.EntropyChecker;
 
+/**
+ * Rejects files based on a hard-coded blacklist of known binary file extensions and on filename
+ * heuristics for hash-named files (MD5/SHA hex with high entropy).
+ * <p>
+ * Used by the sensor's {@code analyzeAllFiles=true} path (notably SonarQube IDE and the
+ * {@code sonar-secrets-cli}), where the language- and git-based filters do not apply and a fast
+ * extension-based rejection of obvious binary content is the only safeguard.
+ */
 public class NotBinaryFilePredicate implements FilePredicate {
 
-  public static final List<String> DEFAULT_BINARY_EXTENSIONS = List.of(
+  public static final Set<String> BINARY_EXTENSIONS = Set.of(
     "3dm",
     "3ds",
     "3g2",
@@ -139,7 +143,6 @@ public class NotBinaryFilePredicate implements FilePredicate {
     "g3",
     "gch",
     "gem",
-    "gem",
     "gh",
     "gif",
     "gpg",
@@ -161,8 +164,6 @@ public class NotBinaryFilePredicate implements FilePredicate {
     "iso",
     "jar",
     "jce",
-    "jce",
-    "jks",
     "jks",
     "jnilib",
     "jpeg",
@@ -396,43 +397,18 @@ public class NotBinaryFilePredicate implements FilePredicate {
     "zipx",
     "zstd");
 
-  private static final List<String> DEFAULT_BINARY_SUFFIXES = List.of("cacerts");
+  private static final List<String> BINARY_SUFFIXES = List.of("cacerts");
 
   private static final Pattern HEX_REGEX = Pattern.compile("\\p{XDigit}++");
   private static final double MD5_AND_SHA_MIN_ENTROPY = 3.1;
-
-  private final Set<String> binaryFileExtensions;
-  private final Set<String> binaryFileSuffixes;
-
-  public NotBinaryFilePredicate(List<String> additionalBinarySuffixes) {
-    // initial capacity set the same as when calling new HashSet<>(DEFAULT_BINARY_EXTENSIONS)
-    binaryFileExtensions = ConcurrentHashMap.newKeySet((int) (DEFAULT_BINARY_EXTENSIONS.size() / .75F) + 1);
-    binaryFileExtensions.addAll(DEFAULT_BINARY_EXTENSIONS);
-
-    var modifiableBinaryFileSuffixes = new HashSet<>(DEFAULT_BINARY_SUFFIXES);
-    Set<String> cleanedSuffixes = additionalBinarySuffixes.stream()
-      .map(String::trim)
-      .filter(value -> !value.isEmpty())
-      .collect(Collectors.toSet());
-    for (String suffix : cleanedSuffixes) {
-      boolean isExtension = suffix.length() > 1 && suffix.startsWith(".") && suffix.indexOf('.', 1) == -1;
-      if (isExtension) {
-        binaryFileExtensions.add(suffix.substring(1));
-      } else {
-        modifiableBinaryFileSuffixes.add(suffix);
-      }
-    }
-    // Will be only read from, so thread-safe in an unmodifiable way
-    binaryFileSuffixes = Collections.unmodifiableSet(modifiableBinaryFileSuffixes);
-  }
 
   @Override
   public boolean apply(InputFile inputFile) {
     String filename = inputFile.filename();
     String extension = extension(filename);
-    boolean hasBinaryExtension = extension != null && binaryFileExtensions.contains(extension);
+    boolean hasBinaryExtension = extension != null && BINARY_EXTENSIONS.contains(extension);
     return !hasBinaryExtension &&
-      binaryFileSuffixes.stream().noneMatch(filename::endsWith) &&
+      BINARY_SUFFIXES.stream().noneMatch(filename::endsWith) &&
       !isMd5OrSha1(filename);
   }
 
@@ -440,10 +416,6 @@ public class NotBinaryFilePredicate implements FilePredicate {
     int len = filename.length();
     return ( /* md5 */ len == 32 || /* sha1 */ len == 40 || /* sha256 */ len == 64 || /* sha512 */ len == 128) &&
       HEX_REGEX.matcher(filename).matches() && EntropyChecker.calculateShannonEntropy(filename) > MD5_AND_SHA_MIN_ENTROPY;
-  }
-
-  public boolean addBinaryFileExtension(String extension) {
-    return binaryFileExtensions.add(extension);
   }
 
   @Nullable

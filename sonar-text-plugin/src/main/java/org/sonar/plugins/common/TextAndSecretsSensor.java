@@ -18,21 +18,18 @@ package org.sonar.plugins.common;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.SonarEdition;
 import org.sonar.api.SonarProduct;
 import org.sonar.api.SonarRuntime;
 import org.sonar.api.batch.fs.FilePredicate;
-import org.sonar.api.batch.fs.IndexedFile;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.Sensor;
@@ -43,12 +40,12 @@ import org.sonar.plugins.common.analyzer.TextAndSecretsAnalyzer;
 import org.sonar.plugins.common.git.CachingGitService;
 import org.sonar.plugins.common.git.GitCliAndJGitService;
 import org.sonar.plugins.common.git.GitService;
-import org.sonar.plugins.common.git.GitTrackedFilePredicate;
 import org.sonar.plugins.common.git.LazyGitService;
 import org.sonar.plugins.common.measures.CiVendorFilesTelemetry;
 import org.sonar.plugins.common.measures.DurationStatistics;
 import org.sonar.plugins.common.measures.MemoryMonitor;
 import org.sonar.plugins.common.measures.TelemetryReporter;
+import org.sonar.plugins.common.predicates.TextAndSecretsPredicates;
 import org.sonar.plugins.common.thread.ParallelizationManager;
 import org.sonar.plugins.common.warnings.AnalysisWarningsWrapper;
 import org.sonar.plugins.common.warnings.DefaultAnalysisWarningsWrapper;
@@ -68,21 +65,15 @@ import org.sonar.plugins.text.TextRuleDefinition;
 import org.sonar.plugins.text.api.AbstractUnicodeSequenceCheck;
 import org.sonar.plugins.text.checks.BIDICharacterCheck;
 
+import static org.sonar.plugins.common.measures.TelemetryReporter.SENSOR_DISABLED_MEASURE_KEY;
+
 public class TextAndSecretsSensor implements Sensor {
 
   private static final Logger LOG = LoggerFactory.getLogger(TextAndSecretsSensor.class);
-  public static final String EXCLUDED_FILE_SUFFIXES_KEY = "sonar.text.excluded.file.suffixes";
-  public static final String TEXT_INCLUSIONS_KEY = "sonar.text.inclusions";
-
-  public static final String TEXT_INCLUSIONS_DEFAULT_VALUE = "**/*.sh,**/*.bash,**/*.zsh,**/*.ksh,**/*.ps1,**/*.properties," +
-    "**/*.conf,**/*.pem,**/*.config,**/*.env,.aws/config,**/*.key";
-  private static final String ANALYZE_ALL_FILES_KEY = "sonar.text.analyzeAllFiles";
   public static final String REGEX_MATCH_TIMEOUT_KEY = "sonar.text.regex.timeout.match";
   public static final String REGEX_EXECUTION_TIMEOUT_KEY = "sonar.text.regex.timeout.execution";
   public static final String ANALYZER_ACTIVATION_KEY = "sonar.text.activate";
   public static final boolean ANALYZER_ACTIVATION_DEFAULT_VALUE = true;
-  public static final String INCLUSIONS_ACTIVATION_KEY = "sonar.text.inclusions.activate";
-  public static final boolean INCLUSIONS_ACTIVATION_DEFAULT_VALUE = true;
   public static final String THREAD_NUMBER_KEY = "sonar.text.threads";
   public static final String TEXT_CATEGORY = "Secrets";
   public static final String SONAR_TESTS_KEY = "sonar.tests";
@@ -98,9 +89,6 @@ public class TextAndSecretsSensor implements Sensor {
   public static final boolean DEBUG_LOG_REJECTED_CANDIDATES_DEFAULT_VALUE = false;
   public static final String DEBUG_LOG_REJECTED_CANDIDATES_LIMIT_KEY = "sonar.text.debug.logRejectedCandidates.maxPerRulePerFile";
   public static final int DEBUG_LOG_REJECTED_CANDIDATES_LIMIT_DEFAULT_VALUE = 20;
-  public static final String ALL_TRACKED_TEXT_FILES_MEASURE_KEY = "all_tracked_text_files_count";
-  public static final String SENSOR_DISABLED_MEASURE_KEY = "is_sensor_disabled";
-  public static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
 
   protected final CheckFactory checkFactory;
   protected final SonarRuntime sonarRuntime;
@@ -111,8 +99,8 @@ public class TextAndSecretsSensor implements Sensor {
   protected TelemetryReporter telemetryReporter;
   protected MemoryMonitor memoryMonitor;
   protected ParallelizationManager parallelizationManager;
+  protected TextAndSecretsPredicates textAndSecretsPredicates;
   protected GitService gitService;
-  private GitTrackedFilePredicate gitTrackedFilePredicate;
 
   public TextAndSecretsSensor(SonarRuntime sonarRuntime, CheckFactory checkFactory, SecretsSpecificationContainer secretsSpecificationContainer,
     CheckContainer checkContainer) {
@@ -167,7 +155,7 @@ public class TextAndSecretsSensor implements Sensor {
       return;
     }
 
-    initializeChecks(activeChecks, createSpecificationConfiguration(sensorContext));
+    initializeChecks(activeChecks, sensorContext, createSpecificationConfiguration(sensorContext));
 
     runAnalysis(sensorContext, activeChecks);
 
@@ -236,10 +224,7 @@ public class TextAndSecretsSensor implements Sensor {
       return;
     }
 
-    // Retrieve list of files to analyse using the right FilePredicate
-    boolean shouldAnalyzeAllFiles = shouldAnalyzeAllFiles(sensorContext);
-    var notBinaryFilePredicate = notBinaryFilePredicate(sensorContext);
-    var filePredicate = constructGeneralFilePredicate(sensorContext, notBinaryFilePredicate, shouldAnalyzeAllFiles);
+    var filePredicate = textAndSecretsPredicates.textAndSecretsPredicate();
 
     List<InputFile> inputFiles = durationStatistics.timed(
       "applyFilePredicate" + DurationStatistics.SUFFIX_GENERAL,
@@ -249,123 +234,7 @@ public class TextAndSecretsSensor implements Sensor {
       checkContainer);
     durationStatistics.timed("analyzerTotal" + DurationStatistics.SUFFIX_GENERAL, () -> analyzer.analyzeFiles(inputFiles));
     logCheckBasedStatistics(suitableChecks);
-    reportAllTrackedTextFilesMeasure(sensorContext, notBinaryFilePredicate);
-  }
-
-  private FilePredicate constructGeneralFilePredicate(SensorContext sensorContext, FilePredicate notBinaryFilePredicate, boolean analyzeAllFiles) {
-    LOG.info("Start fetching files for the text and secrets analysis");
-    if (analyzeAllFiles) {
-      // if we're in a sonarlint context, we return this predicate as well
-      LOG.info("Retrieving all except binary files");
-      return notBinaryFilePredicate;
-    }
-
-    var nonHiddenLanguageFilesPredicate = filterHiddenFiles(sensorContext);
-
-    // if the property is inactive, we prevent jgit from being initialized
-    if (!isGitAndInclusionsActive(sensorContext)) {
-      LOG.info("Retrieving only language associated files, \"{}\" property is deactivated", INCLUSIONS_ACTIVATION_KEY);
-      return nonHiddenLanguageFilesPredicate;
-    }
-
-    initializeGitPredicate(sensorContext);
-    if (!gitTrackedFilePredicate.isGitStatusSuccessful()) {
-      LOG.warn("Retrieving only language associated files, " +
-        "make sure to run the analysis inside a git repository to make use of inclusions specified via \"{}\"",
-        TEXT_INCLUSIONS_KEY);
-      return nonHiddenLanguageFilesPredicate;
-    }
-
-    // Retrieve list of files to analyse using the right FilePredicate
-    var includedFilesPredicate = includedPathPatternsFilePredicate(sensorContext);
-
-    var predicates = sensorContext.fileSystem().predicates();
-    if (isHiddenFilesAnalysisSupported(sensorContext.runtime())) {
-      includedFilesPredicate = predicates.or(IndexedFile::isHidden, includedFilesPredicate);
-    }
-
-    LOG.info("Retrieving language associated files and files included via \"{}\" that are tracked by git", TEXT_INCLUSIONS_KEY);
-    return predicates.or(
-      nonHiddenLanguageFilesPredicate,
-      predicates.and(includedFilesPredicate, gitTrackedFilePredicate));
-  }
-
-  /**
-   * Report the number of non-binary files tracked by git.
-   * For performance reasons, it does not take into account binary files excluded based on content, so the measure can be inflated.
-   */
-  private void reportAllTrackedTextFilesMeasure(SensorContext sensorContext, NotBinaryFilePredicate notBinaryFilePredicate) {
-    if (isSonarLintContext(sensorContext.runtime())) {
-      // In SQ IDE the file predicates are handled differently, and there is no telemetry anyway
-      return;
-    }
-
-    int allTrackedTextFilesCount = durationStatistics.timed(
-      "countAllTrackedTextFiles" + DurationStatistics.SUFFIX_GENERAL,
-      () -> countAllTrackedTextFiles(sensorContext, notBinaryFilePredicate));
-    telemetryReporter.addNumericMeasure(ALL_TRACKED_TEXT_FILES_MEASURE_KEY, allTrackedTextFilesCount);
-  }
-
-  private int countAllTrackedTextFiles(SensorContext sensorContext, NotBinaryFilePredicate notBinaryFilePredicate) {
-    if (gitTrackedFilePredicate == null) {
-      // If the tracked files have not been computed before, we do not want to compute it here as it can be expensive
-      return 0;
-    }
-
-    var baseDir = sensorContext.fileSystem().baseDir().toPath();
-    // Initializing a new one to not interfere with the logged "ignoredFileNames" of the main one
-    var trackedFilesPredicate = new GitTrackedFilePredicate(baseDir, gitService, LANGUAGE_FILE_PREDICATE);
-
-    if (!trackedFilesPredicate.isGitStatusSuccessful()) {
-      return 0;
-    }
-
-    var predicates = sensorContext.fileSystem().predicates();
-    var allTrackedTextFilesPredicate = predicates.and(trackedFilesPredicate, notBinaryFilePredicate);
-    // First check if any language is associated with the file to improve performances
-    allTrackedTextFilesPredicate = predicates.or(LANGUAGE_FILE_PREDICATE, allTrackedTextFilesPredicate);
-
-    return (int) StreamSupport
-      .stream(sensorContext.fileSystem().inputFiles(allTrackedTextFilesPredicate).spliterator(), false)
-      .count();
-  }
-
-  /**
-   * Blacklist approach: provide a predicate that exclude file that are considered as not-binary file.
-   * Example: for 'exe', 'txt' and 'unknown', it will return true for 'txt' and 'unknown'
-   * List of binary extension to exclude are provided by configuration key {@link TextAndSecretsSensor#EXCLUDED_FILE_SUFFIXES_KEY}
-   */
-  private static NotBinaryFilePredicate notBinaryFilePredicate(SensorContext sensorContext) {
-    return new NotBinaryFilePredicate(resolveCleanedExcludedSuffixes(sensorContext));
-  }
-
-  /**
-   * Whitelist approach: provide a predicate that include file that are considered as text file.
-   * Example: for 'exe', 'txt' and 'unknown', it will return true for 'txt'
-   * List of path patterns to include are provided by configuration key {@link TextAndSecretsSensor#TEXT_INCLUSIONS_KEY}
-   */
-  private static FilePredicate includedPathPatternsFilePredicate(SensorContext sensorContext) {
-    String[] includedPathPatterns = sensorContext.config().getStringArray(TEXT_INCLUSIONS_KEY);
-    if (includedPathPatterns.length == 0) {
-      return sensorContext.fileSystem().predicates().none();
-    }
-
-    List<FilePredicate> pathPatternsPredicates = new ArrayList<>();
-    for (String pathPattern : includedPathPatterns) {
-      var filePredicate = sensorContext.fileSystem().predicates().matchesPathPattern(pathPattern);
-      pathPatternsPredicates.add(filePredicate);
-    }
-    return sensorContext.fileSystem().predicates().or(pathPatternsPredicates);
-  }
-
-  private static FilePredicate filterHiddenFiles(SensorContext sensorContext) {
-    if (isHiddenFilesAnalysisSupported(sensorContext.runtime())) {
-      var predicates = sensorContext.fileSystem().predicates();
-      FilePredicate onlyNonHiddenFiles = inputFile -> !inputFile.isHidden();
-      return predicates.and(onlyNonHiddenFiles, TextAndSecretsSensor.LANGUAGE_FILE_PREDICATE);
-    }
-    // In SonarLint context, we do not support hidden files analysis
-    return TextAndSecretsSensor.LANGUAGE_FILE_PREDICATE;
+    textAndSecretsPredicates.reportAllTrackedTextFilesMeasure();
   }
 
   private static boolean isHiddenFilesAnalysisSupported(SonarRuntime sonarRuntime) {
@@ -402,14 +271,25 @@ public class TextAndSecretsSensor implements Sensor {
     durationStatistics = new DurationStatistics(sensorContext.config());
     telemetryReporter = new TelemetryReporter(sensorContext);
     telemetryReporter.startRecordingSensorTime();
+    gitService = initializeGitService(sensorContext);
+    textAndSecretsPredicates = new TextAndSecretsPredicates(sensorContext, durationStatistics, telemetryReporter, gitService, analysisWarnings);
     CiVendorFilesTelemetry.measureProjectsCIFilesInclusion(sensorContext, telemetryReporter);
-    reportConfigurationTelemetry(sensorContext);
+    reportDisabledSecretFilters(sensorContext);
     initializeParallelizationManager(sensorContext);
-    initializeGitService(sensorContext);
     initializeOptionalConfigValue(sensorContext, REGEX_MATCH_TIMEOUT_KEY, RegexMatchingManager::setTimeoutMs);
     initializeOptionalConfigValue(sensorContext, REGEX_EXECUTION_TIMEOUT_KEY, RegexMatchingManager::setUninterruptibleTimeoutMs);
 
     secretsSpecificationContainer.initialize(this::constructSpecificationLoader, durationStatistics);
+  }
+
+  private GitService initializeGitService(SensorContext sensorContext) {
+    var baseDir = sensorContext.fileSystem().baseDir().toPath();
+    return createGitService(baseDir);
+  }
+
+  // For testing purposes
+  public GitService createGitService(Path baseDir) {
+    return new LazyGitService(() -> new CachingGitService(new GitCliAndJGitService(baseDir)));
   }
 
   private void initializeParallelizationManager(SensorContext sensorContext) {
@@ -441,12 +321,7 @@ public class TextAndSecretsSensor implements Sensor {
     RegexMatchingManager.initialize(threads);
   }
 
-  private void initializeGitService(SensorContext sensorContext) {
-    var baseDir = sensorContext.fileSystem().baseDir().toPath();
-    gitService = createGitService(baseDir);
-  }
-
-  protected void initializeChecks(List<Check> checks, SpecificationConfiguration specificationConfiguration) {
+  protected void initializeChecks(List<Check> checks, SensorContext sensorContext, SpecificationConfiguration specificationConfiguration) {
     durationStatistics.timed("initializingSecretMatchers" + DurationStatistics.SUFFIX_GENERAL, () -> {
       for (Check activeCheck : checks) {
         if (activeCheck instanceof SpecificationBasedCheck specificationBasedCheck) {
@@ -458,7 +333,8 @@ public class TextAndSecretsSensor implements Sensor {
         }
       }
     });
-    checkContainer.initialize(checks, secretsSpecificationContainer.getSpecificationLoader(), durationStatistics);
+    var secretSuffixExclusionPredicate = textAndSecretsPredicates.excludedFileSuffixesPredicate(sensorContext);
+    checkContainer.initialize(checks, secretsSpecificationContainer.getSpecificationLoader(), durationStatistics, secretSuffixExclusionPredicate);
   }
 
   private static void initializeOptionalConfigValue(SensorContext sensorContext, String key, Consumer<Integer> setConfigValue) {
@@ -471,15 +347,6 @@ public class TextAndSecretsSensor implements Sensor {
     }
   }
 
-  private void initializeGitPredicate(SensorContext sensorContext) {
-    if (gitTrackedFilePredicate == null) {
-      var baseDir = sensorContext.fileSystem().baseDir().toPath();
-      gitTrackedFilePredicate = durationStatistics.timed(
-        "trackedByGitPredicate" + DurationStatistics.SUFFIX_GENERAL,
-        () -> new GitTrackedFilePredicate(baseDir, gitService, filterHiddenFiles(sensorContext)));
-    }
-  }
-
   private void logWarningConsoleUI(String message) {
     LOG.warn(message);
     analysisWarnings.addWarning(message);
@@ -487,10 +354,6 @@ public class TextAndSecretsSensor implements Sensor {
 
   protected SecretsSpecificationLoader constructSpecificationLoader() {
     return new SecretsSpecificationLoader();
-  }
-
-  public GitService createGitService(Path baseDir) {
-    return new LazyGitService(() -> new CachingGitService(new GitCliAndJGitService(baseDir)));
   }
 
   protected void logCheckBasedStatistics(List<Check> activeChecks) {
@@ -505,9 +368,7 @@ public class TextAndSecretsSensor implements Sensor {
     telemetryReporter.endRecordingSensorTime(getEditionName());
     telemetryReporter.report();
     durationStatistics.log();
-    if (gitTrackedFilePredicate != null) {
-      gitTrackedFilePredicate.logSummary();
-    }
+    textAndSecretsPredicates.logGitTrackedPredicateSummary();
     memoryMonitor.addRecord("End of the sensor");
     memoryMonitor.logMemory();
   }
@@ -520,9 +381,9 @@ public class TextAndSecretsSensor implements Sensor {
     durationStatistics = null;
     telemetryReporter = null;
     memoryMonitor = null;
-    gitTrackedFilePredicate = null;
     parallelizationManager.shutdown();
     RegexMatchingManager.shutdown();
+    textAndSecretsPredicates = null;
     try {
       gitService.close();
     } catch (Exception e) {
@@ -534,10 +395,6 @@ public class TextAndSecretsSensor implements Sensor {
     return sensorContext.config().getBoolean(ANALYZER_ACTIVATION_KEY).orElse(ANALYZER_ACTIVATION_DEFAULT_VALUE);
   }
 
-  private static boolean isGitAndInclusionsActive(SensorContext sensorContext) {
-    return sensorContext.config().getBoolean(INCLUSIONS_ACTIVATION_KEY).orElse(INCLUSIONS_ACTIVATION_DEFAULT_VALUE);
-  }
-
   public static boolean isSonarLintContext(SonarRuntime runtime) {
     return runtime.getProduct() == SonarProduct.SONARLINT;
   }
@@ -546,36 +403,7 @@ public class TextAndSecretsSensor implements Sensor {
     return !isSonarLintContext(sensorContext.runtime()) && sensorContext.runtime().getEdition() == SonarEdition.SONARCLOUD;
   }
 
-  private static boolean shouldAnalyzeAllFiles(SensorContext sensorContext) {
-    return isSonarLintContext(sensorContext.runtime()) || sensorContext.config().getBoolean(ANALYZE_ALL_FILES_KEY).orElse(false);
-  }
-
-  private static List<String> cleanExcludedFileSuffixes(String[] excludedFileSuffixes) {
-    return Arrays.stream(excludedFileSuffixes)
-      .map(String::trim)
-      .map(value -> value.replaceAll("[^a-zA-Z0-9]", ""))
-      .filter(value -> !value.isEmpty())
-      .distinct()
-      .toList();
-  }
-
-  private static List<String> resolveCleanedExcludedSuffixes(SensorContext sensorContext) {
-    String[] excludedFileSuffixes = sensorContext.config().getStringArray(EXCLUDED_FILE_SUFFIXES_KEY);
-    return cleanExcludedFileSuffixes(excludedFileSuffixes);
-  }
-
-  private void reportConfigurationTelemetry(SensorContext sensorContext) {
-    reportExcludedFileSuffix(resolveCleanedExcludedSuffixes(sensorContext), telemetryReporter);
-    reportDisabledFilters(sensorContext, telemetryReporter);
-  }
-
-  private static void reportExcludedFileSuffix(List<String> excludedFileSuffixes, TelemetryReporter telemetryReporter) {
-    if (!excludedFileSuffixes.isEmpty()) {
-      telemetryReporter.addListAsStringMeasure("excluded.user.suffix", excludedFileSuffixes);
-    }
-  }
-
-  private static void reportDisabledFilters(SensorContext sensorContext, TelemetryReporter telemetryReporter) {
+  private void reportDisabledSecretFilters(SensorContext sensorContext) {
     boolean entropyFilterDisabled = sensorContext.config().getBoolean(DISABLE_ENTROPY_FILTER_KEY).orElse(DISABLE_ENTROPY_FILTER_DEFAULT_VALUE);
     telemetryReporter.addNumericMeasure("secrets.disable_entropy_filter", entropyFilterDisabled ? 1 : 0);
 

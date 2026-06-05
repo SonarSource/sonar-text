@@ -32,6 +32,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.event.Level;
+import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.rule.RuleKey;
@@ -45,6 +46,7 @@ import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.configuration.deserialization.SpecificationDeserializer;
 import org.sonar.plugins.secrets.configuration.model.Specification;
 import org.sonar.plugins.secrets.utils.CheckContainer;
+import org.sonar.plugins.text.api.TextCheck;
 
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -82,6 +84,8 @@ class TextAndSecretsAnalyzerTest {
   @Mock
   private SpecificationBasedCheck checkWithOverlappingPreFilter;
   @Mock
+  private TextCheck textCheck;
+  @Mock
   private RuleKey ruleKeyWithPreFilter;
   @Mock
   private RuleKey ruleKeyWithoutPreFilter;
@@ -94,6 +98,7 @@ class TextAndSecretsAnalyzerTest {
 
   private TextAndSecretsAnalyzer textAndSecretsAnalyzer;
   private Specification testSpec;
+  private FilePredicate filePredicate;
 
   @BeforeEach
   void setUp() {
@@ -156,9 +161,15 @@ class TextAndSecretsAnalyzerTest {
       return null;
     }).when(durationStatistics).timed(anyString(), ArgumentMatchers.<Runnable>any());
 
+    filePredicate = mock(FilePredicate.class);
+    lenient().when(filePredicate.apply(any())).thenAnswer(invocation -> {
+      var inputFile = invocation.getArgument(0, InputFile.class);
+      return !"rejected".equals(inputFile.filename());
+    });
+
     var checksContainer = new CheckContainer();
-    checksContainer.initialize(List.of(checkWithPreFilter, checkWithoutPreFilter, checkWithMultiplePreFilters),
-      specLoader, durationStatistics);
+    checksContainer.initialize(List.of(checkWithPreFilter, checkWithoutPreFilter, checkWithMultiplePreFilters, textCheck),
+      specLoader, durationStatistics, filePredicate);
 
     textAndSecretsAnalyzer = new TextAndSecretsAnalyzer(
       sensorContext, mock(), durationStatistics,
@@ -216,7 +227,7 @@ class TextAndSecretsAnalyzerTest {
 
     var checksContainer = new CheckContainer();
     checksContainer.initialize(List.of(checkWithPreFilter, checkWithoutPreFilter, checkWithMultiplePreFilters, checkWithOverlappingPreFilter),
-      specLoader, durationStatistics);
+      specLoader, durationStatistics, filePredicate);
 
     textAndSecretsAnalyzer = new TextAndSecretsAnalyzer(
       sensorContext, mock(), durationStatistics,
@@ -244,7 +255,7 @@ class TextAndSecretsAnalyzerTest {
 
     var checksContainer = new CheckContainer();
     checksContainer.initialize(List.of(checkWithMultiplePreFilters, checkWithDuplicatedPreFilter),
-      specLoader, durationStatistics);
+      specLoader, durationStatistics, filePredicate);
 
     textAndSecretsAnalyzer = new TextAndSecretsAnalyzer(
       sensorContext, mock(), durationStatistics,
@@ -308,6 +319,20 @@ class TextAndSecretsAnalyzerTest {
     textAndSecretsAnalyzer.processFileTelemetryMeasures();
 
     verify(telemetryReporter, never()).addListAsStringMeasure(any(), any());
+  }
+
+  @Test
+  void shouldOnlyAnalyzeTextCheckWhenPredicateMatches() {
+    InputFileContext secretChecksRejectedFile = createMockInputFileContext("", "rejected", false);
+
+    textAndSecretsAnalyzer.analyzeAllChecks(secretChecksRejectedFile);
+
+    verify(checkWithPreFilter, never()).analyze(secretChecksRejectedFile);
+    verify(checkWithMultiplePreFilters, never()).analyze(secretChecksRejectedFile);
+    verify(checkWithOverlappingPreFilter, never()).analyze(secretChecksRejectedFile);
+    verify(checkWithoutPreFilter, never()).analyze(secretChecksRejectedFile);
+    verify(textCheck).analyze(secretChecksRejectedFile);
+    verify(secretChecksRejectedFile, times(1)).flushIssues();
   }
 
   @ParameterizedTest

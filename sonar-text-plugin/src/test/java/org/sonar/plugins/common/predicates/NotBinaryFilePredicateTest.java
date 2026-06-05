@@ -14,15 +14,15 @@
  * You should have received a copy of the Sonar Source-Available License
  * along with this program; if not, see https://sonarsource.com/license/ssal/
  */
-package org.sonar.plugins.common;
+package org.sonar.plugins.common.predicates;
 
 import java.nio.file.Path;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.event.Level;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
+import org.sonar.plugins.common.TestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,18 +33,14 @@ class NotBinaryFilePredicateTest {
 
   @Test
   void all_values() {
-    NotBinaryFilePredicate predicate = new NotBinaryFilePredicate(List.of(".foo", ".foo.bar", "_my_suffix", "", "oo."));
-    assertThat(predicate.apply(inputFile("foo.foo"))).isFalse();
+    NotBinaryFilePredicate predicate = new NotBinaryFilePredicate();
     assertThat(predicate.apply(inputFile("foo.exe"))).isFalse();
     assertThat(predicate.apply(inputFile("foo.EXE"))).isFalse();
     assertThat(predicate.apply(inputFile("foo.UNKNOWN"))).isTrue();
     assertThat(predicate.apply(inputFile("foo.txt"))).isTrue();
-    assertThat(predicate.apply(inputFile("boom.foo.bar"))).isFalse();
     assertThat(predicate.apply(inputFile("boom.foo.other"))).isTrue();
     assertThat(predicate.apply(inputFile("boom_suffix"))).isTrue();
-    assertThat(predicate.apply(inputFile("boom_my_suffix"))).isFalse();
     assertThat(predicate.apply(inputFile("_"))).isTrue();
-    assertThat(predicate.apply(inputFile("foo."))).isFalse();
     assertThat(predicate.apply(inputFile("bar."))).isTrue();
     assertThat(predicate.apply(inputFile(""))).isTrue();
     assertThat(predicate.apply(inputFile("cacerts"))).isFalse();
@@ -59,8 +55,6 @@ class NotBinaryFilePredicateTest {
     assertThat(predicate.apply(inputFile("9dc59c1853a762fb0fe420b0e18b7861b0045f291f8dd75ab9e9d578a31e729a"))).isFalse();
     assertThat(predicate.apply(inputFile("faccb33a9627c7269e7ce4e4a37beb2809410a90612977b61944b1680411f39eb2b773adf539d320c3b48c1a0ddfc9b01fc0673a1d893cdb30878b7432f0ebc6")))
       .isFalse();
-    predicate.addBinaryFileExtension("txt");
-    assertThat(predicate.apply(inputFile("foo.txt"))).isFalse();
   }
 
   private static InputFile inputFile(String filename) {
@@ -77,17 +71,5 @@ class NotBinaryFilePredicateTest {
     assertThat(NotBinaryFilePredicate.extension("...c")).isEqualTo("c");
     assertThat(NotBinaryFilePredicate.extension("foo.")).isNull();
     assertThat(NotBinaryFilePredicate.extension("foo.bar.")).isNull();
-  }
-
-  @Test
-  void shouldReturnCorrectlyIfAnExtensionWasNewlyAdded() {
-    NotBinaryFilePredicate predicate = new NotBinaryFilePredicate(List.of(".foo"));
-    boolean addFooExtension = predicate.addBinaryFileExtension("foo");
-    boolean addBarExtension1 = predicate.addBinaryFileExtension("bar");
-    boolean addBarExtension2 = predicate.addBinaryFileExtension("bar");
-
-    assertThat(addFooExtension).isFalse();
-    assertThat(addBarExtension1).isTrue();
-    assertThat(addBarExtension2).isFalse();
   }
 }

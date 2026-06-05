@@ -20,12 +20,12 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 import org.ahocorasick.trie.PayloadEmit;
 import org.ahocorasick.trie.PayloadTrie;
 import org.ahocorasick.trie.handler.PayloadEmitHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.scanner.ScannerSide;
 import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.InputFileContext;
@@ -52,7 +52,9 @@ public class CheckContainer {
   private static final Logger LOG = LoggerFactory.getLogger(CheckContainer.class);
 
   private DurationStatistics durationStatistics;
-  private Collection<? extends Check> checksWithoutPreFilter;
+  private FilePredicate secretsSuffixExclusionPredicate;
+  private Collection<? extends Check> specChecksWithoutPreFilter;
+  private Collection<? extends Check> nonSecretChecks;
   /**
    * A Trie that represents all content pre-filters and associated checks.<br/>
    * Implementation of Trie and `Trie#parseText` seems thread-safe, so we can have a single instance for the whole analyzer.
@@ -72,7 +74,8 @@ public class CheckContainer {
   public void initialize(
     Collection<Check> checks,
     SecretsSpecificationLoader specificationLoader,
-    DurationStatistics durationStatistics) {
+    DurationStatistics durationStatistics,
+    FilePredicate secretsExclusionPredicate) {
     if (this.initialized) {
       LOG.debug("ChecksContainer is already initialized, skipping re-initialization.");
       return;
@@ -81,22 +84,26 @@ public class CheckContainer {
     LOG.debug("Initializing ChecksContainer with checks and trie construction.");
 
     var suitableChecks = TextAndSecretsAnalyzer.filterSuitableChecks(checks);
+
     var specificationBasedChecks = suitableChecks.stream()
       .filter(SpecificationBasedCheck.class::isInstance)
       .map(SpecificationBasedCheck.class::cast)
       .collect(toSet());
     var checksByPreFilters = getChecksByContentPreFilters(specificationBasedChecks, specificationLoader);
     var checksWithPreFilter = checksByPreFilters.values().stream().flatMap(Collection::stream).collect(toSet());
-    this.checksWithoutPreFilter = Stream.concat(
-      suitableChecks.stream().filter(not(SpecificationBasedCheck.class::isInstance)),
-      specificationBasedChecks.stream().filter(not(checksWithPreFilter::contains)))
+    this.specChecksWithoutPreFilter = specificationBasedChecks.stream().filter(not(checksWithPreFilter::contains)).collect(toSet());
+
+    this.nonSecretChecks = suitableChecks.stream()
+      .filter(not(SpecificationBasedCheck.class::isInstance))
       .collect(toSet());
+
     this.trie = durationStatistics.timed("trieBuild::general", () -> getPreprocessedTrie(checksByPreFilters));
     this.durationStatistics = durationStatistics;
+    this.secretsSuffixExclusionPredicate = secretsExclusionPredicate;
     this.initialized = true;
 
     LOG.debug("ChecksContainer initialized successfully with {} checks without pre-filter and trie containing {} patterns.",
-      checksWithoutPreFilter.size(), checksByPreFilters.size());
+      specChecksWithoutPreFilter.size(), checksByPreFilters.size());
   }
 
   public void analyze(InputFileContext inputFileContext) {
@@ -116,14 +123,19 @@ public class CheckContainer {
 
   private void analyze(InputFileContext inputFileContext, Consumer<Check> executeCheck) {
     validateInitialized();
-    var handler = new SingleEmittingEmitHandler<Collection<SpecificationBasedCheck>>();
-    durationStatistics.timed("trieMatch::general", () -> trie.parseText(inputFileContext.content(), handler));
 
-    var emits = handler.getEmits();
-    emits.stream()
-      .flatMap(Collection::stream)
-      .forEach(executeCheck);
-    checksWithoutPreFilter.forEach(executeCheck);
+    // secret checks will not be analyzed on files with excluded secrets suffixes
+    if (secretsSuffixExclusionPredicate.apply(inputFileContext.getInputFile())) {
+      var handler = new SingleEmittingEmitHandler<Collection<SpecificationBasedCheck>>();
+      durationStatistics.timed("trieMatch::general", () -> trie.parseText(inputFileContext.content(), handler));
+
+      var emits = handler.getEmits();
+      emits.stream()
+        .flatMap(Collection::stream)
+        .forEach(executeCheck);
+      specChecksWithoutPreFilter.forEach(executeCheck);
+    }
+    nonSecretChecks.forEach(executeCheck);
 
     inputFileContext.flushIssues();
   }
