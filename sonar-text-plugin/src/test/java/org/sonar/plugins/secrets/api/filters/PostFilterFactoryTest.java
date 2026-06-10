@@ -382,6 +382,61 @@ class PostFilterFactoryTest {
   }
 
   @Test
+  void whenKnownFakeSecretFilterDisabledCandidateMatchingPatternNotIsAccepted() {
+    var postModule = new TopLevelPostModule(null, null, List.of("EXAMPLEKEY"), null, emptyList());
+
+    PostFilter filter = PostFilterFactory.createFilter(postModule, Set.of(SkippedFilter.KNOWN_FAKE_SECRET_FILTER));
+    FilterOutcome result = filter.apply("candidate EXAMPLEKEY here");
+
+    assertThat(result.passed()).isTrue();
+    assertThat(result.skipped()).contains(SkippedFilter.KNOWN_FAKE_SECRET_FILTER);
+  }
+
+  @Test
+  void whenKnownFakeSecretFilterDisabledCandidateNotMatchingPatternNotIsAcceptedWithoutSkippedTag() {
+    var postModule = new TopLevelPostModule(null, null, List.of("EXAMPLEKEY"), null, emptyList());
+
+    PostFilter filter = PostFilterFactory.createFilter(postModule, Set.of(SkippedFilter.KNOWN_FAKE_SECRET_FILTER));
+    FilterOutcome result = filter.apply("candidate without fake pattern");
+
+    assertThat(result.passed()).isTrue();
+    assertThat(result.skipped()).doesNotContain(SkippedFilter.KNOWN_FAKE_SECRET_FILTER);
+  }
+
+  @Test
+  void whenKnownFakeSecretFilterEnabledCandidateMatchingPatternNotIsRejected() {
+    var postModule = new TopLevelPostModule(null, null, List.of("EXAMPLEKEY"), null, emptyList());
+
+    PostFilter filter = PostFilterFactory.createFilter(postModule, Set.of());
+    FilterOutcome result = filter.apply("candidate EXAMPLEKEY here");
+
+    assertThat(result.passed()).isFalse();
+  }
+
+  @Test
+  void whenBothFiltersDisabledCandidateMatchingPatternNotAndLowEntropyCarriesBothSkippedTags() {
+    var postModule = ReferenceTestModel.constructPostModule();
+
+    PostFilter filter = PostFilterFactory.createFilter(postModule, Set.of(SkippedFilter.ENTROPY_FILTER, SkippedFilter.KNOWN_FAKE_SECRET_FILTER));
+    FilterOutcome result = filter.apply("low entropy EXAMPLEKEY");
+
+    assertThat(result.passed()).isTrue();
+    assertThat(result.skipped()).contains(SkippedFilter.ENTROPY_FILTER, SkippedFilter.KNOWN_FAKE_SECRET_FILTER);
+  }
+
+  @Test
+  void whenKnownFakeSecretFilterDisabledAndNoPatternNotSkippedIsEmpty() {
+    var postModule = ReferenceTestModel.constructPostModule();
+    postModule.setPatternNot(emptyList());
+
+    PostFilter filter = PostFilterFactory.createFilter(postModule, Set.of(SkippedFilter.KNOWN_FAKE_SECRET_FILTER));
+    FilterOutcome result = filter.apply("rule matching EXAMPLEKEY pattern with high entropy: lasdij2338f,.q29cm2acasd");
+
+    assertThat(result.passed()).isTrue();
+    assertThat(result.skipped()).doesNotContain(SkippedFilter.KNOWN_FAKE_SECRET_FILTER);
+  }
+
+  @Test
   void shouldNotLogRejectionsWhenLoggerIsDisabled() {
     var postModule = ReferenceTestModel.constructPostModule();
     var filter = PostFilterFactory.createFilter(postModule, Set.of(), RejectionLogger.DISABLED);

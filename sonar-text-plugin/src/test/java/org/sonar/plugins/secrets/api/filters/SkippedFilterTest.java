@@ -44,4 +44,18 @@ class SkippedFilterTest {
       .isEqualTo("base message (low-confidence match, disabled filters: entropy, automatic test file detection)");
     assertThat(amended.split("low-confidence match")).hasSize(2);
   }
+
+  @Test
+  void shouldAppendKnownFakeSecretFilterName() {
+    assertThat(SkippedFilter.appendLowConfidenceSuffix("base message", Set.of(SkippedFilter.KNOWN_FAKE_SECRET_FILTER)))
+      .isEqualTo("base message (low-confidence match, disabled filters: known fake secrets)");
+  }
+
+  @Test
+  void shouldGroupAllThreeFilterNamesUnderSingleLowConfidencePrefix() {
+    var skipped = EnumSet.of(SkippedFilter.ENTROPY_FILTER, SkippedFilter.KNOWN_FAKE_SECRET_FILTER, SkippedFilter.TEST_FILES_FILTER);
+    var amended = SkippedFilter.appendLowConfidenceSuffix("base message", skipped);
+    assertThat(amended)
+      .isEqualTo("base message (low-confidence match, disabled filters: entropy, known fake secrets, automatic test file detection)");
+  }
 }

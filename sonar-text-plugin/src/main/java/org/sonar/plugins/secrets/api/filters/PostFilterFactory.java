@@ -198,10 +198,14 @@ public final class PostFilterFactory {
       var patterns = patternNot.stream()
         .map(pattern -> Map.entry(pattern, Pattern.compile(pattern)))
         .toList();
+      var knownFakeSecretFilterDisabled = skippedFilters.contains(SkippedFilter.KNOWN_FAKE_SECRET_FILTER);
 
       return candidate -> {
         for (var entry : patterns) {
           if (entry.getValue().matcher(candidate).find()) {
+            if (knownFakeSecretFilterDisabled) {
+              return new FilteringResult(FilterOutcome.passedWithSkipped(SkippedFilter.KNOWN_FAKE_SECRET_FILTER), "");
+            }
             return FilteringResult.rejected("patternNot: " + entry.getKey());
           }
         }

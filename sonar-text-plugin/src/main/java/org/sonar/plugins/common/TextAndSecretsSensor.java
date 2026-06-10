@@ -81,6 +81,8 @@ public class TextAndSecretsSensor implements Sensor {
   public static final boolean DISABLE_ENTROPY_FILTER_DEFAULT_VALUE = false;
   public static final String DISABLE_TEST_FILE_DETECTION_KEY = "sonar.secrets.disableTestFileDetection";
   public static final boolean DISABLE_TEST_FILE_DETECTION_DEFAULT_VALUE = false;
+  public static final String DISABLE_KNOWN_FAKE_SECRET_FILTER_KEY = "sonar.secrets.disableKnownFakeSecretFilter";
+  public static final boolean DISABLE_KNOWN_FAKE_SECRET_FILTER_DEFAULT_VALUE = false;
   /**
    * Internal debug switch (off by default) that enables per-candidate debug logging when a post-filter rejects a
    * match.
@@ -205,6 +207,9 @@ public class TextAndSecretsSensor implements Sensor {
     }
     if (sensorContext.config().getBoolean(DISABLE_TEST_FILE_DETECTION_KEY).orElse(DISABLE_TEST_FILE_DETECTION_DEFAULT_VALUE)) {
       skippedFilters.add(SkippedFilter.TEST_FILES_FILTER);
+    }
+    if (sensorContext.config().getBoolean(DISABLE_KNOWN_FAKE_SECRET_FILTER_KEY).orElse(DISABLE_KNOWN_FAKE_SECRET_FILTER_DEFAULT_VALUE)) {
+      skippedFilters.add(SkippedFilter.KNOWN_FAKE_SECRET_FILTER);
     }
 
     if (!skippedFilters.isEmpty()) {
@@ -409,5 +414,8 @@ public class TextAndSecretsSensor implements Sensor {
 
     boolean testFileDetectionDisabled = sensorContext.config().getBoolean(DISABLE_TEST_FILE_DETECTION_KEY).orElse(DISABLE_TEST_FILE_DETECTION_DEFAULT_VALUE);
     telemetryReporter.addNumericMeasure("secrets.disable_test_file_detection", testFileDetectionDisabled ? 1 : 0);
+
+    boolean knownFakeSecretFilterDisabled = sensorContext.config().getBoolean(DISABLE_KNOWN_FAKE_SECRET_FILTER_KEY).orElse(DISABLE_KNOWN_FAKE_SECRET_FILTER_DEFAULT_VALUE);
+    telemetryReporter.addNumericMeasure("secrets.disable_known_fake_secret_filter", knownFakeSecretFilterDisabled ? 1 : 0);
   }
 }

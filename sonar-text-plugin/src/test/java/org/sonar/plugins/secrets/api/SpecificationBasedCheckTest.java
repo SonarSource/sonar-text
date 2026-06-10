@@ -175,6 +175,30 @@ class SpecificationBasedCheckTest {
       "secrets:exampleKey [1:25-1:46] provider message");
   }
 
+  @Test
+  void checkShouldRaiseLowConfidenceIssueWhenKnownFakeSecretFilterDisabledAndCandidateMatchesPatternNot() throws IOException {
+    var specificationLoader = new SecretsSpecificationLoader("secretsConfiguration/postFilter/", Set.of("postFilterSpec.sml"));
+    specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().setPatternNot(List.of("matching"));
+    // Lower the threshold so the candidate passes the entropy filter and rejection comes only from patternNot
+    specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().getStatisticalFilter().setThreshold(3f);
+    var configWithKnownFakeSecretDisabled = new SpecificationConfiguration(true, Set.of(SkippedFilter.KNOWN_FAKE_SECRET_FILTER), MessageFormatter.RULE_MESSAGE);
+    var exampleCheck = initializeExampleCheck(specificationLoader, configWithKnownFakeSecretDisabled);
+
+    assertThat(analyze(exampleCheck, "rule matching pattern")).containsExactly(
+      "secrets:exampleKey [1:0-1:21] rule message (low-confidence match, disabled filters: known fake secrets)");
+  }
+
+  @Test
+  void checkShouldNotRaiseIssueWhenKnownFakeSecretFilterDisabledAndCandidateDoesNotMatchPatternNot() throws IOException {
+    var specificationLoader = new SecretsSpecificationLoader("secretsConfiguration/postFilter/", Set.of("postFilterSpec.sml"));
+    specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().setPatternNot(List.of("nonMatchingWord"));
+    var configWithKnownFakeSecretDisabled = new SpecificationConfiguration(true, Set.of(SkippedFilter.KNOWN_FAKE_SECRET_FILTER), MessageFormatter.RULE_MESSAGE);
+    var exampleCheck = initializeExampleCheck(specificationLoader, configWithKnownFakeSecretDisabled);
+
+    // Low entropy candidate is still filtered out by the (still-enabled) entropy filter; we just don't add the suffix.
+    assertThat(analyze(exampleCheck, "rule matching pattern")).isEmpty();
+  }
+
   private static ExampleCheck initializeExampleCheck(String specificationLocation, String specificationFile, SpecificationConfiguration config) {
     return initializeExampleCheck(new SecretsSpecificationLoader(specificationLocation, Set.of(specificationFile)), config);
   }

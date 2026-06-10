@@ -134,6 +134,19 @@ public class TextAndSecretsPlugin implements Plugin {
         .type(PropertyType.BOOLEAN)
         .onConfigScopes(ConfigScope.PROJECT)
         .subCategory(GENERAL_SUBCATEGORY)
+        .build(),
+
+      PropertyDefinition.builder(TextAndSecretsSensor.DISABLE_KNOWN_FAKE_SECRET_FILTER_KEY)
+        .defaultValue(String.valueOf(TextAndSecretsSensor.DISABLE_KNOWN_FAKE_SECRET_FILTER_DEFAULT_VALUE))
+        .category(TextAndSecretsSensor.TEXT_CATEGORY)
+        .name("Disable the known fake secret filter for secret detection")
+        .description("When enabled, candidates matching a rule's curated fake-secret exclusion list (e.g. repeated characters, " +
+          "placeholder tokens, documentation example values) are raised as low-confidence issues. " +
+          "This helps surface potential fake or example secrets in benchmark or evaluation projects. " +
+          "Other post-filters are unaffected.")
+        .type(PropertyType.BOOLEAN)
+        .onConfigScopes(ConfigScope.PROJECT)
+        .subCategory(GENERAL_SUBCATEGORY)
         .build());
   }
 }

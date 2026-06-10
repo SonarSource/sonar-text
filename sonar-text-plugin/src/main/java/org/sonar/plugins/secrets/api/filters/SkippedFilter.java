@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
  */
 public enum SkippedFilter {
   ENTROPY_FILTER("entropy"),
+  KNOWN_FAKE_SECRET_FILTER("known fake secrets"),
   TEST_FILES_FILTER("automatic test file detection");
 
   public static final String LOW_CONFIDENCE_PREFIX = "low-confidence match";

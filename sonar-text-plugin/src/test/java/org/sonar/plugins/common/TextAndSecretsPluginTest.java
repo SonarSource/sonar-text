@@ -27,6 +27,6 @@ class TextAndSecretsPluginTest extends AbstractPluginTest {
 
   @Override
   protected int getExpectedExtensionCount() {
-    return 17;
+    return 18;
   }
 }

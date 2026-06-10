@@ -95,6 +95,7 @@ import static org.sonar.plugins.common.TestUtils.sensorContext;
 import static org.sonar.plugins.common.TextAndSecretsSensor.DEBUG_LOG_REJECTED_CANDIDATES_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.DEBUG_LOG_REJECTED_CANDIDATES_LIMIT_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.DISABLE_ENTROPY_FILTER_KEY;
+import static org.sonar.plugins.common.TextAndSecretsSensor.DISABLE_KNOWN_FAKE_SECRET_FILTER_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.DISABLE_TEST_FILE_DETECTION_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.SONAR_TESTS_KEY;
 
@@ -104,6 +105,7 @@ public abstract class AbstractTextAndSecretsSensorTest {
 
   private static final String DISABLE_ENTROPY_FILTER_TELEMETRY_KEY = "text.secrets.disable_entropy_filter";
   private static final String DISABLE_TEST_FILE_DETECTION_TELEMETRY_KEY = "text.secrets.disable_test_file_detection";
+  private static final String DISABLE_KNOWN_FAKE_SECRET_FILTER_TELEMETRY_KEY = "text.secrets.disable_known_fake_secret_filter";
   private static final String SENSITIVE_BIDI_CHARS = "\u0002\u0004";
   private static final int AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();
   private static final String EXPECTED_PROCESSOR_LOG_LINE = "Available processors: " + AVAILABLE_PROCESSORS;
@@ -1494,12 +1496,16 @@ public abstract class AbstractTextAndSecretsSensorTest {
 
   @ParameterizedTest
   @CsvSource({
-    "false, false",
-    "true,  false",
-    "false, true",
-    "true,  true"
+    "false, false, false",
+    "true,  false, false",
+    "false, true,  false",
+    "true,  true,  false",
+    "false, false, true",
+    "true,  false, true",
+    "false, true,  true",
+    "true,  true,  true"
   })
-  void shouldReportDisabledFilters(boolean disableEntropy, boolean disableTestFileDetection) {
+  void shouldReportDisabledFilters(boolean disableEntropy, boolean disableTestFileDetection, boolean disableKnownFakeSecretFilter) {
     var context = testUtils().defaultSensorContext();
     if (disableEntropy) {
       context.settings().setProperty(DISABLE_ENTROPY_FILTER_KEY, "true");
@@ -1507,11 +1513,15 @@ public abstract class AbstractTextAndSecretsSensorTest {
     if (disableTestFileDetection) {
       context.settings().setProperty(DISABLE_TEST_FILE_DETECTION_KEY, "true");
     }
+    if (disableKnownFakeSecretFilter) {
+      context.settings().setProperty(DISABLE_KNOWN_FAKE_SECRET_FILTER_KEY, "true");
+    }
     sensor(new ReportIssueAtLineOneCheck()).execute(context);
 
     assertThat(context.getTelemetryProperties())
       .containsEntry(DISABLE_ENTROPY_FILTER_TELEMETRY_KEY, disableEntropy ? "1" : "0")
-      .containsEntry(DISABLE_TEST_FILE_DETECTION_TELEMETRY_KEY, disableTestFileDetection ? "1" : "0");
+      .containsEntry(DISABLE_TEST_FILE_DETECTION_TELEMETRY_KEY, disableTestFileDetection ? "1" : "0")
+      .containsEntry(DISABLE_KNOWN_FAKE_SECRET_FILTER_TELEMETRY_KEY, disableKnownFakeSecretFilter ? "1" : "0");
   }
 
   @Test
@@ -1548,6 +1558,27 @@ public abstract class AbstractTextAndSecretsSensorTest {
 
     assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters()).containsExactlyInAnyOrder(SkippedFilter.ENTROPY_FILTER, SkippedFilter.TEST_FILES_FILTER);
     assertThat(logTester.logs()).contains("The secret analysis will skip the following filters per user configuration: entropy, automatic test file detection");
+  }
+
+  @Test
+  void createSpecificationConfigurationShouldHaveKnownFakeSecretFilterSkippedWhenPropertyIsTrue() {
+    var context = testUtils().sonarqubeSensorContext();
+    context.settings().setProperty(DISABLE_KNOWN_FAKE_SECRET_FILTER_KEY, "true");
+
+    assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters()).contains(SkippedFilter.KNOWN_FAKE_SECRET_FILTER);
+    assertThat(logTester.logs()).contains("The secret analysis will skip the following filters per user configuration: known fake secrets");
+  }
+
+  @Test
+  void createSpecificationConfigurationShouldSkipAllFiltersWhenAllAreDisabledByConfiguration() {
+    var context = testUtils().sonarqubeSensorContext();
+    context.settings().setProperty(DISABLE_ENTROPY_FILTER_KEY, "true");
+    context.settings().setProperty(DISABLE_TEST_FILE_DETECTION_KEY, "true");
+    context.settings().setProperty(DISABLE_KNOWN_FAKE_SECRET_FILTER_KEY, "true");
+
+    assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters())
+      .containsExactlyInAnyOrder(SkippedFilter.ENTROPY_FILTER, SkippedFilter.KNOWN_FAKE_SECRET_FILTER, SkippedFilter.TEST_FILES_FILTER);
+    assertThat(logTester.logs()).contains("The secret analysis will skip the following filters per user configuration: entropy, known fake secrets, automatic test file detection");
   }
 
   @Rule(key = "FileIssue")

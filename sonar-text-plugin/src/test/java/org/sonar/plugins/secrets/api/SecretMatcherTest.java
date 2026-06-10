@@ -275,11 +275,23 @@ class SecretMatcherTest {
     SecretMatcher matcher = SecretMatcher.build(rule, mockDurationStatistics(), SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, true);
 
     var outcome = FilterOutcome.passedWithSkipped(SkippedFilter.ENTROPY_FILTER)
+      .combine(FilterOutcome.passedWithSkipped(SkippedFilter.KNOWN_FAKE_SECRET_FILTER))
       .combine(FilterOutcome.passedWithSkipped(SkippedFilter.TEST_FILES_FILTER));
     String message = matcher.getMessageForCandidate(outcome);
     assertThat(message)
-      .isEqualTo(rule.getMetadata().getMessage() + " (low-confidence match, disabled filters: entropy, automatic test file detection)");
+      .isEqualTo(rule.getMetadata().getMessage() + " (low-confidence match, disabled filters: entropy, known fake secrets, automatic test file detection)");
     assertThat(message.split("low-confidence match")).hasSize(2);
+  }
+
+  @Test
+  void getMessageForCandidateAppendsLabelWhenKnownFakeSecretFilterSkipped() {
+    Rule rule = ReferenceTestModel.constructReferenceSpecification().getProvider().getRules().get(0);
+    SecretMatcher matcher = SecretMatcher.build(rule, mockDurationStatistics(), SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, true);
+
+    var match = new CandidateMatch("LGYIh8rDziCXCgDCUbJq1h7CKwNqnpA1il4MXL+y", 0, 41, Map.of());
+    var acceptedMatch = new MatchResult(match, FilterOutcome.passedWithSkipped(SkippedFilter.KNOWN_FAKE_SECRET_FILTER));
+    assertThat(matcher.getMessageForCandidate(acceptedMatch.outcome()))
+      .isEqualTo(rule.getMetadata().getMessage() + " (low-confidence match, disabled filters: known fake secrets)");
   }
 
   @Test

@@ -50,6 +50,19 @@ class SpecificationConfigurationTest {
   }
 
   @Test
+  void skippedFiltersCanContainKnownFakeSecretFilter() {
+    var config = new SpecificationConfiguration(false, Set.of(SkippedFilter.KNOWN_FAKE_SECRET_FILTER), MessageFormatter.RULE_MESSAGE);
+    assertThat(config.skippedFilters()).containsExactly(SkippedFilter.KNOWN_FAKE_SECRET_FILTER);
+  }
+
+  @Test
+  void skippedFiltersCanContainAllFilters() {
+    var config = new SpecificationConfiguration(false,
+      Set.of(SkippedFilter.ENTROPY_FILTER, SkippedFilter.KNOWN_FAKE_SECRET_FILTER, SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE);
+    assertThat(config.skippedFilters()).containsExactlyInAnyOrder(SkippedFilter.ENTROPY_FILTER, SkippedFilter.KNOWN_FAKE_SECRET_FILTER, SkippedFilter.TEST_FILES_FILTER);
+  }
+
+  @Test
   void autoTestFileDetectionEnabledConstantHasNoOverrides() {
     assertThat(SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED.skippedFilters()).isEmpty();
   }
