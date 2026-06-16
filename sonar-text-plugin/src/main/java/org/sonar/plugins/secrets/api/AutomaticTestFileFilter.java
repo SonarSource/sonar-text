@@ -21,10 +21,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sonar.plugins.common.InputFileContext;
+import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.sensor.SensorContext;
 
 /**
  * Class for producing a scope based file filter.
@@ -59,29 +59,32 @@ public final class AutomaticTestFileFilter {
   }
 
   /**
-   * Creates a predicate based on the rule scopes and status of automatic test file detection.
+   * Runs the filename/path heuristic that classifies a file as an automatically-detected test file from the raw
+   * {@link SensorContext} and {@link InputFile}. This is the single place the heuristic lives; it is evaluated once per
+   * file at {@code InputFileContext} construction time and the result is cached on the context, which every rule then
+   * reads back via {@code InputFileContext.isAutomaticallyDetectedTestFile()}.
    */
-  public static Predicate<InputFileContext> isNotAutomaticallyDetectedTestFile() {
-    return ctx -> !isFilenameTest(ctx) && !isFileInDocOrTestDirectory(ctx);
+  public static boolean isAutomaticallyDetectedTestFile(SensorContext sensorContext, InputFile inputFile) {
+    return isFilenameTest(inputFile) || isFileInDocOrTestDirectory(sensorContext, inputFile);
   }
 
-  private static boolean isFilenameTest(InputFileContext inputFileContext) {
-    var filename = inputFileContext.getInputFile().filename().toLowerCase(Locale.ROOT);
+  private static boolean isFilenameTest(InputFile inputFile) {
+    var filename = inputFile.filename().toLowerCase(Locale.ROOT);
     return FILENAME_PREFIXES.stream().anyMatch(filename::startsWith) ||
       FILENAME_CONTAINS.stream().anyMatch(filename::contains) ||
       FILENAME_SUFFIXES.stream().anyMatch(filename::endsWith);
   }
 
-  private static boolean isFileInDocOrTestDirectory(InputFileContext inputFileContext) {
+  private static boolean isFileInDocOrTestDirectory(SensorContext sensorContext, InputFile inputFile) {
     // the path of the baseDir is not analyzed, only the relative path from file to baseDir
-    var path = Path.of(inputFileContext.getInputFile().uri());
+    var path = Path.of(inputFile.uri());
     String relativeUnixPath;
     try {
-      var baseDir = inputFileContext.getFileSystem().baseDir().toPath();
+      var baseDir = sensorContext.fileSystem().baseDir().toPath();
       var relativePath = baseDir.relativize(path).normalize();
       relativeUnixPath = normalizeToUnixPathSeparator(relativePath.toString().toLowerCase(Locale.ROOT));
     } catch (IllegalArgumentException e) {
-      LOG.debug("Couldn't calculate the projects relative path of {}", inputFileContext.getInputFile());
+      LOG.debug("Couldn't calculate the projects relative path of {}", inputFile);
       // Default to not detect it as test file
       return false;
     }

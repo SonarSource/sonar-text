@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.common.InputFileContext;
-import org.sonar.plugins.secrets.api.AutomaticTestFileFilter;
 import org.sonar.plugins.secrets.api.SpecificationConfiguration;
 import org.sonar.plugins.secrets.configuration.model.Selectivity;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.FileFilter;
@@ -39,7 +38,6 @@ import static java.util.function.Predicate.not;
 public final class PreFilterFactory {
   private static final Logger LOG = LoggerFactory.getLogger(PreFilterFactory.class);
   private static final Predicate<InputFileContext> NO_LANGUAGE_PREDICATE = ctx -> ctx.getInputFile().language() == null;
-  private static final Predicate<InputFileContext> AUTOMATIC_NO_TEST_FILE_FILTER = AutomaticTestFileFilter.isNotAutomaticallyDetectedTestFile();
 
   static final Predicate<InputFileContext> INCLUDE_ONLY_MAIN_FILES = ctx -> InputFile.Type.MAIN == ctx.getInputFile().type();
 
@@ -66,14 +64,15 @@ public final class PreFilterFactory {
     boolean shouldExecuteContentPreFilters) {
     var selectivityPredicate = appendSelectivityPredicate(INCLUDE_ONLY_MAIN_FILES, selectivity);
     var rejectIncludePredicate = buildRejectIncludePredicate(pre, shouldExecuteContentPreFilters);
-    var automaticTestFileDetectionEnabled = specificationConfiguration.automaticTestFileDetection();
+    var automaticTestFileDetectionEnabled = specificationConfiguration.automaticTestFileDetectionEnabled();
     var testFilesFilterSkipped = specificationConfiguration.skippedFilters().contains(SkippedFilter.TEST_FILES_FILTER);
 
     return (InputFileContext ctx) -> {
       if (!selectivityPredicate.test(ctx)) {
         return FilterOutcome.REJECTED;
       }
-      var isTestFile = automaticTestFileDetectionEnabled && !AUTOMATIC_NO_TEST_FILE_FILTER.test(ctx);
+      // The per-file test-file classification is computed and cached once on the InputFileContext; just read it here.
+      var isTestFile = automaticTestFileDetectionEnabled && ctx.isAutomaticallyDetectedTestFile();
       if (isTestFile && !testFilesFilterSkipped) {
         return FilterOutcome.REJECTED;
       }

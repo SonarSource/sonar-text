@@ -18,6 +18,7 @@ package org.sonar.plugins.secrets.api;
 
 import java.util.Set;
 import org.junit.jupiter.api.Test;
+import org.sonar.plugins.secrets.api.filters.RejectionLogger;
 import org.sonar.plugins.secrets.api.filters.SkippedFilter;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,40 +26,35 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SpecificationConfigurationTest {
 
   @Test
-  void skippedFiltersDefaultsToEmpty() {
-    var config = new SpecificationConfiguration(true);
-    assertThat(config.skippedFilters()).isEmpty();
-  }
-
-  @Test
   void skippedFiltersCanContainEntropyFilter() {
-    var config = new SpecificationConfiguration(false, Set.of(SkippedFilter.ENTROPY_FILTER), MessageFormatter.RULE_MESSAGE);
+    var config = new SpecificationConfiguration(false, Set.of(SkippedFilter.ENTROPY_FILTER), MessageFormatter.RULE_MESSAGE, RejectionLogger.DISABLED);
     assertThat(config.skippedFilters()).containsExactly(SkippedFilter.ENTROPY_FILTER);
   }
 
   @Test
   void skippedFiltersCanContainTestFilesFilter() {
-    var config = new SpecificationConfiguration(false, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE);
+    var config = new SpecificationConfiguration(false, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE, RejectionLogger.DISABLED);
     assertThat(config.skippedFilters()).containsExactly(SkippedFilter.TEST_FILES_FILTER);
   }
 
   @Test
   void skippedFiltersCanContainBothFilters() {
     var config = new SpecificationConfiguration(false,
-      Set.of(SkippedFilter.ENTROPY_FILTER, SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE);
+      Set.of(SkippedFilter.ENTROPY_FILTER, SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE, RejectionLogger.DISABLED);
     assertThat(config.skippedFilters()).containsExactlyInAnyOrder(SkippedFilter.ENTROPY_FILTER, SkippedFilter.TEST_FILES_FILTER);
   }
 
   @Test
   void skippedFiltersCanContainKnownFakeSecretFilter() {
-    var config = new SpecificationConfiguration(false, Set.of(SkippedFilter.KNOWN_FAKE_SECRET_FILTER), MessageFormatter.RULE_MESSAGE);
+    var config = new SpecificationConfiguration(false, Set.of(SkippedFilter.KNOWN_FAKE_SECRET_FILTER), MessageFormatter.RULE_MESSAGE, RejectionLogger.DISABLED);
     assertThat(config.skippedFilters()).containsExactly(SkippedFilter.KNOWN_FAKE_SECRET_FILTER);
   }
 
   @Test
   void skippedFiltersCanContainAllFilters() {
     var config = new SpecificationConfiguration(false,
-      Set.of(SkippedFilter.ENTROPY_FILTER, SkippedFilter.KNOWN_FAKE_SECRET_FILTER, SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE);
+      Set.of(SkippedFilter.ENTROPY_FILTER, SkippedFilter.KNOWN_FAKE_SECRET_FILTER, SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE,
+      RejectionLogger.DISABLED);
     assertThat(config.skippedFilters()).containsExactlyInAnyOrder(SkippedFilter.ENTROPY_FILTER, SkippedFilter.KNOWN_FAKE_SECRET_FILTER, SkippedFilter.TEST_FILES_FILTER);
   }
 

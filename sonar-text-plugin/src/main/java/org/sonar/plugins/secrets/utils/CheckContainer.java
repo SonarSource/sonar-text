@@ -16,9 +16,13 @@
  */
 package org.sonar.plugins.secrets.utils;
 
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import org.ahocorasick.trie.PayloadEmit;
 import org.ahocorasick.trie.PayloadTrie;
@@ -33,6 +37,7 @@ import org.sonar.plugins.common.analyzer.TextAndSecretsAnalyzer;
 import org.sonar.plugins.common.measures.DurationStatistics;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
+import org.sonar.plugins.secrets.api.filters.SkippedFilter;
 import org.sonarsource.api.sonarlint.SonarLintSide;
 
 import static java.util.function.Predicate.not;
@@ -66,6 +71,11 @@ public class CheckContainer {
    */
   private PayloadTrie<Collection<SpecificationBasedCheck>> trie;
   private boolean initialized;
+  private boolean automaticTestFileDetectionEnabled;
+  private boolean testFilesFilterSkipped;
+  private boolean collectSkippedPaths;
+  private final AtomicInteger automaticTestFilesSkippedCount = new AtomicInteger(0);
+  private final ConcurrentLinkedQueue<String> automaticTestFilesSkippedPaths = new ConcurrentLinkedQueue<>();
 
   public CheckContainer() {
     // Default constructor for DI framework.
@@ -76,6 +86,26 @@ public class CheckContainer {
     SecretsSpecificationLoader specificationLoader,
     DurationStatistics durationStatistics,
     FilePredicate secretsExclusionPredicate) {
+    initialize(checks, specificationLoader, durationStatistics, secretsExclusionPredicate, false, Set.of(), false);
+  }
+
+  public void initialize(
+    Collection<Check> checks,
+    SecretsSpecificationLoader specificationLoader,
+    DurationStatistics durationStatistics,
+    FilePredicate secretsExclusionPredicate,
+    boolean automaticTestFileDetectionEnabled,
+    Set<SkippedFilter> skippedFilters,
+    boolean collectSkippedPaths) {
+    // Re-apply config and reset per-analysis skipped tracking on every call (before the early-return guard), so a
+    // reused instance — e.g. a SonarLint module re-analysis — starts each analysis clean. The CLI aggregates its
+    // per-directory counts in SecretFinder, so resetting here does not lose cross-directory totals.
+    this.automaticTestFileDetectionEnabled = automaticTestFileDetectionEnabled;
+    this.testFilesFilterSkipped = skippedFilters.contains(SkippedFilter.TEST_FILES_FILTER);
+    this.collectSkippedPaths = collectSkippedPaths;
+    automaticTestFilesSkippedCount.set(0);
+    automaticTestFilesSkippedPaths.clear();
+
     if (this.initialized) {
       LOG.debug("ChecksContainer is already initialized, skipping re-initialization.");
       return;
@@ -124,8 +154,24 @@ public class CheckContainer {
   private void analyze(InputFileContext inputFileContext, Consumer<Check> executeCheck) {
     validateInitialized();
 
-    // secret checks will not be analyzed on files with excluded secrets suffixes
-    if (secretsSuffixExclusionPredicate.apply(inputFileContext.getInputFile())) {
+    // The test-file classification was computed once per file at InputFileContext construction and cached there. The
+    // analyzer only runs the heuristic when detection is enabled (see Analyzer#buildInputFileContext), so when it is
+    // disabled the cached value is false; reading it here yields the same value every rule's pre-filter sees.
+    var skipSecretChecks = automaticTestFileDetectionEnabled && !testFilesFilterSkipped && inputFileContext.isAutomaticallyDetectedTestFile();
+
+    if (skipSecretChecks) {
+      automaticTestFilesSkippedCount.incrementAndGet();
+      // Only retain the path list when a downstream caller asked for it (e.g. CLI --show-skipped-files). For large
+      // monorepos with automatic detection active this saves a String per skipped file otherwise never read.
+      // Store the relative path (not just the filename) so the listing is useful for locating files in the logs.
+      if (collectSkippedPaths) {
+        automaticTestFilesSkippedPaths.add(relativePathOf(inputFileContext));
+      }
+    }
+
+    // secret checks will not be analyzed on files with excluded secrets suffixes,
+    // nor on files that the automatic test-file filter rejected (unless the filter is configured as skipped).
+    if (!skipSecretChecks && secretsSuffixExclusionPredicate.apply(inputFileContext.getInputFile())) {
       var handler = new SingleEmittingEmitHandler<Collection<SpecificationBasedCheck>>();
       durationStatistics.timed("trieMatch::general", () -> trie.parseText(inputFileContext.content(), handler));
 
@@ -138,6 +184,64 @@ public class CheckContainer {
     nonSecretChecks.forEach(executeCheck);
 
     inputFileContext.flushIssues();
+  }
+
+  /**
+   * Path of the file relative to the analysis base directory, with forward-slash separators, for the skipped-file
+   * listing. Derived from the file URI rather than the deprecated {@code InputFile#relativePath()}, mirroring the
+   * relativization already done in {@code AutomaticTestFileFilter}.
+   */
+  private static String relativePathOf(InputFileContext inputFileContext) {
+    var path = Path.of(inputFileContext.getInputFile().uri());
+    var baseDir = inputFileContext.getFileSystem().baseDir().toPath();
+    try {
+      return baseDir.relativize(path).normalize().toString().replace('\\', '/');
+    } catch (IllegalArgumentException e) {
+      // Cross-root paths (e.g. a different filesystem root) can't be relativized; fall back to the absolute path.
+      return path.toString().replace('\\', '/');
+    }
+  }
+
+  /**
+   * Number of files skipped from secret analysis because the automatic test-file filter classified them as test files
+   * during the most recent analysis. Always {@code 0} when the filter is disabled or skipped via configuration. Reset
+   * at the start of every {@link #initialize(Collection, SecretsSpecificationLoader, DurationStatistics, FilePredicate,
+   * boolean, Set, boolean)} call (before the early-return guard), so it reflects a single analysis. The CLI calls
+   * {@code initialize()} once per directory argument and aggregates these per-directory counts in {@code SecretFinder}.
+   */
+  public int getAutomaticTestFilesSkippedCount() {
+    return automaticTestFilesSkippedCount.get();
+  }
+
+  /**
+   * Paths of the files skipped due to the automatic test-file filter during the most recent analysis (reset on every
+   * {@code initialize()} call, like {@link #getAutomaticTestFilesSkippedCount()}). The order is the order files were
+   * processed, which is non-deterministic under parallel analysis — callers that need a stable order should sort.
+   * Populated only when the {@code collectSkippedPaths} flag was set at initialization time (e.g. by the CLI's
+   * {@code --show-skipped-files} flag); empty otherwise — even when the filter has skipped files (use
+   * {@link #getAutomaticTestFilesSkippedCount()} for the count without retaining paths).
+   */
+  public List<String> getAutomaticTestFilesSkippedPaths() {
+    return List.copyOf(automaticTestFilesSkippedPaths);
+  }
+
+  /**
+   * Master switch for the heuristic test-file detection: {@code true} when the project did not declare its own test
+   * files (e.g. {@code sonar.tests} is unset), so the filename/path heuristic should run. The analyzer reads this to
+   * decide whether to classify files at all — when {@code false}, the per-file classification is skipped entirely
+   * since its result would never be read. Distinct from {@link #isAutomaticTestFileFilterActive()}, which additionally
+   * accounts for the filter being skipped via configuration.
+   */
+  public boolean isAutomaticTestFileDetectionEnabled() {
+    return automaticTestFileDetectionEnabled;
+  }
+
+  /**
+   * Whether the automatic test-file filter is active (enabled and not configured to be skipped). Used by callers
+   * deciding whether to surface the skipped-file count.
+   */
+  public boolean isAutomaticTestFileFilterActive() {
+    return automaticTestFileDetectionEnabled && !testFilesFilterSkipped;
   }
 
   private void validateInitialized() {

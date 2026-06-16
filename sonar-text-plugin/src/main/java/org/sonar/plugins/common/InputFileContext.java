@@ -63,9 +63,18 @@ public class InputFileContext {
   // list of issues that were detected and should be reported after filtering out overlaps
   private final List<CandidateIssue> candidateIssues = new ArrayList<>();
 
+  // Result of the automatic test-file heuristic, computed once from the InputFile/SensorContext and passed in by the
+  // caller that creates this context (see Analyzer#buildInputFileContext). Every rule for this file reads the same value.
+  private final boolean automaticallyDetectedTestFile;
+
   public InputFileContext(SensorContext sensorContext, InputFile inputFile) throws IOException {
+    this(sensorContext, inputFile, false);
+  }
+
+  public InputFileContext(SensorContext sensorContext, InputFile inputFile, boolean automaticallyDetectedTestFile) throws IOException {
     this.sensorContext = sensorContext;
     this.inputFile = inputFile;
+    this.automaticallyDetectedTestFile = automaticallyDetectedTestFile;
     List<String> contentLines = new ArrayList<>();
     boolean checkNonTextCharacters = inputFile.language() == null;
     try (var in = inputFile.inputStream()) {
@@ -215,6 +224,15 @@ public class InputFileContext {
 
   public FileSystem getFileSystem() {
     return sensorContext.fileSystem();
+  }
+
+  /**
+   * Whether the filename/path heuristic classified this file as an automatically-detected test file. Computed once at
+   * construction and the single source of truth for that classification, read by every rule's pre-filter and
+   * {@code CheckContainer}'s per-file short-circuit. {@code false} unless a value was supplied to the constructor.
+   */
+  public boolean isAutomaticallyDetectedTestFile() {
+    return automaticallyDetectedTestFile;
   }
 
   private List<List<CandidateIssue>> groupAndPrioritizeOverlappingIssues() {

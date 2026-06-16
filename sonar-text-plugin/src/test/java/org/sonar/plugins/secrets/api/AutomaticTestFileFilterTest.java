@@ -22,9 +22,10 @@ import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.internal.DefaultFileSystem;
 import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
-import org.sonar.plugins.common.InputFileContext;
+import org.sonar.api.batch.sensor.SensorContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -53,17 +54,20 @@ class AutomaticTestFileFilterTest {
     URI uri = URI.create("file:" + baseDir + projectKey + "/" + filePath);
     when(inputFile.uri()).thenReturn(uri);
 
-    DefaultFileSystem fileSystem = new DefaultFileSystem(Path.of(baseDir));
+    var sensorContext = mock(SensorContext.class);
+    when(sensorContext.fileSystem()).thenReturn(new DefaultFileSystem(Path.of(baseDir)));
 
-    var ctx = mock(InputFileContext.class);
-    when(ctx.getInputFile()).thenReturn(inputFile);
-    when(ctx.getFileSystem()).thenReturn(fileSystem);
-
-    var predicate = AutomaticTestFileFilter.isNotAutomaticallyDetectedTestFile();
-
-    assertThat(predicate.test(ctx))
+    assertThat(isNotAutomaticallyDetectedTestFile(sensorContext, inputFile))
       .withFailMessage("Input file uri: " + inputFile.uri().getPath())
       .isEqualTo(expected);
+  }
+
+  /**
+   * Negates {@link AutomaticTestFileFilter#isAutomaticallyDetectedTestFile(SensorContext, InputFile)} so the existing
+   * truth tables keep reading as "true == treated as a regular, non-test file".
+   */
+  private static boolean isNotAutomaticallyDetectedTestFile(SensorContext sensorContext, InputFile inputFile) {
+    return !AutomaticTestFileFilter.isAutomaticallyDetectedTestFile(sensorContext, inputFile);
   }
 
   static Stream<Arguments> inputsForTestingMainScopeAndSonarTest() {
@@ -157,14 +161,10 @@ class AutomaticTestFileFilterTest {
     var uri = URI.create("file:/base/directory/myProject/" + filePath);
     when(inputFile.uri()).thenReturn(uri);
 
-    DefaultFileSystem fileSystem = new DefaultFileSystem(Path.of("./wrong/base/directory/path/type"));
+    var sensorContext = mock(SensorContext.class);
+    when(sensorContext.fileSystem()).thenReturn(new DefaultFileSystem(Path.of("./wrong/base/directory/path/type")));
 
-    var ctx = mock(InputFileContext.class);
-    when(ctx.getInputFile()).thenReturn(inputFile);
-    when(ctx.getFileSystem()).thenReturn(fileSystem);
-
-    var predicate = AutomaticTestFileFilter.isNotAutomaticallyDetectedTestFile();
-    assertThat(predicate.test(ctx)).isEqualTo(shouldMatch);
+    assertThat(isNotAutomaticallyDetectedTestFile(sensorContext, inputFile)).isEqualTo(shouldMatch);
   }
 
   static Stream<Arguments> inputsForTestingMainScopeWithWrongBaseDirectory() {

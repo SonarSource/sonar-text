@@ -168,9 +168,9 @@ public class TextAndSecretsSensor implements Sensor {
 
   protected SpecificationConfiguration createSpecificationConfiguration(SensorContext sensorContext) {
     var skippedFilters = resolveSkippedFilters(sensorContext);
-    var automaticTestFileDetection = resolveAutomaticTestFileDetection(sensorContext);
+    var automaticTestFileDetectionEnabled = resolveAutomaticTestFileDetection(sensorContext);
     var rejectionLogger = resolveRejectionLogger(sensorContext);
-    return new SpecificationConfiguration(automaticTestFileDetection, skippedFilters, MessageFormatter.RULE_MESSAGE, rejectionLogger);
+    return new SpecificationConfiguration(automaticTestFileDetectionEnabled, skippedFilters, MessageFormatter.RULE_MESSAGE, rejectionLogger);
   }
 
   protected static RejectionLogger resolveRejectionLogger(SensorContext sensorContext) {
@@ -238,8 +238,20 @@ public class TextAndSecretsSensor implements Sensor {
     var analyzer = new TextAndSecretsAnalyzer(sensorContext, parallelizationManager, durationStatistics, suitableChecks, telemetryReporter, memoryMonitor,
       checkContainer);
     durationStatistics.timed("analyzerTotal" + DurationStatistics.SUFFIX_GENERAL, () -> analyzer.analyzeFiles(inputFiles));
+    logAutomaticTestFileSkippedSummary();
     logCheckBasedStatistics(suitableChecks);
     textAndSecretsPredicates.reportAllTrackedTextFilesMeasure();
+  }
+
+  private void logAutomaticTestFileSkippedSummary() {
+    if (!checkContainer.isAutomaticTestFileFilterActive()) {
+      return;
+    }
+    int skipped = checkContainer.getAutomaticTestFilesSkippedCount();
+    if (skipped == 0) {
+      return;
+    }
+    LOG.info("Skipped {} file(s) in the secrets analysis due to automatic test file detection", skipped);
   }
 
   private static boolean isHiddenFilesAnalysisSupported(SonarRuntime sonarRuntime) {
@@ -339,7 +351,18 @@ public class TextAndSecretsSensor implements Sensor {
       }
     });
     var secretSuffixExclusionPredicate = textAndSecretsPredicates.excludedFileSuffixesPredicate(sensorContext);
-    checkContainer.initialize(checks, secretsSpecificationContainer.getSpecificationLoader(), durationStatistics, secretSuffixExclusionPredicate);
+    checkContainer.initialize(checks, secretsSpecificationContainer.getSpecificationLoader(), durationStatistics, secretSuffixExclusionPredicate,
+      specificationConfiguration.automaticTestFileDetectionEnabled(), specificationConfiguration.skippedFilters(), shouldCollectSkippedPaths());
+  }
+
+  /**
+   * Whether the sensor wants {@link org.sonar.plugins.secrets.utils.CheckContainer} to retain the paths of files dropped by
+   * the automatic test-file filter. Default {@code false} — the SonarQube / SonarLint pipelines only consume the count
+   * via {@link org.sonar.plugins.secrets.utils.CheckContainer#getAutomaticTestFilesSkippedCount()}. The CLI sensor
+   * overrides this to {@code true} when {@code --show-skipped-files} is set.
+   */
+  protected boolean shouldCollectSkippedPaths() {
+    return false;
   }
 
   private static void initializeOptionalConfigValue(SensorContext sensorContext, String key, Consumer<Integer> setConfigValue) {

@@ -61,6 +61,11 @@ public final class TextAndSecretsAnalyzer extends Analyzer {
   }
 
   @Override
+  protected boolean shouldDetectAutomaticTestFiles() {
+    return checkContainer.isAutomaticTestFileDetectionEnabled();
+  }
+
+  @Override
   protected void analyzeAllChecks(InputFileContext inputFileContext) {
     // Currently not possible and desired to parallelize check execution per file, as we rely on the sequential and always same order of the
     // checks to achieve deterministic analysis results

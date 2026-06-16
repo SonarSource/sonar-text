@@ -28,6 +28,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.check.Rule;
+import org.sonar.plugins.secrets.api.filters.RejectionLogger;
 import org.sonar.plugins.secrets.api.filters.SkippedFilter;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -124,7 +125,7 @@ class SpecificationBasedCheckTest {
 
   @Test
   void checkShouldRaiseFakeSecretIssueWhenEntropyFilterDisabledAndSecretHasLowEntropy() throws IOException {
-    var configWithEntropyDisabled = new SpecificationConfiguration(true, Set.of(SkippedFilter.ENTROPY_FILTER), MessageFormatter.RULE_MESSAGE);
+    var configWithEntropyDisabled = new SpecificationConfiguration(true, Set.of(SkippedFilter.ENTROPY_FILTER), MessageFormatter.RULE_MESSAGE, RejectionLogger.DISABLED);
     var exampleCheck = initializeExampleCheck("secretsConfiguration/postFilter/", "postFilterSpec.sml", configWithEntropyDisabled);
 
     assertThat(analyze(exampleCheck, "rule matching pattern")).containsExactly(
@@ -136,7 +137,7 @@ class SpecificationBasedCheckTest {
     var specificationLoader = new SecretsSpecificationLoader("secretsConfiguration/postFilter/", Set.of("postFilterSpec.sml"));
     // Lower the threshold to 3f so that "rule matching pattern" (entropy ~3.76) passes as high entropy
     specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().getStatisticalFilter().setThreshold(3f);
-    var configWithEntropyDisabled = new SpecificationConfiguration(true, Set.of(SkippedFilter.ENTROPY_FILTER), MessageFormatter.RULE_MESSAGE);
+    var configWithEntropyDisabled = new SpecificationConfiguration(true, Set.of(SkippedFilter.ENTROPY_FILTER), MessageFormatter.RULE_MESSAGE, RejectionLogger.DISABLED);
     var exampleCheck = initializeExampleCheck(specificationLoader, configWithEntropyDisabled);
 
     assertThat(analyze(exampleCheck, "rule matching pattern")).containsExactly(
@@ -145,7 +146,7 @@ class SpecificationBasedCheckTest {
 
   @Test
   void checkShouldRaiseLowConfidenceIssueWhenTestFilesFilterDisabledAndFileIsAutomaticallyDetectedTestFile() throws IOException {
-    var config = new SpecificationConfiguration(true, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE);
+    var config = new SpecificationConfiguration(true, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE, RejectionLogger.DISABLED);
     var exampleCheck = initializeExampleCheck("secretsConfiguration/", "validMinSpec.sml", config);
 
     String fileContent = "The content contains the rule matching pattern and various other characters.";
@@ -167,7 +168,7 @@ class SpecificationBasedCheckTest {
 
   @Test
   void checkShouldRaiseNormalIssueInNonTestFileEvenWhenTestFilesFilterDisabled() throws IOException {
-    var config = new SpecificationConfiguration(true, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE);
+    var config = new SpecificationConfiguration(true, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE, RejectionLogger.DISABLED);
     var exampleCheck = initializeExampleCheck("secretsConfiguration/", "validMinSpec.sml", config);
 
     String fileContent = "The content contains the rule matching pattern and various other characters.";
@@ -181,7 +182,8 @@ class SpecificationBasedCheckTest {
     specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().setPatternNot(List.of("matching"));
     // Lower the threshold so the candidate passes the entropy filter and rejection comes only from patternNot
     specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().getStatisticalFilter().setThreshold(3f);
-    var configWithKnownFakeSecretDisabled = new SpecificationConfiguration(true, Set.of(SkippedFilter.KNOWN_FAKE_SECRET_FILTER), MessageFormatter.RULE_MESSAGE);
+    var configWithKnownFakeSecretDisabled = new SpecificationConfiguration(true, Set.of(SkippedFilter.KNOWN_FAKE_SECRET_FILTER), MessageFormatter.RULE_MESSAGE,
+      RejectionLogger.DISABLED);
     var exampleCheck = initializeExampleCheck(specificationLoader, configWithKnownFakeSecretDisabled);
 
     assertThat(analyze(exampleCheck, "rule matching pattern")).containsExactly(
@@ -192,7 +194,8 @@ class SpecificationBasedCheckTest {
   void checkShouldNotRaiseIssueWhenKnownFakeSecretFilterDisabledAndCandidateDoesNotMatchPatternNot() throws IOException {
     var specificationLoader = new SecretsSpecificationLoader("secretsConfiguration/postFilter/", Set.of("postFilterSpec.sml"));
     specificationLoader.getRulesForKey("exampleKey").get(0).getDetection().getPost().setPatternNot(List.of("nonMatchingWord"));
-    var configWithKnownFakeSecretDisabled = new SpecificationConfiguration(true, Set.of(SkippedFilter.KNOWN_FAKE_SECRET_FILTER), MessageFormatter.RULE_MESSAGE);
+    var configWithKnownFakeSecretDisabled = new SpecificationConfiguration(true, Set.of(SkippedFilter.KNOWN_FAKE_SECRET_FILTER), MessageFormatter.RULE_MESSAGE,
+      RejectionLogger.DISABLED);
     var exampleCheck = initializeExampleCheck(specificationLoader, configWithKnownFakeSecretDisabled);
 
     // Low entropy candidate is still filtered out by the (still-enabled) entropy filter; we just don't add the suffix.

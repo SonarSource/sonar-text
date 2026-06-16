@@ -49,6 +49,7 @@ import org.sonar.plugins.common.measures.DurationStatistics;
 import org.sonar.plugins.common.predicates.TextAndSecretsPredicates;
 import org.sonar.plugins.common.warnings.AnalysisWarningsWrapper;
 import org.sonar.plugins.secrets.SecretsCheckList;
+import org.sonar.plugins.secrets.api.AutomaticTestFileFilter;
 import org.sonar.plugins.text.TextCheckList;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -74,7 +75,9 @@ public class TestUtils {
 
   public static List<String> analyze(Check check, InputFile inputFile) throws IOException {
     SensorContextTester context = sensorContext(check);
-    InputFileContext inputFileContext = new InputFileContext(context, inputFile);
+    // Mirror the analyzer: classify the file once and pass it into the context.
+    var automaticallyDetectedTestFile = AutomaticTestFileFilter.isAutomaticallyDetectedTestFile(context, inputFile);
+    InputFileContext inputFileContext = new InputFileContext(context, inputFile, automaticallyDetectedTestFile);
     check.analyze(inputFileContext);
     inputFileContext.flushIssues();
     return asString(context.allIssues());
@@ -165,7 +168,9 @@ public class TestUtils {
 
   public static InputFileContext inputFileContext(InputFile inputFile) throws IOException {
     var sensorContext = SensorContextTester.create(Path.of(".").toAbsolutePath());
-    return new InputFileContext(sensorContext, inputFile);
+    // Mirror the analyzer: classify the file once and pass it into the context.
+    var automaticallyDetectedTestFile = AutomaticTestFileFilter.isAutomaticallyDetectedTestFile(sensorContext, inputFile);
+    return new InputFileContext(sensorContext, inputFile, automaticallyDetectedTestFile);
   }
 
   public static SensorContextTester sensorContext(Check... checks) {

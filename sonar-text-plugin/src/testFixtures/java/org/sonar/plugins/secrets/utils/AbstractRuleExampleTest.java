@@ -41,6 +41,7 @@ import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.TextRange;
 import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.plugins.common.InputFileContext;
+import org.sonar.plugins.secrets.api.AutomaticTestFileFilter;
 import org.sonar.plugins.secrets.api.PatternMatcher;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
@@ -126,7 +127,10 @@ public abstract class AbstractRuleExampleTest {
     return () -> {
       var context = sensorContext(check);
       var exampleFileName = ruleExample.getFileName() != null ? ruleExample.getFileName() : "file.txt";
-      var inputFileContext = new InputFileContext(context, inputFile(Path.of(exampleFileName), ruleExample.getText()));
+      var exampleInputFile = inputFile(Path.of(exampleFileName), ruleExample.getText());
+      // Mirror the analyzer: classify the file once and pass it into the context.
+      var automaticallyDetectedTestFile = AutomaticTestFileFilter.isAutomaticallyDetectedTestFile(context, exampleInputFile);
+      var inputFileContext = new InputFileContext(context, exampleInputFile, automaticallyDetectedTestFile);
       FilePredicate secretPredicate = file -> true;
 
       var checksContainer = new CheckContainer();

@@ -32,6 +32,7 @@ import org.sonar.plugins.common.measures.DurationStatistics;
 import org.sonar.plugins.common.measures.MemoryMonitor;
 import org.sonar.plugins.common.measures.TelemetryReporter;
 import org.sonar.plugins.common.thread.ParallelizationManager;
+import org.sonar.plugins.secrets.api.AutomaticTestFileFilter;
 
 public class Analyzer {
   public static final Version HIDDEN_FILES_SUPPORTED_API_VERSION = Version.create(12, 0);
@@ -136,11 +137,28 @@ public class Analyzer {
   @CheckForNull
   private InputFileContext buildInputFileContext(InputFile inputFile) {
     try {
-      return new InputFileContext(sensorContext, inputFile);
+      // Classify the file once here, from the raw InputFile and SensorContext, and pass it into the context. Every
+      // rule's pre-filter and CheckContainer's short-circuit then read the same cached value (via
+      // inputFileContext.isAutomaticallyDetectedTestFile()) without re-running the filename/path heuristic. Only run
+      // the heuristic when automatic test-file detection is enabled; otherwise its result is never read, so we skip
+      // the work and leave the classification false.
+      var automaticallyDetectedTestFile = shouldDetectAutomaticTestFiles()
+        && AutomaticTestFileFilter.isAutomaticallyDetectedTestFile(sensorContext, inputFile);
+      return new InputFileContext(sensorContext, inputFile, automaticallyDetectedTestFile);
     } catch (IOException | RuntimeException e) {
       logAnalysisError(inputFile, e);
       return null;
     }
+  }
+
+  /**
+   * Whether files should be run through the automatic test-file heuristic at {@link InputFileContext} construction.
+   * Defaults to {@code false}; only {@link TextAndSecretsAnalyzer} enables it, and only when the heuristic is actually
+   * in play (the project did not declare its own test files, e.g. {@code sonar.tests} is unset). Returning
+   * {@code false} skips the per-file filename/path classification when its result would never be read.
+   */
+  protected boolean shouldDetectAutomaticTestFiles() {
+    return false;
   }
 
   protected void analyzeAllChecks(InputFileContext inputFileContext) {

@@ -1581,6 +1581,59 @@ public abstract class AbstractTextAndSecretsSensorTest {
     assertThat(logTester.logs()).contains("The secret analysis will skip the following filters per user configuration: entropy, known fake secrets, automatic test file detection");
   }
 
+  @Test
+  void shouldLogSummaryWhenAutomaticTestFileDetectionRejectsFiles() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.settings().setProperty("sonar.text.analyzeAllFiles", true);
+
+    analyse(sensor(check), context,
+      inputFile(Path.of("test_one.txt"), "secret 1", null),
+      inputFile(Path.of("tests/two.txt"), "secret 2", null),
+      inputFile(Path.of("src/Three.txt"), "secret 3", null));
+
+    assertThat(logTester.logs()).contains("Skipped 2 file(s) in the secrets analysis due to automatic test file detection");
+  }
+
+  @Test
+  void shouldNotLogSummaryWhenAutomaticTestFileDetectionIsActiveButRejectsNothing() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.settings().setProperty("sonar.text.analyzeAllFiles", true);
+
+    analyse(sensor(check), context,
+      inputFile(Path.of("src/Three.txt"), "secret 3", null));
+
+    assertThat(logTester.logs()).noneMatch(log -> log.startsWith("Skipped ") && log.contains("automatic test file detection"));
+  }
+
+  @Test
+  void shouldNotLogSummaryWhenAutomaticTestFileDetectionIsSkippedByDisableProperty() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.settings().setProperty("sonar.text.analyzeAllFiles", true);
+    context.settings().setProperty(DISABLE_TEST_FILE_DETECTION_KEY, "true");
+
+    analyse(sensor(check), context,
+      inputFile(Path.of("test_one.txt"), "secret 1", null),
+      inputFile(Path.of("src/Three.txt"), "secret 3", null));
+
+    assertThat(logTester.logs()).noneMatch(log -> log.startsWith("Skipped ") && log.contains("automatic test file detection"));
+  }
+
+  @Test
+  void shouldNotLogSummaryWhenSonarTestsIsSet() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.settings().setProperty("sonar.text.analyzeAllFiles", true);
+    context.settings().setProperty(SONAR_TESTS_KEY, "test");
+
+    analyse(sensor(check), context,
+      inputFile(Path.of("test_one.txt"), "secret 1", null));
+
+    assertThat(logTester.logs()).noneMatch(log -> log.startsWith("Skipped ") && log.contains("automatic test file detection"));
+  }
+
   @Rule(key = "FileIssue")
   public static class SpecCheck extends SpecificationBasedCheck {
     public void analyze(InputFileContext ctx) {

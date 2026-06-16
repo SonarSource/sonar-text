@@ -36,6 +36,7 @@ import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.secrets.api.filters.FilterOutcome;
 import org.sonar.plugins.secrets.api.filters.PostFilter;
 import org.sonar.plugins.secrets.api.filters.PreFilter;
+import org.sonar.plugins.secrets.api.filters.RejectionLogger;
 import org.sonar.plugins.secrets.api.filters.SkippedFilter;
 import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestModel;
 import org.sonar.plugins.secrets.configuration.model.Rule;
@@ -156,7 +157,7 @@ class SecretMatcherTest {
 
   @Test
   void findInMarksMatchesInAutomaticallyDetectedTestFileAsSkippedWhenFilterDisabled() throws IOException {
-    var config = new SpecificationConfiguration(true, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE);
+    var config = new SpecificationConfiguration(true, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE, RejectionLogger.DISABLED);
 
     var results = findInMinimumSpecMatcher(config, "test.env");
 
@@ -167,7 +168,7 @@ class SecretMatcherTest {
 
   @Test
   void findInReturnsAcceptedForNonTestFileWhenTestFilesFilterDisabled() throws IOException {
-    var config = new SpecificationConfiguration(true, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE);
+    var config = new SpecificationConfiguration(true, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE, RejectionLogger.DISABLED);
 
     var results = findInMinimumSpecMatcher(config, ".env");
 
@@ -297,7 +298,7 @@ class SecretMatcherTest {
   @Test
   void findWithResultsReportsEntropySkippedForLowEntropyWhenDisabled() throws IOException {
     var rule = ruleWithStatisticalFilterOnly();
-    var configWithEntropyDisabled = new SpecificationConfiguration(false, Set.of(SkippedFilter.ENTROPY_FILTER), MessageFormatter.RULE_MESSAGE);
+    var configWithEntropyDisabled = new SpecificationConfiguration(false, Set.of(SkippedFilter.ENTROPY_FILTER), MessageFormatter.RULE_MESSAGE, RejectionLogger.DISABLED);
     SecretMatcher matcher = SecretMatcher.build(rule, mockDurationStatistics(), configWithEntropyDisabled, true);
 
     var inputFile = inputFile(Path.of(".env"), "rule matching pattern", null, InputFile.Type.MAIN);
@@ -312,7 +313,7 @@ class SecretMatcherTest {
   @Test
   void findWithResultsReportsEntropySkippedForGroupLevelWhenDisabled() throws IOException {
     var rule = ruleWithGroupStatisticalFilter();
-    var configWithEntropyDisabled = new SpecificationConfiguration(false, Set.of(SkippedFilter.ENTROPY_FILTER), MessageFormatter.RULE_MESSAGE);
+    var configWithEntropyDisabled = new SpecificationConfiguration(false, Set.of(SkippedFilter.ENTROPY_FILTER), MessageFormatter.RULE_MESSAGE, RejectionLogger.DISABLED);
     SecretMatcher matcher = SecretMatcher.build(rule, mockDurationStatistics(), configWithEntropyDisabled, true);
 
     var inputFile = inputFile(Path.of(".env"), "rule matching pattern", null, InputFile.Type.MAIN);
@@ -327,7 +328,7 @@ class SecretMatcherTest {
   @Test
   void findInReturnsLowEntropyMatchesWhenEntropyFilterDisabled() throws IOException {
     var rule = ruleWithStatisticalFilterOnly();
-    var configWithEntropyDisabled = new SpecificationConfiguration(false, Set.of(SkippedFilter.ENTROPY_FILTER), MessageFormatter.RULE_MESSAGE);
+    var configWithEntropyDisabled = new SpecificationConfiguration(false, Set.of(SkippedFilter.ENTROPY_FILTER), MessageFormatter.RULE_MESSAGE, RejectionLogger.DISABLED);
     SecretMatcher matcher = SecretMatcher.build(rule, mockDurationStatistics(), configWithEntropyDisabled, true);
 
     // "rule matching pattern" has low entropy but should still be found when filter is disabled
@@ -354,7 +355,7 @@ class SecretMatcherTest {
   @Test
   void findInReturnsLowEntropyGroupMatchesWhenEntropyFilterDisabled() throws IOException {
     var rule = ruleWithGroupStatisticalFilter();
-    var configWithEntropyDisabled = new SpecificationConfiguration(false, Set.of(SkippedFilter.ENTROPY_FILTER), MessageFormatter.RULE_MESSAGE);
+    var configWithEntropyDisabled = new SpecificationConfiguration(false, Set.of(SkippedFilter.ENTROPY_FILTER), MessageFormatter.RULE_MESSAGE, RejectionLogger.DISABLED);
     SecretMatcher matcher = SecretMatcher.build(rule, mockDurationStatistics(), configWithEntropyDisabled, true);
 
     // "rule matching pattern" has low entropy but the group predicate should not filter it out when entropy filter is disabled
