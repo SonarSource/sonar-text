@@ -16,6 +16,14 @@
  */
 plugins {}
 
+configurations.all {
+    resolutionStrategy {
+        // Pinned to avoid dependency risks
+        force("org.apache.logging.log4j:log4j-core:2.26.0")
+        force("org.codehaus.plexus:plexus-utils:4.0.3")
+    }
+}
+
 configurations.matching { it.name == "kotlinBouncyCastleConfiguration" }.configureEach {
     // Workaround for https://github.com/gradle/gradle/issues/35309.
     // When any of cloud-native Gradle plugins is applied in a project
