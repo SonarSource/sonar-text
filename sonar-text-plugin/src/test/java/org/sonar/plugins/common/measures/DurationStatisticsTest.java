@@ -33,7 +33,7 @@ class DurationStatisticsTest {
   @RegisterExtension
   LogTesterJUnit5 logTester = new LogTesterJUnit5().setLevel(Level.DEBUG);
 
-  private static final Predicate<String> REPORT_PREDICATE = Pattern.compile(".*Statistics\\s+ {2}.*::.* \\d+ ms \\d+ times \\(mean [\\d']+ us\\)(.|\\s)*").asPredicate();
+  private static final Predicate<String> REPORT_PREDICATE = Pattern.compile("Statistics\\s+ {2}[^:\\s]*::\\S* \\d+ ms \\d+ times \\(mean [\\d']+ us\\)").asPredicate();
 
   @ParameterizedTest
   @ValueSource(strings = {"true", "false"})
