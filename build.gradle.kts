@@ -69,13 +69,17 @@ sonar {
         property("sonar.links.scm", "https://github.com/SonarSource/sonar-text-enterprise")
         property("sonar.links.issue", "https://jira.sonarsource.com/browse/SECRETS")
 
-        properties["sonar.sources"] as MutableCollection<String> +=
-            gradle.includedBuild("build-logic-text").projectDir.resolve("src/main/java").toString()
+        (properties["sonar.sources"] as MutableCollection<String>).apply {
+            add(gradle.includedBuild("build-logic-text").projectDir.resolve("src/main/java").toString())
+            add(gradle.includedBuild("build-logic-text").projectDir.resolve("src/main/kotlin").toString())
+        }
         property("sonar.sca.exclusions", "private/its/benchmark/src/integrationTest/resources/sources/**")
 
         val binaries = properties["sonar.java.binaries"] as? MutableCollection<String> ?: mutableSetOf()
-        properties["sonar.java.binaries"] = binaries +
-            gradle.includedBuild("build-logic-text").projectDir.resolve("build/classes/java/main").toString()
+        properties["sonar.java.binaries"] = binaries.apply {
+            add(gradle.includedBuild("build-logic-text").projectDir.resolve("build/classes/java/main").toString())
+            add(gradle.includedBuild("build-logic-text").projectDir.resolve("build/classes/kotlin/main").toString())
+        }
         val libraries = properties["sonar.java.libraries"] as? MutableCollection<String> ?: mutableSetOf()
         properties["sonar.java.libraries"] = libraries + buildscript.configurations.getByName("classpath")
         properties["sonar.coverage.jacoco.xmlReportPaths"] =
