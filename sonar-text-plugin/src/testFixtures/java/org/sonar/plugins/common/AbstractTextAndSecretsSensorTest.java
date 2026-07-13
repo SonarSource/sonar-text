@@ -803,6 +803,17 @@ public abstract class AbstractTextAndSecretsSensorTest {
   }
 
   @Test
+  void shouldReportPluginVersionAsTelemetry() {
+    Check check = new ReportIssueAtLineOneCheck();
+    InputFile inputFile = inputFile("foo");
+
+    SensorContextTester context = spy(sensorContext(check));
+    analyse(sensor(check), context, inputFile);
+
+    verify(context).addTelemetryProperty(eq(TelemetryReporter.KEY_PREFIX + "pluginVersion"), argThat(value -> value != null && !value.isBlank()));
+  }
+
+  @Test
   void shouldExecuteAnalysisWithOneThread() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);

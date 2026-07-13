@@ -21,6 +21,7 @@ plugins {
     id("org.sonarsource.cloud-native.license-file-generator")
     id("org.sonarsource.text.code-generation")
     id("org.sonarsource.text.specification-files-processing")
+    id("org.sonarsource.cloud-native.project-version-provisioning")
     `java-library`
     `java-test-fixtures`
 }

@@ -16,13 +16,21 @@
  */
 package org.sonar.plugins.common;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import org.junit.jupiter.api.Test;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.plugins.secrets.configuration.SecretsSpecificationContainer;
 import org.sonar.plugins.secrets.utils.CheckContainer;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.SONARQUBE_RUNTIME;
 import static org.sonar.plugins.common.TestUtils.activeRules;
 import static org.sonar.plugins.common.TestUtils.toRuleKeys;
@@ -56,5 +64,43 @@ class TextAndSecretsSensorTest extends AbstractTextAndSecretsSensorTest {
   @Override
   protected String sensorName() {
     return "TextAndSecretsSensor";
+  }
+
+  @Test
+  void shouldResolvePluginVersionFromClasspathResource() {
+    assertThat(TextAndSecretsSensor.resolvePluginVersion(getClass().getClassLoader())).isEqualTo("1.2.3-test");
+  }
+
+  @Test
+  void shouldFallBackToUnknownPluginVersionWhenResourceIsMissing() {
+    ClassLoader emptyClassLoader = new URLClassLoader(new URL[0], null);
+    assertThat(TextAndSecretsSensor.resolvePluginVersion(emptyClassLoader)).isEqualTo("unknown");
+  }
+
+  @Test
+  void shouldFallBackToUnknownPluginVersionWhenResourceCannotBeRead() {
+    ClassLoader brokenClassLoader = new ClassLoader() {
+      @Override
+      public InputStream getResourceAsStream(String name) {
+        return new InputStream() {
+          @Override
+          public int read() throws IOException {
+            throw new IOException("boom");
+          }
+        };
+      }
+    };
+    assertThat(TextAndSecretsSensor.resolvePluginVersion(brokenClassLoader)).isEqualTo("unknown");
+  }
+
+  @Test
+  void shouldFallBackToUnknownPluginVersionWhenPlaceholderWasNotSubstituted() {
+    ClassLoader unsubstitutedClassLoader = new ClassLoader() {
+      @Override
+      public InputStream getResourceAsStream(String name) {
+        return new ByteArrayInputStream("plugin.version=${version}".getBytes(StandardCharsets.UTF_8));
+      }
+    };
+    assertThat(TextAndSecretsSensor.resolvePluginVersion(unsubstitutedClassLoader)).isEqualTo("unknown");
   }
 }

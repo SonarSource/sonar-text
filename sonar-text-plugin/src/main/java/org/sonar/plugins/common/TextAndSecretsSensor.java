@@ -16,11 +16,14 @@
  */
 package org.sonar.plugins.common;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -70,6 +73,7 @@ import static org.sonar.plugins.common.measures.TelemetryReporter.SENSOR_DISABLE
 public class TextAndSecretsSensor implements Sensor {
 
   private static final Logger LOG = LoggerFactory.getLogger(TextAndSecretsSensor.class);
+  private static final String PLUGIN_VERSION_RESOURCE = "org/sonar/plugins/secrets/pluginVersion.properties";
   public static final String REGEX_MATCH_TIMEOUT_KEY = "sonar.text.regex.timeout.match";
   public static final String REGEX_EXECUTION_TIMEOUT_KEY = "sonar.text.regex.timeout.execution";
   public static final String ANALYZER_ACTIVATION_KEY = "sonar.text.activate";
@@ -291,6 +295,7 @@ public class TextAndSecretsSensor implements Sensor {
     gitService = initializeGitService(sensorContext);
     textAndSecretsPredicates = new TextAndSecretsPredicates(sensorContext, durationStatistics, telemetryReporter, gitService, analysisWarnings);
     CiVendorFilesTelemetry.measureProjectsCIFilesInclusion(sensorContext, telemetryReporter);
+    telemetryReporter.addStringMeasure("pluginVersion", resolvePluginVersion());
     reportDisabledSecretFilters(sensorContext);
     initializeParallelizationManager(sensorContext);
     initializeOptionalConfigValue(sensorContext, REGEX_MATCH_TIMEOUT_KEY, RegexMatchingManager::setTimeoutMs);
@@ -429,6 +434,27 @@ public class TextAndSecretsSensor implements Sensor {
 
   private static boolean isSonarCloudContext(SensorContext sensorContext) {
     return !isSonarLintContext(sensorContext.runtime()) && sensorContext.runtime().getEdition() == SonarEdition.SONARCLOUD;
+  }
+
+  private static String resolvePluginVersion() {
+    return resolvePluginVersion(TextAndSecretsSensor.class.getClassLoader());
+  }
+
+  // For testing purposes
+  static String resolvePluginVersion(ClassLoader classLoader) {
+    try (InputStream is = classLoader.getResourceAsStream(PLUGIN_VERSION_RESOURCE)) {
+      if (is != null) {
+        var props = new Properties();
+        props.load(is);
+        var version = props.getProperty("plugin.version", "unknown");
+        if (!version.contains("${")) {
+          return version;
+        }
+      }
+    } catch (IOException e) {
+      // fall through to fallback
+    }
+    return "unknown";
   }
 
   private void reportDisabledSecretFilters(SensorContext sensorContext) {
