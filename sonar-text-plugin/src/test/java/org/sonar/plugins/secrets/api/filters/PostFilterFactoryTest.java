@@ -33,6 +33,7 @@ import org.sonar.plugins.secrets.configuration.deserialization.ReferenceTestMode
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.DecodedBase64Module;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.HeuristicsFilter;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.NestedPostModule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.StatisticalFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.TopLevelPostModule;
 
@@ -316,6 +317,105 @@ class PostFilterFactoryTest {
     // Test with content that has none of the matchNot patterns
     var inputWithNeither = Base64.getEncoder().encodeToString("{\"key\":\"value\"}".getBytes());
     assertThat(postFilter.apply(inputWithNeither).passed()).isTrue();
+  }
+
+  @ParameterizedTest
+  @CsvSource(textBlock = """
+    {"sub":"svc-realsecretvalue"};true
+    {"sub":"svc-EXAMPLE-token"};false
+    """, delimiter = ';')
+  void shouldFilterExtractedMatchWithNestedPost(String json, boolean shouldMatch) {
+    // matching.pattern extracts the "sub" value; nested post rejects it when it contains EXAMPLE.
+    var decodedBase64Module = new DecodedBase64Module(
+      emptyList(), emptyList(), DecodedBase64Module.Alphabet.DEFAULT,
+      matchingWithPattern("\"sub\":\"([^\"]+)\""),
+      new NestedPostModule(null, List.of("EXAMPLE"), null));
+    var postFilter = PostFilterFactory.createFilter(topLevelWith(decodedBase64Module));
+    var encoded = Base64.getEncoder().encodeToString(json.getBytes());
+
+    assertThat(postFilter.apply(encoded).passed()).isEqualTo(shouldMatch);
+  }
+
+  @Test
+  void shouldRejectWhenMatchingPatternDoesNotMatchDecodedValue() {
+    var decodedBase64Module = new DecodedBase64Module(
+      emptyList(), emptyList(), DecodedBase64Module.Alphabet.DEFAULT,
+      matchingWithPattern("\"sub\":\"([^\"]+)\""), null);
+    var postFilter = PostFilterFactory.createFilter(topLevelWith(decodedBase64Module));
+    var encoded = Base64.getEncoder().encodeToString("{\"other\":\"value\"}".getBytes());
+
+    assertThat(postFilter.apply(encoded).passed()).isFalse();
+  }
+
+  @ParameterizedTest
+  @CsvSource(textBlock = """
+    {"token":"realvalue"};true
+    {"token":"EXAMPLE"};false
+    """, delimiter = ';')
+  void shouldRunNestedPostOnWholeDecodedValueWhenNoMatchingPattern(String json, boolean shouldMatch) {
+    var decodedBase64Module = new DecodedBase64Module(
+      emptyList(), emptyList(), DecodedBase64Module.Alphabet.DEFAULT,
+      null, new NestedPostModule(null, List.of("EXAMPLE"), null));
+    var postFilter = PostFilterFactory.createFilter(topLevelWith(decodedBase64Module));
+    var encoded = Base64.getEncoder().encodeToString(json.getBytes());
+
+    assertThat(postFilter.apply(encoded).passed()).isEqualTo(shouldMatch);
+  }
+
+  @Test
+  void shouldStillApplyMatchEachOnFullDecodedValueAlongsideExtraction() {
+    // matchEach guards the full decoded value; the extracted "sub" value must also pass the nested post.
+    var decodedBase64Module = new DecodedBase64Module(
+      List.of("\"iss\":"), emptyList(), DecodedBase64Module.Alphabet.DEFAULT,
+      matchingWithPattern("\"sub\":\"([^\"]+)\""),
+      new NestedPostModule(null, List.of("EXAMPLE"), null));
+    var postFilter = PostFilterFactory.createFilter(topLevelWith(decodedBase64Module));
+
+    // Contains "iss": (matchEach ok) and extracted sub is clean -> accepted.
+    var accepted = Base64.getEncoder().encodeToString("{\"iss\":\"acme\",\"sub\":\"svc-clean\"}".getBytes());
+    assertThat(postFilter.apply(accepted).passed()).isTrue();
+
+    // Missing "iss": -> matchEach fails before extraction even though sub is clean.
+    var missingIss = Base64.getEncoder().encodeToString("{\"sub\":\"svc-clean\"}".getBytes());
+    assertThat(postFilter.apply(missingIss).passed()).isFalse();
+  }
+
+  @Test
+  void shouldLogNestedPostRejectionWithDecodedBase64Prefix() {
+    var decodedBase64Module = new DecodedBase64Module(
+      emptyList(), emptyList(), DecodedBase64Module.Alphabet.DEFAULT,
+      matchingWithPattern("\"sub\":\"([^\"]+)\""),
+      new NestedPostModule(null, List.of("EXAMPLE"), null));
+    var filter = PostFilterFactory.createFilter(topLevelWith(decodedBase64Module), Set.of(), RejectionLogger.create(5));
+    var encoded = Base64.getEncoder().encodeToString("{\"sub\":\"svc-EXAMPLE\"}".getBytes());
+
+    filter.apply(encoded, contextFor("S6290", "file.txt", 10));
+
+    assertThat(logTester.logs(Level.DEBUG))
+      .anyMatch(line -> line.contains("Rejecting candidate")
+        && line.contains("by decodedBase64 -> patternNot: EXAMPLE"));
+  }
+
+  @Test
+  void shouldAcceptWhenNestedPostDeclaresNoFilters() {
+    // The schema rejects an empty nested post, so this only happens for programmatic modules: a no-op that accepts.
+    var decodedBase64Module = new DecodedBase64Module(
+      emptyList(), emptyList(), DecodedBase64Module.Alphabet.DEFAULT,
+      null, new NestedPostModule(null, emptyList(), null));
+    var postFilter = PostFilterFactory.createFilter(topLevelWith(decodedBase64Module));
+    var encoded = Base64.getEncoder().encodeToString("user:realStr0ngP4ss".getBytes());
+
+    assertThat(postFilter.apply(encoded).passed()).isTrue();
+  }
+
+  private static Matching matchingWithPattern(String pattern) {
+    var m = new Matching();
+    m.setPattern(pattern);
+    return m;
+  }
+
+  private static TopLevelPostModule topLevelWith(DecodedBase64Module decodedBase64Module) {
+    return new TopLevelPostModule(decodedBase64Module, null, emptyList(), null, emptyList());
   }
 
   @Test

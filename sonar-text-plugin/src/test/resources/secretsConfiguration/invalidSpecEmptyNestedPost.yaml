@@ -1,0 +1,21 @@
+provider:
+  metadata:
+    name: provider name
+    category: Cloud Provider
+    message: provider message
+  rules:
+    - id: exampleId
+      rspecKey: exampleKey
+      metadata:
+        name: rule name
+      detection:
+        matching:
+          pattern: "\\b(rule matching pattern)\\b"
+        post:
+          decodedBase64:
+            post: {}
+      examples:
+        - text: >
+            example
+            text
+          containsSecret: true

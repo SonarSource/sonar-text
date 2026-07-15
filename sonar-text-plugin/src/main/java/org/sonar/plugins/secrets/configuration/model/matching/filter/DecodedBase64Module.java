@@ -21,15 +21,25 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import java.util.List;
 import javax.annotation.Nullable;
+import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 
-public record DecodedBase64Module(List<String> matchEach, List<String> matchNot, Alphabet alphabet) {
+public record DecodedBase64Module(List<String> matchEach, List<String> matchNot, Alphabet alphabet,
+  @Nullable Matching matching, @Nullable NestedPostModule post) {
   public DecodedBase64Module(
     @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> matchEach,
     @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> matchNot,
-    @Nullable Alphabet alphabet) {
+    @Nullable Alphabet alphabet,
+    @Nullable Matching matching,
+    @Nullable NestedPostModule post) {
     this.matchEach = matchEach;
     this.matchNot = matchNot;
     this.alphabet = alphabet == null ? Alphabet.DEFAULT : alphabet;
+    this.matching = matching;
+    this.post = post;
+  }
+
+  public DecodedBase64Module(List<String> matchEach, List<String> matchNot, @Nullable Alphabet alphabet) {
+    this(matchEach, matchNot, alphabet, null, null);
   }
 
   public enum Alphabet {

@@ -27,7 +27,9 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.sonar.plugins.secrets.api.EntropyChecker;
 import org.sonar.plugins.secrets.api.Heuristics;
+import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.AbstractPostModule;
+import org.sonar.plugins.secrets.configuration.model.matching.filter.DecodedBase64Module;
 
 /**
  * Factory class to create a post-filter based on the post module configuration.
@@ -64,10 +66,9 @@ public final class PostFilterFactory {
   /**
    * Creates a structured post-filter based on the post module configuration.
    *
-   * <p>For each filter type present in {@code post}, a {@link FilteringPostFilter} is built by the corresponding
-   * handler. Each handler returns a {@link FilteringResult} carrying both the {@link FilterOutcome} and an optional
-   * detail string about why a candidate was rejected. {@link #withRejectionLogging} then wraps each filter so the
-   * {@code rejectionLogger} can emit a debug line — handlers themselves never reference the logger.
+   * <p>The applicable handlers are combined via {@link #combineHandlers}, which short-circuits on the first rejection
+   * and carries a detail string about why the candidate was rejected. This wrapper forwards that detail to
+   * {@code rejectionLogger} on rejection — handlers themselves never reference the logger.
    *
    * @param post            deserialized post module configuration
    * @param skippedFilters  filters to skip as requested by the caller
@@ -77,51 +78,44 @@ public final class PostFilterFactory {
     if (post == null) {
       return PostFilter.ACCEPT_ALL;
     }
-
-    List<PostFilter> filters = HANDLERS.stream()
-      .map(h -> {
-        FilteringPostFilter inner = h.build(post, skippedFilters);
-        if (inner == null) {
-          return null;
-        }
-        return withRejectionLogging(inner, rejectionLogger);
-      })
-      .filter(Objects::nonNull)
-      .toList();
-
-    if (filters.isEmpty()) {
+    FilteringPostFilter combined = combineHandlers(post, skippedFilters);
+    if (combined == null) {
       return PostFilter.ACCEPT_ALL;
     }
-
     return (String candidateSecret, RejectionLogContext context) -> {
-      FilterOutcome aggregate = FilterOutcome.ACCEPTED;
-      for (PostFilter filter : filters) {
-        FilterOutcome outcome = filter.apply(candidateSecret, context);
-        if (!outcome.passed()) {
-          return FilterOutcome.REJECTED;
-        }
-        aggregate = aggregate.combine(outcome);
-      }
-      return aggregate;
-    };
-  }
-
-  /**
-   * Adapts a {@link FilteringPostFilter} (which carries a description string) into the public {@link PostFilter}
-   * type (which only carries {@link FilterOutcome}). On rejection, the wrapper forwards the description to
-   * {@code rejectionLogger}; on accept, the description is ignored.
-   *
-   * <p>Only the {@code inner} filter's own rejection triggers a log line — the outer pipeline short-circuits on the
-   * first failing filter, so wrappers for later filters are never reached. This keeps each log line correctly
-   * attributed to the specific filter that rejected the candidate.
-   */
-  private static PostFilter withRejectionLogging(FilteringPostFilter inner, RejectionLogger rejectionLogger) {
-    return (candidate, context) -> {
-      FilteringResult result = inner.apply(candidate);
+      FilteringResult result = combined.apply(candidateSecret);
       if (!result.outcome().passed()) {
         rejectionLogger.log(context, result.details());
       }
       return result.outcome();
+    };
+  }
+
+  /**
+   * Combines every applicable handler for {@code module} into a single {@link FilteringPostFilter} that short-circuits
+   * on the first rejection and aggregates {@link SkippedFilter} tags on acceptance. Used to run a nested post module
+   * (e.g. the {@code post} block of {@code decodedBase64}) against an extracted value, without a
+   * {@link RejectionLogContext} in scope. Returns {@code null} when the module declares no filters.
+   */
+  @Nullable
+  static FilteringPostFilter combineHandlers(AbstractPostModule module, Set<SkippedFilter> skippedFilters) {
+    List<FilteringPostFilter> filters = HANDLERS.stream()
+      .map(h -> h.build(module, skippedFilters))
+      .filter(Objects::nonNull)
+      .toList();
+    if (filters.isEmpty()) {
+      return null;
+    }
+    return candidate -> {
+      FilterOutcome aggregate = FilterOutcome.ACCEPTED;
+      for (FilteringPostFilter filter : filters) {
+        FilteringResult result = filter.apply(candidate);
+        if (!result.outcome().passed()) {
+          return result;
+        }
+        aggregate = aggregate.combine(result.outcome());
+      }
+      return new FilteringResult(aggregate, "");
     };
   }
 
@@ -164,27 +158,91 @@ public final class PostFilterFactory {
       if (decodedBase64Module == null) {
         return null;
       }
-      return candidate -> {
-        var stringToDecode = switch (decodedBase64Module.alphabet()) {
-          case Y64 -> candidate.replace('.', '+').replace('_', '/').replace('-', '=');
-          case DEFAULT -> candidate;
-        };
-        byte[] decodedBytes;
-        try {
-          decodedBytes = Base64.getDecoder().decode(stringToDecode);
-        } catch (IllegalArgumentException iae) {
-          return FilteringResult.rejected("decodedBase64: invalid encoding");
-        }
-        var decoded = new String(decodedBytes, StandardCharsets.UTF_8);
-        if (!decodedBase64Module.matchEach().isEmpty()
-          && !decodedBase64Module.matchEach().stream().allMatch(decoded::contains)) {
-          return FilteringResult.rejected("decodedBase64: matchEach not satisfied");
-        }
-        if (decodedBase64Module.matchNot().stream().anyMatch(decoded::contains)) {
-          return FilteringResult.rejected("decodedBase64: matchNot matched");
-        }
-        return FilteringResult.ACCEPTED;
+      Matching matching = decodedBase64Module.matching();
+      Pattern extractionPattern = matching != null && matching.getPattern() != null
+        ? Pattern.compile(matching.getPattern())
+        : null;
+      FilteringPostFilter nestedFilter = buildNestedFilter(decodedBase64Module, skippedFilters);
+      return candidate -> evaluate(candidate, decodedBase64Module, extractionPattern, nestedFilter);
+    }
+
+    @Nullable
+    private static FilteringPostFilter buildNestedFilter(DecodedBase64Module module, Set<SkippedFilter> skippedFilters) {
+      var nestedPost = module.post();
+      if (nestedPost == null) {
+        return null;
+      }
+      // An empty nested post is rejected by the schema; null here (only from programmatic modules) is a no-op filter.
+      return combineHandlers(nestedPost, skippedFilters);
+    }
+
+    private static FilteringResult evaluate(String candidate, DecodedBase64Module module,
+      @Nullable Pattern extractionPattern, @Nullable FilteringPostFilter nestedFilter) {
+      String decoded = decode(candidate, module.alphabet());
+      if (decoded == null) {
+        return FilteringResult.rejected("decodedBase64: invalid encoding");
+      }
+      FilteringResult literalResult = applyLiteralFilters(decoded, module);
+      if (!literalResult.outcome().passed()) {
+        return literalResult;
+      }
+      String extracted = extract(decoded, extractionPattern);
+      if (extracted == null) {
+        return FilteringResult.rejected("decodedBase64: matching not satisfied");
+      }
+      return applyNested(extracted, nestedFilter);
+    }
+
+    @Nullable
+    private static String decode(String candidate, DecodedBase64Module.Alphabet alphabet) {
+      var stringToDecode = switch (alphabet) {
+        case Y64 -> candidate.replace('.', '+').replace('_', '/').replace('-', '=');
+        case DEFAULT -> candidate;
       };
+      try {
+        return new String(Base64.getDecoder().decode(stringToDecode), StandardCharsets.UTF_8);
+      } catch (IllegalArgumentException iae) {
+        return null;
+      }
+    }
+
+    private static FilteringResult applyLiteralFilters(String decoded, DecodedBase64Module module) {
+      if (!module.matchEach().isEmpty() && !module.matchEach().stream().allMatch(decoded::contains)) {
+        return FilteringResult.rejected("decodedBase64: matchEach not satisfied");
+      }
+      if (module.matchNot().stream().anyMatch(decoded::contains)) {
+        return FilteringResult.rejected("decodedBase64: matchNot matched");
+      }
+      return FilteringResult.ACCEPTED;
+    }
+
+    /**
+     * Applies the extraction pattern to the decoded value. Returns the whole decoded value when no pattern is
+     * configured, the captured value (first group, else the whole match) on a hit, or {@code null} when a configured
+     * pattern does not match.
+     */
+    @Nullable
+    private static String extract(String decoded, @Nullable Pattern extractionPattern) {
+      if (extractionPattern == null) {
+        return decoded;
+      }
+      var matcher = extractionPattern.matcher(decoded);
+      if (!matcher.find()) {
+        return null;
+      }
+      // Convention (see PatternMatcher): the first capturing group is the extracted value; without one, the whole match.
+      return matcher.groupCount() > 0 && matcher.group(1) != null ? matcher.group(1) : matcher.group();
+    }
+
+    private static FilteringResult applyNested(String extracted, @Nullable FilteringPostFilter nestedFilter) {
+      if (nestedFilter == null) {
+        return FilteringResult.ACCEPTED;
+      }
+      FilteringResult nestedResult = nestedFilter.apply(extracted);
+      if (!nestedResult.outcome().passed()) {
+        return FilteringResult.rejected("decodedBase64 -> " + nestedResult.details());
+      }
+      return nestedResult;
     }
   }
 
