@@ -98,6 +98,7 @@ import static org.sonar.plugins.common.TextAndSecretsSensor.DISABLE_ENTROPY_FILT
 import static org.sonar.plugins.common.TextAndSecretsSensor.DISABLE_KNOWN_FAKE_SECRET_FILTER_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.DISABLE_TEST_FILE_DETECTION_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.SONAR_TESTS_KEY;
+import static org.sonarsource.analyzer.commons.appsec.TestFileClassifier.HEURISTIC_DISABLED_KEY;
 
 // The class is executed in isolation from other test classes, because of shouldNotLeakThreads() method.
 @Isolated
@@ -1556,6 +1557,15 @@ public abstract class AbstractTextAndSecretsSensorTest {
   void createSpecificationConfigurationShouldHaveTestFilesFilterSkippedWhenDisableTestFileDetectionIsTrue() {
     var context = testUtils().sonarqubeSensorContext();
     context.settings().setProperty(DISABLE_TEST_FILE_DETECTION_KEY, "true");
+
+    assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters()).contains(SkippedFilter.TEST_FILES_FILTER);
+    assertThat(logTester.logs()).contains("The secret analysis will skip the following filters per user configuration: automatic test file detection");
+  }
+
+  @Test
+  void createSpecificationConfigurationShouldHaveTestFilesFilterSkippedWhenGenericTestFileHeuristicIsDisabled() {
+    var context = testUtils().sonarqubeSensorContext();
+    context.settings().setProperty(HEURISTIC_DISABLED_KEY, "true");
 
     assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters()).contains(SkippedFilter.TEST_FILES_FILTER);
     assertThat(logTester.logs()).contains("The secret analysis will skip the following filters per user configuration: automatic test file detection");

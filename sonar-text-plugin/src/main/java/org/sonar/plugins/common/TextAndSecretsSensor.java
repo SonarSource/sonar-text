@@ -67,6 +67,7 @@ import org.sonar.plugins.text.TextCheckList;
 import org.sonar.plugins.text.TextRuleDefinition;
 import org.sonar.plugins.text.api.AbstractUnicodeSequenceCheck;
 import org.sonar.plugins.text.checks.BIDICharacterCheck;
+import org.sonarsource.analyzer.commons.appsec.TestFileClassifier;
 
 import static org.sonar.plugins.common.measures.TelemetryReporter.SENSOR_DISABLED_MEASURE_KEY;
 
@@ -204,12 +205,19 @@ public class TextAndSecretsSensor implements Sensor {
     return false;
   }
 
+  private static boolean isTestFileDetectionDisabled(SensorContext sensorContext) {
+    var config = sensorContext.config();
+    // Also honor the generic, analyzer-agnostic opt-out defined by sonar-analyzer-commons.
+    return config.getBoolean(DISABLE_TEST_FILE_DETECTION_KEY).orElse(DISABLE_TEST_FILE_DETECTION_DEFAULT_VALUE)
+      || config.getBoolean(TestFileClassifier.HEURISTIC_DISABLED_KEY).orElse(false);
+  }
+
   private static Set<SkippedFilter> resolveSkippedFilters(SensorContext sensorContext) {
     EnumSet<SkippedFilter> skippedFilters = EnumSet.noneOf(SkippedFilter.class);
     if (sensorContext.config().getBoolean(DISABLE_ENTROPY_FILTER_KEY).orElse(DISABLE_ENTROPY_FILTER_DEFAULT_VALUE)) {
       skippedFilters.add(SkippedFilter.ENTROPY_FILTER);
     }
-    if (sensorContext.config().getBoolean(DISABLE_TEST_FILE_DETECTION_KEY).orElse(DISABLE_TEST_FILE_DETECTION_DEFAULT_VALUE)) {
+    if (isTestFileDetectionDisabled(sensorContext)) {
       skippedFilters.add(SkippedFilter.TEST_FILES_FILTER);
     }
     if (sensorContext.config().getBoolean(DISABLE_KNOWN_FAKE_SECRET_FILTER_KEY).orElse(DISABLE_KNOWN_FAKE_SECRET_FILTER_DEFAULT_VALUE)) {
@@ -461,7 +469,7 @@ public class TextAndSecretsSensor implements Sensor {
     boolean entropyFilterDisabled = sensorContext.config().getBoolean(DISABLE_ENTROPY_FILTER_KEY).orElse(DISABLE_ENTROPY_FILTER_DEFAULT_VALUE);
     telemetryReporter.addNumericMeasure("secrets.disable_entropy_filter", entropyFilterDisabled ? 1 : 0);
 
-    boolean testFileDetectionDisabled = sensorContext.config().getBoolean(DISABLE_TEST_FILE_DETECTION_KEY).orElse(DISABLE_TEST_FILE_DETECTION_DEFAULT_VALUE);
+    boolean testFileDetectionDisabled = isTestFileDetectionDisabled(sensorContext);
     telemetryReporter.addNumericMeasure("secrets.disable_test_file_detection", testFileDetectionDisabled ? 1 : 0);
 
     boolean knownFakeSecretFilterDisabled = sensorContext.config().getBoolean(DISABLE_KNOWN_FAKE_SECRET_FILTER_KEY).orElse(DISABLE_KNOWN_FAKE_SECRET_FILTER_DEFAULT_VALUE);
