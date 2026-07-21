@@ -1,33 +1,33 @@
 [versions]
-sonar-commons = "2.27.0.5007"
+sonar-commons = "2.28.0.5085"
 # Before updating the plugin-api version, make sure to check the compatibility matrix and stick to the lowest denominator
 # https://github.com/SonarSource/sonar-plugin-api?tab=readme-ov-file#compatibility
 sonar-plugin-api = "12.0.0.2960"
 sonarqube = "26.3.0.120487"
-sonar-java = "8.26.0.42915"
-sonar-scanner-gradle = "7.2.3.7755"
-sonar-orchestrator = "6.1.0.3962"
+sonar-java = "8.36.0.45637"
+sonar-scanner-gradle = "7.3.1.8318"
+sonar-orchestrator = "6.3.1.4538"
 sonar-license-api = "3.4"
 sonar-lint = "10.47.0.84936"
-slf4j = "2.0.17"
-logback = "1.5.32"
-jackson = "2.21.2"
-json-schema-validator = "2.0.1"
+slf4j = "2.0.18"
+logback = "1.5.38"
+jackson = "2.22.1"
+json-schema-validator = "2.0.4"
 pico-cli = "4.7.7"
-junit = "6.0.3"
+junit = "6.1.2"
 assertj = "3.27.7"
 mockito = "5.23.0"
 yguard = "4.1.1"
-eclipse-jgit = "7.6.0.202603022253-r"
-commons-io = "2.21.0"
+eclipse-jgit = "7.7.0.202606012155-r"
+commons-io = "2.22.0"
 re2j = "1.8"
-gradle-shadow = "9.4.1" # should be in sync with build-logic/common/gradle/libs.versions.toml
+gradle-shadow = "9.5.1" # should be in sync with build-logic/common/gradle/libs.versions.toml
 awaitility = "4.3.0"
 ahocorasick = "0.6.3"
-tink = "1.21.0"
+tink = "1.23.0"
 wiremock = "3.13.2"
-ayza = "10.0.4"
-bouncycastle = "1.84"
+ayza = "10.0.5"
+bouncycastle = "1.85"
 
 [libraries]
 sonar-analyzer-commons = { module = "org.sonarsource.analyzer-commons:sonar-analyzer-commons", version.ref = "sonar-commons" }
@@ -69,6 +69,6 @@ ayza-pem = { module = "io.github.hakky54:ayza-for-pem", version.ref = "ayza" }
 bc-pkix-jdk18on = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bouncycastle" }
 
 [plugins]
-buildconfig = { id = "com.github.gmazzo.buildconfig", version = "6.0.9" }
+buildconfig = { id = "com.github.gmazzo.buildconfig", version = "6.0.10" }
 jmh = { id = "me.champeau.jmh", version = "0.7.3" }
 graalvm-native = { id = "org.graalvm.buildtools.native", version = "0.11.5" }
