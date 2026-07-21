@@ -3,8 +3,9 @@ sonar-commons = "2.28.0.5085"
 # Before updating the plugin-api version, make sure to check the compatibility matrix and stick to the lowest denominator
 # https://github.com/SonarSource/sonar-plugin-api?tab=readme-ov-file#compatibility
 sonar-plugin-api = "13.2.0.3137"
-sonarqube = "26.3.0.120487"
+sonarqube = "26.7.0.124771"
 sonar-java = "8.36.0.45637"
+sonar-scanner-engine = "13.4.1.4007"
 sonar-scanner-gradle = "7.3.1.8318"
 sonar-orchestrator = "6.3.1.4538"
 sonar-license-api = "3.4"
@@ -32,10 +33,11 @@ bouncycastle = "1.85"
 [libraries]
 sonar-analyzer-commons = { module = "org.sonarsource.analyzer-commons:sonar-analyzer-commons", version.ref = "sonar-commons" }
 sonar-plugin-api = { module = "org.sonarsource.api.plugin:sonar-plugin-api", version.ref = "sonar-plugin-api" }
-sonar-plugin-api-impl = { module = "org.sonarsource.sonarqube:sonar-plugin-api-impl", version.ref = "sonarqube" }
 sonar-plugin-api-test-fixtures = { module = "org.sonarsource.api.plugin:sonar-plugin-api-test-fixtures", version.ref = "sonar-plugin-api" }
 sonar-ws = { module = "org.sonarsource.sonarqube:sonar-ws", version.ref = "sonarqube" }
 sonar-java-checks = { module = "org.sonarsource.java:java-checks", version.ref = "sonar-java" }
+sonar-sensor-test-fixtures = { module = "org.sonarsource.scanner.engine:sensor-test-fixtures", version.ref = "sonar-scanner-engine" }
+sonar-plugin-api-scanner-impl = { module = "org.sonarsource.scanner.engine:plugin-api-scanner-impl", version.ref = "sonar-scanner-engine" }
 sonar-scanner-gradle = { module = "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin", version.ref = "sonar-scanner-gradle" }
 sonar-orchestrator-junit5 = { module = "org.sonarsource.orchestrator:sonar-orchestrator-junit5", version.ref = "sonar-orchestrator" }
 sonar-lint-core = { module = "org.sonarsource.sonarlint.core:sonarlint-core", version.ref = "sonar-lint" }

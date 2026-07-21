@@ -16,6 +16,7 @@
  */
 package org.sonar.plugins.common.predicates;
 
+import com.sonarsource.scanner.engine.sensor.test.fixtures.SensorContextTester;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
@@ -31,7 +32,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.event.Level;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.plugins.common.TestUtils;
 import org.sonar.plugins.common.git.GitService;

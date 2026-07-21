@@ -18,6 +18,7 @@ package org.sonar.plugins.secrets.api.filters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.sonarsource.scanner.engine.sensor.test.fixtures.TestInputFileBuilder;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
@@ -31,8 +32,6 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.fs.internal.DefaultFileSystem;
-import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.api.AutomaticTestFileFilter;
@@ -41,6 +40,7 @@ import org.sonar.plugins.secrets.api.SpecificationConfiguration;
 import org.sonar.plugins.secrets.configuration.model.Selectivity;
 import org.sonar.plugins.secrets.configuration.model.matching.Detection;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
+import org.sonar.scanner.plugin.api.impl.fs.DefaultFileSystem;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;

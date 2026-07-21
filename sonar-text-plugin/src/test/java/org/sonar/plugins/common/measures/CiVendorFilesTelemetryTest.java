@@ -16,6 +16,7 @@
  */
 package org.sonar.plugins.common.measures;
 
+import com.sonarsource.scanner.engine.sensor.test.fixtures.SensorContextTester;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Set;
@@ -25,7 +26,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
-import org.sonar.api.batch.sensor.internal.SensorContextTester;
 
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.spy;

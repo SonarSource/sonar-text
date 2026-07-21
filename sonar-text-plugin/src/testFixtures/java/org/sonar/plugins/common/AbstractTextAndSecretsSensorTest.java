@@ -16,6 +16,7 @@
  */
 package org.sonar.plugins.common;
 
+import com.sonarsource.scanner.engine.sensor.test.fixtures.SensorContextTester;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -51,10 +52,7 @@ import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.error.AnalysisError;
-import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
-import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.batch.sensor.issue.Issue;
-import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.check.Rule;
 import org.sonar.plugins.common.analyzer.Analyzer;
@@ -70,6 +68,8 @@ import org.sonar.plugins.secrets.api.filters.SkippedFilter;
 import org.sonar.plugins.secrets.api.task.RegexMatchingManager;
 import org.sonar.plugins.text.api.TextCheck;
 import org.sonar.plugins.text.checks.BIDICharacterCheck;
+import org.sonar.scanner.plugin.api.impl.config.MapSettings;
+import org.sonar.scanner.plugin.api.impl.sensor.DefaultSensorDescriptor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;

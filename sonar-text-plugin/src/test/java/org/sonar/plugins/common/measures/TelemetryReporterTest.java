@@ -16,6 +16,7 @@
  */
 package org.sonar.plugins.common.measures;
 
+import com.sonarsource.scanner.engine.sensor.test.fixtures.SensorContextTester;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +26,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.event.Level;
 import org.sonar.api.SonarRuntime;
-import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 
 import static org.assertj.core.api.Assertions.assertThat;

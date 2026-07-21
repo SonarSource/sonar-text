@@ -16,6 +16,8 @@
  */
 package org.sonar.plugins.common;
 
+import com.sonarsource.scanner.engine.sensor.test.fixtures.SensorContextTester;
+import com.sonarsource.scanner.engine.sensor.test.fixtures.TestInputFileBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,15 +36,8 @@ import org.sonar.api.SonarQubeSide;
 import org.sonar.api.SonarRuntime;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.TextRange;
-import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
-import org.sonar.api.batch.rule.internal.ActiveRulesBuilder;
-import org.sonar.api.batch.rule.internal.DefaultActiveRules;
-import org.sonar.api.batch.rule.internal.NewActiveRule;
-import org.sonar.api.batch.sensor.internal.SensorContextTester;
 import org.sonar.api.batch.sensor.issue.Issue;
 import org.sonar.api.batch.sensor.issue.IssueLocation;
-import org.sonar.api.config.internal.MapSettings;
-import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.api.utils.Version;
 import org.sonar.plugins.common.measures.DurationStatistics;
@@ -51,6 +46,11 @@ import org.sonar.plugins.common.warnings.AnalysisWarningsWrapper;
 import org.sonar.plugins.secrets.SecretsCheckList;
 import org.sonar.plugins.secrets.api.AutomaticTestFileFilter;
 import org.sonar.plugins.text.TextCheckList;
+import org.sonar.scanner.plugin.api.impl.config.MapSettings;
+import org.sonar.scanner.plugin.api.impl.internal.SonarRuntimeImpl;
+import org.sonar.scanner.plugin.api.impl.rule.ActiveRulesBuilder;
+import org.sonar.scanner.plugin.api.impl.rule.DefaultActiveRules;
+import org.sonar.scanner.plugin.api.impl.rule.NewActiveRule;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.mockito.ArgumentMatchers.any;
