@@ -197,7 +197,8 @@ public final class PostFilterFactory {
     private static String decode(String candidate, DecodedBase64Module.Alphabet alphabet) {
       var stringToDecode = switch (alphabet) {
         case Y64 -> candidate.replace('.', '+').replace('_', '/').replace('-', '=');
-        case DEFAULT -> candidate;
+        // Normalize base64url so JWT segments decode; a no-op for standard base64.
+        case DEFAULT -> candidate.replace('-', '+').replace('_', '/');
       };
       try {
         return new String(Base64.getDecoder().decode(stringToDecode), StandardCharsets.UTF_8);

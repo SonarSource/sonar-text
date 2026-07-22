@@ -227,6 +227,15 @@ class PostFilterFactoryTest {
   }
 
   @Test
+  void shouldMatchOnBase64UrlDecodedPartsByDefault() {
+    var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("\"alg\":"), emptyList(), DecodedBase64Module.Alphabet.DEFAULT), null, emptyList(), null, emptyList());
+    var postFilter = PostFilterFactory.createFilter(postModule);
+
+    // base64url segment (contains '-' and '_') as JWT parts do; decodes to {"alg":"HS256","x":">>>???"}
+    assertThat(postFilter.apply("eyJhbGciOiJIUzI1NiIsIngiOiI-Pj4_Pz8ifQ").passed()).isTrue();
+  }
+
+  @Test
   void shouldNotMatchOnMalformedBase64DecodedParts() {
     var postModule = new TopLevelPostModule(new DecodedBase64Module(List.of("\"alg\":"), emptyList(), DecodedBase64Module.Alphabet.DEFAULT), null, emptyList(), null, emptyList());
     var postFilter = PostFilterFactory.createFilter(postModule);
