@@ -25,7 +25,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.Mockito;
 import org.slf4j.event.Level;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.plugins.common.InputFileContext;
@@ -39,6 +38,8 @@ import org.sonar.plugins.secrets.configuration.model.matching.filter.TopLevelPos
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class PostFilterFactoryTest {
 
@@ -626,8 +627,8 @@ class PostFilterFactoryTest {
   }
 
   private static RejectionLogContext contextFor(String ruleId, String displayName, int offset) {
-    var fileContext = Mockito.mock(InputFileContext.class);
-    Mockito.when(fileContext.toString()).thenReturn(displayName);
+    var fileContext = mock(InputFileContext.class);
+    when(fileContext.toString()).thenReturn(displayName);
     return new RejectionLogContext(ruleId, fileContext, offset);
   }
 }

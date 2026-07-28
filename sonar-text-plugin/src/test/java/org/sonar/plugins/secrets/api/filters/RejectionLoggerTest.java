@@ -18,12 +18,13 @@ package org.sonar.plugins.secrets.api.filters;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.mockito.Mockito;
 import org.slf4j.event.Level;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.plugins.common.InputFileContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class RejectionLoggerTest {
 
@@ -33,7 +34,7 @@ class RejectionLoggerTest {
   @Test
   void disabledLoggerProducesNothing() {
     var logger = RejectionLogger.DISABLED;
-    var context = new RejectionLogContext("S1", Mockito.mock(InputFileContext.class), 12);
+    var context = new RejectionLogContext("S1", mock(InputFileContext.class), 12);
 
     logger.log(context, "statistical (entropy): entropy=2.1");
 
@@ -102,8 +103,8 @@ class RejectionLoggerTest {
   }
 
   private static InputFileContext mockFileContext(String displayName) {
-    var fileContext = Mockito.mock(InputFileContext.class);
-    Mockito.when(fileContext.toString()).thenReturn(displayName);
+    var fileContext = mock(InputFileContext.class);
+    when(fileContext.toString()).thenReturn(displayName);
     return fileContext;
   }
 }

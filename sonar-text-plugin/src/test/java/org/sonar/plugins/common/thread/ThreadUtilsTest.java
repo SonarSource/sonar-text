@@ -18,13 +18,13 @@ package org.sonar.plugins.common.thread;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.mockito.Mockito;
 import org.slf4j.event.Level;
 import org.sonar.api.testfixtures.log.LogAndArguments;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 
 class ThreadUtilsTest {
 
@@ -33,7 +33,7 @@ class ThreadUtilsTest {
 
   @Test
   void shouldThrowExceptionWhenSecurityManagerIsUsed() {
-    var thread = Mockito.mock(Thread.class);
+    var thread = mock(Thread.class);
     doThrow(new SecurityException("Boom")).when(thread).setName("test");
 
     ThreadUtils.setThreadName(thread, "test");
