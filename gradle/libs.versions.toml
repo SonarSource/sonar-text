@@ -5,8 +5,10 @@ sonar-commons = "2.29.0.5138"
 sonar-plugin-api = "13.2.0.3137"
 sonarqube = "26.7.0.124771"
 sonar-java = "8.36.0.45637"
+sonar-php = "3.59.0.16496"
 sonar-scanner-engine = "13.5.0.4089"
 sonar-scanner-gradle = "7.3.1.8318"
+sonar-scanner-integration-tester = "1.2.0.1354"
 sonar-orchestrator = "6.4.0.4572"
 sonar-license-api = "3.4"
 sonar-lint = "11.7.0.86025"
@@ -29,6 +31,7 @@ tink = "1.23.0"
 wiremock = "3.13.2"
 ayza = "10.0.5"
 bouncycastle = "1.85"
+xerces = "2.12.2"
 
 [libraries]
 sonar-analyzer-commons = { module = "org.sonarsource.analyzer-commons:sonar-analyzer-commons", version.ref = "sonar-commons" }
@@ -40,6 +43,7 @@ sonar-sensor-test-fixtures = { module = "org.sonarsource.scanner.engine:sensor-t
 sonar-plugin-api-scanner-impl = { module = "org.sonarsource.scanner.engine:plugin-api-scanner-impl", version.ref = "sonar-scanner-engine" }
 sonar-scanner-gradle = { module = "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin", version.ref = "sonar-scanner-gradle" }
 sonar-orchestrator-junit5 = { module = "org.sonarsource.orchestrator:sonar-orchestrator-junit5", version.ref = "sonar-orchestrator" }
+sonar-scanner-integration-tester = { module = "com.sonarsource.scanner.integrationtester:sonar-scanner-integration-tester", version.ref = "sonar-scanner-integration-tester" }
 sonar-lint-core = { module = "org.sonarsource.sonarlint.core:sonarlint-core", version.ref = "sonar-lint" }
 sonar-lint-rpc-java-client = { module = "org.sonarsource.sonarlint.core:sonarlint-rpc-java-client", version.ref = "sonar-lint" }
 sonar-lint-rpc-impl = { module = "org.sonarsource.sonarlint.core:sonarlint-rpc-impl", version.ref = "sonar-lint" }
@@ -69,6 +73,7 @@ tink = { module = "com.google.crypto.tink:tink", version.ref = "tink" }
 wiremock = { module = "org.wiremock:wiremock", version.ref = "wiremock" }
 ayza-pem = { module = "io.github.hakky54:ayza-for-pem", version.ref = "ayza" }
 bc-pkix-jdk18on = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bouncycastle" }
+xerces = { module = "xerces:xercesImpl", version.ref = "xerces" }
 
 [plugins]
 buildconfig = { id = "com.github.gmazzo.buildconfig", version = "6.0.10" }
