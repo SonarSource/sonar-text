@@ -163,7 +163,7 @@ public class TextAndSecretsPredicates {
     return LANGUAGE_FILE_PREDICATE;
   }
 
-  private static boolean isHiddenFilesAnalysisSupported(SonarRuntime sonarRuntime) {
+  public static boolean isHiddenFilesAnalysisSupported(SonarRuntime sonarRuntime) {
     // Temporarily exclude SonarLint context, as it's breaking integration tests, where sonar-plugin-api is retrieved from the classpath, and
     // not from the SQ-IDE library
     return !isSonarLintContext(sonarRuntime) && sonarRuntime.getApiVersion().isGreaterThanOrEqual(Analyzer.HIDDEN_FILES_SUPPORTED_API_VERSION);

@@ -16,10 +16,12 @@
  */
 package org.sonar.plugins.common.measures;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.sensor.SensorContext;
-import org.sonar.plugins.common.TextAndSecretsSensor;
+import org.sonar.plugins.common.predicates.TextAndSecretsPredicates;
 
 public class CiVendorFilesTelemetry {
 
@@ -43,20 +45,33 @@ public class CiVendorFilesTelemetry {
   }
 
   public static void measureProjectsCIFilesInclusion(SensorContext sensorContext, TelemetryReporter telemetryReporter) {
-    if (TextAndSecretsSensor.isSonarLintContext(sensorContext.runtime())) {
-      // Telemetry is not raised in SQ-IDE context, we don't need to compute it
+    if (!TextAndSecretsPredicates.isHiddenFilesAnalysisSupported(sensorContext.runtime())) {
+      // Guarantees that telemetry is not calculated in SQ-IDE context since telemetry won't be saved there.
+      // Since most ci vendor files are dotfiles/dot-directories, we only calculate this when hidden file analysis is supported
       return;
     }
 
     var fileSystem = sensorContext.fileSystem();
+    var predicates = fileSystem.predicates();
 
-    for (Map.Entry<String, Set<String>> entry : CI_VENDOR_TO_REL_FILE_PATHS.entrySet()) {
-      var vendor = entry.getKey();
-      var relativePaths = entry.getValue();
-      // We only look for path's relative to the root
-      var hasFilesForVendor = relativePaths.stream()
-        .anyMatch(path -> fileSystem.hasFiles(fileSystem.predicates().hasRelativePath(path)));
-      telemetryReporter.addNumericMeasure(TELEMETRY_INFIX + vendor, hasFilesForVendor ? 1 : 0);
+    var detectedVendors = new HashSet<String>();
+    var recordingPredicates = CI_VENDOR_TO_REL_FILE_PATHS.entrySet().stream()
+      .flatMap(entry -> entry.getValue().stream()
+        // We only look for path's relative to the root
+        .<FilePredicate>map(path -> new RecordingPredicate(
+          predicates.hasRelativePath(path),
+          file -> detectedVendors.add(entry.getKey()))))
+      .toList();
+    var combinedPredicate = predicates.or(recordingPredicates);
+
+    // predicates.or(...) short-circuits on the first predicate match.
+    // Iterating triggers RecordingPredicate's recording side effects
+    fileSystem.inputFiles(combinedPredicate).forEach(inputFile -> {
+      // no-op: recording already happened inside RecordingPredicate.apply()
+    });
+
+    for (String vendor : CI_VENDOR_TO_REL_FILE_PATHS.keySet()) {
+      telemetryReporter.addNumericMeasure(TELEMETRY_INFIX + vendor, detectedVendors.contains(vendor) ? 1 : 0);
     }
   }
 }

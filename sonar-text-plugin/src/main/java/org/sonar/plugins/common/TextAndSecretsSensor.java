@@ -44,6 +44,7 @@ import org.sonar.plugins.common.git.CachingGitService;
 import org.sonar.plugins.common.git.GitCliAndJGitService;
 import org.sonar.plugins.common.git.GitService;
 import org.sonar.plugins.common.git.LazyGitService;
+import org.sonar.plugins.common.measures.AgenticArtifactsTelemetry;
 import org.sonar.plugins.common.measures.CiVendorFilesTelemetry;
 import org.sonar.plugins.common.measures.DurationStatistics;
 import org.sonar.plugins.common.measures.MemoryMonitor;
@@ -303,6 +304,7 @@ public class TextAndSecretsSensor implements Sensor {
     gitService = initializeGitService(sensorContext);
     textAndSecretsPredicates = new TextAndSecretsPredicates(sensorContext, durationStatistics, telemetryReporter, gitService, analysisWarnings);
     CiVendorFilesTelemetry.measureProjectsCIFilesInclusion(sensorContext, telemetryReporter);
+    AgenticArtifactsTelemetry.measureAgenticArtifacts(sensorContext, telemetryReporter);
     telemetryReporter.addStringMeasure("pluginVersion", resolvePluginVersion());
     reportDisabledSecretFilters(sensorContext);
     initializeParallelizationManager(sensorContext);
