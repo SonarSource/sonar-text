@@ -60,7 +60,8 @@ class PreFilterFactoryTest {
   })
   void testMatchesExt(String ext, String filename, boolean shouldMatch) {
     InputFileContext ctx = mock(InputFileContext.class);
-    when(ctx.getInputFile()).thenReturn(mock(InputFile.class));
+    InputFile inputFile = mock(InputFile.class);
+    when(ctx.getInputFile()).thenReturn(inputFile);
     when(ctx.getInputFile().filename()).thenReturn(filename);
     when(ctx.getFileSystem()).thenReturn(new DefaultFileSystem(Path.of(".")));
     assertThat(PreFilterFactory.matchesExt(ext, ctx)).isEqualTo(shouldMatch);
@@ -243,8 +244,9 @@ class PreFilterFactoryTest {
   @MethodSource
   void matchesBasePredicateBySelectivityWithInputFileLanguage(Selectivity selectivity, String language, boolean shouldMatch) {
     InputFileContext ctx = mock(InputFileContext.class);
-    when(ctx.getInputFile()).thenReturn(mock(InputFile.class));
-    when(ctx.getInputFile().language()).thenReturn(language);
+    InputFile inputFile = mock(InputFile.class);
+    when(ctx.getInputFile()).thenReturn(inputFile);
+    when(inputFile.language()).thenReturn(language);
 
     var selectivityPredicate = PreFilterFactory.appendSelectivityPredicate(context -> true, selectivity);
     assertThat(selectivityPredicate.test(ctx)).isEqualTo(shouldMatch);
