@@ -27,6 +27,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.plugins.common.warnings.AnalysisWarningsWrapper;
 import org.sonar.plugins.secrets.configuration.SecretsSpecificationContainer;
 import org.sonar.plugins.secrets.utils.CheckContainer;
 
@@ -64,6 +65,38 @@ class TextAndSecretsSensorTest extends AbstractTextAndSecretsSensorTest {
   @Override
   protected String sensorName() {
     return "TextAndSecretsSensor";
+  }
+
+  @Test
+  void shouldRaiseAnalysisWarningWhenDemoModeIsEnabled() {
+    var context = testUtils().defaultSensorContext();
+    context.settings().setProperty(TextAndSecretsSensor.DEMO_MODE_KEY, "true");
+    var analysisWarnings = new TestAnalysisWarningsWrapper();
+
+    sensorWithAnalysisWarnings(analysisWarnings, new ReportIssueAtLineOneCheck()).execute(context);
+
+    assertThat(analysisWarnings.getWarnings())
+      .anyMatch(warning -> warning.contains("Demo mode is enabled through the property \"sonar.secrets.demoMode\""));
+  }
+
+  @Test
+  void shouldNotRaiseAnalysisWarningWhenDemoModeIsDisabled() {
+    var context = testUtils().defaultSensorContext();
+    var analysisWarnings = new TestAnalysisWarningsWrapper();
+
+    sensorWithAnalysisWarnings(analysisWarnings, new ReportIssueAtLineOneCheck()).execute(context);
+
+    assertThat(analysisWarnings.getWarnings()).noneMatch(warning -> warning.contains("Demo mode is enabled"));
+  }
+
+  private static TextAndSecretsSensor sensorWithAnalysisWarnings(AnalysisWarningsWrapper analysisWarnings, Check... checks) {
+    CheckFactory checkFactory = new CheckFactory(activeRules(toRuleKeys(checks)));
+    return new TextAndSecretsSensor(SONARQUBE_RUNTIME, checkFactory, analysisWarnings, new SecretsSpecificationContainer(), new CheckContainer()) {
+      @Override
+      protected List<Check> getActiveChecks() {
+        return Arrays.stream(checks).toList();
+      }
+    };
   }
 
   @Test

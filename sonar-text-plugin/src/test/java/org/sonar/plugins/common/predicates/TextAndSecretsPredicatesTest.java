@@ -34,6 +34,7 @@ import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.plugins.common.TestUtils;
+import org.sonar.plugins.common.TextAndSecretsSensor;
 import org.sonar.plugins.common.git.GitService;
 import org.sonar.plugins.common.measures.TelemetryReporter;
 import org.sonar.plugins.common.warnings.AnalysisWarningsWrapper;
@@ -259,8 +260,44 @@ class TextAndSecretsPredicatesTest {
   })
   void excludedFileSuffixesPredicateShouldRejectFilesWithDefaultRejectedExtensionsCorrectly(String filename, boolean shouldAccept) {
     InputFile inputFile = TestUtils.inputFile(Path.of(filename), "");
-    FilePredicate excludedFileSuffixesPredicate = textAndSecretsPredicates.excludedFileSuffixesPredicate(sensorContext);
+    FilePredicate excludedFileSuffixesPredicate = textAndSecretsPredicates.excludedFileSuffixesPredicate();
     assertThat(excludedFileSuffixesPredicate.apply(inputFile)).isEqualTo(shouldAccept);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+    "file.md",
+    "file.adoc",
+    "file.html",
+    "file.example",
+    "file.sample",
+    "file.template",
+    "file.dist",
+    "file.mdx",
+    "file.MD",
+    "file.txt"
+  })
+  void excludedFileSuffixesPredicateShouldAcceptEveryFileWhenDemoModeIsEnabled(String filename) {
+    logTester.setLevel(Level.DEBUG);
+    sensorContext.settings().setProperty(TextAndSecretsSensor.DEMO_MODE_KEY, "true");
+    InputFile inputFile = TestUtils.inputFile(Path.of(filename), "");
+
+    FilePredicate excludedFileSuffixesPredicate = textAndSecretsPredicates.excludedFileSuffixesPredicate();
+
+    assertThat(excludedFileSuffixesPredicate.apply(inputFile)).isTrue();
+    assertThat(logTester.logs(Level.DEBUG))
+      .contains("Demo mode is enabled, the configured excluded file suffixes are ignored by the secrets analysis");
+  }
+
+  @Test
+  void excludedFileSuffixesPredicateShouldAcceptUserConfiguredSuffixWhenDemoModeIsEnabled() {
+    sensorContext.settings().setProperty(TextAndSecretsPredicates.EXCLUDED_FILE_SUFFIXES_KEY, ".custom");
+    sensorContext.settings().setProperty(TextAndSecretsSensor.DEMO_MODE_KEY, "true");
+    InputFile inputFile = TestUtils.inputFile(Path.of("file.custom"), "");
+
+    FilePredicate excludedFileSuffixesPredicate = textAndSecretsPredicates.excludedFileSuffixesPredicate();
+
+    assertThat(excludedFileSuffixesPredicate.apply(inputFile)).isTrue();
   }
 
   // ==========================================

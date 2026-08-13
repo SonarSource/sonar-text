@@ -113,6 +113,22 @@ public class TextAndSecretsPlugin implements Plugin {
         .onConfigScopes(ConfigScope.PROJECT)
         .build(),
 
+      PropertyDefinition.builder(TextAndSecretsSensor.DEMO_MODE_KEY)
+        .defaultValue(String.valueOf(TextAndSecretsSensor.DEMO_MODE_DEFAULT_VALUE))
+        .category(TextAndSecretsSensor.TEXT_CATEGORY)
+        .name("Activate demo mode for secret detection")
+        .description("When enabled, every non-binary file is analyzed, all filters that discard fake and placeholder secrets are " +
+          "disabled (enables '" + TextAndSecretsSensor.DISABLE_KNOWN_FAKE_SECRET_FILTER_KEY + "'), low-entropy secrets are " +
+          "reported (enables '" + TextAndSecretsSensor.DISABLE_ENTROPY_FILTER_KEY + "'), automatically detected test files are " +
+          "analyzed (enables '" + TextAndSecretsSensor.DISABLE_TEST_FILE_DETECTION_KEY + "'), and no file suffix is excluded " +
+          "from the secrets analysis (clears '" + TextAndSecretsPredicates.EXCLUDED_FILE_SUFFIXES_KEY + "'). " +
+          "This is a shortcut for setting all the individual properties named above. " +
+          "Intended for demos and evaluations: it raises findings that are known to be noisy, so it should not be used for production analyses.")
+        .type(PropertyType.BOOLEAN)
+        .onConfigScopes(ConfigScope.PROJECT)
+        .subCategory(GENERAL_SUBCATEGORY)
+        .build(),
+
       PropertyDefinition.builder(TextAndSecretsSensor.DISABLE_ENTROPY_FILTER_KEY)
         .defaultValue(String.valueOf(TextAndSecretsSensor.DISABLE_ENTROPY_FILTER_DEFAULT_VALUE))
         .category(TextAndSecretsSensor.TEXT_CATEGORY)

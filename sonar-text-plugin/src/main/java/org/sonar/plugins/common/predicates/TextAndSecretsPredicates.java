@@ -29,6 +29,7 @@ import org.sonar.api.SonarRuntime;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.IndexedFile;
 import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.plugins.common.TextAndSecretsSensor;
 import org.sonar.plugins.common.analyzer.Analyzer;
 import org.sonar.plugins.common.git.GitService;
 import org.sonar.plugins.common.git.GitTrackedFilePredicate;
@@ -50,7 +51,7 @@ public class TextAndSecretsPredicates {
   public static final String INCLUSIONS_ACTIVATION_KEY = "sonar.text.inclusions.activate";
   public static final boolean INCLUSIONS_ACTIVATION_DEFAULT_VALUE = true;
 
-  private static final String ANALYZE_ALL_FILES_KEY = "sonar.text.analyzeAllFiles";
+  public static final String ANALYZE_ALL_FILES_KEY = "sonar.text.analyzeAllFiles";
   public static final FilePredicate LANGUAGE_FILE_PREDICATE = inputFile -> inputFile.language() != null;
 
   // Deprecated: Replaced by EXCLUDED_FILE_SUFFIXES_KEY. Will be removed in a future release.
@@ -94,7 +95,7 @@ public class TextAndSecretsPredicates {
     var predicates = sensorContext.fileSystem().predicates();
 
     LOG.info("Start fetching files for the text and secrets analysis");
-    var analyzeAllFiles = shouldAnalyzeAllFiles(sensorContext);
+    var analyzeAllFiles = shouldAnalyzeAllFiles();
     if (analyzeAllFiles) {
       LOG.info("Retrieving all except binary files");
       // (not binary file)
@@ -173,8 +174,17 @@ public class TextAndSecretsPredicates {
    * List of file suffixes to exclude are provided by configuration key {@link TextAndSecretsPredicates#EXCLUDED_FILE_SUFFIXES_KEY} and the deprecated {@link TextAndSecretsPredicates#DEPRECATED_EXCLUDED_BINARY_FILE_SUFFIXES_KEY}.
    * Applied at the check level in {@link org.sonar.plugins.common.analyzer.TextAndSecretsAnalyzer} / {@link org.sonar.plugins.secrets.utils.CheckContainer}, as it only should affect secret rules.
    * Text rules should not be affected by this predicate file filtering.
+   *
+   * <p>When {@link TextAndSecretsSensor#DEMO_MODE_KEY} is on, no suffix is excluded at all, so documentation and
+   * example files are analyzed for secrets too.
    */
-  public FilePredicate excludedFileSuffixesPredicate(SensorContext sensorContext) {
+  public FilePredicate excludedFileSuffixesPredicate() {
+    var predicates = sensorContext.fileSystem().predicates();
+    if (TextAndSecretsSensor.isDemoModeEnabled(sensorContext.config())) {
+      LOG.debug("Demo mode is enabled, the configured excluded file suffixes are ignored by the secrets analysis");
+      return predicates.all();
+    }
+
     String[] excludedFileSuffixes = sensorContext.config().getStringArray(TextAndSecretsPredicates.EXCLUDED_FILE_SUFFIXES_KEY);
     List<String> cleanedSuffixes = cleanExcludedFileSuffixes(excludedFileSuffixes);
     reportExcludedFileSuffixes(cleanedSuffixes);
@@ -187,7 +197,6 @@ public class TextAndSecretsPredicates {
     Set<String> suffixesToExclude = new HashSet<>(cleanedSuffixes);
     suffixesToExclude.addAll(cleanedSuffixesDeprecatedProperty);
 
-    var predicates = sensorContext.fileSystem().predicates();
     if (suffixesToExclude.isEmpty()) {
       return predicates.all();
     }
@@ -267,8 +276,14 @@ public class TextAndSecretsPredicates {
     return runtime.getProduct() == SonarProduct.SONARLINT;
   }
 
-  private static boolean shouldAnalyzeAllFiles(SensorContext sensorContext) {
-    return isSonarLintContext(sensorContext.runtime()) || sensorContext.config().getBoolean(ANALYZE_ALL_FILES_KEY).orElse(false);
+  /**
+   * Demo mode is included here on purpose: a demo is worthless if the files holding the placeholder secrets are never
+   * indexed, so it implies {@link #ANALYZE_ALL_FILES_KEY} rather than requiring the user to set a second property.
+   */
+  private boolean shouldAnalyzeAllFiles() {
+    return isSonarLintContext(sensorContext.runtime())
+      || TextAndSecretsSensor.isDemoModeEnabled(sensorContext.config())
+      || sensorContext.config().getBoolean(ANALYZE_ALL_FILES_KEY).orElse(false);
   }
 
   private static List<String> cleanExcludedFileSuffixes(String[] excludedFileSuffixes) {

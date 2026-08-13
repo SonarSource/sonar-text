@@ -94,6 +94,7 @@ import static org.sonar.plugins.common.TestUtils.inputFileFromPath;
 import static org.sonar.plugins.common.TestUtils.sensorContext;
 import static org.sonar.plugins.common.TextAndSecretsSensor.DEBUG_LOG_REJECTED_CANDIDATES_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.DEBUG_LOG_REJECTED_CANDIDATES_LIMIT_KEY;
+import static org.sonar.plugins.common.TextAndSecretsSensor.DEMO_MODE_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.DISABLE_ENTROPY_FILTER_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.DISABLE_KNOWN_FAKE_SECRET_FILTER_KEY;
 import static org.sonar.plugins.common.TextAndSecretsSensor.DISABLE_TEST_FILE_DETECTION_KEY;
@@ -104,6 +105,7 @@ import static org.sonarsource.analyzer.commons.appsec.TestFileClassifier.HEURIST
 @Isolated
 public abstract class AbstractTextAndSecretsSensorTest {
 
+  private static final String DEMO_MODE_TELEMETRY_KEY = "text.secrets.demo_mode";
   private static final String DISABLE_ENTROPY_FILTER_TELEMETRY_KEY = "text.secrets.disable_entropy_filter";
   private static final String DISABLE_TEST_FILE_DETECTION_TELEMETRY_KEY = "text.secrets.disable_test_file_detection";
   private static final String DISABLE_KNOWN_FAKE_SECRET_FILTER_TELEMETRY_KEY = "text.secrets.disable_known_fake_secret_filter";
@@ -1603,6 +1605,110 @@ public abstract class AbstractTextAndSecretsSensorTest {
   }
 
   @Test
+  void createSpecificationConfigurationShouldSkipAllFiltersWhenDemoModeIsEnabled() {
+    var context = testUtils().sonarqubeSensorContext();
+    context.settings().setProperty(DEMO_MODE_KEY, "true");
+
+    assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters())
+      .containsExactlyInAnyOrder(SkippedFilter.ENTROPY_FILTER, SkippedFilter.KNOWN_FAKE_SECRET_FILTER, SkippedFilter.TEST_FILES_FILTER);
+    assertThat(logTester.logs()).contains("The secret analysis will skip the following filters per user configuration: entropy, known fake secrets, automatic test file detection");
+  }
+
+  @Test
+  void createSpecificationConfigurationShouldNotSkipFiltersWhenDemoModeIsExplicitlyDisabled() {
+    var context = testUtils().sonarqubeSensorContext();
+    context.settings().setProperty(DEMO_MODE_KEY, "false");
+
+    assertThat(sensor(context).createSpecificationConfiguration(context).skippedFilters()).isEmpty();
+  }
+
+  @Test
+  void shouldLogWarningWhenDemoModeIsEnabled() {
+    var context = testUtils().defaultSensorContext();
+    context.settings().setProperty(DEMO_MODE_KEY, "true");
+
+    sensor(new ReportIssueAtLineOneCheck()).execute(context);
+
+    assertThat(logTester.logs(Level.WARN)).anyMatch(log -> log.contains("Demo mode is enabled through the property \"sonar.secrets.demoMode\"")
+      && log.contains("as if \"sonar.text.analyzeAllFiles\" was enabled")
+      && log.contains("ignore \"sonar.secrets.excluded.file.suffixes\""));
+  }
+
+  @Test
+  void shouldNotStartTheWarningWithAnEmptyLineWhenDemoModeIsEnabled() {
+    var context = testUtils().defaultSensorContext();
+    context.settings().setProperty(DEMO_MODE_KEY, "true");
+
+    sensor(new ReportIssueAtLineOneCheck()).execute(context);
+
+    assertThat(logTester.logs(Level.WARN))
+      .filteredOn(log -> log.contains("Demo mode is enabled"))
+      .allSatisfy(log -> assertThat(log).startsWith("Demo mode is enabled").doesNotEndWith("\n"));
+  }
+
+  @Test
+  void shouldAnalyzeAllFilesWhenDemoModeIsEnabled() {
+    var context = testUtils().defaultSensorContext();
+    context.settings().setProperty(DEMO_MODE_KEY, "true");
+
+    sensor(new ReportIssueAtLineOneCheck()).execute(context);
+
+    // Demo mode implies "sonar.text.analyzeAllFiles", so the predicate pipeline short-circuits to "non-binary only"
+    // without the user having to set a second property.
+    assertThat(logTester.logs()).contains("Retrieving all except binary files");
+  }
+
+  @Test
+  void shouldNotAnalyzeAllFilesWhenDemoModeIsDisabled() {
+    var context = testUtils().defaultSensorContext();
+
+    sensor(new ReportIssueAtLineOneCheck()).execute(context);
+
+    assertThat(logTester.logs()).doesNotContain("Retrieving all except binary files");
+  }
+
+  @Test
+  void shouldNotLogDemoModeWarningWhenDemoModeIsDisabled() {
+    var context = testUtils().defaultSensorContext();
+
+    sensor(new ReportIssueAtLineOneCheck()).execute(context);
+
+    assertThat(logTester.logs()).noneMatch(log -> log.contains("Demo mode is enabled"));
+  }
+
+  @ParameterizedTest
+  @CsvSource({
+    "true, 1",
+    "false, 0"
+  })
+  void shouldReportEveryFilterTelemetryMeasureAccordingToDemoMode(boolean demoMode, String expectedMeasure) {
+    var context = testUtils().defaultSensorContext();
+    context.settings().setProperty(DEMO_MODE_KEY, String.valueOf(demoMode));
+
+    sensor(new ReportIssueAtLineOneCheck()).execute(context);
+
+    assertThat(context.getTelemetryProperties())
+      .containsEntry(DEMO_MODE_TELEMETRY_KEY, expectedMeasure)
+      .containsEntry(DISABLE_ENTROPY_FILTER_TELEMETRY_KEY, expectedMeasure)
+      .containsEntry(DISABLE_TEST_FILE_DETECTION_TELEMETRY_KEY, expectedMeasure)
+      .containsEntry(DISABLE_KNOWN_FAKE_SECRET_FILTER_TELEMETRY_KEY, expectedMeasure);
+  }
+
+  @Test
+  void shouldNotLogSummaryWhenAutomaticTestFileDetectionIsSkippedByDemoMode() {
+    Check check = new ReportIssueAtLineOneCheck();
+    SensorContextTester context = sensorContext(check);
+    context.settings().setProperty("sonar.text.analyzeAllFiles", true);
+    context.settings().setProperty(DEMO_MODE_KEY, "true");
+
+    analyse(sensor(check), context,
+      inputFile(Path.of("test_one.txt"), "secret 1", null),
+      inputFile(Path.of("src/Three.txt"), "secret 3", null));
+
+    assertThat(logTester.logs()).noneMatch(log -> log.startsWith("Skipped ") && log.contains("automatic test file detection"));
+  }
+
+  @Test
   void shouldLogSummaryWhenAutomaticTestFileDetectionRejectsFiles() {
     Check check = new ReportIssueAtLineOneCheck();
     SensorContextTester context = sensorContext(check);
@@ -1694,6 +1800,43 @@ public abstract class AbstractTextAndSecretsSensorTest {
     }
 
     assertCorrectLogsForTextAndSecretsAnalysis(1, false);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+    "file.md",
+    "file.adoc",
+    "file.html",
+    "file.example",
+    "file.sample",
+    "file.template",
+    "file.dist",
+    "file.mdx",
+    ".env.dist",
+    "foo.bar.md"
+  })
+  void shouldAnalyzeSpecCheckOnFilesWithExcludedSuffixWhenDemoModeIsEnabled(String fileName) {
+    Check specCheck = new SpecCheck();
+    InputFile inputFile = inputFile(Path.of(fileName), "");
+    SensorContextTester context = testUtils().defaultSensorContext();
+    context.settings().setProperty(TextAndSecretsPredicates.TEXT_INCLUSIONS_KEY, "**/" + fileName);
+    context.settings().setProperty(DEMO_MODE_KEY, "true");
+    analyse(sensor(specCheck), context, inputFile);
+
+    assertThatIssuesRaisedOnFiles(context.allIssues(), inputFile);
+  }
+
+  @Test
+  void shouldAnalyzeSpecCheckOnUserConfiguredExcludedSuffixWhenDemoModeIsEnabled() {
+    Check specCheck = new SpecCheck();
+    InputFile inputFile = inputFile(Path.of("foo.custom"), "");
+    SensorContextTester context = testUtils().defaultSensorContext();
+    context.settings().setProperty(TextAndSecretsPredicates.TEXT_INCLUSIONS_KEY, "**/foo.custom");
+    context.settings().setProperty(TextAndSecretsPredicates.EXCLUDED_FILE_SUFFIXES_KEY, ".custom");
+    context.settings().setProperty(DEMO_MODE_KEY, "true");
+    analyse(sensor(specCheck), context, inputFile);
+
+    assertThatIssuesRaisedOnFiles(context.allIssues(), inputFile);
   }
 
   @Test

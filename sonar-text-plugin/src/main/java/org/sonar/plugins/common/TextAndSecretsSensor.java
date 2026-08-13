@@ -38,6 +38,7 @@ import org.sonar.api.batch.rule.CheckFactory;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
+import org.sonar.api.config.Configuration;
 import org.sonar.plugins.common.analyzer.Analyzer;
 import org.sonar.plugins.common.analyzer.TextAndSecretsAnalyzer;
 import org.sonar.plugins.common.git.CachingGitService;
@@ -89,6 +90,23 @@ public class TextAndSecretsSensor implements Sensor {
   public static final boolean DISABLE_TEST_FILE_DETECTION_DEFAULT_VALUE = false;
   public static final String DISABLE_KNOWN_FAKE_SECRET_FILTER_KEY = "sonar.secrets.disableKnownFakeSecretFilter";
   public static final boolean DISABLE_KNOWN_FAKE_SECRET_FILTER_DEFAULT_VALUE = false;
+  /**
+   * Demo mode: a single switch that turns off every false-positive filter of the secrets analysis at once, so that
+   * fake, placeholder and example secrets are surfaced during demos and product evaluations. Equivalent to setting
+   * {@link #DISABLE_ENTROPY_FILTER_KEY}, {@link #DISABLE_TEST_FILE_DETECTION_KEY} and
+   * {@link #DISABLE_KNOWN_FAKE_SECRET_FILTER_KEY} to {@code true}, clearing
+   * {@link TextAndSecretsPredicates#EXCLUDED_FILE_SUFFIXES_KEY} and enabling
+   * {@link TextAndSecretsPredicates#ANALYZE_ALL_FILES_KEY}: a demo is worthless if the files holding the placeholder
+   * secrets are never indexed, so every non-binary file is analyzed, whether or not it carries a language or matches
+   * {@link TextAndSecretsPredicates#TEXT_INCLUSIONS_KEY}.
+   *
+   * <p>Purely additive: it can only disable filters, never re-enable one the user turned off through its dedicated
+   * property. Findings that only a disabled filter would have rejected are still reported as low-confidence matches
+   * naming the disabled filter (see {@link SkippedFilter}). Because it raises findings that are known to be noisy,
+   * demo mode is not meant for production analyses.
+   */
+  public static final String DEMO_MODE_KEY = "sonar.secrets.demoMode";
+  public static final boolean DEMO_MODE_DEFAULT_VALUE = false;
   /**
    * Internal debug switch (off by default) that enables per-candidate debug logging when a post-filter rejects a
    * match.
@@ -206,30 +224,53 @@ public class TextAndSecretsSensor implements Sensor {
     return false;
   }
 
-  private static boolean isTestFileDetectionDisabled(SensorContext sensorContext) {
-    var config = sensorContext.config();
+  /** Whether {@link #DEMO_MODE_KEY} is on. See that constant for what it implies. */
+  public static boolean isDemoModeEnabled(Configuration config) {
+    return config.getBoolean(DEMO_MODE_KEY).orElse(DEMO_MODE_DEFAULT_VALUE);
+  }
+
+  private static boolean isEntropyFilterDisabled(Configuration config) {
+    return isDemoModeEnabled(config)
+      || config.getBoolean(DISABLE_ENTROPY_FILTER_KEY).orElse(DISABLE_ENTROPY_FILTER_DEFAULT_VALUE);
+  }
+
+  private static boolean isTestFileDetectionDisabled(Configuration config) {
     // Also honor the generic, analyzer-agnostic opt-out defined by sonar-analyzer-commons.
-    return config.getBoolean(DISABLE_TEST_FILE_DETECTION_KEY).orElse(DISABLE_TEST_FILE_DETECTION_DEFAULT_VALUE)
+    return isDemoModeEnabled(config)
+      || config.getBoolean(DISABLE_TEST_FILE_DETECTION_KEY).orElse(DISABLE_TEST_FILE_DETECTION_DEFAULT_VALUE)
       || config.getBoolean(TestFileClassifier.HEURISTIC_DISABLED_KEY).orElse(false);
   }
 
+  private static boolean isKnownFakeSecretFilterDisabled(Configuration config) {
+    return isDemoModeEnabled(config)
+      || config.getBoolean(DISABLE_KNOWN_FAKE_SECRET_FILTER_KEY).orElse(DISABLE_KNOWN_FAKE_SECRET_FILTER_DEFAULT_VALUE);
+  }
+
   private static Set<SkippedFilter> resolveSkippedFilters(SensorContext sensorContext) {
-    EnumSet<SkippedFilter> skippedFilters = EnumSet.noneOf(SkippedFilter.class);
-    if (sensorContext.config().getBoolean(DISABLE_ENTROPY_FILTER_KEY).orElse(DISABLE_ENTROPY_FILTER_DEFAULT_VALUE)) {
-      skippedFilters.add(SkippedFilter.ENTROPY_FILTER);
-    }
-    if (isTestFileDetectionDisabled(sensorContext)) {
-      skippedFilters.add(SkippedFilter.TEST_FILES_FILTER);
-    }
-    if (sensorContext.config().getBoolean(DISABLE_KNOWN_FAKE_SECRET_FILTER_KEY).orElse(DISABLE_KNOWN_FAKE_SECRET_FILTER_DEFAULT_VALUE)) {
-      skippedFilters.add(SkippedFilter.KNOWN_FAKE_SECRET_FILTER);
-    }
+    var config = sensorContext.config();
+    // Demo mode skips every filter at once, including any value added to SkippedFilter later on, the same way
+    // AnalysisProperties#skippedFilters does for the CLI.
+    var skippedFilters = isDemoModeEnabled(config) ? EnumSet.allOf(SkippedFilter.class) : skippedFiltersFromDedicatedProperties(config);
 
     if (!skippedFilters.isEmpty()) {
       var filterNames = skippedFilters.stream().map(SkippedFilter::filterName).collect(Collectors.joining(", "));
       LOG.info("The secret analysis will skip the following filters per user configuration: {}", filterNames);
     }
     return Set.copyOf(skippedFilters);
+  }
+
+  private static EnumSet<SkippedFilter> skippedFiltersFromDedicatedProperties(Configuration config) {
+    EnumSet<SkippedFilter> skippedFilters = EnumSet.noneOf(SkippedFilter.class);
+    if (isEntropyFilterDisabled(config)) {
+      skippedFilters.add(SkippedFilter.ENTROPY_FILTER);
+    }
+    if (isTestFileDetectionDisabled(config)) {
+      skippedFilters.add(SkippedFilter.TEST_FILES_FILTER);
+    }
+    if (isKnownFakeSecretFilterDisabled(config)) {
+      skippedFilters.add(SkippedFilter.KNOWN_FAKE_SECRET_FILTER);
+    }
+    return skippedFilters;
   }
 
   protected void runAnalysis(SensorContext sensorContext, List<Check> activeChecks) {
@@ -306,6 +347,7 @@ public class TextAndSecretsSensor implements Sensor {
     CiVendorFilesTelemetry.measureProjectsCIFilesInclusion(sensorContext, telemetryReporter);
     AgenticArtifactsTelemetry.measureAgenticArtifacts(sensorContext, telemetryReporter);
     telemetryReporter.addStringMeasure("pluginVersion", resolvePluginVersion());
+    logDemoModeIfEnabled(sensorContext);
     reportDisabledSecretFilters(sensorContext);
     initializeParallelizationManager(sensorContext);
     initializeOptionalConfigValue(sensorContext, REGEX_MATCH_TIMEOUT_KEY, RegexMatchingManager::setTimeoutMs);
@@ -365,7 +407,7 @@ public class TextAndSecretsSensor implements Sensor {
         }
       }
     });
-    var secretSuffixExclusionPredicate = textAndSecretsPredicates.excludedFileSuffixesPredicate(sensorContext);
+    var secretSuffixExclusionPredicate = textAndSecretsPredicates.excludedFileSuffixesPredicate();
     checkContainer.initialize(checks, secretsSpecificationContainer.getSpecificationLoader(), durationStatistics, secretSuffixExclusionPredicate,
       specificationConfiguration.automaticTestFileDetectionEnabled(), specificationConfiguration.skippedFilters(), shouldCollectSkippedPaths());
   }
@@ -467,14 +509,32 @@ public class TextAndSecretsSensor implements Sensor {
     return "unknown";
   }
 
+  /**
+   * Report which false-positive filters are off for this analysis. The per-filter measures carry the effective state,
+   * so a filter turned off through {@link #DEMO_MODE_KEY} is reported as disabled too; the dedicated demo mode measure
+   * tells the two configurations apart.
+   */
   private void reportDisabledSecretFilters(SensorContext sensorContext) {
-    boolean entropyFilterDisabled = sensorContext.config().getBoolean(DISABLE_ENTROPY_FILTER_KEY).orElse(DISABLE_ENTROPY_FILTER_DEFAULT_VALUE);
-    telemetryReporter.addNumericMeasure("secrets.disable_entropy_filter", entropyFilterDisabled ? 1 : 0);
+    var config = sensorContext.config();
+    telemetryReporter.addNumericMeasure("secrets.demo_mode", isDemoModeEnabled(config) ? 1 : 0);
+    telemetryReporter.addNumericMeasure("secrets.disable_entropy_filter", isEntropyFilterDisabled(config) ? 1 : 0);
+    telemetryReporter.addNumericMeasure("secrets.disable_test_file_detection", isTestFileDetectionDisabled(config) ? 1 : 0);
+    telemetryReporter.addNumericMeasure("secrets.disable_known_fake_secret_filter", isKnownFakeSecretFilterDisabled(config) ? 1 : 0);
+  }
 
-    boolean testFileDetectionDisabled = isTestFileDetectionDisabled(sensorContext);
-    telemetryReporter.addNumericMeasure("secrets.disable_test_file_detection", testFileDetectionDisabled ? 1 : 0);
-
-    boolean knownFakeSecretFilterDisabled = sensorContext.config().getBoolean(DISABLE_KNOWN_FAKE_SECRET_FILTER_KEY).orElse(DISABLE_KNOWN_FAKE_SECRET_FILTER_DEFAULT_VALUE);
-    telemetryReporter.addNumericMeasure("secrets.disable_known_fake_secret_filter", knownFakeSecretFilterDisabled ? 1 : 0);
+  private void logDemoModeIfEnabled(SensorContext sensorContext) {
+    if (!isDemoModeEnabled(sensorContext.config())) {
+      return;
+    }
+    // Surfaced as an analysis warning too, so that the noisy findings of a demo analysis cannot be mistaken for
+    // production results by someone only looking at the SonarQube UI.
+    logWarningConsoleUI("""
+      Demo mode is enabled through the property "%s". For this analysis, the secrets detection will:
+        * analyze every non-binary file, as if "%s" was enabled
+        * skip all filters that discard known fake, placeholder and low-entropy secrets
+        * analyze automatically detected test files
+        * ignore "%s", so files such as "*.example" or "*.md" are analyzed as well
+      Demo mode raises findings that are known to be noisy and is not meant for production analyses.\
+      """.formatted(DEMO_MODE_KEY, TextAndSecretsPredicates.ANALYZE_ALL_FILES_KEY, TextAndSecretsPredicates.EXCLUDED_FILE_SUFFIXES_KEY));
   }
 }
