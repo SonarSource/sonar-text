@@ -17,6 +17,7 @@
 package org.sonar.plugins.common;
 
 import java.util.List;
+import java.util.stream.Stream;
 import org.sonar.api.Plugin;
 import org.sonar.api.PropertyType;
 import org.sonar.api.config.PropertyDefinition;
@@ -57,6 +58,12 @@ public class TextAndSecretsPlugin implements Plugin {
   }
 
   public static List<PropertyDefinition> createUIProperties() {
+    return Stream.of(createAnalysisProperties(), createDemoModeProperties())
+      .flatMap(List::stream)
+      .toList();
+  }
+
+  private static List<PropertyDefinition> createAnalysisProperties() {
     return List.of(
       PropertyDefinition.builder(TextAndSecretsSensor.ANALYZER_ACTIVATION_KEY)
         .index(1)
@@ -111,8 +118,11 @@ public class TextAndSecretsPlugin implements Plugin {
           "in addition to those associated to a language. This is only applied when the scanner detects a git repository. ")
         .subCategory(GENERAL_SUBCATEGORY)
         .onConfigScopes(ConfigScope.PROJECT)
-        .build(),
+        .build());
+  }
 
+  private static List<PropertyDefinition> createDemoModeProperties() {
+    return List.of(
       PropertyDefinition.builder(TextAndSecretsSensor.DEMO_MODE_KEY)
         .defaultValue(String.valueOf(TextAndSecretsSensor.DEMO_MODE_DEFAULT_VALUE))
         .category(TextAndSecretsSensor.TEXT_CATEGORY)

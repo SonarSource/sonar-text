@@ -181,7 +181,7 @@ public class TextAndSecretsSensor implements Sensor {
       return;
     }
 
-    initializeChecks(activeChecks, sensorContext, createSpecificationConfiguration(sensorContext));
+    initializeChecks(activeChecks, createSpecificationConfiguration(sensorContext));
 
     runAnalysis(sensorContext, activeChecks);
 
@@ -395,7 +395,7 @@ public class TextAndSecretsSensor implements Sensor {
     RegexMatchingManager.initialize(threads);
   }
 
-  protected void initializeChecks(List<Check> checks, SensorContext sensorContext, SpecificationConfiguration specificationConfiguration) {
+  protected void initializeChecks(List<Check> checks, SpecificationConfiguration specificationConfiguration) {
     durationStatistics.timed("initializingSecretMatchers" + DurationStatistics.SUFFIX_GENERAL, () -> {
       for (Check activeCheck : checks) {
         if (activeCheck instanceof SpecificationBasedCheck specificationBasedCheck) {
