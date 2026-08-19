@@ -64,7 +64,9 @@ sonar {
         property("sonar.projectName", "SonarText Enterprise")
         property("sonar.projectKey", System.getenv("SONAR_PROJECT_KEY"))
         property("sonar.organization", "sonarsource")
-        property("sonar.exclusions", "**/build/**/*")
+        // The secrets CLI's TLS fixtures hold throwaway keys generated for the mTLS tests; our own secrets analysis
+        // rightly flags them, so they are kept out of the self-analysis instead of being marked false positive.
+        property("sonar.exclusions", "**/build/**/*,private/sonar-secrets-cli/src/test/resources/ssl/**")
         property("sonar.links.ci", "https://cirrus-ci.com/github/SonarSource/sonar-text-enterprise")
         property("sonar.links.scm", "https://github.com/SonarSource/sonar-text-enterprise")
         property("sonar.links.issue", "https://jira.sonarsource.com/browse/SECRETS")
