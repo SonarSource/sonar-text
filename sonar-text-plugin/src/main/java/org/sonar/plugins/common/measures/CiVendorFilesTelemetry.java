@@ -38,7 +38,9 @@ public class CiVendorFilesTelemetry {
     Map.entry("buildkite", Set.of(".buildkite/pipeline.yml")),
     Map.entry("bitbucketpipelines", Set.of("bitbucket-pipelines.yml")),
     Map.entry("semaphore", Set.of(".semaphore/semaphore.yml")),
-    Map.entry("dockercompose", Set.of("docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml")));
+    Map.entry("dockercompose", Set.of("docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml")),
+    Map.entry("dockerfile", Set.of("Dockerfile")),
+    Map.entry("containerfile", Set.of("Containerfile")));
 
   private CiVendorFilesTelemetry() {
     // only static methods
