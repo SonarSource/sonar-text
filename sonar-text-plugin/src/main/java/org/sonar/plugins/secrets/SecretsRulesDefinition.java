@@ -20,6 +20,7 @@ import java.util.List;
 import org.sonar.api.SonarRuntime;
 import org.sonar.plugins.common.CommonRulesDefinition;
 import org.sonar.plugins.common.DefaultQualityProfileDefinition;
+import org.sonarsource.analyzer.commons.BuiltInQualityProfileJsonLoader;
 
 public class SecretsRulesDefinition extends CommonRulesDefinition {
 
@@ -31,8 +32,36 @@ public class SecretsRulesDefinition extends CommonRulesDefinition {
   }
 
   public static class DefaultQualityProfile extends DefaultQualityProfileDefinition {
-    public DefaultQualityProfile() {
-      super(REPOSITORY_KEY, SecretsLanguage.KEY);
+    public DefaultQualityProfile(SonarRuntime sonarRuntime) {
+      super(sonarRuntime, REPOSITORY_KEY, SecretsLanguage.KEY);
+    }
+
+    @Override
+    public void define(Context context) {
+      NewBuiltInQualityProfile profile = context.createBuiltInQualityProfile(NAME, languageKey);
+      // load the default profile from the open-source plugin ("org" package)
+      BuiltInQualityProfileJsonLoader.load(profile, repositoryKey, profilePath(DEFAULT_PACKAGE_PREFIX, repositoryKey, languageKey));
+      if (isCommercialEdition()) {
+        // load the default profile from the commercial plugin ("com" package)
+        BuiltInQualityProfileJsonLoader.load(profile, repositoryKey, profilePath(packagePrefix(), repositoryKey, languageKey));
+      }
+      // load the rules that are part of "Sonar way" on SonarQube Cloud only
+      loadSonarQubeCloudOnlyRules(profile);
+      profile.setDefault(true);
+      profile.done();
+    }
+
+    @Override
+    protected List<String> sonarQubeCloudOnlyProfilePaths() {
+      // only the commercial plugins ship a SonarQube Cloud addition profile for the secrets repository
+      if (!isCommercialEdition()) {
+        return List.of();
+      }
+      return List.of(sonarQubeCloudProfilePath(packagePrefix(), repositoryKey, languageKey));
+    }
+
+    private boolean isCommercialEdition() {
+      return !DEFAULT_PACKAGE_PREFIX.equals(packagePrefix());
     }
   }
 

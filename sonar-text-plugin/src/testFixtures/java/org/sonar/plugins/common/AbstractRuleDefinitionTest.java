@@ -16,6 +16,8 @@
  */
 package org.sonar.plugins.common;
 
+import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.sonar.api.SonarRuntime;
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
@@ -42,18 +44,51 @@ public abstract class AbstractRuleDefinitionTest {
 
   @Test
   void shouldDefineSonarWayProfile() {
-    BuiltInQualityProfilesDefinition.Context context = new BuiltInQualityProfilesDefinition.Context();
-    BuiltInQualityProfilesDefinition profileDefinition = getQualityProfile();
-    profileDefinition.define(context);
-    BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = context.profile(getRepositoryKey(), "Sonar way");
+    BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = defineSonarWayProfile(TestUtils.SONARLINT_RUNTIME);
     assertThat(profile.language()).isEqualTo(getRepositoryKey());
     assertThat(profile.name()).isEqualTo("Sonar way");
     assertThat(profile.rules()).hasSize(expectedSonarWayChecksCount(TestUtils.SONARLINT_RUNTIME));
+    assertThat(activeRuleKeys(profile))
+      .as("Rules rolled out on SonarQube Cloud only must not be in \"Sonar way\" on the other products")
+      .noneMatch(sonarQubeCloudOnlyRuleKeys()::contains);
+  }
+
+  @Test
+  void shouldDefineSonarWayProfileWithoutSonarQubeCloudOnlyRulesOnSonarQubeServer() {
+    BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = defineSonarWayProfile(TestUtils.SONARQUBE_RUNTIME);
+    assertThat(profile.rules()).hasSize(expectedSonarWayChecksCount(TestUtils.SONARQUBE_RUNTIME));
+    assertThat(activeRuleKeys(profile)).noneMatch(sonarQubeCloudOnlyRuleKeys()::contains);
+  }
+
+  @Test
+  void shouldDefineSonarWayProfileWithAdditionalRulesOnSonarQubeCloud() {
+    BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = defineSonarWayProfile(TestUtils.SONARCLOUD_RUNTIME);
+    assertThat(profile.rules()).hasSize(expectedSonarWayChecksCount(TestUtils.SONARCLOUD_RUNTIME) + sonarQubeCloudOnlyRuleKeys().size());
+    assertThat(activeRuleKeys(profile)).containsAll(sonarQubeCloudOnlyRuleKeys());
+  }
+
+  private BuiltInQualityProfilesDefinition.BuiltInQualityProfile defineSonarWayProfile(SonarRuntime sonarRuntime) {
+    BuiltInQualityProfilesDefinition.Context context = new BuiltInQualityProfilesDefinition.Context();
+    getQualityProfile(sonarRuntime).define(context);
+    return context.profile(getRepositoryKey(), "Sonar way");
+  }
+
+  private static List<String> activeRuleKeys(BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile) {
+    return profile.rules().stream().map(BuiltInQualityProfilesDefinition.BuiltInActiveRule::ruleKey).toList();
   }
 
   protected abstract CommonRulesDefinition getRuleDefinition(SonarRuntime sonarRuntime);
 
-  protected abstract BuiltInQualityProfilesDefinition getQualityProfile();
+  protected abstract BuiltInQualityProfilesDefinition getQualityProfile(SonarRuntime sonarRuntime);
+
+  /**
+   * Keys of the rules that belong to "Sonar way" on SonarQube Cloud only, because they are being rolled out gradually
+   * there. They are expected to be absent from {@link org.sonar.plugins.common.DefaultQualityProfileDefinition#FILE_NAME}
+   * and present in {@link org.sonar.plugins.common.DefaultQualityProfileDefinition#SONARQUBE_CLOUD_FILE_NAME}.
+   */
+  protected Set<String> sonarQubeCloudOnlyRuleKeys() {
+    return Set.of();
+  }
 
   protected abstract String getRepositoryKey();
 

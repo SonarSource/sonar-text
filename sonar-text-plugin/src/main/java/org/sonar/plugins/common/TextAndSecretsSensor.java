@@ -22,6 +22,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
@@ -39,6 +41,7 @@ import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.config.Configuration;
+import org.sonar.api.rule.RuleKey;
 import org.sonar.plugins.common.analyzer.Analyzer;
 import org.sonar.plugins.common.analyzer.TextAndSecretsAnalyzer;
 import org.sonar.plugins.common.git.CachingGitService;
@@ -115,6 +118,10 @@ public class TextAndSecretsSensor implements Sensor {
   public static final boolean DEBUG_LOG_REJECTED_CANDIDATES_DEFAULT_VALUE = false;
   public static final String DEBUG_LOG_REJECTED_CANDIDATES_LIMIT_KEY = "sonar.text.debug.logRejectedCandidates.maxPerRulePerFile";
   public static final int DEBUG_LOG_REJECTED_CANDIDATES_LIMIT_DEFAULT_VALUE = 20;
+  public static final String FEATURE_FLAG_PROPERTY_PREFIX = "sonar.featureflag.";
+  private static final Map<RuleKey, String> SONARQUBE_CLOUD_ROLLOUT_FLAGS = Map.of(
+    RuleKey.of(SecretsRulesDefinition.REPOSITORY_KEY, "S8135"), "cloud-security-enable-secrets-S8135",
+    RuleKey.of(SecretsRulesDefinition.REPOSITORY_KEY, "S8136"), "cloud-security-enable-secrets-S8136");
 
   protected final CheckFactory checkFactory;
   protected final SonarRuntime sonarRuntime;
@@ -176,8 +183,10 @@ public class TextAndSecretsSensor implements Sensor {
     }
     initialize(sensorContext);
 
-    var activeChecks = getActiveChecks();
+    var activeChecks = filterChecksDisabledByRolloutFlag(getActiveChecks(), sensorContext);
     if (activeChecks.isEmpty()) {
+      processMetrics();
+      cleanUp();
       return;
     }
 
@@ -328,6 +337,51 @@ public class TextAndSecretsSensor implements Sensor {
     return inputFiles;
   }
 
+  /**
+   * Drops the checks of the rules whose SonarQube Cloud rollout feature flag is off for the analyzed organization, so
+   * that they are neither initialized nor executed. Outside of SonarQube Cloud every check is kept: no feature flag is
+   * provisioned there, so SonarQube Server, SonarQube IDE and the CLI behave exactly as they did before the rollout.
+   */
+  private List<Check> filterChecksDisabledByRolloutFlag(List<Check> activeChecks, SensorContext sensorContext) {
+    if (!isSonarCloudContext(sensorContext.runtime())) {
+      return activeChecks;
+    }
+
+    reportRolloutFeatureFlags(sensorContext);
+
+    List<Check> enabledChecks = new ArrayList<>(activeChecks.size());
+    List<RuleKey> disabledRuleKeys = new ArrayList<>();
+    for (Check check : activeChecks) {
+      var flagKey = SONARQUBE_CLOUD_ROLLOUT_FLAGS.get(check.getRuleKey());
+      if (flagKey != null && !isFeatureFlagEnabled(sensorContext, flagKey)) {
+        disabledRuleKeys.add(check.getRuleKey());
+      } else {
+        enabledChecks.add(check);
+      }
+    }
+
+    if (!disabledRuleKeys.isEmpty() && LOG.isInfoEnabled()) {
+      LOG.info("The following rules are activated in the quality profile but will not raise any issue, because they are being rolled out " +
+        "progressively: {}. You can enable it by setting: {} to true.",
+        disabledRuleKeys.stream().map(RuleKey::toString).sorted().collect(Collectors.joining(", ")),
+        disabledRuleKeys.stream().map(TextAndSecretsSensor::rolloutFlagProperty).sorted().collect(Collectors.joining(", ")));
+    }
+    return enabledChecks;
+  }
+
+  private static String rolloutFlagProperty(RuleKey ruleKey) {
+    return FEATURE_FLAG_PROPERTY_PREFIX + SONARQUBE_CLOUD_ROLLOUT_FLAGS.get(ruleKey);
+  }
+
+  private static boolean isFeatureFlagEnabled(SensorContext sensorContext, String flagKey) {
+    return sensorContext.config().getBoolean(FEATURE_FLAG_PROPERTY_PREFIX + flagKey).orElse(false);
+  }
+
+  private void reportRolloutFeatureFlags(SensorContext sensorContext) {
+    SONARQUBE_CLOUD_ROLLOUT_FLAGS.forEach((ruleKey, flagKey) -> telemetryReporter.addNumericMeasure(
+      "secrets.rollout_flag." + ruleKey.rule().toLowerCase(Locale.ROOT), isFeatureFlagEnabled(sensorContext, flagKey) ? 1 : 0));
+  }
+
   protected List<Check> getActiveChecks() {
     List<Check> checks = new ArrayList<>(checkFactory.<Check>create(TextRuleDefinition.REPOSITORY_KEY)
       .addAnnotatedChecks(new TextCheckList().checks()).all());
@@ -376,7 +430,7 @@ public class TextAndSecretsSensor implements Sensor {
       threads = threadOption.get();
       logMessageSuffix = ", according to the value of \"" + THREAD_NUMBER_KEY + "\" property";
       if (threads > availableProcessors) {
-        if (isSonarCloudContext(sensorContext)) {
+        if (isSonarCloudContext(sensorContext.runtime())) {
           threads = availableProcessors;
           logMessageSuffix = ", \"" + THREAD_NUMBER_KEY + "\" is ignored";
         } else {
@@ -484,8 +538,8 @@ public class TextAndSecretsSensor implements Sensor {
     return runtime.getProduct() == SonarProduct.SONARLINT;
   }
 
-  private static boolean isSonarCloudContext(SensorContext sensorContext) {
-    return !isSonarLintContext(sensorContext.runtime()) && sensorContext.runtime().getEdition() == SonarEdition.SONARCLOUD;
+  public static boolean isSonarCloudContext(SonarRuntime runtime) {
+    return !isSonarLintContext(runtime) && runtime.getEdition() == SonarEdition.SONARCLOUD;
   }
 
   private static String resolvePluginVersion() {

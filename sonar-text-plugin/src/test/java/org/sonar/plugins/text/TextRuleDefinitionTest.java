@@ -33,8 +33,8 @@ class TextRuleDefinitionTest extends AbstractRuleDefinitionTest {
   }
 
   @Override
-  protected BuiltInQualityProfilesDefinition getQualityProfile() {
-    return new TextRuleDefinition.DefaultQualityProfile();
+  protected BuiltInQualityProfilesDefinition getQualityProfile(SonarRuntime sonarRuntime) {
+    return new TextRuleDefinition.DefaultQualityProfile(sonarRuntime);
   }
 
   @Override

@@ -31,8 +31,8 @@ public class TextRuleDefinition extends CommonRulesDefinition {
   }
 
   public static class DefaultQualityProfile extends DefaultQualityProfileDefinition {
-    public DefaultQualityProfile() {
-      super(REPOSITORY_KEY, TextLanguage.KEY);
+    public DefaultQualityProfile(SonarRuntime sonarRuntime) {
+      super(sonarRuntime, REPOSITORY_KEY, TextLanguage.KEY);
     }
   }
 

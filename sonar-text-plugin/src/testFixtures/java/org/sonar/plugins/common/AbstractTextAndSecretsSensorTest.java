@@ -175,6 +175,23 @@ public abstract class AbstractTextAndSecretsSensorTest {
   }
 
   @Test
+  public void descriptorShouldNotSignalHiddenFileProcessingInSonarQubeIde() {
+    SensorDescriptor descriptor = mock(SensorDescriptor.class);
+    SensorContextTester sensorContext = testUtils().defaultSensorContext();
+    sensorContext.setRuntime(SONARLINT_RUNTIME);
+
+    when(descriptor.name(any())).thenReturn(descriptor);
+    when(descriptor.createIssuesForRuleRepository(any())).thenReturn(descriptor);
+    when(descriptor.createIssuesForRuleRepositories(any(), any())).thenReturn(descriptor);
+    when(descriptor.processesFilesIndependently()).thenReturn(descriptor);
+    when(descriptor.global()).thenReturn(descriptor);
+    sensor(sensorContext).describe(descriptor);
+
+    verify(descriptor, never()).processesHiddenFiles();
+    assertThat(logTester.logs()).isEmpty();
+  }
+
+  @Test
   public void descriptorShouldSignalHiddenFileProcessingWhenAPIDoesSupportIt() {
     // After release of SQS 25.3, we can integrate this test into shouldDescribeWithoutErrors(), as then the mocking of SensorDescriptor is not
     // needed anymore.
