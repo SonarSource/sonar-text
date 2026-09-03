@@ -45,14 +45,14 @@ jobs:
           echo "GRADLE_USER_HOME=${GRADLE_USER_HOME}" >> $GITHUB_ENV
 
       - name: Cache Gradle Dependencies
-        uses: SonarSource/ci-github-actions/cache@v1
+        uses: SonarSource/ci-github-actions/cache@v2
         with:
           path: ${{ env.GRADLE_USER_HOME }}
           key: gradle-${{ env.GRADLE_CACHE_KEY }}
 
       - name: Build, test and analyze
         id: build
-        uses: SonarSource/ci-github-actions/build-gradle@v1
+        uses: SonarSource/ci-github-actions/build-gradle@v2
         with:
           deploy-pull-request: false
           skip-tests: false
