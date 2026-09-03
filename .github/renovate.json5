@@ -45,7 +45,8 @@
       ],
       "pinDigests": false,
       "groupName": "all Sonar GitHub Actions",
-      "groupSlug": "all-sonar-github-actions"
+      "groupSlug": "all-sonar-github-actions",
+      "rangeStrategy": "replace"
     },
     {
       "matchManagers": [
