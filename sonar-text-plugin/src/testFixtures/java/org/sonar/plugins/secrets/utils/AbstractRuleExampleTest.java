@@ -16,10 +16,7 @@
  */
 package org.sonar.plugins.secrets.utils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.smile.SmileFactory;
 import com.networknt.schema.Error;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
@@ -50,6 +47,7 @@ import org.sonar.plugins.secrets.configuration.model.Rule;
 import org.sonar.plugins.secrets.configuration.model.RuleExample;
 import org.sonar.plugins.secrets.configuration.model.matching.Matching;
 import org.sonar.plugins.secrets.configuration.validation.SchemaValidator;
+import tools.jackson.dataformat.smile.SmileMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.sonar.plugins.common.TestUtils.asString;
@@ -99,8 +97,8 @@ public abstract class AbstractRuleExampleTest {
   }
 
   @Test
-  void testSpecificationFileValidity() throws IOException {
-    var mapper = new ObjectMapper(new SmileFactory());
+  void testSpecificationFileValidity() {
+    var mapper = new SmileMapper();
     var fileNames = specificationLoader.getSpecificationFilesForKey(check.getRuleKey().rule());
     for (String fileName : fileNames) {
       var specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(specificationLocation + fileName);

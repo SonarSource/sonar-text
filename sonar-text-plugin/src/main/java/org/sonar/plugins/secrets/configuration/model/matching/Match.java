@@ -16,8 +16,8 @@
  */
 package org.sonar.plugins.secrets.configuration.model.matching;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.sonar.plugins.secrets.configuration.deserialization.MatchDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 @JsonDeserialize(using = MatchDeserializer.class)
 public interface Match {

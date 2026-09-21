@@ -34,6 +34,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JacksonException;
 
 import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -135,7 +136,8 @@ class UpdatingSpecificationFilesGeneratorTest {
 
     assertThatThrownBy(generator::performGeneration)
       .isInstanceOf(GenerationException.class)
-      .hasCauseInstanceOf(IOException.class)
+      .hasCauseInstanceOf(JacksonException.class)
+      .hasRootCauseInstanceOf(IOException.class)
       .hasRootCauseMessage("./src/test/resources/secretsConfiguration/generator/nonExistentFile.yaml (No such file or directory)");
   }
 

@@ -16,16 +16,21 @@
  */
 package org.sonar.plugins.secrets.configuration.deserialization;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.smile.SmileFactory;
-import java.io.IOException;
 import java.io.InputStream;
 import org.sonar.plugins.secrets.configuration.model.Specification;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.dataformat.smile.SmileMapper;
 
 public class SpecificationDeserializer {
 
-  private static final ObjectMapper MAPPER = new ObjectMapper(new SmileFactory());
+  // Jackson 3 disables FAIL_ON_UNKNOWN_PROPERTIES by default; re-enable it to keep rejecting
+  // specification files with typos/unexpected fields, as before the Jackson 2 -> 3 migration.
+  private static final ObjectMapper MAPPER = SmileMapper.builder()
+    .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+    .build();
 
   private SpecificationDeserializer() {
   }
@@ -34,11 +39,11 @@ public class SpecificationDeserializer {
     try {
       JsonNode specification = MAPPER.readTree(specificationStream);
       return MAPPER.treeToValue(specification, Specification.class);
-    } catch (IOException e) {
-      throw new DeserializationException(String.format("Deserialization of specification failed for file: %s", fileName), e);
     } catch (IllegalArgumentException e) {
       throw new DeserializationException(
         String.format("Deserialization of specification failed for file because it was not found: %s", fileName), e);
+    } catch (JacksonException e) {
+      throw new DeserializationException(String.format("Deserialization of specification failed for file: %s", fileName), e);
     }
   }
 }

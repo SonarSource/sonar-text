@@ -16,24 +16,26 @@
  */
 package org.sonar.plugins.secrets.configuration.validation;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import java.io.IOException;
 import java.io.InputStream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
 class SchemaValidatorTest {
 
-  private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper MAPPER = YAMLMapper.builder()
+    .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+    .build();
 
   @ParameterizedTest
   @ValueSource(strings = {"validMinSpec.yaml", "validReferenceSpec.yaml"})
-  void testSpecificationFilesAreValid(String specificationFileName) throws IOException {
+  void testSpecificationFilesAreValid(String specificationFileName) {
     InputStream specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + specificationFileName);
     JsonNode specification = MAPPER.readTree(specificationStream);
 
@@ -46,7 +48,7 @@ class SchemaValidatorTest {
     "invalidSpecWithWrongType.yaml",
     "invalidSpecForbiddenCategory.yaml",
     "invalidSpecEmptyNestedPost.yaml"})
-  void testSpecificationFilesAreInValid(String specificationFileName) throws IOException {
+  void testSpecificationFilesAreInValid(String specificationFileName) {
     InputStream specificationStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("secretsConfiguration/" + specificationFileName);
     JsonNode specification = MAPPER.readTree(specificationStream);
 

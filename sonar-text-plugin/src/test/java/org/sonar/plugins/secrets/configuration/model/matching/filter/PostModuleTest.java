@@ -16,16 +16,18 @@
  */
 package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PostModuleTest {
 
-  private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper MAPPER = YAMLMapper.builder()
+    .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+    .build();
 
   @Test
   void shouldHaveDefaultConstructor() {
@@ -37,7 +39,7 @@ class PostModuleTest {
   }
 
   @Test
-  void shouldDeserializePostModules() throws JsonProcessingException {
+  void shouldDeserializePostModules() {
     var input = """
       patternNot:
         - example
@@ -57,7 +59,7 @@ class PostModuleTest {
   }
 
   @Test
-  void shouldDeserializeAbsentFieldsOfTopLevelPostModuleToEmptyCollection() throws JsonProcessingException {
+  void shouldDeserializeAbsentFieldsOfTopLevelPostModuleToEmptyCollection() {
     var input = """
       statisticalFilter:
         threshold: 4

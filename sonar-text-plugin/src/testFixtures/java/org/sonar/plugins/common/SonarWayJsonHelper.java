@@ -16,13 +16,13 @@
  */
 package org.sonar.plugins.common;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
 
 import static org.assertj.core.api.Assertions.fail;
 
@@ -38,7 +38,7 @@ public class SonarWayJsonHelper {
   }
 
   private static HashSet<String> findDuplicatedKeys(String content) {
-    var objectMapper = new ObjectMapper();
+    var objectMapper = new JsonMapper();
     JsonNode root = null;
     try {
       root = objectMapper.readTree(content);

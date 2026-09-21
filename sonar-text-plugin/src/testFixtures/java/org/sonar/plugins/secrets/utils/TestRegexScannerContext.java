@@ -16,10 +16,7 @@
  */
 package org.sonar.plugins.secrets.utils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -50,6 +47,8 @@ import org.sonarsource.analyzer.commons.regex.RegexParseResult;
 import org.sonarsource.analyzer.commons.regex.RegexParser;
 import org.sonarsource.analyzer.commons.regex.ast.FlagSet;
 import org.sonarsource.analyzer.commons.regex.ast.RegexSyntaxElement;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 public class TestRegexScannerContext implements JavaFileScannerContext, RegexScannerContext {
 
@@ -61,14 +60,12 @@ public class TestRegexScannerContext implements JavaFileScannerContext, RegexSca
 
   public TestRegexScannerContext(String baselineFileName) {
     this.baselineFileName = baselineFileName;
-    try {
-      var mapper = new ObjectMapper(new YAMLFactory());
-      var file = new File("src/test/resources/SecretsRegexTest", baselineFileName);
-      var treeNode = mapper.readTree(file);
-      baseline = mapper.treeToValue(treeNode, SecretsRegexBaseline.class);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    var mapper = YAMLMapper.builder()
+      .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+      .build();
+    var file = new File("src/test/resources/SecretsRegexTest", baselineFileName);
+    var treeNode = mapper.readTree(file);
+    baseline = mapper.treeToValue(treeNode, SecretsRegexBaseline.class);
   }
 
   public void verify(boolean shouldWarnAboutUnusedIssuesInBaseline) {

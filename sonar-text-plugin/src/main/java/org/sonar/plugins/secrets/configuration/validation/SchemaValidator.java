@@ -16,13 +16,13 @@
  */
 package org.sonar.plugins.secrets.configuration.validation;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.networknt.schema.Error;
 import com.networknt.schema.InputFormat;
 import com.networknt.schema.Schema;
 import com.networknt.schema.SchemaRegistry;
 import com.networknt.schema.SpecificationVersion;
 import java.util.List;
+import tools.jackson.databind.JsonNode;
 
 public final class SchemaValidator {
 

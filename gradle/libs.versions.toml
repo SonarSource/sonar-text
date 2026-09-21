@@ -14,8 +14,11 @@ sonar-license-api = "3.4"
 sonar-lint = "11.10.0.86299"
 slf4j = "2.0.19"
 logback = "1.6.3"
-jackson = "2.22.2"
-json-schema-validator = "2.0.7"
+jackson = "3.2.2"
+# Jackson 2 still reaches the CLI test classpath via WireMock and the Orchestrator; pinned because
+# WireMock's own jackson-bom 2.20.1 has known jackson-databind CVEs
+jackson2 = "2.22.2"
+json-schema-validator = "3.0.6"
 pico-cli = "4.7.7"
 junit = "6.1.3"
 assertj = "3.27.7"
@@ -47,10 +50,9 @@ sonar-scanner-integration-tester = { module = "com.sonarsource.scanner.integrati
 sonar-lint-core = { module = "org.sonarsource.sonarlint.core:sonarlint-core", version.ref = "sonar-lint" }
 sonar-lint-rpc-java-client = { module = "org.sonarsource.sonarlint.core:sonarlint-rpc-java-client", version.ref = "sonar-lint" }
 sonar-lint-rpc-impl = { module = "org.sonarsource.sonarlint.core:sonarlint-rpc-impl", version.ref = "sonar-lint" }
-jackson-dataformat-yaml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jackson" }
-jackson-dataformat-smile = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-smile", version.ref = "jackson" }
-jackson-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "jackson" }
-jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+jackson2-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "jackson2" }
+jackson-dataformat-yaml = { module = "tools.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jackson" }
+jackson-dataformat-smile = { module = "tools.jackson.dataformat:jackson-dataformat-smile", version.ref = "jackson" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-nop = { module = "org.slf4j:slf4j-nop", version.ref = "slf4j" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }

@@ -16,33 +16,29 @@
  */
 package org.sonar.plugins.secrets.configuration.deserialization;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.TreeNode;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import java.io.IOException;
-import java.util.Iterator;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
 import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombination;
 import org.sonar.plugins.secrets.configuration.model.matching.Match;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.node.ObjectNode;
 
-public class MatchDeserializer extends JsonDeserializer<Match> {
+public class MatchDeserializer extends ValueDeserializer<Match> {
 
   @Override
-  public Match deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
-    TreeNode treeNode = jsonParser.getCodec().readTree(jsonParser);
+  public Match deserialize(JsonParser jsonParser, DeserializationContext ctxt) {
+    JsonNode treeNode = ctxt.readTree(jsonParser);
 
-    JsonParser matchNodeParser = treeNode.traverse();
-    matchNodeParser.setCodec(jsonParser.getCodec());
-
-    Iterator<String> nodeIterator = treeNode.fieldNames();
+    var nodeIterator = ((ObjectNode) treeNode).properties().iterator();
     // As the yaml is validated before, there is always one element
-    String name = nodeIterator.next();
+    String name = nodeIterator.next().getKey();
 
     if (name.startsWith("pattern")) {
-      return matchNodeParser.readValueAs(AuxiliaryPattern.class);
+      return ctxt.readTreeAsValue(treeNode, AuxiliaryPattern.class);
     } else {
-      return matchNodeParser.readValueAs(BooleanCombination.class);
+      return ctxt.readTreeAsValue(treeNode, BooleanCombination.class);
     }
   }
 }

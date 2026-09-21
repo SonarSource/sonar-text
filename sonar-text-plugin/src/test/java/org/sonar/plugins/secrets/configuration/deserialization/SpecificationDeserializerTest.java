@@ -16,13 +16,13 @@
  */
 package org.sonar.plugins.secrets.configuration.deserialization;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import java.io.InputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.sonar.plugins.secrets.configuration.model.Specification;
+import tools.jackson.databind.DatabindException;
+import tools.jackson.databind.exc.UnrecognizedPropertyException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -104,7 +104,8 @@ class SpecificationDeserializerTest {
       .withMessage("Deserialization of specification failed for file: %s".formatted("test.yaml"))
       .havingCause()
       .isInstanceOf(UnrecognizedPropertyException.class)
-      .withMessageContaining("Unrecognized field \"name\"");
+      // Jackson 3 rewords UnrecognizedPropertyException from "field" to "property".
+      .withMessageContaining("Unrecognized property \"name\"");
   }
 
   @ParameterizedTest
@@ -138,6 +139,6 @@ class SpecificationDeserializerTest {
       .isThrownBy(() -> SpecificationDeserializer.deserialize(specificationStream, "test.yaml"))
       .withMessage("Deserialization of specification failed for file: %s".formatted("test.yaml"))
       .havingCause()
-      .isInstanceOf(JsonMappingException.class);
+      .isInstanceOf(DatabindException.class);
   }
 }

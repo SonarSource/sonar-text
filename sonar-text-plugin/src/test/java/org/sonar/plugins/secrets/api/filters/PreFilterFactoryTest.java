@@ -16,10 +16,7 @@
  */
 package org.sonar.plugins.secrets.api.filters;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.sonarsource.scanner.engine.sensor.test.fixtures.TestInputFileBuilder;
-import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
@@ -41,6 +38,9 @@ import org.sonar.plugins.secrets.configuration.model.Selectivity;
 import org.sonar.plugins.secrets.configuration.model.matching.Detection;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.PreModule;
 import org.sonar.scanner.plugin.api.impl.fs.DefaultFileSystem;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -48,7 +48,9 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 class PreFilterFactoryTest {
-  private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper MAPPER = YAMLMapper.builder()
+    .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+    .build();
 
   @ParameterizedTest
   @CsvSource({
@@ -100,7 +102,7 @@ class PreFilterFactoryTest {
 
   @ParameterizedTest
   @MethodSource("inputs")
-  void testFiltersFromYamlFragments(String input, String filename, boolean shouldMatch) throws IOException {
+  void testFiltersFromYamlFragments(String input, String filename, boolean shouldMatch) {
     Detection detection = MAPPER.readValue(input, Detection.class);
 
     var filter = PreFilterFactory.createFilter(detection.getPre(), Selectivity.SPECIFIC, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_DISABLED, true);

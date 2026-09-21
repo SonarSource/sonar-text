@@ -16,9 +16,9 @@
  */
 package org.sonar.plugins.secrets.configuration.model.matching;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.util.List;
 import org.sonar.plugins.secrets.configuration.deserialization.BooleanCombinationDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 @JsonDeserialize(using = BooleanCombinationDeserializer.class)
 public class BooleanCombination implements Match {

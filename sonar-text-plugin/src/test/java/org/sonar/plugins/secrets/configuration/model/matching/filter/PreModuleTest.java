@@ -16,19 +16,21 @@
  */
 package org.sonar.plugins.secrets.configuration.model.matching.filter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PreModuleTest {
 
-  private static final ObjectMapper MAPPER = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper MAPPER = YAMLMapper.builder()
+    .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+    .build();
 
   @Test
-  void shouldDeserializeToEmptyCollection() throws JsonProcessingException {
+  void shouldDeserializeToEmptyCollection() {
     var input = """
       include:
         content: []
@@ -51,7 +53,7 @@ class PreModuleTest {
   }
 
   @Test
-  void shouldReturnOverrideWhenBaseIsNull() throws JsonProcessingException {
+  void shouldReturnOverrideWhenBaseIsNull() {
     var override = constructPreModule("""
       reject:
         paths:
@@ -64,7 +66,7 @@ class PreModuleTest {
   }
 
   @Test
-  void shouldReturnBaseWhenOverrideIsNull() throws JsonProcessingException {
+  void shouldReturnBaseWhenOverrideIsNull() {
     var base = constructPreModule("""
       reject:
         ext:
@@ -77,7 +79,7 @@ class PreModuleTest {
   }
 
   @Test
-  void shouldMergeBothIncludeAndRejectFilters() throws JsonProcessingException {
+  void shouldMergeBothIncludeAndRejectFilters() {
     var base = MAPPER.readValue("""
       include:
         paths:
@@ -125,7 +127,7 @@ class PreModuleTest {
     assertThat(result.getReject()).isNull();
   }
 
-  private static PreModule constructPreModule(String spec) throws JsonProcessingException {
+  private static PreModule constructPreModule(String spec) {
     return MAPPER.readValue(spec, PreModule.class);
   }
 }

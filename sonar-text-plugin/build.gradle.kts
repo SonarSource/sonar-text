@@ -36,6 +36,7 @@ dependencies {
     api(libs.ahocorasick)
     compileOnly(libs.sonar.plugin.api)
     compileOnly(libs.slf4j.api)
+    testImplementation(libs.jackson.dataformat.yaml)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.assertj.core)
     testImplementation(libs.sonar.plugin.api.test.fixtures)
@@ -46,6 +47,7 @@ dependencies {
     testImplementation(libs.logback.classic)
     testRuntimeOnly(libs.junit.platform.launcher)
 
+    testFixturesImplementation(libs.jackson.dataformat.yaml)
     testFixturesImplementation(libs.junit.jupiter)
     testFixturesImplementation(libs.assertj.core)
     testFixturesImplementation(libs.sonar.plugin.api.test.fixtures)
@@ -94,7 +96,7 @@ tasks.shadowJar {
 
     val logger = project.logger
     doLast {
-        enforceJarSize(tasks.shadowJar.get().archiveFile.get().asFile, 6_500_000L, 8_500_000L, logger)
+        enforceJarSize(tasks.shadowJar.get().archiveFile.get().asFile, 7_000_000L, 8_500_000L, logger)
     }
 }
 

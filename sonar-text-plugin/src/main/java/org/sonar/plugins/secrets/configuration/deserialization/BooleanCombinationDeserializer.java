@@ -16,13 +16,6 @@
  */
 package org.sonar.plugins.secrets.configuration.deserialization;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.TreeNode;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -30,11 +23,17 @@ import java.util.Map;
 import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombination;
 import org.sonar.plugins.secrets.configuration.model.matching.BooleanCombinationType;
 import org.sonar.plugins.secrets.configuration.model.matching.Match;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.node.ObjectNode;
 
-public class BooleanCombinationDeserializer extends JsonDeserializer<BooleanCombination> {
+public class BooleanCombinationDeserializer extends ValueDeserializer<BooleanCombination> {
 
-  public BooleanCombination deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
-    TreeNode treeNode = jsonParser.getCodec().readTree(jsonParser);
+  @Override
+  public BooleanCombination deserialize(JsonParser jsonParser, DeserializationContext ctxt) {
+    JsonNode treeNode = ctxt.readTree(jsonParser);
 
     Iterator<Map.Entry<String, JsonNode>> properties = ((ObjectNode) treeNode).properties().iterator();
     // As the yaml is validated before, there is always one element!
@@ -43,10 +42,10 @@ public class BooleanCombinationDeserializer extends JsonDeserializer<BooleanComb
     List<Match> modules = new ArrayList<>();
 
     if ("matchNot".equals(node.getKey())) {
-      addMatch(jsonParser, node.getValue(), modules);
+      addMatch(ctxt, node.getValue(), modules);
     } else {
       for (JsonNode matchNode : node.getValue()) {
-        addMatch(jsonParser, matchNode, modules);
+        addMatch(ctxt, matchNode, modules);
       }
     }
 
@@ -56,10 +55,8 @@ public class BooleanCombinationDeserializer extends JsonDeserializer<BooleanComb
     return booleanCombination;
   }
 
-  private static void addMatch(JsonParser jsonParser, JsonNode matchNode, List<Match> modules) throws IOException {
-    JsonParser matchNodeParser = matchNode.traverse();
-    matchNodeParser.setCodec(jsonParser.getCodec());
-    Match match = matchNodeParser.readValueAs(Match.class);
+  private static void addMatch(DeserializationContext ctxt, JsonNode matchNode, List<Match> modules) {
+    Match match = ctxt.readTreeAsValue(matchNode, Match.class);
     modules.add(match);
   }
 }

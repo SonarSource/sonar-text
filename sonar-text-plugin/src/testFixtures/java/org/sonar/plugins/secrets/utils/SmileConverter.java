@@ -16,17 +16,22 @@
  */
 package org.sonar.plugins.secrets.utils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.smile.SmileFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.dataformat.smile.SmileMapper;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 public class SmileConverter {
 
-  private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
-  private static final ObjectMapper SMILE_MAPPER = new ObjectMapper(new SmileFactory());
+  private static final ObjectMapper YAML_MAPPER = YAMLMapper.builder()
+    .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+    .build();
+  private static final ObjectMapper SMILE_MAPPER = SmileMapper.builder()
+    .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+    .build();
 
   private SmileConverter() {
   }

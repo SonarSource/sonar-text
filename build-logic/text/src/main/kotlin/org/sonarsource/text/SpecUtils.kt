@@ -16,10 +16,9 @@
  */
 package org.sonarsource.text
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.smile.SmileFactory
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import java.io.File
+import tools.jackson.dataformat.smile.SmileMapper
+import tools.jackson.dataformat.yaml.YAMLMapper
 
 fun String.expandCommonBlock(commonSections: Map<String, String>): String {
     val line = this
@@ -39,8 +38,8 @@ fun convertYamlToSmile(
     yamlFile: File,
     smileFile: File,
 ) {
-    val yamlMapper = ObjectMapper(YAMLFactory())
-    val smileMapper = ObjectMapper(SmileFactory())
+    val yamlMapper = YAMLMapper()
+    val smileMapper = SmileMapper()
 
     val jsonNode = try {
         yamlMapper.readTree(yamlFile)

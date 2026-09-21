@@ -16,10 +16,6 @@
  */
 package org.sonarsource.text;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.smile.SmileFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -38,6 +34,11 @@ import java.util.stream.StreamSupport;
 import kotlin.text.StringsKt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.dataformat.smile.SmileMapper;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import static java.util.Collections.unmodifiableCollection;
 import static java.util.Objects.requireNonNull;
@@ -53,8 +54,8 @@ public class UpdatingSpecificationFilesGenerator {
   public static final Path RSPEC_LIST_PATH = Path.of("build/generated");
   private static final Charset CHARSET = StandardCharsets.UTF_8;
   private static final String LINE_SEPARATOR = "\n";
-  private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
-  private static final ObjectMapper SMILE_MAPPER = new ObjectMapper(new SmileFactory());
+  private static final ObjectMapper YAML_MAPPER = new YAMLMapper();
+  private static final ObjectMapper SMILE_MAPPER = new SmileMapper();
   private static final Pattern FORBIDDEN_SYMBOLS_IN_CHECK_NAME = Pattern.compile("[^\\p{IsAlphabetic}]");
 
   public final String packagePrefix;
@@ -281,7 +282,7 @@ public class UpdatingSpecificationFilesGenerator {
         try {
           var mapper = file.getName().endsWith(".yaml") ? YAML_MAPPER : SMILE_MAPPER;
           return mapper.readValue(file, JsonNode.class);
-        } catch (IOException e) {
+        } catch (JacksonException e) {
           throw new GenerationException("error while reading specification file " + file, e);
         }
       });

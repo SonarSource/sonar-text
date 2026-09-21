@@ -16,24 +16,22 @@
  */
 package org.sonar.plugins.secrets.configuration.deserialization;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.TreeNode;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPattern;
 import org.sonar.plugins.secrets.configuration.model.matching.AuxiliaryPatternType;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.node.StringNode;
 
-public class AuxiliaryPatternDeserializer extends JsonDeserializer<AuxiliaryPattern> {
+public class AuxiliaryPatternDeserializer extends ValueDeserializer<AuxiliaryPattern> {
 
   @Override
-  public AuxiliaryPattern deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
-    TreeNode treeNode = jsonParser.getCodec().readTree(jsonParser);
+  public AuxiliaryPattern deserialize(JsonParser jsonParser, DeserializationContext ctxt) {
+    JsonNode treeNode = ctxt.readTree(jsonParser);
 
     Iterator<Map.Entry<String, JsonNode>> properties = ((ObjectNode) treeNode).properties().iterator();
     // As the yaml is validated before, there is always one element
@@ -41,7 +39,7 @@ public class AuxiliaryPatternDeserializer extends JsonDeserializer<AuxiliaryPatt
 
     AuxiliaryPattern auxiliaryPattern = new AuxiliaryPattern();
     auxiliaryPattern.setType(AuxiliaryPatternType.valueOfLabel(node.getKey()));
-    if (node.getValue() instanceof TextNode) {
+    if (node.getValue() instanceof StringNode) {
       auxiliaryPattern.setPattern(node.getValue().asText());
     } else {
       JsonNode value = node.getValue();
