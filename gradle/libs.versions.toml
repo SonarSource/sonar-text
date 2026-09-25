@@ -14,7 +14,7 @@ sonar-license-api = "3.4"
 sonar-lint = "11.10.0.86299"
 slf4j = "2.0.19"
 logback = "1.6.3"
-jackson = "3.2.2"
+jackson = "3.2.3"
 # Jackson 2 still reaches the CLI test classpath via WireMock and the Orchestrator; pinned because
 # WireMock's own jackson-bom 2.20.1 has known jackson-databind CVEs
 jackson2 = "2.22.2"
