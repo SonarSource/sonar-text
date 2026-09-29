@@ -23,8 +23,13 @@ plugins {
 
 tasks.artifactoryPublish { skip = true }
 
-val cliArtifacts = setOf("linux-x86-64", "linux-arm64", "macos-arm64", "windows-x86-64")
-    .joinToString(",") { it -> "com.sonarsource.text:sonar-secrets:exe:$it" }
+val cliArtifacts = mapOf(
+    "linux-x86-64" to "bin",
+    "linux-arm64" to "bin",
+    "macos-arm64" to "bin",
+    "windows-x86-64" to "exe"
+).map { (classifier, extension) -> "com.sonarsource.text:sonar-secrets:$extension:$classifier" }
+    .joinToString(",")
 
 artifactoryConfiguration {
     buildName = providers.environmentVariable("PROJECT").orElse("sonar-text")
