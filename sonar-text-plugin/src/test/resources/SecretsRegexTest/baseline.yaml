@@ -70,12 +70,3 @@ issuesToVerify:
     issueRuleKey: S5852
     message: Make sure the regex used here, which is vulnerable to polynomial runtime due to backtracking, cannot lead to denial of service.
     details: ""
-
-  - secretRuleKey: S6703
-    secretRuleId: odbc-connection-string
-    location: post
-    regexText: "parameters\\\\(+[^)]*\\\\)++"
-    issueRuleKey: S5852
-    message: Make sure the regex used here, which is vulnerable to polynomial runtime due to backtracking, cannot lead to denial of service.
-    details: ""
-
