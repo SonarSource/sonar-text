@@ -27,7 +27,7 @@ This component helps you prevent the leakage of secrets even before you push the
 
 *Prerequisite*
 
-- Java 17
+- Java 21
 
 ### Setup
 To configure build dependencies, run the following command:
@@ -125,14 +125,13 @@ The Regular Expressions provided in the secrets specification should be verified
 Currently, the Sonar products don't scan YAML files for Regex problems.
 To avoid potential problems the [SecretsRegexTest](sonar-text-plugin/src/test/java/org/sonar/plugins/secrets/utils/SecretsRegexTest.java)
 was prepared for validating regexes.
-There is a simple way to validate all specification files and a single one.
-Currently, tests are disabled, as the issues need to be reviewed first.
-
-There is also a way of running this check from the command line.
+The test validates all specification files as part of the regular unit tests (`shouldValidateAllRegexesInConfiguration`):
 
 ```shell
-./gradlew --rerun-tasks :sonar-text-plugin:test --console plain --tests SecretsRegexTest.shouldValidateSingleFile -Dfilename=google-oauth2.yaml
+./gradlew :sonar-text-plugin:test --tests 'SecretsRegexTest.shouldValidateAllRegexesInConfiguration'
 ```
+
+`shouldValidateSingleFile` is meant for a single specification file, but it is skipped unless the system property `filename` reaches the test JVM, which `-Dfilename` on the Gradle command line currently does not do.
 
 # License
 
