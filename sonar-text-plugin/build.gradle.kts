@@ -78,7 +78,6 @@ tasks.jar {
                 "Plugin-OrganizationUrl" to "https://www.sonarsource.com",
                 "Plugin-SourcesUrl" to "https://github.com/SonarSource/sonar-text",
                 "Plugin-Version" to project.version,
-                "Sonar-Version" to "9.8",
                 "SonarLint-Supported" to "true",
                 "Version" to project.version.toString(),
                 "Jre-Min-Version" to java.sourceCompatibility.majorVersion
