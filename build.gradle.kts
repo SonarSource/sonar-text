@@ -80,7 +80,12 @@ sonar {
             add(gradle.includedBuild("build-logic-text").projectDir.resolve("src/main/java").toString())
             add(gradle.includedBuild("build-logic-text").projectDir.resolve("src/main/kotlin").toString())
         }
-        property("sonar.sca.exclusions", "private/its/benchmark/src/integrationTest/resources/sources/**")
+        property(
+            "sonar.sca.exclusions",
+            "private/its/benchmark/src/integrationTest/resources/sources/**," +
+                "private/its/ruling/src/integrationTest/resources/sources/**," +
+                "private/its/plugin/projects/**"
+        )
 
         val binaries = properties["sonar.java.binaries"] as? MutableCollection<String> ?: mutableSetOf()
         properties["sonar.java.binaries"] = binaries.apply {
