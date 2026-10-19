@@ -29,9 +29,11 @@ public class DefaultQualityProfileDefinition implements BuiltInQualityProfilesDe
    * Name of the profile file listing the rules that are part of "Sonar way" on SonarQube Cloud only. Such rules are
    * rolled out gradually on SonarQube Cloud, per organization, through the feature flags declared in
    * {@link TextAndSecretsSensor}, before being enabled on every product. Only the repositories that have such rules
-   * ship this file.
+   * ship this file. It sits in {@link #SONARQUBE_CLOUD_DIRECTORY_NAME} because rule-api, which lists only the rules
+   * directory itself, would otherwise read it as a second "Sonar way" profile and overwrite {@link #FILE_NAME}.
    */
   public static final String SONARQUBE_CLOUD_FILE_NAME = "Sonar_way_sonarqube_cloud_addition_profile.json";
+  public static final String SONARQUBE_CLOUD_DIRECTORY_NAME = "sonarqube_cloud";
 
   public final String repositoryKey;
   public final String languageKey;
@@ -78,7 +80,7 @@ public class DefaultQualityProfileDefinition implements BuiltInQualityProfilesDe
   }
 
   public static String sonarQubeCloudProfilePath(String packagePrefix, String repository, String language) {
-    return CommonRulesDefinition.resourcePath(packagePrefix, repository, language) + "/" + SONARQUBE_CLOUD_FILE_NAME;
+    return CommonRulesDefinition.resourcePath(packagePrefix, repository, language) + "/" + SONARQUBE_CLOUD_DIRECTORY_NAME + "/" + SONARQUBE_CLOUD_FILE_NAME;
   }
 
   public String packagePrefix() {

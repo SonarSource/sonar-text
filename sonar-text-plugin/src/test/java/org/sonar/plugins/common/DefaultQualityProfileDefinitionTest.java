@@ -86,7 +86,7 @@ class DefaultQualityProfileDefinitionTest {
     assertThat(DefaultQualityProfileDefinition.profilePath("org", "secrets", "secrets"))
       .isEqualTo("/org/sonar/l10n/secrets/rules/secrets/Sonar_way_profile.json");
     assertThat(DefaultQualityProfileDefinition.sonarQubeCloudProfilePath("com", "secrets", "secrets"))
-      .isEqualTo("/com/sonar/l10n/secrets/rules/secrets/Sonar_way_sonarqube_cloud_addition_profile.json");
+      .isEqualTo("/com/sonar/l10n/secrets/rules/secrets/sonarqube_cloud/Sonar_way_sonarqube_cloud_addition_profile.json");
   }
 
   @Test

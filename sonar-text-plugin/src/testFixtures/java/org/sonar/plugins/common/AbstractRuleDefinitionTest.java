@@ -18,6 +18,7 @@ package org.sonar.plugins.common;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.sonar.api.SonarRuntime;
 import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
@@ -65,6 +66,18 @@ public abstract class AbstractRuleDefinitionTest {
     BuiltInQualityProfilesDefinition.BuiltInQualityProfile profile = defineSonarWayProfile(TestUtils.SONARCLOUD_RUNTIME);
     assertThat(profile.rules()).hasSize(expectedSonarWayChecksCount(TestUtils.SONARCLOUD_RUNTIME) + sonarQubeCloudOnlyRuleKeys().size());
     assertThat(activeRuleKeys(profile)).containsAll(sonarQubeCloudOnlyRuleKeys());
+  }
+
+  @Test
+  void shouldActivateTheSameSonarWayRulesOnEveryProductExceptTheSonarQubeCloudOnlyRules() {
+    List<String> serverRuleKeys = activeRuleKeys(defineSonarWayProfile(TestUtils.SONARQUBE_RUNTIME));
+
+    assertThat(activeRuleKeys(defineSonarWayProfile(TestUtils.SONARLINT_RUNTIME)))
+      .as("SonarQube IDE must activate the same rules as SonarQube Server")
+      .containsExactlyInAnyOrderElementsOf(serverRuleKeys);
+    assertThat(activeRuleKeys(defineSonarWayProfile(TestUtils.SONARCLOUD_RUNTIME)))
+      .as("SonarQube Cloud must activate the SonarQube Server rules plus the cloud-only ones")
+      .containsExactlyInAnyOrderElementsOf(Stream.concat(serverRuleKeys.stream(), sonarQubeCloudOnlyRuleKeys().stream()).toList());
   }
 
   private BuiltInQualityProfilesDefinition.BuiltInQualityProfile defineSonarWayProfile(SonarRuntime sonarRuntime) {

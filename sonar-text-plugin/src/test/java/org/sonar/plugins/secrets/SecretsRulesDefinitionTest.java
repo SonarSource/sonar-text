@@ -113,7 +113,7 @@ class SecretsRulesDefinitionTest extends AbstractRuleDefinitionTest {
   void shouldAlsoLoadTheSonarQubeCloudOnlyRulesInCommercialEditionOnSonarQubeCloud() {
     var profileDefinition = new CommercialEditionQualityProfile(TestUtils.SONARCLOUD_RUNTIME);
     assertThat(profileDefinition.sonarQubeCloudOnlyProfilePaths())
-      .containsExactly("/" + TEST_COMMERCIAL_PACKAGE_PREFIX + "/sonar/l10n/secrets/rules/secrets/Sonar_way_sonarqube_cloud_addition_profile.json");
+      .containsExactly("/" + TEST_COMMERCIAL_PACKAGE_PREFIX + "/sonar/l10n/secrets/rules/secrets/sonarqube_cloud/Sonar_way_sonarqube_cloud_addition_profile.json");
 
     var profile = defineProfile(profileDefinition);
 
