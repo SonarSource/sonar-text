@@ -61,15 +61,4 @@ public interface AuxiliaryPatternMatcher {
   default AuxiliaryPatternMatcher negate() {
     return new NegationMatcher(this);
   }
-
-  /**
-   * Default implementation of the {@link AuxiliaryPatternMatcher} which has no filtering behavior.
-   */
-  class DefaultAuxiliaryMatcher implements AuxiliaryPatternMatcher {
-
-    @Override
-    public List<CandidateMatch> filter(List<CandidateMatch> candidateMatches, InputFileContext inputFileContext, String ruleId) {
-      return candidateMatches;
-    }
-  }
 }

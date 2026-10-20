@@ -29,6 +29,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.SonarEdition;
@@ -329,12 +330,9 @@ public class TextAndSecretsSensor implements Sensor {
    * language OR file with a text extension are analyzed.
    */
   protected static List<InputFile> getInputFiles(SensorContext sensorContext, FilePredicate filePredicate) {
-    List<InputFile> inputFiles = new ArrayList<>();
     var fileSystem = sensorContext.fileSystem();
-    for (InputFile inputFile : fileSystem.inputFiles(filePredicate)) {
-      inputFiles.add(inputFile);
-    }
-    return inputFiles;
+    return StreamSupport.stream(fileSystem.inputFiles(filePredicate).spliterator(), false)
+      .collect(Collectors.toCollection(ArrayList::new));
   }
 
   /**
