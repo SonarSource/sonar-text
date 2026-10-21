@@ -1,28 +1,28 @@
 [versions]
-sonar-commons = "2.32.0.5319"
+sonar-commons = "2.33.0.5369"
 # Before updating the plugin-api version, make sure to check the compatibility matrix and stick to the lowest denominator
 # https://github.com/SonarSource/sonar-plugin-api?tab=readme-ov-file#compatibility
 sonar-plugin-api = "13.4.2.4284"
-sonarqube = "26.9.0.129388"
-sonar-java = "8.43.0.47668"
+sonarqube = "26.10.0.133078"
+sonar-java = "8.44.0.48651"
 sonar-php = "3.59.0.16496"
-sonar-scanner-engine = "13.13.0.6016"
+sonar-scanner-engine = "13.16.0.6705"
 sonar-scanner-gradle = "7.5.0.8588"
-sonar-scanner-integration-tester = "1.2.0.1354"
-sonar-orchestrator = "6.4.3.4676"
+sonar-scanner-integration-tester = "1.5.0.1412"
+sonar-orchestrator = "6.4.4.4797"
 sonar-license-api = "3.4"
 sonar-lint = "11.10.0.86299"
-slf4j = "2.0.19"
-logback = "1.6.3"
+slf4j = "2.0.20"
+logback = "1.6.5"
 jackson = "3.2.3"
 # Jackson 2 still reaches the CLI test classpath via WireMock and the Orchestrator; pinned because
 # WireMock's own jackson-bom 2.20.1 has known jackson-databind CVEs
-jackson2 = "2.22.2"
-json-schema-validator = "3.0.7"
+jackson2 = "2.22.3"
+json-schema-validator = "3.0.8"
 pico-cli = "4.7.7"
 junit = "6.1.3"
 assertj = "3.27.7"
-mockito = "5.23.0"
+mockito = "5.24.0"
 yguard = "4.1.1"
 eclipse-jgit = "7.8.0.202609011348-r"
 commons-io = "2.22.0"
@@ -32,7 +32,7 @@ awaitility = "4.3.0"
 ahocorasick = "0.6.3"
 tink = "1.23.0"
 wiremock = "3.13.2"
-ayza = "10.0.7"
+ayza = "10.1.0"
 bouncycastle = "1.86"
 xerces = "2.12.2"
 
@@ -80,6 +80,6 @@ bc-pkix-jdk18on = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "b
 xerces = { module = "xerces:xercesImpl", version.ref = "xerces" }
 
 [plugins]
-buildconfig = { id = "com.github.gmazzo.buildconfig", version = "6.1.0" }
+buildconfig = { id = "com.github.gmazzo.buildconfig", version = "6.1.2" }
 jmh = { id = "me.champeau.jmh", version = "0.7.3" }
-graalvm-native = { id = "org.graalvm.buildtools.native", version = "1.1.13" }
+graalvm-native = { id = "org.graalvm.buildtools.native", version = "1.1.14" }
