@@ -5,13 +5,15 @@
     ":semanticCommitsDisabled"
   ],
   "schedule": [
-    "before 4am on Monday"
+    // from 00:00 to 16:59
+    "* 0-16 * * 1"
   ],
+  "internalChecksAsSuccess": true,
   "enabledManagers": [
     "gradle",
     "gradle-wrapper",
     "github-actions",
-    "regex",
+    "custom.regex",
     "dockerfile",
     "git-submodules"
   ],
@@ -92,6 +94,13 @@
         "private/its/benchmark/src/integrationTest/resources/sources/**"
       ],
       "enabled": false
+    },
+    {
+      "matchManagers": [
+        "git-submodules"
+      ],
+      // git submodules are included as source, so artifact age doesn't apply to them
+      "minimumReleaseAge": null
     }
   ]
 }
