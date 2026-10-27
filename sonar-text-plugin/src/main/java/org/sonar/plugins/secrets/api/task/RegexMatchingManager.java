@@ -23,6 +23,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,11 +79,17 @@ public class RegexMatchingManager {
   public static boolean runRegexMatchingWithTimeout(Runnable runnable, String pattern, String ruleId) {
     forceInitialization();
     var semaphore = new Semaphore(0);
-    Future<?> future = submitWithSemaphore(runnable, semaphore);
+    var started = new AtomicBoolean(false);
+    Future<?> future = submitWithSemaphore(runnable, semaphore, started);
 
     try {
       if (waitFutureCompletion(future, ruleId, timeoutMs)) {
         return true;
+      }
+      if (started.compareAndSet(false, true)) {
+        // The task is still queued: prevent it from running, as a cancelled task never releases the semaphore
+        future.cancel(false);
+        return false;
       }
       future.cancel(true);
 
@@ -113,10 +120,12 @@ public class RegexMatchingManager {
     return false;
   }
 
-  private static Future<?> submitWithSemaphore(Runnable runnable, Semaphore semaphore) {
+  private static Future<?> submitWithSemaphore(Runnable runnable, Semaphore semaphore, AtomicBoolean started) {
     return executorService.submit(() -> {
       try {
-        runnable.run();
+        if (started.compareAndSet(false, true)) {
+          runnable.run();
+        }
       } catch (RuntimeException e) {
         throw e;
       } finally {

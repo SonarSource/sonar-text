@@ -16,6 +16,8 @@
  */
 package org.sonar.plugins.secrets.api.task;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +40,7 @@ class RegexMatchingManagerTest {
   DummyObject dummyObject;
 
   @AfterEach
-  public void cleanUp() {
+  void cleanUp() {
     int defaultTimeout = 10_000;
     // due to running other tests, this property can be changed. That's why we need to set the default after each test.
     RegexMatchingManager.setTimeoutMs(defaultTimeout);
@@ -182,25 +184,51 @@ class RegexMatchingManagerTest {
 
   @Test
   void shouldSuccessfullyAcquireSemaphoreDuringSecondTry() {
-    RegexMatchingManager.setTimeoutMs(1);
+    // leaves the worker thread enough time to start the task before the first timeout
+    RegexMatchingManager.setTimeoutMs(100);
     RegexMatchingManager.setUninterruptibleTimeoutMs(10000);
+    var warning = "Couldn't interrupt secret-matching task of rule with id \"<rule-id>\", waiting for it to finish. Related pattern is \"<pattern-for-logging>\"";
     boolean runWithSuccess = RegexMatchingManager.runRegexMatchingWithTimeout(() -> {
       try {
         // should be interrupted by future.cancel(true)
         Thread.currentThread().join();
       } catch (InterruptedException e) {
-        try {
-          // sleeps during the first semaphore.tryAcquire(), but not during the second
-          Thread.sleep(100);
-        } catch (InterruptedException ex) {
-          // do nothing
-        }
+        // keeps running during the first semaphore.tryAcquire(), and finishes during the second
+        waitUntilLogged(warning);
       }
     }, "<pattern-for-logging>", "<rule-id>");
 
     assertThat(runWithSuccess).isFalse();
-    assertThat(logTester.logs()).contains(
-      "Couldn't interrupt secret-matching task of rule with id \"<rule-id>\", waiting for it to finish. Related pattern is \"<pattern-for-logging>\"");
+    assertThat(logTester.logs()).contains(warning);
+  }
+
+  @Test
+  void shouldNotRunTaskStillQueuedWhenTimeoutIsReached() throws InterruptedException {
+    RegexMatchingManager.initialize(1);
+    var releaseWorker = new CountDownLatch(1);
+    var workerBusy = new CountDownLatch(1);
+    // occupies the only worker thread, so the next task stays queued
+    RegexMatchingManager.executorService.submit(() -> {
+      workerBusy.countDown();
+      releaseWorker.await();
+      return null;
+    });
+    workerBusy.await();
+
+    boolean runWithSuccess = RegexMatchingManager.runRegexMatchingWithTimeout(() -> {
+      dummyObject.method();
+    }, "<pattern-for-logging>", "<rule-id>");
+    releaseWorker.countDown();
+
+    boolean nextRunWithSuccess = RegexMatchingManager.runRegexMatchingWithTimeout(() -> {
+      dummyObject.method();
+    }, "<pattern-for-logging>", "<rule-id>");
+
+    assertThat(runWithSuccess).isFalse();
+    assertThat(nextRunWithSuccess).isTrue();
+    // only the second task ran: the first one was dropped while still queued
+    verify(dummyObject, times(1)).method();
+    assertThat(logTester.logs()).isEmpty();
   }
 
   static class DummyObject {
@@ -222,6 +250,13 @@ class RegexMatchingManagerTest {
       Thread.currentThread().join();
     } catch (InterruptedException e) {
       waitForever();
+    }
+  }
+
+  void waitUntilLogged(String message) {
+    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+    while (!logTester.logs().contains(message) && System.nanoTime() < deadline) {
+      Thread.onSpinWait();
     }
   }
 
