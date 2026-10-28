@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.plugins.secrets.configuration.model.Rule;
+import org.sonar.plugins.secrets.configuration.model.Selectivity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -38,6 +39,25 @@ public abstract class AbstractSecretsSpecificationLoaderTest {
   public abstract List<Class<?>> getSecretsCheckListWithSpecifications();
 
   public abstract SecretsSpecificationLoader getSecretsSpecificationLoader();
+
+  @Test
+  void shouldIncludeEveryAnalyzerGenericRuleInGenericSecretRuleCoverage() {
+    var specificationLoader = getSecretsSpecificationLoader();
+    assertThat(collectedErrors)
+      .as("All specifications must load before checking analyzer-generic rule coverage")
+      .isEmpty();
+
+    var analyzerGenericRuleKeys = specificationLoader.getRulesMappedToKey().values().stream()
+      .flatMap(List::stream)
+      .filter(rule -> rule.getSelectivity() == Selectivity.ANALYZER_GENERIC)
+      .map(Rule::getRspecKey)
+      .distinct()
+      .toList();
+
+    assertThat(analyzerGenericRuleKeys)
+      .as("Every analyzerGeneric rule must be included in GenericSecretRuleCoverage.ANALYZER_GENERIC_RULE_KEYS")
+      .isSubsetOf(GenericSecretRuleCoverage.ANALYZER_GENERIC_RULE_KEYS);
+  }
 
   @Test
   void shouldLoadRulesWithoutErrors() {

@@ -20,11 +20,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.common.InputFileContext;
+import org.sonar.plugins.secrets.api.GenericSecretRuleCoverage;
 import org.sonar.plugins.secrets.api.SpecificationConfiguration;
 import org.sonar.plugins.secrets.configuration.model.Selectivity;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.FileFilter;
@@ -37,7 +39,6 @@ import static java.util.function.Predicate.not;
  */
 public final class PreFilterFactory {
   private static final Logger LOG = LoggerFactory.getLogger(PreFilterFactory.class);
-  private static final Predicate<InputFileContext> NO_LANGUAGE_PREDICATE = ctx -> ctx.getInputFile().language() == null;
 
   static final Predicate<InputFileContext> INCLUDE_ONLY_MAIN_FILES = ctx -> InputFile.Type.MAIN == ctx.getInputFile().type();
 
@@ -53,6 +54,7 @@ public final class PreFilterFactory {
    *
    * @param pre                            the input {@link PreModule}
    * @param selectivity                    the rule selectivity, or {@code null} when not applicable (e.g. binary checks)
+   * @param rspecKey                       the check's RSPEC key
    * @param specificationConfiguration     the configuration
    * @param shouldExecuteContentPreFilters whether content pre-filters should be executed or they have been executed earlier
    * @return a {@link PreFilter}
@@ -60,9 +62,10 @@ public final class PreFilterFactory {
   public static PreFilter createFilter(
     @Nullable PreModule pre,
     @Nullable Selectivity selectivity,
+    String rspecKey,
     SpecificationConfiguration specificationConfiguration,
     boolean shouldExecuteContentPreFilters) {
-    var selectivityPredicate = appendSelectivityPredicate(INCLUDE_ONLY_MAIN_FILES, selectivity);
+    var selectivityPredicate = appendSelectivityPredicate(INCLUDE_ONLY_MAIN_FILES, selectivity, rspecKey, specificationConfiguration::genericSecretRuleCoverage);
     var rejectIncludePredicate = buildRejectIncludePredicate(pre, shouldExecuteContentPreFilters);
     var automaticTestFileDetectionEnabled = specificationConfiguration.automaticTestFileDetectionEnabled();
     var testFilesFilterSkipped = specificationConfiguration.skippedFilters().contains(SkippedFilter.TEST_FILES_FILTER);
@@ -102,9 +105,10 @@ public final class PreFilterFactory {
     return predicate;
   }
 
-  static Predicate<InputFileContext> appendSelectivityPredicate(Predicate<InputFileContext> predicate, @Nullable Selectivity selectivity) {
+  static Predicate<InputFileContext> appendSelectivityPredicate(Predicate<InputFileContext> predicate, @Nullable Selectivity selectivity,
+    String rspecKey, Supplier<GenericSecretRuleCoverage> genericSecretRuleCoverage) {
     if (selectivity == Selectivity.ANALYZER_GENERIC) {
-      return predicate.and(NO_LANGUAGE_PREDICATE);
+      return predicate.and(ctx -> !genericSecretRuleCoverage.get().isRuleActiveForLanguage(rspecKey, ctx.getInputFile().language()));
     }
     return predicate;
   }

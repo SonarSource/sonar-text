@@ -60,6 +60,7 @@ import org.sonar.plugins.common.warnings.AnalysisWarningsWrapper;
 import org.sonar.plugins.common.warnings.DefaultAnalysisWarningsWrapper;
 import org.sonar.plugins.secrets.SecretsCheckList;
 import org.sonar.plugins.secrets.SecretsRulesDefinition;
+import org.sonar.plugins.secrets.api.GenericSecretRuleCoverage;
 import org.sonar.plugins.secrets.api.MessageFormatter;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
@@ -204,7 +205,9 @@ public class TextAndSecretsSensor implements Sensor {
     var skippedFilters = resolveSkippedFilters(sensorContext);
     var automaticTestFileDetectionEnabled = resolveAutomaticTestFileDetection(sensorContext);
     var rejectionLogger = resolveRejectionLogger(sensorContext);
-    return new SpecificationConfiguration(automaticTestFileDetectionEnabled, skippedFilters, MessageFormatter.RULE_MESSAGE, rejectionLogger);
+    checkContainer.setGenericSecretRuleCoverage(GenericSecretRuleCoverage.from(sensorContext.activeRules()));
+    return new SpecificationConfiguration(automaticTestFileDetectionEnabled, skippedFilters, MessageFormatter.RULE_MESSAGE, rejectionLogger,
+      checkContainer::getGenericSecretRuleCoverage);
   }
 
   protected static RejectionLogger resolveRejectionLogger(SensorContext sensorContext) {

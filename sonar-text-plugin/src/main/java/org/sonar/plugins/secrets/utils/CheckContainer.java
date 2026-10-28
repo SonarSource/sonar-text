@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import org.ahocorasick.trie.PayloadEmit;
 import org.ahocorasick.trie.PayloadTrie;
@@ -35,6 +36,7 @@ import org.sonar.plugins.common.Check;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.common.analyzer.TextAndSecretsAnalyzer;
 import org.sonar.plugins.common.measures.DurationStatistics;
+import org.sonar.plugins.secrets.api.GenericSecretRuleCoverage;
 import org.sonar.plugins.secrets.api.SecretsSpecificationLoader;
 import org.sonar.plugins.secrets.api.SpecificationBasedCheck;
 import org.sonar.plugins.secrets.api.filters.SkippedFilter;
@@ -56,6 +58,7 @@ import static org.sonarsource.api.sonarlint.SonarLintSide.MODULE;
 public class CheckContainer {
   private static final Logger LOG = LoggerFactory.getLogger(CheckContainer.class);
 
+  private final AtomicReference<GenericSecretRuleCoverage> genericSecretRuleCoverage = new AtomicReference<>(GenericSecretRuleCoverage.EMPTY);
   private DurationStatistics durationStatistics;
   private FilePredicate secretsSuffixExclusionPredicate;
   private Collection<? extends Check> specChecksWithoutPreFilter;
@@ -79,6 +82,16 @@ public class CheckContainer {
 
   public CheckContainer() {
     // Default constructor for DI framework.
+  }
+
+  /** Replaces the module's language-rule coverage before starting an analysis, without rebuilding cached checks. */
+  public void setGenericSecretRuleCoverage(GenericSecretRuleCoverage genericSecretRuleCoverage) {
+    this.genericSecretRuleCoverage.set(genericSecretRuleCoverage);
+  }
+
+  /** Returns the current analysis's immutable coverage snapshot for cached pre-filters. */
+  public GenericSecretRuleCoverage getGenericSecretRuleCoverage() {
+    return genericSecretRuleCoverage.get();
   }
 
   public void initialize(

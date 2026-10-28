@@ -17,6 +17,7 @@
 package org.sonar.plugins.secrets.api;
 
 import java.util.Set;
+import java.util.function.Supplier;
 import org.sonar.plugins.secrets.api.filters.RejectionLogger;
 import org.sonar.plugins.secrets.api.filters.SkippedFilter;
 
@@ -37,12 +38,28 @@ import org.sonar.plugins.secrets.api.filters.SkippedFilter;
  * @param messageFormatter            formatter for secret issue messages.
  * @param rejectionLogger             logger used by post-filters to emit debug lines when a candidate is rejected.
  *                                    Pass {@link RejectionLogger#DISABLED} (the default) to opt out.
+ * @param genericSecretRuleCoverageSupplier   supplies the current analysis's language-rule coverage. In SonarQube for IDE (SQIDE),
+ *                                    the module-scoped {@link org.sonar.plugins.secrets.utils.CheckContainer} retains checks and
+ *                                    matchers across analyses. A supplier lets those cached matchers read updated coverage
+ *                                    instead of retaining the first analysis's snapshot.
  */
 public record SpecificationConfiguration(
   boolean automaticTestFileDetectionEnabled,
   Set<SkippedFilter> skippedFilters,
   MessageFormatter messageFormatter,
-  RejectionLogger rejectionLogger) {
+  RejectionLogger rejectionLogger,
+  Supplier<GenericSecretRuleCoverage> genericSecretRuleCoverageSupplier) {
+
+  /** Resolves coverage when a pre-filter runs so cached matchers observe the current analysis. */
+  public GenericSecretRuleCoverage genericSecretRuleCoverage() {
+    return genericSecretRuleCoverageSupplier.get();
+  }
+
+  /** Creates a configuration for callers without competing language analyzers, such as the standalone CLI. */
+  public SpecificationConfiguration(boolean automaticTestFileDetectionEnabled, Set<SkippedFilter> skippedFilters,
+    MessageFormatter messageFormatter, RejectionLogger rejectionLogger) {
+    this(automaticTestFileDetectionEnabled, skippedFilters, messageFormatter, rejectionLogger, () -> GenericSecretRuleCoverage.EMPTY);
+  }
 
   public static final SpecificationConfiguration AUTO_TEST_FILE_DETECTION_ENABLED = new SpecificationConfiguration(true, Set.of(), MessageFormatter.RULE_MESSAGE,
     RejectionLogger.DISABLED);

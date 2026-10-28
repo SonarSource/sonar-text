@@ -25,7 +25,8 @@ public enum Selectivity {
   SPECIFIC(0),
   @JsonAlias("providerGeneric")
   PROVIDER_GENERIC(1),
-  // Lowest priority. If used as a selectivity, the rule will only raise on files without a language associated to it
+  // Lowest priority. If used as a selectivity, the rule is suppressed only on files whose assigned language has an active
+  // rule (outside the text and secrets repositories) with the same RSPEC key; see GenericSecretRuleCoverage.
   @JsonAlias("analyzerGeneric")
   ANALYZER_GENERIC(2);
 

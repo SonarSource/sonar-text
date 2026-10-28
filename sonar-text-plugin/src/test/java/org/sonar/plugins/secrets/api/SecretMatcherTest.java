@@ -31,8 +31,10 @@ import org.eclipse.jgit.util.Base64;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.rule.RuleKey;
 import org.sonar.plugins.secrets.api.filters.FilterOutcome;
 import org.sonar.plugins.secrets.api.filters.PostFilter;
 import org.sonar.plugins.secrets.api.filters.PreFilter;
@@ -44,6 +46,8 @@ import org.sonar.plugins.secrets.configuration.model.Selectivity;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.NamedPostModule;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.StatisticalFilter;
 import org.sonar.plugins.secrets.configuration.model.matching.filter.TopLevelPostModule;
+import org.sonar.scanner.plugin.api.impl.rule.ActiveRulesBuilder;
+import org.sonar.scanner.plugin.api.impl.rule.NewActiveRule;
 
 import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -96,6 +100,7 @@ class SecretMatcherTest {
       try {
         base64Decoded = new String(Base64.decode(candidateSecret), StandardCharsets.UTF_8);
       } catch (Exception e) {
+        // intentionally empty
       }
       boolean passed = !Heuristics.matchesHeuristics(candidateSecret, List.of("uri")) && base64Decoded != null && base64Decoded.equals("\"alg\":");
       return passed ? FilterOutcome.ACCEPTED : FilterOutcome.REJECTED;
@@ -402,6 +407,35 @@ class SecretMatcherTest {
   }
 
   @ParameterizedTest
+  @CsvSource({
+    "S2068, S2068, cs, ANALYZER_GENERIC, false",
+    "S6418, S6418, cs, ANALYZER_GENERIC, false",
+    "S2068, S6418, cs, ANALYZER_GENERIC, true",
+    "S6418, S2068, cs, ANALYZER_GENERIC, true",
+    "S2068, S2068, r, ANALYZER_GENERIC, true",
+    "S6418, S6418, r, ANALYZER_GENERIC, true",
+    "S2068, S2068, , ANALYZER_GENERIC, true",
+    "S6418, S6418, , ANALYZER_GENERIC, true",
+    "S2068, S2068, cs, SPECIFIC, true",
+    "S6418, S6418, cs, PROVIDER_GENERIC, true"
+  })
+  void shouldSuppressOnlyMatchingActiveLanguageRule(String rspecKey, String activeRspecKey, String language, Selectivity selectivity,
+    boolean shouldRaise) throws IOException {
+    var rule = ReferenceTestModel.constructMinimumSpecification().getProvider().getRules().get(0);
+    rule.setRspecKey(rspecKey);
+    rule.setSelectivity(selectivity);
+    var builder = new ActiveRulesBuilder();
+    builder.addRule(new NewActiveRule.Builder().setRuleKey(RuleKey.of("csharpsquid", activeRspecKey)).setLanguage("cs").build());
+    var coverage = GenericSecretRuleCoverage.from(builder.build());
+    var configuration = new SpecificationConfiguration(false, Set.of(), MessageFormatter.RULE_MESSAGE, RejectionLogger.DISABLED,
+      () -> coverage);
+    var matcher = SecretMatcher.build(rule, mockDurationStatistics(), configuration, true);
+    var file = inputFile(Path.of(".env"), "rule matching pattern", language, InputFile.Type.MAIN);
+
+    assertThat(matcher.findIn(inputFileContext(file))).hasSize(shouldRaise ? 1 : 0);
+  }
+
+  @ParameterizedTest
   @MethodSource
   void shouldRaiseIssueAccordingToSelectivityAndLanguageExistence(Selectivity ruleSelectivity, String language, boolean shouldRaise) throws IOException {
     var specification = ReferenceTestModel.constructMinimumSpecification();
@@ -424,6 +458,6 @@ class SecretMatcherTest {
 
       Arguments.of(Selectivity.SPECIFIC, "myLanguage", true),
       Arguments.of(Selectivity.PROVIDER_GENERIC, "myLanguage", true),
-      Arguments.of(Selectivity.ANALYZER_GENERIC, "myLanguage", false));
+      Arguments.of(Selectivity.ANALYZER_GENERIC, "myLanguage", true));
   }
 }

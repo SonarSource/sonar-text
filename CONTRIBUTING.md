@@ -55,7 +55,8 @@ provider:
       # The `selectivity` field can be either `specific`, `providerGeneric` or `analyzerGeneric`.
       # In case two rules match on the same text,
       # the issue with the more specific selectivity will be used with the following order `specific` > `providerGeneric` > `analyzerGeneric`.
-      # Rules with a selectivity of `analyzerGeneric` will also only be raised on files without a sonar language associated to it. 
+      # Rules with a selectivity of `analyzerGeneric` are suppressed only when the file's assigned language
+      # has an active rule outside the text and secrets repositories with the same RSPEC key.
       selectivity: specific
       metadata:
         # This does not influence the rule name

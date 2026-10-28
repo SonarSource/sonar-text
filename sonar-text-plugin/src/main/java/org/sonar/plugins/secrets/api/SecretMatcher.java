@@ -87,7 +87,7 @@ public class SecretMatcher implements Matcher {
     boolean shouldExecuteContentPreFilters) {
     var patternMatcher = PatternMatcher.build(rule.getDetection().getMatching());
     var preFilter = PreFilterFactory.createFilter(
-      rule.getDetection().getPre(), rule.getSelectivity(), specificationConfiguration, shouldExecuteContentPreFilters);
+      rule.getDetection().getPre(), rule.getSelectivity(), rule.getRspecKey(), specificationConfiguration, shouldExecuteContentPreFilters);
     var skippedFilters = specificationConfiguration.skippedFilters();
     var rejectionLogger = specificationConfiguration.rejectionLogger();
     var postFilter = PostFilterFactory.createFilter(rule.getDetection().getPost(), skippedFilters, rejectionLogger);

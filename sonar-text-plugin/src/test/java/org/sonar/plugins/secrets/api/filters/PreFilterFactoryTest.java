@@ -32,6 +32,7 @@ import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.plugins.common.InputFileContext;
 import org.sonar.plugins.secrets.api.AutomaticTestFileFilter;
+import org.sonar.plugins.secrets.api.GenericSecretRuleCoverage;
 import org.sonar.plugins.secrets.api.MessageFormatter;
 import org.sonar.plugins.secrets.api.SpecificationConfiguration;
 import org.sonar.plugins.secrets.configuration.model.Selectivity;
@@ -105,7 +106,7 @@ class PreFilterFactoryTest {
   void testFiltersFromYamlFragments(String input, String filename, boolean shouldMatch) {
     Detection detection = MAPPER.readValue(input, Detection.class);
 
-    var filter = PreFilterFactory.createFilter(detection.getPre(), Selectivity.SPECIFIC, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_DISABLED, true);
+    var filter = PreFilterFactory.createFilter(detection.getPre(), Selectivity.SPECIFIC, "S2068", SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_DISABLED, true);
 
     InputFileContext ctx = mock(InputFileContext.class);
     when(ctx.getInputFile()).thenReturn(new TestInputFileBuilder("myProject", filename).build());
@@ -178,21 +179,21 @@ class PreFilterFactoryTest {
     var configuration = automaticTestDetectionEnabled
       ? SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED
       : SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_DISABLED;
-    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, configuration, true);
+    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, "S2068", configuration, true);
     assertThat(filter.apply(ctx).passed()).isFalse();
   }
 
   @Test
   void createFilterReturnsAcceptedForNonTestMainFile() {
     var ctx = fileContext("src/file.txt", "/base/directory/", InputFile.Type.MAIN);
-    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, true);
+    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, "S2068", SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, true);
     assertThat(filter.apply(ctx)).isEqualTo(FilterOutcome.ACCEPTED);
   }
 
   @Test
   void createFilterReturnsRejectedForAutomaticTestFileWhenFilterEnabled() {
     var ctx = fileContext("test_secrets.txt", "/base/directory/", InputFile.Type.MAIN);
-    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, true);
+    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, "S2068", SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_ENABLED, true);
     assertThat(filter.apply(ctx)).isEqualTo(FilterOutcome.REJECTED);
   }
 
@@ -200,7 +201,7 @@ class PreFilterFactoryTest {
   void createFilterReturnsPassedWithSkippedForAutomaticTestFileWhenFilterDisabled() {
     var ctx = fileContext("test_secrets.txt", "/base/directory/", InputFile.Type.MAIN);
     var config = new SpecificationConfiguration(true, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE, RejectionLogger.DISABLED);
-    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, config, true);
+    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, "S2068", config, true);
     var outcome = filter.apply(ctx);
     assertThat(outcome.passed()).isTrue();
     assertThat(outcome.skipped()).containsExactly(SkippedFilter.TEST_FILES_FILTER);
@@ -211,7 +212,7 @@ class PreFilterFactoryTest {
     var ctx = fileContext("test_secrets.txt", "/base/directory/", InputFile.Type.MAIN);
     // When automatic test detection is off (user configured sonar.tests), the automatic filter is never
     // applied — skipping it via --disable-test-file-detection has no effect.
-    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_DISABLED, true);
+    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, "S2068", SpecificationConfiguration.AUTO_TEST_FILE_DETECTION_DISABLED, true);
     assertThat(filter.apply(ctx)).isEqualTo(FilterOutcome.ACCEPTED);
   }
 
@@ -221,7 +222,7 @@ class PreFilterFactoryTest {
     // When a file is explicitly classified as Type.TEST (user configured sonar.tests), it's rejected before
     // the automatic filter runs — skipping that filter has no effect.
     var config = new SpecificationConfiguration(true, Set.of(SkippedFilter.TEST_FILES_FILTER), MessageFormatter.RULE_MESSAGE, RejectionLogger.DISABLED);
-    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, config, true);
+    var filter = PreFilterFactory.createFilter(new PreModule(), Selectivity.SPECIFIC, "S2068", config, true);
     assertThat(filter.apply(ctx)).isEqualTo(FilterOutcome.REJECTED);
   }
 
@@ -250,7 +251,7 @@ class PreFilterFactoryTest {
     when(ctx.getInputFile()).thenReturn(inputFile);
     when(inputFile.language()).thenReturn(language);
 
-    var selectivityPredicate = PreFilterFactory.appendSelectivityPredicate(context -> true, selectivity);
+    var selectivityPredicate = PreFilterFactory.appendSelectivityPredicate(context -> true, selectivity, "S2068", () -> GenericSecretRuleCoverage.EMPTY);
     assertThat(selectivityPredicate.test(ctx)).isEqualTo(shouldMatch);
   }
 
@@ -262,6 +263,6 @@ class PreFilterFactoryTest {
 
       Arguments.of(Selectivity.SPECIFIC, "myLanguage", true),
       Arguments.of(Selectivity.PROVIDER_GENERIC, "myLanguage", true),
-      Arguments.of(Selectivity.ANALYZER_GENERIC, "myLanguage", false));
+      Arguments.of(Selectivity.ANALYZER_GENERIC, "myLanguage", true));
   }
 }

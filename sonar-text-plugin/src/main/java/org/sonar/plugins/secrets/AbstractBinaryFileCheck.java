@@ -42,7 +42,7 @@ public abstract class AbstractBinaryFileCheck extends Check {
    * @param gitService {@link GitService} instance to be used by checks like S7203
    */
   public void initialize(SpecificationConfiguration specificationConfiguration, GitService gitService) {
-    this.scopedFilePreFilter = PreFilterFactory.createFilter(null, null, specificationConfiguration, true);
+    this.scopedFilePreFilter = PreFilterFactory.createFilter(null, null, getRuleKey().rule(), specificationConfiguration, true);
     this.gitService = gitService;
   }
 

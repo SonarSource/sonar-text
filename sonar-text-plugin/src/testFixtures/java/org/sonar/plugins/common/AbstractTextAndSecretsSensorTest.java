@@ -53,6 +53,7 @@ import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.error.AnalysisError;
 import org.sonar.api.batch.sensor.issue.Issue;
+import org.sonar.api.rule.RuleKey;
 import org.sonar.api.testfixtures.log.LogTesterJUnit5;
 import org.sonar.check.Rule;
 import org.sonar.plugins.common.analyzer.Analyzer;
@@ -69,6 +70,8 @@ import org.sonar.plugins.secrets.api.task.RegexMatchingManager;
 import org.sonar.plugins.text.api.TextCheck;
 import org.sonar.plugins.text.checks.BIDICharacterCheck;
 import org.sonar.scanner.plugin.api.impl.config.MapSettings;
+import org.sonar.scanner.plugin.api.impl.rule.ActiveRulesBuilder;
+import org.sonar.scanner.plugin.api.impl.rule.NewActiveRule;
 import org.sonar.scanner.plugin.api.impl.sensor.DefaultSensorDescriptor;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -1560,6 +1563,57 @@ public abstract class AbstractTextAndSecretsSensorTest {
       .containsEntry(DISABLE_ENTROPY_FILTER_TELEMETRY_KEY, disableEntropy ? "1" : "0")
       .containsEntry(DISABLE_TEST_FILE_DETECTION_TELEMETRY_KEY, disableTestFileDetection ? "1" : "0")
       .containsEntry(DISABLE_KNOWN_FAKE_SECRET_FILTER_TELEMETRY_KEY, disableKnownFakeSecretFilter ? "1" : "0");
+  }
+
+  @ParameterizedTest
+  @CsvSource({"S2068, true", "S2068, false", "S6418, true", "S6418, false"})
+  void shouldRefreshLanguageRuleCoverageOnRepeatedIdeAnalyses(String ruleKey, boolean initiallyCovered) {
+    if (isPublicSensor()) {
+      return;
+    }
+    logTester.setLevel(Level.DEBUG);
+    var sensor = sensor(genericCoverageContext(ruleKey, initiallyCovered));
+    var content = """
+      password = "V1Vu1kkTwGAQJqz0szrBqQ9LYg0K4rpi"
+      token = "V1Vu1kkTwGAQJqz0szrBqQ9LYg0K4rpi"
+      """;
+
+    for (boolean covered : List.of(initiallyCovered, !initiallyCovered, initiallyCovered)) {
+      var context = genericCoverageContext(ruleKey, covered);
+
+      analyse(sensor, context, inputFile(Path.of("credentials.cs"), content, "cs"));
+
+      assertThat(context.allIssues()).hasSize(covered ? 0 : 1);
+    }
+    assertThat(logTester.logs(Level.DEBUG)).filteredOn(message -> message.contains("trie construction")).hasSize(1);
+  }
+
+  private static SensorContextTester genericCoverageContext(String ruleKey, boolean covered) {
+    var context = sensorContext("secrets:" + ruleKey).setRuntime(SONARLINT_RUNTIME);
+    if (covered) {
+      var builder = new ActiveRulesBuilder();
+      builder.addRule(new NewActiveRule.Builder().setRuleKey(RuleKey.of("secrets", ruleKey)).build());
+      builder.addRule(new NewActiveRule.Builder().setRuleKey(RuleKey.of("csharpsquid", ruleKey)).setLanguage("cs").build());
+      context.setActiveRules(builder.build());
+    }
+    return context;
+  }
+
+  @Test
+  void shouldRefreshLanguageRuleCoverageForEachAnalysis() {
+    var context = testUtils().defaultSensorContext();
+    var builder = new ActiveRulesBuilder();
+    builder.addRule(new NewActiveRule.Builder().setRuleKey(RuleKey.of("csharpsquid", "S2068")).setLanguage("cs").build());
+    context.setActiveRules(builder.build());
+    var sensor = sensor(context);
+    var firstConfiguration = sensor.createSpecificationConfiguration(context);
+    assertThat(firstConfiguration.genericSecretRuleCoverage().isRuleActiveForLanguage("S2068", "cs")).isTrue();
+
+    context.setActiveRules(new ActiveRulesBuilder().build());
+    var secondConfiguration = sensor.createSpecificationConfiguration(context);
+
+    assertThat(firstConfiguration.genericSecretRuleCoverage().isRuleActiveForLanguage("S2068", "cs")).isFalse();
+    assertThat(secondConfiguration.genericSecretRuleCoverage().isRuleActiveForLanguage("S2068", "cs")).isFalse();
   }
 
   @Test
